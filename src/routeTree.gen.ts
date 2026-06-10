@@ -17,8 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClientsIndexRouteImport } from './routes/clients/index'
 import { Route as SeedsApiTimeframesRouteImport } from './routes/seeds-api/timeframes'
 import { Route as SeedsApiTagsRouteImport } from './routes/seeds-api/tags'
-import { Route as SeedsApiStuffRouteImport } from './routes/seeds-api/stuff'
-import { Route as SeedsApiStorePackagesRouteImport } from './routes/seeds-api/store-packages'
+import { Route as SeedsApiSubscriptionsRouteImport } from './routes/seeds-api/subscriptions'
 import { Route as SeedsApiSeedsRouteImport } from './routes/seeds-api/seeds'
 import { Route as SeedsApiSeedSubscriptionsRouteImport } from './routes/seeds-api/seed-subscriptions'
 import { Route as SeedsApiScrappingOptionsRouteImport } from './routes/seeds-api/scrapping-options'
@@ -68,14 +67,9 @@ const SeedsApiTagsRoute = SeedsApiTagsRouteImport.update({
   path: '/seeds-api/tags',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SeedsApiStuffRoute = SeedsApiStuffRouteImport.update({
-  id: '/seeds-api/stuff',
-  path: '/seeds-api/stuff',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SeedsApiStorePackagesRoute = SeedsApiStorePackagesRouteImport.update({
-  id: '/seeds-api/store-packages',
-  path: '/seeds-api/store-packages',
+const SeedsApiSubscriptionsRoute = SeedsApiSubscriptionsRouteImport.update({
+  id: '/seeds-api/subscriptions',
+  path: '/seeds-api/subscriptions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SeedsApiSeedsRoute = SeedsApiSeedsRouteImport.update({
@@ -133,8 +127,7 @@ export interface FileRoutesByFullPath {
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
-  '/seeds-api/store-packages': typeof SeedsApiStorePackagesRoute
-  '/seeds-api/stuff': typeof SeedsApiStuffRoute
+  '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
   '/clients/': typeof ClientsIndexRoute
@@ -153,8 +146,7 @@ export interface FileRoutesByTo {
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
-  '/seeds-api/store-packages': typeof SeedsApiStorePackagesRoute
-  '/seeds-api/stuff': typeof SeedsApiStuffRoute
+  '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
   '/clients': typeof ClientsIndexRoute
@@ -174,8 +166,7 @@ export interface FileRoutesById {
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
-  '/seeds-api/store-packages': typeof SeedsApiStorePackagesRoute
-  '/seeds-api/stuff': typeof SeedsApiStuffRoute
+  '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
   '/clients/': typeof ClientsIndexRoute
@@ -196,8 +187,7 @@ export interface FileRouteTypes {
     | '/seeds-api/scrapping-options'
     | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
-    | '/seeds-api/store-packages'
-    | '/seeds-api/stuff'
+    | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
     | '/clients/'
@@ -216,8 +206,7 @@ export interface FileRouteTypes {
     | '/seeds-api/scrapping-options'
     | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
-    | '/seeds-api/store-packages'
-    | '/seeds-api/stuff'
+    | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
     | '/clients'
@@ -236,8 +225,7 @@ export interface FileRouteTypes {
     | '/seeds-api/scrapping-options'
     | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
-    | '/seeds-api/store-packages'
-    | '/seeds-api/stuff'
+    | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
     | '/clients/'
@@ -257,8 +245,7 @@ export interface RootRouteChildren {
   SeedsApiScrappingOptionsRoute: typeof SeedsApiScrappingOptionsRoute
   SeedsApiSeedSubscriptionsRoute: typeof SeedsApiSeedSubscriptionsRoute
   SeedsApiSeedsRoute: typeof SeedsApiSeedsRoute
-  SeedsApiStorePackagesRoute: typeof SeedsApiStorePackagesRoute
-  SeedsApiStuffRoute: typeof SeedsApiStuffRoute
+  SeedsApiSubscriptionsRoute: typeof SeedsApiSubscriptionsRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
   SeedsApiTimeframesRoute: typeof SeedsApiTimeframesRoute
   ClientsIndexRoute: typeof ClientsIndexRoute
@@ -325,18 +312,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiTagsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/seeds-api/stuff': {
-      id: '/seeds-api/stuff'
-      path: '/seeds-api/stuff'
-      fullPath: '/seeds-api/stuff'
-      preLoaderRoute: typeof SeedsApiStuffRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/seeds-api/store-packages': {
-      id: '/seeds-api/store-packages'
-      path: '/seeds-api/store-packages'
-      fullPath: '/seeds-api/store-packages'
-      preLoaderRoute: typeof SeedsApiStorePackagesRouteImport
+    '/seeds-api/subscriptions': {
+      id: '/seeds-api/subscriptions'
+      path: '/seeds-api/subscriptions'
+      fullPath: '/seeds-api/subscriptions'
+      preLoaderRoute: typeof SeedsApiSubscriptionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seeds-api/seeds': {
@@ -409,8 +389,7 @@ const rootRouteChildren: RootRouteChildren = {
   SeedsApiScrappingOptionsRoute: SeedsApiScrappingOptionsRoute,
   SeedsApiSeedSubscriptionsRoute: SeedsApiSeedSubscriptionsRoute,
   SeedsApiSeedsRoute: SeedsApiSeedsRoute,
-  SeedsApiStorePackagesRoute: SeedsApiStorePackagesRoute,
-  SeedsApiStuffRoute: SeedsApiStuffRoute,
+  SeedsApiSubscriptionsRoute: SeedsApiSubscriptionsRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
   SeedsApiTimeframesRoute: SeedsApiTimeframesRoute,
   ClientsIndexRoute: ClientsIndexRoute,

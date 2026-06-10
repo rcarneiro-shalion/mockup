@@ -1,8 +1,8 @@
 import { nowStamp } from "./clients";
 import { readPersistedList } from "./seedOptions";
 
-// project-storepackage relationship: a store package assigned to a project.
-export type AssignedStorePackage = {
+// project-subscription relationship: a subscription assigned to a project.
+export type AssignedSubscription = {
   id: string;
   name: string;
   store: string;
@@ -20,7 +20,7 @@ export type Project = {
   updatedAt: string;
   createdBy: string;
   updatedBy: string;
-  assignedStorePackages?: AssignedStorePackage[];
+  assignedSubscriptions?: AssignedSubscription[];
 };
 
 export const PROJECTS_KEY = "seeds-api:projects";
@@ -47,9 +47,9 @@ export const INITIAL_PROJECTS: Project[] = [
   {
     id: "abinmx", name: "Ab Inbev MX", bom: "SHL0131", status: "Active",
     createdAt: "Wed, Jun 25, 2025 10:00", updatedAt: "Mon, Oct 27, 2025 1:50", createdBy: EC, updatedBy: EC,
-    assignedStorePackages: [
-      { id: "asp1", name: "PKG Amazon US", store: "Amazon US", geo: "MANUAL", type: "BASE", expiration: "-" },
-      { id: "asp2", name: "PKG - MAT Amazon US", store: "Amazon US", geo: "VIRTUAL STORE", type: "BASE", expiration: "-" },
+    assignedSubscriptions: [
+      { id: "asu1", name: "ME_KW_WATER — Amazon US", store: "Amazon US", geo: "MANUAL", type: "BASE", expiration: "-" },
+      { id: "asu2", name: "PDP_BEAM_US — Amazon US", store: "Amazon US", geo: "AUTOMATIC", type: "BASE", expiration: "-" },
     ],
   },
 ];

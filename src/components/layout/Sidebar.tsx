@@ -33,10 +33,9 @@ const nav: NavItem[] = [
     defaultOpen: true,
     children: [
       { label: "Projects", to: "/seeds-api/projects" },
-      { label: "Store packages", to: "/seeds-api/store-packages" },
       { label: "Seeds", to: "/seeds-api/seeds" },
       { label: "Scrapping options", to: "/seeds-api/scrapping-options" },
-      { label: "Stuff", to: "/seeds-api/stuff" },
+      { label: "Subscriptions", to: "/seeds-api/subscriptions" },
       { label: "Tags", to: "/seeds-api/tags" },
       { label: "Timeframes", to: "/seeds-api/timeframes" },
       { label: "Seed subscriptions", to: "/seeds-api/seed-subscriptions", legacy: true },

@@ -68,15 +68,6 @@ export const SORT_OPTIONS = [
   "newest",
 ];
 
-// Output templates ("plantillas") that drive the extraction schema.
-export const TEMPLATE_OPTIONS = [
-  "Default",
-  "ECOMETRYSEARCH",
-  "ECOMETRYMEDIA",
-  "ECOMETRYPDP",
-  "ECOMETRYPLP",
-];
-
 // Client-oriented option: how often the Stuff re-runs.
 export const FREQUENCY_OPTIONS = [
   "NO_ROTATE_DAILY",

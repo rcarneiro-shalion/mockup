@@ -10,12 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { readPersistedList } from "@/lib/seedOptions";
-import { ASSIGN_TYPE_OPTIONS, type AssignedStorePackage } from "@/lib/projects";
+import { getSubscriptions } from "@/lib/subscriptions";
+import { ASSIGN_TYPE_OPTIONS, type AssignedSubscription } from "@/lib/projects";
 
-type StorePackageRow = { name: string; store: string; geo?: string };
-
-export function AssignStorePackageDialog({
+export function AssignSubscriptionDialog({
   open,
   onOpenChange,
   assignedNames,
@@ -24,7 +22,7 @@ export function AssignStorePackageDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   assignedNames: string[];
-  onAssign: (sp: AssignedStorePackage) => void;
+  onAssign: (s: AssignedSubscription) => void;
 }) {
   const [name, setName] = useState("");
   const [type, setType] = useState("BASE");
@@ -38,15 +36,8 @@ export function AssignStorePackageDialog({
     }
   }, [open]);
 
-  const packages = readPersistedList<StorePackageRow>("seeds-api:store-packages");
-  const source = packages.length
-    ? packages
-    : [
-        { name: "PKG Amazon US", store: "Amazon US", geo: "MANUAL" },
-        { name: "PKG - MAT Amazon US", store: "Amazon US", geo: "MANUAL" },
-      ];
-  const available = source.filter((p) => !assignedNames.includes(p.name));
-  const selected = available.find((p) => p.name === name);
+  const available = getSubscriptions().filter((s) => !assignedNames.includes(s.name));
+  const selected = available.find((s) => s.name === name);
 
   const handleAssign = () => {
     if (!selected) return;
@@ -54,7 +45,7 @@ export function AssignStorePackageDialog({
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
       name: selected.name,
       store: selected.store,
-      geo: selected.geo ?? "MANUAL",
+      geo: selected.geo,
       type,
       expiration: expiration || "-",
     });
@@ -65,21 +56,21 @@ export function AssignStorePackageDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 p-0" style={{ maxWidth: 520 }}>
         <div className="border-b border-border px-5 py-4">
-          <DialogTitle className="text-base font-semibold tracking-tight">Assign store package</DialogTitle>
+          <DialogTitle className="text-base font-semibold tracking-tight">Assign subscription</DialogTitle>
         </div>
         <div className="space-y-4 px-5 py-5">
           <div className="flex flex-col gap-1.5">
             <Label className="text-sm font-medium text-foreground/80">
-              Store package <span className="text-destructive">*</span>
+              Subscription <span className="text-destructive">*</span>
             </Label>
             <Select value={name || undefined} onValueChange={setName}>
               <SelectTrigger>
-                <SelectValue placeholder={available.length ? "Select a store package" : "No store packages available"} />
+                <SelectValue placeholder={available.length ? "Select a subscription" : "No subscriptions available"} />
               </SelectTrigger>
               <SelectContent>
-                {available.map((p) => (
-                  <SelectItem key={p.name} value={p.name}>
-                    {p.name} · {p.store}
+                {available.map((s) => (
+                  <SelectItem key={s.id} value={s.name}>
+                    {s.name} · {s.store}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -107,7 +98,7 @@ export function AssignStorePackageDialog({
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleAssign} disabled={!selected}>Assign store package</Button>
+          <Button onClick={handleAssign} disabled={!selected}>Assign subscription</Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AssignStorePackageDialog } from "@/components/projects/AssignStorePackageDialog";
+import { AssignSubscriptionDialog } from "@/components/projects/AssignSubscriptionDialog";
 import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimitives";
 import type { Project } from "@/lib/projects";
 import { toast } from "sonner";
@@ -47,7 +47,7 @@ export function ProjectForm({
   const set = <K extends keyof Project>(k: K, v: Project[K]) =>
     setProject((prev) => ({ ...prev, [k]: v }));
 
-  const assignedStorePackages = project.assignedStorePackages ?? [];
+  const assignedSubscriptions = project.assignedSubscriptions ?? [];
 
   const canSave = project.name.trim().length > 0;
 
@@ -130,13 +130,13 @@ export function ProjectForm({
             </div>
           </div>
 
-          {/* Assigned store packages */}
+          {/* Assigned subscriptions */}
           <div className="mt-5 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-foreground">Assigned store packages</h2>
+              <h2 className="text-base font-semibold text-foreground">Assigned subscriptions</h2>
               <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setAssignOpen(true)}>
                 <Plus className="h-3.5 w-3.5" />
-                Assign store package
+                Assign subscription
               </Button>
             </div>
 
@@ -153,15 +153,15 @@ export function ProjectForm({
                   </tr>
                 </thead>
                 <tbody>
-                  {assignedStorePackages.length === 0 ? (
+                  {assignedSubscriptions.length === 0 ? (
                     <tr>
                       <Td className="text-muted-foreground">
-                        <span className="block py-2">No store packages assigned yet.</span>
+                        <span className="block py-2">No subscriptions assigned yet.</span>
                       </Td>
                       <Td /><Td /><Td /><Td /><Td />
                     </tr>
                   ) : (
-                    assignedStorePackages.map((sp) => (
+                    assignedSubscriptions.map((sp) => (
                       <tr key={sp.id} className="border-t border-border hover:bg-secondary/40">
                         <Td><LinkText>{sp.name}</LinkText></Td>
                         <Td><LinkText>{sp.store}</LinkText></Td>
@@ -170,7 +170,7 @@ export function ProjectForm({
                         <Td className="text-muted-foreground">{sp.expiration}</Td>
                         <Td>
                           <button
-                            onClick={() => set("assignedStorePackages", assignedStorePackages.filter((x) => x.id !== sp.id))}
+                            onClick={() => set("assignedSubscriptions", assignedSubscriptions.filter((x) => x.id !== sp.id))}
                             className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
                             aria-label={`Remove ${sp.name}`}
                           >
@@ -183,7 +183,7 @@ export function ProjectForm({
                 </tbody>
               </table>
             </div>
-            <Pagination total={assignedStorePackages.length} />
+            <Pagination total={assignedSubscriptions.length} />
           </div>
         </div>
 
@@ -218,11 +218,11 @@ export function ProjectForm({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AssignStorePackageDialog
+      <AssignSubscriptionDialog
         open={assignOpen}
         onOpenChange={setAssignOpen}
-        assignedNames={assignedStorePackages.map((sp) => sp.name)}
-        onAssign={(sp) => set("assignedStorePackages", [...assignedStorePackages, sp])}
+        assignedNames={assignedSubscriptions.map((sp) => sp.name)}
+        onAssign={(sp) => set("assignedSubscriptions", [...assignedSubscriptions, sp])}
       />
     </AppShell>
   );

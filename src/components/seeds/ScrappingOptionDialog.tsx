@@ -26,7 +26,6 @@ import {
   STORE_OPTIONS,
   EXTRACTION_TYPE_OPTIONS,
   TIMEFRAME_OPTIONS,
-  TEMPLATE_OPTIONS,
   MODALITY_OPTIONS,
   SORT_OPTIONS,
 } from "@/lib/seedOptions";
@@ -41,8 +40,7 @@ export type ScrappingOptionValues = {
   status: string;
   extractionType: string;
   stores: string[];
-  timeframe: string;
-  template: string;
+  timeframes: string[];
   // Joints (conjuntos)
   multivariants: boolean;
   pagination: boolean;
@@ -61,8 +59,7 @@ export const EMPTY_SCRAPPING_OPTION: ScrappingOptionValues = {
   status: "Active",
   extractionType: "MEDIA",
   stores: [],
-  timeframe: "All Day (1 x day)",
-  template: "Default",
+  timeframes: ["All Day (1 x day)"],
   multivariants: false,
   pagination: false,
   maxPage: "",
@@ -111,6 +108,13 @@ export function ScrappingOptionDialog({
     set("stores", v.stores.filter((s) => s !== store));
 
   const availableStores = STORE_OPTIONS.filter((s) => !v.stores.includes(s));
+
+  const addTimeframe = (t: string) => {
+    if (!v.timeframes.includes(t)) set("timeframes", [...v.timeframes, t]);
+  };
+  const removeTimeframe = (t: string) =>
+    set("timeframes", v.timeframes.filter((x) => x !== t));
+  const availableTimeframes = TIMEFRAME_OPTIONS.filter((t) => !v.timeframes.includes(t));
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -167,8 +171,42 @@ export function ScrappingOptionDialog({
               <Field label="Extraction type" required className="sm:col-span-2">
                 <SelectBox value={v.extractionType} onChange={(x) => set("extractionType", x)} options={EXTRACTION_TYPE_OPTIONS} />
               </Field>
-              <Field label="Timeframe" required className="sm:col-span-2">
-                <SelectBox value={v.timeframe} onChange={(x) => set("timeframe", x)} options={TIMEFRAME_OPTIONS} />
+              {/* Timeframes — 1:N multi-select */}
+              <Field label="Timeframes" required className="sm:col-span-2">
+                <div className="flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5">
+                  {v.timeframes.length === 0 && (
+                    <span className="px-1 text-sm text-muted-foreground">No timeframes selected</span>
+                  )}
+                  {v.timeframes.map((t) => (
+                    <span
+                      key={t}
+                      className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground"
+                    >
+                      {t}
+                      <button
+                        type="button"
+                        onClick={() => removeTimeframe(t)}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label={`Remove ${t}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                  {availableTimeframes.length > 0 && (
+                    <Select value="" onValueChange={addTimeframe}>
+                      <SelectTrigger className="h-6 w-auto gap-1 border-dashed px-2 text-xs text-muted-foreground">
+                        <Plus className="h-3 w-3" />
+                        <span>Add timeframe</span>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableTimeframes.map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
               </Field>
 
               {/* Stores or retailer — n:n multi-select */}
@@ -207,10 +245,6 @@ export function ScrappingOptionDialog({
                     </Select>
                   )}
                 </div>
-              </Field>
-
-              <Field label="Template" className="sm:col-span-2">
-                <SelectBox value={v.template} onChange={(x) => set("template", x)} options={TEMPLATE_OPTIONS} />
               </Field>
             </section>
 
