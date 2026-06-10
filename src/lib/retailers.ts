@@ -3,7 +3,7 @@ import { nowStamp } from "./clients";
 // ---------- shared options ----------
 
 export const STORE_TYPE_OPTIONS = ["GEOLOC", "FLAGSHIP"];
-export const STORE_CLASS_OPTIONS = ["BRICK_AND_CLICK", "MARKETPLACE", "SPECIALIST", "AGGREGATOR"];
+export const STORE_CLASS_OPTIONS = ["BRICK_AND_CLICK", "MARKETPLACE", "SPECIALIST", "AGGREGATOR", "DARK_STORE", "PURE_PLAYER", "DIRECT_TO_CONSUMER"];
 export const DEVICE_OPTIONS = ["WEB", "APP"];
 
 export const TIMEZONE_OPTIONS = [
@@ -187,6 +187,16 @@ export type Store = {
 
 export const STORES_KEY = "retailers:stores";
 
+const S = (
+  id: string, name: string, domain: string, retailer: string,
+  type: string, klass: string, device: string, country: string,
+  status: Store["status"] = "Active",
+): Store => ({
+  id, name, domain, retailer, type, klass, device, country, status,
+  ecometryId: "", timezone: "", locale: "", logoUrl: "", meta: "{}", locations: [],
+  createdAt: "Mon, Jan 9, 2023 8:05 AM", updatedAt: "Mon, Dec 11, 2023 11:24 AM",
+});
+
 export const INITIAL_STORES: Store[] = [
   { id: "st1", name: "Walmart Mismo Dia MX", domain: "walmart.com.mx", retailer: "Walmart MX", type: "GEOLOC", klass: "BRICK_AND_CLICK", device: "WEB", country: "MX", status: "Active", ecometryId: "4530", timezone: "America/Mexico_City", locale: "es-MX", logoUrl: "https://media.shalion.com/console-images/stores/walmart.svg", meta: "{}", locations: [
     { id: "loc1", name: "Villahermosa I - 88060", locator: "{\"cookie\":\"...\"}", address: "Blvd. Adolfo Ruiz Cortinez 496 Col. Casa", city: "Tabasco", postal: "86060", status: "Active" },
@@ -194,19 +204,89 @@ export const INITIAL_STORES: Store[] = [
     { id: "loc3", name: "Navarte - Superama - Navarte", locator: "{\"cookie\":\"...\"}", address: "Superama - Calzada de Tlalpan", city: "Ciudad de Mexico", postal: "03650", status: "Active" },
     { id: "loc4", name: "WE BOSQUES DE MINAS", locator: "{\"isExplicitInterc\":true}", address: "BOSQUES DE MINAS A XX HUIXQUILUC", city: "Estado de Mexico", postal: "52785", status: "Active" },
     { id: "loc5", name: "Cd Jardin - Walmart - Av. Bord...", locator: "{\"cookie\":\"...\"}", address: "Walmart - Av. Bordo de Xochiaca 3", city: "Estado de Mexico", postal: "50000", status: "Active" },
-  ], createdAt: "Mon, Jan 9, 2023 8:00", updatedAt: "Mon, Jan 9, 2023 8:00" },
-  { id: "st2", name: "Magazine Luiza BR - The Bar", domain: "magazineluiza.com.br-th...", retailer: "Magazine Luiza BR", type: "GEOLOC", klass: "MARKETPLACE", device: "WEB", country: "BR", status: "Active", createdAt: "Wed, Jan 1, 2025 9:00", updatedAt: "Wed, Jan 1, 2025 9:00" },
-  { id: "st3", name: "Fnac ES", domain: "fnac.es", retailer: "Fnac ES", type: "FLAGSHIP", klass: "BRICK_AND_CLICK", device: "WEB", country: "ES", status: "Active", createdAt: "Wed, Jan 1, 2025 9:00", updatedAt: "Wed, Jan 1, 2025 9:00" },
-  { id: "st4", name: "Petsmart US", domain: "petsmart.com", retailer: "Petsmart US", type: "GEOLOC", klass: "SPECIALIST", device: "WEB", country: "US", status: "Active", createdAt: "Thu, Jan 2, 2025 9:00", updatedAt: "Thu, Jan 2, 2025 9:00" },
-  { id: "st5", name: "Rossmann HU", domain: "rossmann.hu", retailer: "Rossmann HU", type: "FLAGSHIP", klass: "BRICK_AND_CLICK", device: "WEB", country: "HU", status: "Active", createdAt: "Mon, Jan 9, 2023 8:00", updatedAt: "Mon, Jan 9, 2023 8:00" },
-  { id: "st6", name: "Nagumo BR", domain: "nagumo.com", retailer: "Nagumo BR", type: "GEOLOC", klass: "AGGREGATOR", device: "WEB", country: "BR", status: "Active", createdAt: "Wed, Jan 1, 2025 9:00", updatedAt: "Wed, Jan 1, 2025 9:00" },
-  { id: "st7", name: "Costco MX", domain: "costco.com.mx", retailer: "Costco MX", type: "GEOLOC", klass: "BRICK_AND_CLICK", device: "WEB", country: "MX", status: "Active", createdAt: "Mon, Jan 9, 2023 8:00", updatedAt: "Mon, Jan 9, 2023 8:00" },
-  { id: "st8", name: "24 Pharma BE_nl", domain: "24pharma.be.nl", retailer: "24 Pharma BE", type: "FLAGSHIP", klass: "SPECIALIST", device: "WEB", country: "BE", status: "Active", createdAt: "Mon, Jan 9, 2023 8:00", updatedAt: "Mon, Jan 9, 2023 8:00" },
-  { id: "st9", name: "GrabFood MM - FSA", domain: "food.grab.com/mm", retailer: "GrabFood MM", type: "GEOLOC", klass: "AGGREGATOR", device: "WEB", country: "MM", status: "Active", createdAt: "Wed, Jan 1, 2025 9:00", updatedAt: "Wed, Jan 1, 2025 9:00" },
-  { id: "st10", name: "Woolworths ZA", domain: "woolworths.co.za", retailer: "Woolworths ZA", type: "FLAGSHIP", klass: "BRICK_AND_CLICK", device: "WEB", country: "ZA", status: "Active", createdAt: "Fri, Feb 7, 2025 9:00", updatedAt: "Fri, Feb 7, 2025 9:00" },
-  { id: "st11", name: "Idea Bellezza IT", domain: "ideabellezza.it", retailer: "Idea Bellezza IT", type: "FLAGSHIP", klass: "SPECIALIST", device: "WEB", country: "IT", status: "Active", createdAt: "Mon, Jan 9, 2023 8:00", updatedAt: "Mon, Jan 9, 2023 8:00" },
-  { id: "st12", name: "Amazon NL_nl", domain: "amazon.nl", retailer: "Amazon NL", type: "FLAGSHIP", klass: "MARKETPLACE", device: "WEB", country: "NL", status: "Active", createdAt: "Thu, Apr 4, 2024 9:00", updatedAt: "Thu, Apr 4, 2024 9:00" },
-  { id: "st13", name: "Viking DE", domain: "viking.de", retailer: "Viking DE", type: "FLAGSHIP", klass: "BRICK_AND_CLICK", device: "WEB", country: "DE", status: "Active", createdAt: "Fri, Nov 1, 2024 9:00", updatedAt: "Fri, Nov 1, 2024 9:00" },
+  ], createdAt: "Mon, Jan 9, 2023 8:05 AM", updatedAt: "Mon, Jan 9, 2023 8:05 AM" },
+  // Sourced from the Stores export (Ecometry / Shalion Console, Jun 2026). Representative
+  // subset (~1,811 total). Created/Updated were truncated in the export → plausible dates.
+  S("st2", "Magazine Luiza BR - The Bar", "magazineluiza.com.br/thebar", "Magazine Luiza BR", "GEOLOC", "MARKETPLACE", "WEB", "BR"),
+  S("st3", "Fnac ES", "fnac.es", "Fnac ES", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "ES"),
+  S("st4", "Petsmart US", "petsmart.com", "Petsmart US", "GEOLOC", "SPECIALIST", "WEB", "US"),
+  S("st5", "Rossmann HU", "rossmann.hu", "Rossmann HU", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "HU"),
+  S("st6", "Nagumo BR", "nagumo.com", "Nagumo BR", "GEOLOC", "AGGREGATOR", "WEB", "BR"),
+  S("st7", "Costco MX", "costco.com.mx", "Costco MX", "GEOLOC", "BRICK_AND_CLICK", "WEB", "MX"),
+  S("st8", "24 Pharma BE_nl", "24pharma.be.nl", "24 Pharma BE", "FLAGSHIP", "SPECIALIST", "WEB", "BE"),
+  S("st9", "GrabFood MM - FSA", "food.grab.com/mm", "GrabFood MM", "GEOLOC", "AGGREGATOR", "WEB", "MM"),
+  S("st10", "Woolworths ZA", "woolworths.co.za", "Woolworths ZA", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "ZA"),
+  S("st11", "Idea Bellezza IT", "ideabellezza.it", "Idea Bellezza IT", "FLAGSHIP", "SPECIALIST", "WEB", "IT"),
+  S("st12", "Amazon NL_nl", "amazon.nl", "Amazon NL", "FLAGSHIP", "MARKETPLACE", "WEB", "NL"),
+  S("st13", "Viking DE", "viking.de", "Viking DE", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "DE"),
+  S("st14", "Make Up PL", "makeup.pl", "Make Up PL", "GEOLOC", "SPECIALIST", "WEB", "PL"),
+  S("st15", "Sabina ES Mobile", "sabina.com", "Sabina ES", "FLAGSHIP", "SPECIALIST", "WEB", "ES"),
+  S("st16", "El Corte Ingles Supermercado", "elcorteingles.es/supermercado", "El Corte Ingles", "GEOLOC", "BRICK_AND_CLICK", "WEB", "ES"),
+  S("st17", "iFood BR - Pague Menos", "ifood.com.br/paguemenos", "iFood BR", "GEOLOC", "AGGREGATOR", "WEB", "BR"),
+  S("st18", "Rimi EE", "rimi.ee", "Rimi EE", "GEOLOC", "BRICK_AND_CLICK", "WEB", "EE"),
+  S("st19", "GrabFood VN - QCA", "food.grab.com/vn", "GrabFood VN", "GEOLOC", "AGGREGATOR", "WEB", "VN"),
+  S("st20", "Walmart ZA", "walmart.za", "Walmart ZA", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "ZA"),
+  S("st21", "Gorillas APP NL", "gorillas.nl", "Gorillas NL", "GEOLOC", "DARK_STORE", "APP", "NL"),
+  S("st22", "Farmacorp BO", "farmacorp.com", "Farmacorp BO", "FLAGSHIP", "SPECIALIST", "WEB", "BO"),
+  S("st23", "Perfumeria Ana ES", "perfumeriaana.com", "Perfumeria Ana ES", "FLAGSHIP", "SPECIALIST", "WEB", "ES"),
+  S("st24", "Club Vet Shop FR", "clubvetshop.fr", "Club Vet Shop FR", "FLAGSHIP", "SPECIALIST", "WEB", "FR"),
+  S("st25", "WhiskyBrother ZA", "whiskybrother.com", "WhiskyBrother ZA", "FLAGSHIP", "SPECIALIST", "WEB", "ZA"),
+  S("st26", "Office Depot MX", "officedepot.com.mx", "Office Depot MX", "FLAGSHIP", "SPECIALIST", "WEB", "MX"),
+  S("st27", "Emag APP RO", "emag.ro", "Emag RO", "FLAGSHIP", "PURE_PLAYER", "APP", "RO"),
+  S("st28", "Amica Farmacia IT", "amicafarmacia.com", "Amica Farmacia IT", "FLAGSHIP", "SPECIALIST", "WEB", "IT"),
+  S("st29", "Bodega Aurrera Express MX", "bodegaaurrera.com.mx", "Bodega Aurrera MX", "GEOLOC", "BRICK_AND_CLICK", "WEB", "MX"),
+  S("st30", "Corner Shop BR - Big", "cornershopapp.com/bbig", "Corner Shop BR", "GEOLOC", "BRICK_AND_CLICK", "WEB", "BR", "Inactive"),
+  S("st31", "Rappi APP PE - Disco", "rappi.com.pe", "Rappi PE", "GEOLOC", "BRICK_AND_CLICK", "APP", "PE"),
+  S("st32", "Gohuff US", "gopuff.com", "Gohuff US", "GEOLOC", "BRICK_AND_CLICK", "WEB", "US"),
+  S("st33", "Amazon IT 1P", "amazon.it", "Amazon IT", "FLAGSHIP", "MARKETPLACE", "WEB", "IT"),
+  S("st34", "Shopee VN - Pernod Ricard", "shopee.vn", "Shopee VN", "GEOLOC", "DIRECT_TO_CONSUMER", "WEB", "VN"),
+  S("st35", "Vassallo AR", "vassallo.com", "Vassallo AR", "FLAGSHIP", "SPECIALIST", "WEB", "AR"),
+  S("st36", "Albertsons US - Market Street", "marketstreetunited.com", "Albertsons US", "GEOLOC", "BRICK_AND_CLICK", "WEB", "US"),
+  S("st37", "Norman GoodFellows ZA", "ngf.co.za", "Norman GoodFellows ZA", "FLAGSHIP", "SPECIALIST", "WEB", "ZA"),
+  S("st38", "Justo BR", "soyjusto.com.br", "Justo BR", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "BR"),
+  S("st39", "King RO", "king.ro", "King RO", "FLAGSHIP", "PURE_PLAYER", "WEB", "RO"),
+  S("st40", "Licores Medellin CO", "licoresmedellin.com", "Licores Medellin CO", "FLAGSHIP", "SPECIALIST", "WEB", "CO"),
+  S("st41", "Colis CO", "cubii.com.co", "Colis CO", "FLAGSHIP", "SPECIALIST", "WEB", "CO"),
+  S("st42", "iFood BR - FSA", "ifood.com.br", "iFood BR", "GEOLOC", "AGGREGATOR", "WEB", "BR"),
+  S("st43", "Talabat APP EG_en", "talabat.com/eg", "Talabat EG", "GEOLOC", "AGGREGATOR", "APP", "EG"),
+  S("st44", "Dia ES", "dia.es", "Dia ES", "FLAGSHIP", "BRICK_AND_CLICK", "APP", "ES"),
+  S("st45", "Picnic APP DE", "picnic.de", "Picnic DE", "GEOLOC", "BRICK_AND_CLICK", "APP", "DE"),
+  S("st46", "Metro UA", "metro.zakaz.ua", "Metro UA", "FLAGSHIP", "PURE_PLAYER", "WEB", "UA"),
+  S("st47", "Promuto BG", "promuto.bg", "Promuto BG", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "BG"),
+  S("st48", "Mirriah Paglia IT", "mirriahpaglia.com", "Mirriah Paglia IT", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "IT"),
+  S("st49", "Brezit SE", "brezit.com/se", "Brezit SE", "FLAGSHIP", "SPECIALIST", "WEB", "SE"),
+  S("st50", "Uber Eats BR - Pao de Acucar", "ubereats.com.br", "Uber Eats BR", "GEOLOC", "AGGREGATOR", "WEB", "BR", "Inactive"),
+  S("st51", "Redemix BR", "redemix.com.br", "Redemix BR", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "BR"),
+  S("st52", "Foodpanda APP SG", "foodpanda.sg", "Foodpanda SG", "GEOLOC", "AGGREGATOR", "APP", "SG"),
+  S("st53", "Di Marche BR", "marche.com.br", "Di Marche BR", "GEOLOC", "BRICK_AND_CLICK", "WEB", "BR"),
+  S("st54", "Extra Bom App BR", "extrabom.app.br", "Extra Bom BR", "GEOLOC", "BRICK_AND_CLICK", "APP", "BR"),
+  S("st55", "Rappi MX", "rappi.com.mx", "Rappi MX", "GEOLOC", "BRICK_AND_CLICK", "WEB", "MX"),
+  S("st56", "La Torre GT", "latorre.com.gt", "La Torre GT", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "GT"),
+  S("st57", "Amazon DE - 3P", "amazon.de", "Amazon DE", "GEOLOC", "DIRECT_TO_CONSUMER", "WEB", "DE"),
+  S("st58", "MIfarma PE", "mifarma.com.pe", "MIfarma PE", "FLAGSHIP", "SPECIALIST", "WEB", "PE"),
+  S("st59", "Uber Eats CR", "ubereats.com/cr", "Uber Eats CR", "GEOLOC", "AGGREGATOR", "WEB", "CR"),
+  S("st60", "Uber Eats CH - FSA", "ubereats.com/ch", "Uber Eats CH", "FLAGSHIP", "AGGREGATOR", "WEB", "CH"),
+  S("st61", "Lazada MX_en", "lazada.com.mx", "Lazada MX", "FLAGSHIP", "MARKETPLACE", "WEB", "MX"),
+  S("st62", "Yasoir MA - FSA", "yasoir.com", "Yasoir MA", "GEOLOC", "AGGREGATOR", "WEB", "MA"),
+  S("st63", "Mercado Libre AR - Vinos", "mercadolibre.com.ar", "Mercado Libre AR", "FLAGSHIP", "MARKETPLACE", "WEB", "AR"),
+  S("st64", "Rappi APP AR - Vea", "rappi.com.ar", "Rappi AR", "GEOLOC", "BRICK_AND_CLICK", "APP", "AR"),
+  S("st65", "Knuspr DE", "knuspr.de", "Knuspr DE", "FLAGSHIP", "SPECIALIST", "WEB", "DE"),
+  S("st66", "Shopee ID_id", "shopee.co.id", "Shopee ID", "FLAGSHIP", "MARKETPLACE", "WEB", "ID"),
+  S("st67", "Wine Brands ZA", "winebrands.co.za", "Wine Brands ZA", "FLAGSHIP", "SPECIALIST", "WEB", "ZA"),
+  S("st68", "Walmart NI", "walmart.com.ni", "Walmart NI", "GEOLOC", "BRICK_AND_CLICK", "WEB", "NI"),
+  S("st69", "Shopee MY - Luen Heng", "shopee.com.my", "Shopee MY", "GEOLOC", "DIRECT_TO_CONSUMER", "WEB", "MY"),
+  S("st70", "Migros CH", "migros.ch", "Migros CH", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "CH"),
+  S("st71", "Rappi BR - DSPD", "rappi.com.br", "Rappi BR", "GEOLOC", "BRICK_AND_CLICK", "WEB", "BR"),
+  S("st72", "Chedraui MX", "chedraui.com.mx", "Chedraui MX", "GEOLOC", "BRICK_AND_CLICK", "WEB", "MX"),
+  S("st73", "Beauty Plaza BE_nl", "beautyplaza.be.nl", "Beauty Plaza BE", "FLAGSHIP", "SPECIALIST", "WEB", "BE"),
+  S("st74", "Tata UY", "tata.com.uy", "Tata UY", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "UY"),
+  S("st75", "Hunger Station APP SA_ar", "hungerstation.com/sa", "Hunger Station SA", "GEOLOC", "AGGREGATOR", "APP", "SA"),
+  S("st76", "Wine Lab RU", "winelab.ru", "Wine Lab RU", "FLAGSHIP", "SPECIALIST", "WEB", "RU"),
+  S("st77", "Checkers Sixty60 APP ZA", "checkers.co.za/sixty60", "Checkers Sixty60 ZA", "GEOLOC", "BRICK_AND_CLICK", "APP", "ZA"),
+  S("st78", "BonPon PR", "bonponpr.com", "BonPon PR", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "PR"),
+  S("st79", "Fnac PT", "fnac.pt", "Fnac PT", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "PT"),
+  S("st80", "e-Leclerc FR", "e-leclerc.com", "Leclerc FR", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "FR"),
+  S("st81", "Olovo RO - FSA", "gotovaapp.com/ro", "Olovo RO", "GEOLOC", "AGGREGATOR", "WEB", "RO"),
 ];
 
 export function getStores(): Store[] {
