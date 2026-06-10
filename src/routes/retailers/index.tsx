@@ -5,7 +5,7 @@ import { FilterChip } from "@/components/seeds/FilterChip";
 import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
-import { RETAILERS_KEY, INITIAL_RETAILERS, type Retailer } from "@/lib/retailers";
+import { RETAILERS_KEY, INITIAL_RETAILERS, deriveStoreRetailers, type Retailer } from "@/lib/retailers";
 import { Plus, Calendar, MoreVertical } from "lucide-react";
 
 export const Route = createFileRoute("/retailers/")({
@@ -14,7 +14,8 @@ export const Route = createFileRoute("/retailers/")({
 });
 
 function RetailersListPage() {
-  const [rows] = usePersistentState<Retailer[]>(RETAILERS_KEY, INITIAL_RETAILERS);
+  const [persisted] = usePersistentState<Retailer[]>(RETAILERS_KEY, INITIAL_RETAILERS);
+  const rows = [...persisted, ...deriveStoreRetailers(persisted)];
   const [query, setQuery] = useState("");
   const sort = useSort();
   const q = query.trim().toLowerCase();

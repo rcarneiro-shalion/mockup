@@ -146,7 +146,8 @@ const BASE_RETAILERS: Retailer[] = [
 
 export function getRetailers(): Retailer[] {
   const list = readList<Retailer>(RETAILERS_KEY);
-  return list.length ? list : INITIAL_RETAILERS;
+  const base = list.length ? list : INITIAL_RETAILERS;
+  return [...base, ...deriveStoreRetailers(base)];
 }
 
 export function emptyRetailer(): Retailer {
@@ -302,6 +303,18 @@ const derivedRetailers: Retailer[] = [...new Set(INITIAL_STORES.map((s) => s.ret
   .map((name) => R(retailerSlugId(name), name, "Mon, Jan 9, 2023 8:05 AM", "Mon, Dec 11, 2023 11:24 AM"));
 
 export const INITIAL_RETAILERS: Retailer[] = [...BASE_RETAILERS, ...derivedRetailers];
+
+/**
+ * Retailers referenced by a store's "Retailer" column that aren't in `existing`.
+ * Surfaced as retailer records (stable slug id) so they always appear in the
+ * Retailers list/edit even when persisted data predates this behavior.
+ */
+export function deriveStoreRetailers(existing: Retailer[]): Retailer[] {
+  const names = new Set(existing.map((r) => r.name));
+  return [...new Set(getStores().map((s) => s.retailer))]
+    .filter((name) => name && !names.has(name))
+    .map((name) => R(retailerSlugId(name), name, "Mon, Jan 9, 2023 8:05 AM", "Mon, Dec 11, 2023 11:24 AM"));
+}
 
 export function getStores(): Store[] {
   const list = readList<Store>(STORES_KEY);

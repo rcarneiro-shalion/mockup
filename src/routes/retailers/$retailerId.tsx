@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { RetailerForm } from "@/components/retailers/RetailerForm";
 import { usePersistentState } from "@/hooks/usePersistentState";
-import { RETAILERS_KEY, INITIAL_RETAILERS, type Retailer } from "@/lib/retailers";
+import { RETAILERS_KEY, INITIAL_RETAILERS, deriveStoreRetailers, type Retailer } from "@/lib/retailers";
 import { nowStamp } from "@/lib/clients";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,8 @@ function EditRetailerPage() {
   const [rows, setRows] = usePersistentState<Retailer[]>(RETAILERS_KEY, INITIAL_RETAILERS);
   const navigate = useNavigate();
   const goBack = () => navigate({ to: "/retailers" });
-  const r = rows.find((x) => x.id === retailerId);
+  // Include store-derived retailers so a retailer that only exists via a store still resolves.
+  const r = rows.find((x) => x.id === retailerId) ?? deriveStoreRetailers(rows).find((x) => x.id === retailerId);
 
   if (!r) {
     return (
@@ -34,7 +35,14 @@ function EditRetailerPage() {
       mode="edit"
       initial={r}
       onCancel={goBack}
-      onSave={(updated) => { setRows((p) => p.map((x) => (x.id === retailerId ? { ...updated, updatedAt: nowStamp() } : x))); goBack(); }}
+      onSave={(updated) => {
+        setRows((p) =>
+          p.some((x) => x.id === retailerId)
+            ? p.map((x) => (x.id === retailerId ? { ...updated, updatedAt: nowStamp() } : x))
+            : [...p, { ...updated, updatedAt: nowStamp() }], // first save of a store-derived retailer
+        );
+        goBack();
+      }}
       onDelete={() => { setRows((p) => p.filter((x) => x.id !== retailerId)); goBack(); }}
     />
   );
