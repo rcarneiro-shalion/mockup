@@ -6,7 +6,7 @@ import { FilterBar, TableShell, Th, Td, Pagination, LinkText, Pill, SortTh, useS
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePersistentState } from "@/hooks/usePersistentState";
-import { STORES_KEY, INITIAL_STORES, COUNTRY_OPTIONS, countryLabel, type Store } from "@/lib/retailers";
+import { STORES_KEY, INITIAL_STORES, COUNTRY_OPTIONS, countryLabel, getRetailers, type Store } from "@/lib/retailers";
 import { Plus, Calendar, MoreVertical, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/stores/")({
@@ -42,6 +42,7 @@ function StoresListPage() {
   );
   const sorted = sortRows(filtered, sort);
   const navigate = useNavigate();
+  const retailerIdByName = new Map(getRetailers().map((r) => [r.name, r.id]));
 
   return (
     <AppShell>
@@ -78,7 +79,16 @@ function StoresListPage() {
               <tr key={s.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => navigate({ to: "/stores/$storeId", params: { storeId: s.id } })}>{s.name}</LinkText></Td>
                 <Td><LinkText>{s.domain}</LinkText></Td>
-                <Td><LinkText>{s.retailer}</LinkText></Td>
+                <Td>
+                  <LinkText
+                    onClick={() => {
+                      const id = retailerIdByName.get(s.retailer);
+                      if (id) navigate({ to: "/retailers/$retailerId", params: { retailerId: id } });
+                    }}
+                  >
+                    {s.retailer}
+                  </LinkText>
+                </Td>
                 <Td><Pill tone={s.type === "GEOLOC" ? "amber" : "blue"}>{s.type}</Pill></Td>
                 <Td><Pill tone="slate">{s.klass}</Pill></Td>
                 <Td><Pill tone="slate">{s.device}</Pill></Td>
