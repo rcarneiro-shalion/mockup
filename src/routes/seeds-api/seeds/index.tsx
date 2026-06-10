@@ -14,7 +14,6 @@ import {
   Td,
   Pagination,
   LinkText,
-  NoBadge,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -46,7 +45,6 @@ function SeedsPage() {
         { kind: "text", label: "Description", value: selected.d, required: true, span: 2 },
         { kind: "select", label: "Store", value: selected.store, required: true, options: STORE_OPTIONS },
         { kind: "select", label: "Category", value: selected.cat, required: true, options: CATEGORY_OPTIONS },
-        { kind: "checkbox", label: "Is QA candidate" },
       ]
     : [];
 
@@ -77,10 +75,8 @@ function SeedsPage() {
         <FilterBar search="Search by Seed description">
           <FilterChip label="Ids" />
           <FilterChip label="Stores" icon={Store} />
-          <FilterChip label="Store packages" />
           <FilterChip label="Categories" />
           <FilterChip label="Status" />
-          <FilterChip label="Is QA candidate" />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />
         </FilterBar>
@@ -90,7 +86,6 @@ function SeedsPage() {
               <Th>Description</Th>
               <Th>Store</Th>
               <Th>Category</Th>
-              <Th>Is QA candidate</Th>
               <Th>Created at</Th>
               <Th>Updated at</Th>
               <Th>Active</Th>
@@ -103,7 +98,6 @@ function SeedsPage() {
                 <Td><LinkText onClick={() => setSelected(r)}>{r.d}</LinkText></Td>
                 <Td><LinkText>{r.store}</LinkText></Td>
                 <Td className="text-foreground/80">{r.cat}</Td>
-                <Td><NoBadge /></Td>
                 <Td className="text-muted-foreground">{r.c}</Td>
                 <Td className="text-muted-foreground">{r.u}</Td>
                 <Td><Switch defaultChecked /></Td>

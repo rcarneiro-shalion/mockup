@@ -105,20 +105,6 @@ export function SeedForm({
                   </Field>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <input
-                    id="is-qa"
-                    type="checkbox"
-                    checked={!!seed.isQa}
-                    onChange={(e) => set("isQa", e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-border"
-                  />
-                  <label htmlFor="is-qa" className="cursor-pointer">
-                    <span className="text-sm font-medium text-foreground">Is qa candidate</span>
-                    <p className="mt-1 text-sm text-muted-foreground">Enable this option to include this seed in the QA process.</p>
-                  </label>
-                </div>
-
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
                   <Field label="Discovery key" required help>
                     <Input value={seed.discoveryKey ?? ""} onChange={(e) => set("discoveryKey", e.target.value)} />
