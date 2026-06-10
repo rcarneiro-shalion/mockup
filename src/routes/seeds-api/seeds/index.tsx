@@ -14,6 +14,7 @@ import {
   Td,
   Pagination,
   LinkText,
+  Pill,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -84,6 +85,7 @@ function SeedsPage() {
           <thead className="bg-secondary/60">
             <tr>
               <Th>Description</Th>
+              <Th>Seed type</Th>
               <Th>Store</Th>
               <Th>Category</Th>
               <Th>Created at</Th>
@@ -96,6 +98,7 @@ function SeedsPage() {
             {visible.map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.d}</LinkText></Td>
+                <Td>{r.type ? <Pill tone="blue">{r.type}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td><LinkText>{r.store}</LinkText></Td>
                 <Td className="text-foreground/80">{r.cat}</Td>
                 <Td className="text-muted-foreground">{r.c}</Td>
