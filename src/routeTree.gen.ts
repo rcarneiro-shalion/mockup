@@ -9,16 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RetailersRouteImport } from './routes/retailers'
 import { Route as IamRouteImport } from './routes/iam'
 import { Route as DataCollectorRouteImport } from './routes/data-collector'
 import { Route as BulkRouteImport } from './routes/bulk'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StoresIndexRouteImport } from './routes/stores/index'
+import { Route as RetailersIndexRouteImport } from './routes/retailers/index'
+import { Route as RegionSystemsIndexRouteImport } from './routes/region-systems/index'
 import { Route as ClientsIndexRouteImport } from './routes/clients/index'
+import { Route as StoresNewRouteImport } from './routes/stores/new'
+import { Route as StoresStoreIdRouteImport } from './routes/stores/$storeId'
 import { Route as SeedsApiTimeframesRouteImport } from './routes/seeds-api/timeframes'
 import { Route as SeedsApiTagsRouteImport } from './routes/seeds-api/tags'
 import { Route as SeedsApiSubscriptionsRouteImport } from './routes/seeds-api/subscriptions'
 import { Route as SeedsApiScrappingOptionsRouteImport } from './routes/seeds-api/scrapping-options'
+import { Route as RetailersNewRouteImport } from './routes/retailers/new'
+import { Route as RetailersRetailerIdRouteImport } from './routes/retailers/$retailerId'
+import { Route as RegionSystemsNewRouteImport } from './routes/region-systems/new'
+import { Route as RegionSystemsRegionIdRouteImport } from './routes/region-systems/$regionId'
 import { Route as ClientsNewRouteImport } from './routes/clients/new'
 import { Route as ClientsClientIdRouteImport } from './routes/clients/$clientId'
 import { Route as SeedsApiSeedsIndexRouteImport } from './routes/seeds-api/seeds/index'
@@ -27,11 +35,6 @@ import { Route as SeedsApiSeedsNewRouteImport } from './routes/seeds-api/seeds/n
 import { Route as SeedsApiProjectsNewRouteImport } from './routes/seeds-api/projects/new'
 import { Route as SeedsApiProjectsProjectIdRouteImport } from './routes/seeds-api/projects/$projectId'
 
-const RetailersRoute = RetailersRouteImport.update({
-  id: '/retailers',
-  path: '/retailers',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IamRoute = IamRouteImport.update({
   id: '/iam',
   path: '/iam',
@@ -52,9 +55,34 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoresIndexRoute = StoresIndexRouteImport.update({
+  id: '/stores/',
+  path: '/stores/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RetailersIndexRoute = RetailersIndexRouteImport.update({
+  id: '/retailers/',
+  path: '/retailers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegionSystemsIndexRoute = RegionSystemsIndexRouteImport.update({
+  id: '/region-systems/',
+  path: '/region-systems/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientsIndexRoute = ClientsIndexRouteImport.update({
   id: '/clients/',
   path: '/clients/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoresNewRoute = StoresNewRouteImport.update({
+  id: '/stores/new',
+  path: '/stores/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoresStoreIdRoute = StoresStoreIdRouteImport.update({
+  id: '/stores/$storeId',
+  path: '/stores/$storeId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SeedsApiTimeframesRoute = SeedsApiTimeframesRouteImport.update({
@@ -78,6 +106,26 @@ const SeedsApiScrappingOptionsRoute =
     path: '/seeds-api/scrapping-options',
     getParentRoute: () => rootRouteImport,
   } as any)
+const RetailersNewRoute = RetailersNewRouteImport.update({
+  id: '/retailers/new',
+  path: '/retailers/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RetailersRetailerIdRoute = RetailersRetailerIdRouteImport.update({
+  id: '/retailers/$retailerId',
+  path: '/retailers/$retailerId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegionSystemsNewRoute = RegionSystemsNewRouteImport.update({
+  id: '/region-systems/new',
+  path: '/region-systems/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegionSystemsRegionIdRoute = RegionSystemsRegionIdRouteImport.update({
+  id: '/region-systems/$regionId',
+  path: '/region-systems/$regionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientsNewRoute = ClientsNewRouteImport.update({
   id: '/clients/new',
   path: '/clients/new',
@@ -120,14 +168,22 @@ export interface FileRoutesByFullPath {
   '/bulk': typeof BulkRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
-  '/retailers': typeof RetailersRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/new': typeof ClientsNewRoute
+  '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
+  '/region-systems/new': typeof RegionSystemsNewRoute
+  '/retailers/$retailerId': typeof RetailersRetailerIdRoute
+  '/retailers/new': typeof RetailersNewRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
+  '/stores/$storeId': typeof StoresStoreIdRoute
+  '/stores/new': typeof StoresNewRoute
   '/clients/': typeof ClientsIndexRoute
+  '/region-systems/': typeof RegionSystemsIndexRoute
+  '/retailers/': typeof RetailersIndexRoute
+  '/stores/': typeof StoresIndexRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
@@ -139,14 +195,22 @@ export interface FileRoutesByTo {
   '/bulk': typeof BulkRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
-  '/retailers': typeof RetailersRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/new': typeof ClientsNewRoute
+  '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
+  '/region-systems/new': typeof RegionSystemsNewRoute
+  '/retailers/$retailerId': typeof RetailersRetailerIdRoute
+  '/retailers/new': typeof RetailersNewRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
+  '/stores/$storeId': typeof StoresStoreIdRoute
+  '/stores/new': typeof StoresNewRoute
   '/clients': typeof ClientsIndexRoute
+  '/region-systems': typeof RegionSystemsIndexRoute
+  '/retailers': typeof RetailersIndexRoute
+  '/stores': typeof StoresIndexRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
@@ -159,14 +223,22 @@ export interface FileRoutesById {
   '/bulk': typeof BulkRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
-  '/retailers': typeof RetailersRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/new': typeof ClientsNewRoute
+  '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
+  '/region-systems/new': typeof RegionSystemsNewRoute
+  '/retailers/$retailerId': typeof RetailersRetailerIdRoute
+  '/retailers/new': typeof RetailersNewRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
+  '/stores/$storeId': typeof StoresStoreIdRoute
+  '/stores/new': typeof StoresNewRoute
   '/clients/': typeof ClientsIndexRoute
+  '/region-systems/': typeof RegionSystemsIndexRoute
+  '/retailers/': typeof RetailersIndexRoute
+  '/stores/': typeof StoresIndexRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
@@ -180,14 +252,22 @@ export interface FileRouteTypes {
     | '/bulk'
     | '/data-collector'
     | '/iam'
-    | '/retailers'
     | '/clients/$clientId'
     | '/clients/new'
+    | '/region-systems/$regionId'
+    | '/region-systems/new'
+    | '/retailers/$retailerId'
+    | '/retailers/new'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
+    | '/stores/$storeId'
+    | '/stores/new'
     | '/clients/'
+    | '/region-systems/'
+    | '/retailers/'
+    | '/stores/'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
     | '/seeds-api/seeds/new'
@@ -199,14 +279,22 @@ export interface FileRouteTypes {
     | '/bulk'
     | '/data-collector'
     | '/iam'
-    | '/retailers'
     | '/clients/$clientId'
     | '/clients/new'
+    | '/region-systems/$regionId'
+    | '/region-systems/new'
+    | '/retailers/$retailerId'
+    | '/retailers/new'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
+    | '/stores/$storeId'
+    | '/stores/new'
     | '/clients'
+    | '/region-systems'
+    | '/retailers'
+    | '/stores'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
     | '/seeds-api/seeds/new'
@@ -218,14 +306,22 @@ export interface FileRouteTypes {
     | '/bulk'
     | '/data-collector'
     | '/iam'
-    | '/retailers'
     | '/clients/$clientId'
     | '/clients/new'
+    | '/region-systems/$regionId'
+    | '/region-systems/new'
+    | '/retailers/$retailerId'
+    | '/retailers/new'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
+    | '/stores/$storeId'
+    | '/stores/new'
     | '/clients/'
+    | '/region-systems/'
+    | '/retailers/'
+    | '/stores/'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
     | '/seeds-api/seeds/new'
@@ -238,14 +334,22 @@ export interface RootRouteChildren {
   BulkRoute: typeof BulkRoute
   DataCollectorRoute: typeof DataCollectorRoute
   IamRoute: typeof IamRoute
-  RetailersRoute: typeof RetailersRoute
   ClientsClientIdRoute: typeof ClientsClientIdRoute
   ClientsNewRoute: typeof ClientsNewRoute
+  RegionSystemsRegionIdRoute: typeof RegionSystemsRegionIdRoute
+  RegionSystemsNewRoute: typeof RegionSystemsNewRoute
+  RetailersRetailerIdRoute: typeof RetailersRetailerIdRoute
+  RetailersNewRoute: typeof RetailersNewRoute
   SeedsApiScrappingOptionsRoute: typeof SeedsApiScrappingOptionsRoute
   SeedsApiSubscriptionsRoute: typeof SeedsApiSubscriptionsRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
   SeedsApiTimeframesRoute: typeof SeedsApiTimeframesRoute
+  StoresStoreIdRoute: typeof StoresStoreIdRoute
+  StoresNewRoute: typeof StoresNewRoute
   ClientsIndexRoute: typeof ClientsIndexRoute
+  RegionSystemsIndexRoute: typeof RegionSystemsIndexRoute
+  RetailersIndexRoute: typeof RetailersIndexRoute
+  StoresIndexRoute: typeof StoresIndexRoute
   SeedsApiProjectsProjectIdRoute: typeof SeedsApiProjectsProjectIdRoute
   SeedsApiProjectsNewRoute: typeof SeedsApiProjectsNewRoute
   SeedsApiSeedsNewRoute: typeof SeedsApiSeedsNewRoute
@@ -255,13 +359,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/retailers': {
-      id: '/retailers'
-      path: '/retailers'
-      fullPath: '/retailers'
-      preLoaderRoute: typeof RetailersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/iam': {
       id: '/iam'
       path: '/iam'
@@ -290,11 +387,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stores/': {
+      id: '/stores/'
+      path: '/stores'
+      fullPath: '/stores/'
+      preLoaderRoute: typeof StoresIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/retailers/': {
+      id: '/retailers/'
+      path: '/retailers'
+      fullPath: '/retailers/'
+      preLoaderRoute: typeof RetailersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/region-systems/': {
+      id: '/region-systems/'
+      path: '/region-systems'
+      fullPath: '/region-systems/'
+      preLoaderRoute: typeof RegionSystemsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clients/': {
       id: '/clients/'
       path: '/clients'
       fullPath: '/clients/'
       preLoaderRoute: typeof ClientsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stores/new': {
+      id: '/stores/new'
+      path: '/stores/new'
+      fullPath: '/stores/new'
+      preLoaderRoute: typeof StoresNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stores/$storeId': {
+      id: '/stores/$storeId'
+      path: '/stores/$storeId'
+      fullPath: '/stores/$storeId'
+      preLoaderRoute: typeof StoresStoreIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seeds-api/timeframes': {
@@ -323,6 +455,34 @@ declare module '@tanstack/react-router' {
       path: '/seeds-api/scrapping-options'
       fullPath: '/seeds-api/scrapping-options'
       preLoaderRoute: typeof SeedsApiScrappingOptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/retailers/new': {
+      id: '/retailers/new'
+      path: '/retailers/new'
+      fullPath: '/retailers/new'
+      preLoaderRoute: typeof RetailersNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/retailers/$retailerId': {
+      id: '/retailers/$retailerId'
+      path: '/retailers/$retailerId'
+      fullPath: '/retailers/$retailerId'
+      preLoaderRoute: typeof RetailersRetailerIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/region-systems/new': {
+      id: '/region-systems/new'
+      path: '/region-systems/new'
+      fullPath: '/region-systems/new'
+      preLoaderRoute: typeof RegionSystemsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/region-systems/$regionId': {
+      id: '/region-systems/$regionId'
+      path: '/region-systems/$regionId'
+      fullPath: '/region-systems/$regionId'
+      preLoaderRoute: typeof RegionSystemsRegionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients/new': {
@@ -382,14 +542,22 @@ const rootRouteChildren: RootRouteChildren = {
   BulkRoute: BulkRoute,
   DataCollectorRoute: DataCollectorRoute,
   IamRoute: IamRoute,
-  RetailersRoute: RetailersRoute,
   ClientsClientIdRoute: ClientsClientIdRoute,
   ClientsNewRoute: ClientsNewRoute,
+  RegionSystemsRegionIdRoute: RegionSystemsRegionIdRoute,
+  RegionSystemsNewRoute: RegionSystemsNewRoute,
+  RetailersRetailerIdRoute: RetailersRetailerIdRoute,
+  RetailersNewRoute: RetailersNewRoute,
   SeedsApiScrappingOptionsRoute: SeedsApiScrappingOptionsRoute,
   SeedsApiSubscriptionsRoute: SeedsApiSubscriptionsRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
   SeedsApiTimeframesRoute: SeedsApiTimeframesRoute,
+  StoresStoreIdRoute: StoresStoreIdRoute,
+  StoresNewRoute: StoresNewRoute,
   ClientsIndexRoute: ClientsIndexRoute,
+  RegionSystemsIndexRoute: RegionSystemsIndexRoute,
+  RetailersIndexRoute: RetailersIndexRoute,
+  StoresIndexRoute: StoresIndexRoute,
   SeedsApiProjectsProjectIdRoute: SeedsApiProjectsProjectIdRoute,
   SeedsApiProjectsNewRoute: SeedsApiProjectsNewRoute,
   SeedsApiSeedsNewRoute: SeedsApiSeedsNewRoute,

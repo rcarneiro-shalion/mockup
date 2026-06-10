@@ -26,7 +26,16 @@ type NavItem = {
 
 const nav: NavItem[] = [
   { label: "Clients", icon: Briefcase, to: "/clients" },
-  { label: "Retailers", icon: Store, to: "/retailers" },
+  {
+    label: "Retailers",
+    icon: Store,
+    defaultOpen: true,
+    children: [
+      { label: "Retailers", to: "/retailers" },
+      { label: "Stores", to: "/stores" },
+      { label: "Region systems", to: "/region-systems" },
+    ],
+  },
   {
     label: "Seeds API",
     icon: Sprout,
