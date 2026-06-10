@@ -44,10 +44,20 @@ export const INITIAL_CLIENTS: Client[] = [
  * to the seeded list / SSR). Use this everywhere a client dropdown is needed so
  * the options stay in sync with the Clients datagrid instead of a static array.
  */
-export function getClientNames(): string[] {
+export function getClients(): Client[] {
   const list = readPersistedList<Client>(CLIENTS_KEY);
-  const src = list.length ? list : INITIAL_CLIENTS;
-  return src.map((c) => c.name);
+  return list.length ? list : INITIAL_CLIENTS;
+}
+
+export function getClientNames(): string[] {
+  return getClients().map((c) => c.name);
+}
+
+/** Names of clients that have the given project assigned (client-project relation). */
+export function getClientsForProject(projectId: string): string[] {
+  return getClients()
+    .filter((c) => (c.assignedProjects ?? []).some((ap) => ap.projectId === projectId))
+    .map((c) => c.name);
 }
 
 export function emptyClient(): Client {

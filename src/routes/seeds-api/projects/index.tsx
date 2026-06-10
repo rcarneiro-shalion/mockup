@@ -10,10 +10,12 @@ import {
   Pagination,
   LinkText,
   UserCell,
+  Pill,
 } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { PROJECTS_KEY, INITIAL_PROJECTS, type Project } from "@/lib/projects";
+import { getClientsForProject } from "@/lib/clients";
 import { cn } from "@/lib/utils";
 import { Plus, Calendar, MoreVertical, MoreHorizontal, HelpCircle } from "lucide-react";
 
@@ -71,6 +73,8 @@ function ProjectsListPage() {
           <thead className="bg-secondary/60">
             <tr>
               <Th>Name</Th>
+              <Th>Clients</Th>
+              <Th>Subscriptions</Th>
               <Th>
                 <span className="inline-flex items-center gap-1">
                   BoM <HelpCircle className="h-3 w-3" />
@@ -90,7 +94,7 @@ function ProjectsListPage() {
                 <Td className="text-muted-foreground">
                   <span className="block py-2">No projects match “{query}”.</span>
                 </Td>
-                <Td /><Td /><Td /><Td /><Td /><Td /><Td />
+                <Td /><Td /><Td /><Td /><Td /><Td /><Td /><Td /><Td />
               </tr>
             )}
             {filtered.map((p) => (
@@ -99,6 +103,24 @@ function ProjectsListPage() {
                   <LinkText onClick={() => navigate({ to: "/seeds-api/projects/$projectId", params: { projectId: p.id } })}>
                     {p.name}
                   </LinkText>
+                </Td>
+                <Td>
+                  <div className="flex flex-wrap gap-1">
+                    {getClientsForProject(p.id).length ? (
+                      getClientsForProject(p.id).map((c) => <Pill key={c} tone="green">{c}</Pill>)
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
+                </Td>
+                <Td>
+                  <div className="flex flex-wrap gap-1">
+                    {(p.assignedSubscriptions ?? []).length ? (
+                      (p.assignedSubscriptions ?? []).map((s) => <Pill key={s.id} tone="slate">{s.name}</Pill>)
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
                 </Td>
                 <Td className="text-foreground/80">{p.bom || "-"}</Td>
                 <Td className="text-muted-foreground">{p.createdAt}</Td>
