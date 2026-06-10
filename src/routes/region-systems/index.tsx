@@ -2,10 +2,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows, distinct } from "@/components/seeds/ListPrimitives";
+import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
-import { REGION_SYSTEMS_KEY, INITIAL_REGION_SYSTEMS, flag, type RegionSystem } from "@/lib/retailers";
+import { REGION_SYSTEMS_KEY, INITIAL_REGION_SYSTEMS, flag, COUNTRY_OPTIONS, countryLabel, type RegionSystem } from "@/lib/retailers";
 import { Plus, Calendar, MoreVertical, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/region-systems/")({
@@ -36,7 +36,7 @@ function RegionSystemsListPage() {
           </Button>
         </div>
         <FilterBar search="Search by region system name" searchValue={query} onSearchChange={setQuery}>
-          <FilterChip label="Countries" icon={Flag} options={distinct(rows, (r) => r.country)} value={fCountry} onChange={setFCountry} />
+          <FilterChip label="Countries" icon={Flag} options={COUNTRY_OPTIONS} getLabel={countryLabel} value={fCountry} onChange={setFCountry} />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />
         </FilterBar>

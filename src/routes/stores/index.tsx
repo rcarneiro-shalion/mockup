@@ -6,7 +6,7 @@ import { FilterBar, TableShell, Th, Td, Pagination, LinkText, Pill, SortTh, useS
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePersistentState } from "@/hooks/usePersistentState";
-import { STORES_KEY, INITIAL_STORES, type Store } from "@/lib/retailers";
+import { STORES_KEY, INITIAL_STORES, COUNTRY_OPTIONS, countryLabel, type Store } from "@/lib/retailers";
 import { Plus, Calendar, MoreVertical, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/stores/")({
@@ -54,7 +54,7 @@ function StoresListPage() {
         </div>
         <FilterBar search="Search by store name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Domain" options={distinct(rows, (s) => s.domain)} value={fDomain} onChange={setFDomain} />
-          <FilterChip label="Countries" icon={Flag} options={distinct(rows, (s) => s.country)} value={fCountry} onChange={setFCountry} />
+          <FilterChip label="Countries" icon={Flag} options={COUNTRY_OPTIONS} getLabel={countryLabel} value={fCountry} onChange={setFCountry} />
           <FilterChip label="Types" options={distinct(rows, (s) => s.type)} value={fType} onChange={setFType} />
           <FilterChip label="Status" options={["Active", "Inactive"]} value={fStatus} onChange={setFStatus} />
           <FilterChip label="Created at" icon={Calendar} />
