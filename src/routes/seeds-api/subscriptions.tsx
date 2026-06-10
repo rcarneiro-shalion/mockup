@@ -70,8 +70,8 @@ function SubscriptionsPage() {
                 <Td className="text-foreground/80">{r.project}</Td>
                 <Td>
                   <div className="flex flex-wrap gap-1">
-                    {r.seeds.length ? (
-                      r.seeds.map((s) => <Pill key={s} tone="green">{s}</Pill>)
+                    {(r.seeds ?? []).length ? (
+                      (r.seeds ?? []).map((s) => <Pill key={s} tone="green">{s}</Pill>)
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}

@@ -92,7 +92,9 @@ export function ScrappingOptionDialog({
 
   useEffect(() => {
     if (open) {
-      setV(initial ?? EMPTY_SCRAPPING_OPTION);
+      // Merge over defaults so older saved records (missing newer fields like
+      // `timeframes`) get safe array/string defaults instead of crashing.
+      setV(initial ? { ...EMPTY_SCRAPPING_OPTION, ...initial } : EMPTY_SCRAPPING_OPTION);
       setIsSaving(false);
       setShowDeleteConfirm(false);
     }

@@ -101,8 +101,8 @@ function ScrappingOptionsPage() {
                 <Td><Pill tone="slate">{r.extractionType}</Pill></Td>
                 <Td>
                   <div className="flex flex-wrap gap-1">
-                    {r.stores.length ? (
-                      r.stores.map((s) => <Pill key={s} tone="green">{s}</Pill>)
+                    {(r.stores ?? []).length ? (
+                      (r.stores ?? []).map((s) => <Pill key={s} tone="green">{s}</Pill>)
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}

@@ -58,7 +58,8 @@ export function SubscriptionDialog({
 
   useEffect(() => {
     if (open) {
-      setV(initial ?? emptySubscription());
+      // Merge over defaults so older saved records get safe defaults (e.g. seeds[]).
+      setV(initial ? { ...emptySubscription(), ...initial } : emptySubscription());
       setIsSaving(false);
       setShowDeleteConfirm(false);
     }
