@@ -31,9 +31,13 @@ export function PageHeader({
 
 export function FilterBar({
   search,
+  searchValue,
+  onSearchChange,
   children,
 }: {
   search?: string;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
   children: ReactNode;
 }) {
   return (
@@ -43,6 +47,8 @@ export function FilterBar({
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             placeholder={search}
+            value={onSearchChange ? searchValue ?? "" : undefined}
+            onChange={onSearchChange ? (e) => onSearchChange(e.target.value) : undefined}
             className="h-9 w-full rounded-md border border-border bg-background pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           />
         </div>

@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import {
@@ -33,7 +34,13 @@ function StatusPill({ status }: { status: Project["status"] }) {
 
 function ProjectsListPage() {
   const [projects] = usePersistentState<Project[]>(PROJECTS_KEY, INITIAL_PROJECTS);
+  const [query, setQuery] = useState("");
   const navigate = useNavigate();
+
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? projects.filter((p) => p.name.toLowerCase().includes(q))
+    : projects;
 
   return (
     <AppShell>
@@ -53,7 +60,7 @@ function ProjectsListPage() {
           </div>
         </div>
 
-        <FilterBar search="Search by project name">
+        <FilterBar search="Search by project name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Status" />
           <FilterChip label="BoM" />
           <FilterChip label="Created at" icon={Calendar} />
@@ -78,7 +85,15 @@ function ProjectsListPage() {
             </tr>
           </thead>
           <tbody>
-            {projects.map((p) => (
+            {filtered.length === 0 && (
+              <tr>
+                <Td className="text-muted-foreground">
+                  <span className="block py-2">No projects match “{query}”.</span>
+                </Td>
+                <Td /><Td /><Td /><Td /><Td /><Td /><Td />
+              </tr>
+            )}
+            {filtered.map((p) => (
               <tr key={p.id} className="border-t border-border hover:bg-secondary/40">
                 <Td>
                   <LinkText onClick={() => navigate({ to: "/seeds-api/projects/$projectId", params: { projectId: p.id } })}>
@@ -100,7 +115,7 @@ function ProjectsListPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={projects.length} />
+        <Pagination total={filtered.length} />
       </div>
     </AppShell>
   );
