@@ -18,6 +18,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import { Calendar, MoreVertical } from "lucide-react";
@@ -41,8 +42,15 @@ function TagsPage() {
   const [selected, setSelected] = useState<Row | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const clientOptions = getClientNames();
+  const [query, setQuery] = useState("");
+  const [fClient, setFClient] = useState("");
   const sort = useSort();
-  const sorted = sortRows(rows, sort, { createdAt: (r) => r.c, updatedAt: (r) => r.u });
+  const q = query.trim().toLowerCase();
+  const filtered = rows.filter((r) =>
+    (!q || r.name.toLowerCase().includes(q)) &&
+    (!fClient || r.client === fClient),
+  );
+  const sorted = sortRows(filtered, sort, { createdAt: (r) => r.c, updatedAt: (r) => r.u });
 
   const editFields: FieldDef[] = selected
     ? [
@@ -65,8 +73,8 @@ function TagsPage() {
           title="Tags"
           action={{ label: "Add tag", onClick: () => setAddOpen(true) }}
         />
-        <FilterBar search="Search by Tag name">
-          <FilterChip label="Client" />
+        <FilterBar search="Search by Tag name" searchValue={query} onSearchChange={setQuery}>
+          <FilterChip label="Client" options={distinct(rows, (r) => r.client)} value={fClient} onChange={setFClient} />
           <FilterChip label="Seeds" />
           <FilterChip label="Status" />
           <FilterChip label="Created at" icon={Calendar} />
@@ -104,7 +112,7 @@ function TagsPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={rows.length} />
+        <Pagination total={sorted.length} />
       </div>
 
       <AddRecordDialog

@@ -4,6 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/** Distinct, sorted, non-empty values for a column — used to populate filter dropdowns. */
+export function distinct<T>(rows: T[], get: (r: T) => string | undefined | null): string[] {
+  const set = new Set<string>();
+  for (const r of rows) {
+    const v = get(r);
+    if (v) set.add(v);
+  }
+  return [...set].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+}
+
 // ---- Sorting ----------------------------------------------------------------
 
 export type SortState = { key: string | null; dir: "asc" | "desc"; toggle: (k: string) => void };

@@ -20,6 +20,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import { Calendar, MoreVertical, Store, PlayCircle } from "lucide-react";
@@ -66,8 +67,19 @@ function ScrappingOptionsPage() {
   );
   const [selected, setSelected] = useState<ScrappingOptionValues | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [fStore, setFStore] = useState("");
+  const [fExtraction, setFExtraction] = useState("");
   const sort = useSort();
-  const sorted = sortRows(rows, sort, {
+
+  const q = query.trim().toLowerCase();
+  const storeOptions = [...new Set(rows.flatMap((r) => r.stores ?? []))].sort();
+  const filtered = rows.filter((r) =>
+    (!q || r.name.toLowerCase().includes(q)) &&
+    (!fStore || (r.stores ?? []).includes(fStore)) &&
+    (!fExtraction || r.extractionType === fExtraction),
+  );
+  const sorted = sortRows(filtered, sort, {
     stores: (r) => (r.stores ?? []).join(", "),
     options: (r) => summaryPills(r).length,
   });
@@ -79,9 +91,9 @@ function ScrappingOptionsPage() {
           title="Scrapping options"
           action={{ label: "Add scrapping option", onClick: () => setAddOpen(true) }}
         />
-        <FilterBar search="Search by Scrapping option name">
-          <FilterChip label="Stores" icon={Store} />
-          <FilterChip label="Extraction types" icon={PlayCircle} />
+        <FilterBar search="Search by Scrapping option name" searchValue={query} onSearchChange={setQuery}>
+          <FilterChip label="Stores" icon={Store} options={storeOptions} value={fStore} onChange={setFStore} />
+          <FilterChip label="Extraction types" icon={PlayCircle} options={distinct(rows, (r) => r.extractionType)} value={fExtraction} onChange={setFExtraction} />
           <FilterChip label="Joints" />
           <FilterChip label="Disjoints" />
           <FilterChip label="Created at" icon={Calendar} />
@@ -133,7 +145,7 @@ function ScrappingOptionsPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={rows.length} />
+        <Pagination total={sorted.length} />
       </div>
 
       <ScrappingOptionDialog

@@ -18,6 +18,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -40,10 +41,19 @@ function SeedsPage() {
   const [rows, setRows] = usePersistentState<Seed[]>(SEEDS_KEY, INITIAL_SEEDS);
   const [selected, setSelected] = useState<Seed | null>(null);
   const [seedType, setSeedType] = useState("All");
+  const [query, setQuery] = useState("");
+  const [fStore, setFStore] = useState("");
+  const [fCat, setFCat] = useState("");
   const sort = useSort();
   const navigate = useNavigate();
 
-  const filtered = seedType === "All" ? rows : rows.filter((r) => (r.type ?? "") === seedType);
+  const q = query.trim().toLowerCase();
+  const filtered = rows.filter((r) =>
+    (seedType === "All" || (r.type ?? "") === seedType) &&
+    (!q || r.d.toLowerCase().includes(q)) &&
+    (!fStore || r.store === fStore) &&
+    (!fCat || r.cat === fCat),
+  );
   const visible = sortRows(filtered, sort, { description: (r) => r.d, type: (r) => r.type ?? "", category: (r) => r.cat, createdAt: (r) => r.c, updatedAt: (r) => r.u });
 
   const editFields: FieldDef[] = selected
@@ -78,10 +88,10 @@ function SeedsPage() {
               navigate({ to: "/seeds-api/seeds/new", search: { type: seedType as "URL" | "API" | "KEYWORD" } }),
           }}
         />
-        <FilterBar search="Search by Seed description">
+        <FilterBar search="Search by Seed description" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Ids" />
-          <FilterChip label="Stores" icon={Store} />
-          <FilterChip label="Categories" />
+          <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
+          <FilterChip label="Categories" options={distinct(rows, (r) => r.cat)} value={fCat} onChange={setFCat} />
           <FilterChip label="Status" />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />

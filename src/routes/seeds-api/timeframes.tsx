@@ -19,6 +19,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import { Calendar, MoreVertical, PlayCircle } from "lucide-react";
@@ -50,8 +51,21 @@ function TimeframesPage() {
   const [rows, setRows] = usePersistentState<Row[]>("seeds-api:timeframes", INITIAL_ROWS);
   const [selected, setSelected] = useState<Row | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [fLocFreq, setFLocFreq] = useState("");
+  const [fSeedFreq, setFSeedFreq] = useState("");
+  const [fGroup, setFGroup] = useState("");
+  const [fProduct, setFProduct] = useState("");
   const sort = useSort();
-  const sorted = sortRows(rows, sort, { locationFrequency: (r) => r.locFreq, seedFrequency: (r) => r.seedFreq });
+  const q = query.trim().toLowerCase();
+  const filtered = rows.filter((r) =>
+    (!q || r.name.toLowerCase().includes(q)) &&
+    (!fLocFreq || r.locFreq === fLocFreq) &&
+    (!fSeedFreq || r.seedFreq === fSeedFreq) &&
+    (!fGroup || r.group === fGroup) &&
+    (!fProduct || r.product === fProduct),
+  );
+  const sorted = sortRows(filtered, sort, { locationFrequency: (r) => r.locFreq, seedFrequency: (r) => r.seedFreq });
 
   const editFields: FieldDef[] = selected
     ? [
@@ -78,12 +92,12 @@ function TimeframesPage() {
           title="Timeframes"
           action={{ label: "Add timeframe", onClick: () => setAddOpen(true) }}
         />
-        <FilterBar search="Search by Timeframe name">
-          <FilterChip label="Location frequency" />
-          <FilterChip label="Seed frequency" />
+        <FilterBar search="Search by Timeframe name" searchValue={query} onSearchChange={setQuery}>
+          <FilterChip label="Location frequency" options={distinct(rows, (r) => r.locFreq)} value={fLocFreq} onChange={setFLocFreq} />
+          <FilterChip label="Seed frequency" options={distinct(rows, (r) => r.seedFreq)} value={fSeedFreq} onChange={setFSeedFreq} />
           <FilterChip label="Jobs" icon={PlayCircle} />
-          <FilterChip label="Timeframe group" />
-          <FilterChip label="Product" />
+          <FilterChip label="Timeframe group" options={distinct(rows, (r) => r.group)} value={fGroup} onChange={setFGroup} />
+          <FilterChip label="Product" options={distinct(rows, (r) => r.product)} value={fProduct} onChange={setFProduct} />
           <FilterChip label="Status" />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />
@@ -124,7 +138,7 @@ function TimeframesPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={rows.length} />
+        <Pagination total={sorted.length} />
       </div>
 
       <AddRecordDialog

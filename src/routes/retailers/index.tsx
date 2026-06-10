@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
@@ -14,8 +15,11 @@ export const Route = createFileRoute("/retailers/")({
 
 function RetailersListPage() {
   const [rows] = usePersistentState<Retailer[]>(RETAILERS_KEY, INITIAL_RETAILERS);
+  const [query, setQuery] = useState("");
   const sort = useSort();
-  const sorted = sortRows(rows, sort);
+  const q = query.trim().toLowerCase();
+  const filtered = q ? rows.filter((r) => r.name.toLowerCase().includes(q)) : rows;
+  const sorted = sortRows(filtered, sort);
   const navigate = useNavigate();
 
   return (
@@ -27,7 +31,7 @@ function RetailersListPage() {
             <Link to="/retailers/new"><Plus className="h-4 w-4" /> New retailer</Link>
           </Button>
         </div>
-        <FilterBar search="Search by retailer name">
+        <FilterBar search="Search by retailer name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />
         </FilterBar>
@@ -51,7 +55,7 @@ function RetailersListPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={rows.length} />
+        <Pagination total={sorted.length} />
       </div>
     </AppShell>
   );

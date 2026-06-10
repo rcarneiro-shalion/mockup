@@ -16,6 +16,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import { Calendar, MoreVertical, Store, Sprout } from "lucide-react";
@@ -34,8 +35,25 @@ function SubscriptionsPage() {
   const [rows, setRows] = usePersistentState<Subscription[]>(SUBSCRIPTIONS_KEY, INITIAL_SUBSCRIPTIONS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [fProject, setFProject] = useState("");
+  const [fStore, setFStore] = useState("");
+  const [fSeed, setFSeed] = useState("");
+  const [fScrap, setFScrap] = useState("");
+  const [fGeo, setFGeo] = useState("");
   const sort = useSort();
-  const sorted = sortRows(rows, sort, { seeds: (r) => (r.seeds ?? []).length });
+
+  const q = query.trim().toLowerCase();
+  const seedOptions = [...new Set(rows.flatMap((r) => r.seeds ?? []))].sort();
+  const filtered = rows.filter((r) =>
+    (!q || r.name.toLowerCase().includes(q)) &&
+    (!fProject || r.project === fProject) &&
+    (!fStore || r.store === fStore) &&
+    (!fSeed || (r.seeds ?? []).includes(fSeed)) &&
+    (!fScrap || r.scrappingOption === fScrap) &&
+    (!fGeo || r.geo === fGeo),
+  );
+  const sorted = sortRows(filtered, sort, { seeds: (r) => (r.seeds ?? []).length });
   const selected = rows.find((r) => r.id === selectedId) ?? null;
 
   return (
@@ -45,12 +63,12 @@ function SubscriptionsPage() {
           title="Subscriptions"
           action={{ label: "Add subscription", onClick: () => setAddOpen(true) }}
         />
-        <FilterBar search="Search by name">
-          <FilterChip label="Projects" />
-          <FilterChip label="Stores" icon={Store} />
-          <FilterChip label="Seeds" icon={Sprout} />
-          <FilterChip label="Scrapping options" />
-          <FilterChip label="Geoloc modes" />
+        <FilterBar search="Search by name" searchValue={query} onSearchChange={setQuery}>
+          <FilterChip label="Projects" options={distinct(rows, (r) => r.project)} value={fProject} onChange={setFProject} />
+          <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
+          <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} />
+          <FilterChip label="Scrapping options" options={distinct(rows, (r) => r.scrappingOption)} value={fScrap} onChange={setFScrap} />
+          <FilterChip label="Geoloc modes" options={distinct(rows, (r) => r.geo)} value={fGeo} onChange={setFGeo} />
           <FilterChip label="Created at" icon={Calendar} />
         </FilterBar>
         <TableShell>
@@ -91,7 +109,7 @@ function SubscriptionsPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={rows.length} />
+        <Pagination total={sorted.length} />
       </div>
 
       <SubscriptionDialog

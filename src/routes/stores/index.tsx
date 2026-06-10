@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { FilterBar, TableShell, Th, Td, Pagination, LinkText, Pill, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
+import { FilterBar, TableShell, Th, Td, Pagination, LinkText, Pill, SortTh, useSort, sortRows, distinct } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePersistentState } from "@/hooks/usePersistentState";
@@ -25,8 +26,21 @@ function StatusPill({ status }: { status: Store["status"] }) {
 
 function StoresListPage() {
   const [rows] = usePersistentState<Store[]>(STORES_KEY, INITIAL_STORES);
+  const [query, setQuery] = useState("");
+  const [fDomain, setFDomain] = useState("");
+  const [fCountry, setFCountry] = useState("");
+  const [fType, setFType] = useState("");
+  const [fStatus, setFStatus] = useState("");
   const sort = useSort();
-  const sorted = sortRows(rows, sort);
+  const q = query.trim().toLowerCase();
+  const filtered = rows.filter((s) =>
+    (!q || s.name.toLowerCase().includes(q)) &&
+    (!fDomain || s.domain === fDomain) &&
+    (!fCountry || s.country === fCountry) &&
+    (!fType || s.type === fType) &&
+    (!fStatus || s.status === fStatus),
+  );
+  const sorted = sortRows(filtered, sort);
   const navigate = useNavigate();
 
   return (
@@ -38,11 +52,11 @@ function StoresListPage() {
             <Link to="/stores/new"><Plus className="h-4 w-4" /> New store</Link>
           </Button>
         </div>
-        <FilterBar search="Search by store name">
-          <FilterChip label="Domain" />
-          <FilterChip label="Countries" icon={Flag} />
-          <FilterChip label="Types" />
-          <FilterChip label="Status" />
+        <FilterBar search="Search by store name" searchValue={query} onSearchChange={setQuery}>
+          <FilterChip label="Domain" options={distinct(rows, (s) => s.domain)} value={fDomain} onChange={setFDomain} />
+          <FilterChip label="Countries" icon={Flag} options={distinct(rows, (s) => s.country)} value={fCountry} onChange={setFCountry} />
+          <FilterChip label="Types" options={distinct(rows, (s) => s.type)} value={fType} onChange={setFType} />
+          <FilterChip label="Status" options={["Active", "Inactive"]} value={fStatus} onChange={setFStatus} />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />
         </FilterBar>
@@ -74,7 +88,7 @@ function StoresListPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={rows.length} />
+        <Pagination total={sorted.length} />
       </div>
     </AppShell>
   );

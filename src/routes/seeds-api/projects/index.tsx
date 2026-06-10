@@ -14,6 +14,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
@@ -40,13 +41,17 @@ function StatusPill({ status }: { status: Project["status"] }) {
 function ProjectsListPage() {
   const [projects] = usePersistentState<Project[]>(PROJECTS_KEY, INITIAL_PROJECTS);
   const [query, setQuery] = useState("");
+  const [fStatus, setFStatus] = useState("");
+  const [fBom, setFBom] = useState("");
   const sort = useSort();
   const navigate = useNavigate();
 
   const q = query.trim().toLowerCase();
-  const filtered = q
-    ? projects.filter((p) => p.name.toLowerCase().includes(q))
-    : projects;
+  const filtered = projects.filter((p) =>
+    (!q || p.name.toLowerCase().includes(q)) &&
+    (!fStatus || p.status === fStatus) &&
+    (!fBom || p.bom === fBom),
+  );
   const sorted = sortRows(filtered, sort, {
     clients: (p) => getClientsForProject(p.id).length,
     subscriptions: (p) => (p.assignedSubscriptions ?? []).length,
@@ -71,8 +76,8 @@ function ProjectsListPage() {
         </div>
 
         <FilterBar search="Search by project name" searchValue={query} onSearchChange={setQuery}>
-          <FilterChip label="Status" />
-          <FilterChip label="BoM" />
+          <FilterChip label="Status" options={["Active", "Inactive"]} value={fStatus} onChange={setFStatus} />
+          <FilterChip label="BoM" options={distinct(projects, (p) => p.bom)} value={fBom} onChange={setFBom} />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />
         </FilterBar>

@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
+import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows, distinct } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { REGION_SYSTEMS_KEY, INITIAL_REGION_SYSTEMS, flag, type RegionSystem } from "@/lib/retailers";
@@ -14,8 +15,15 @@ export const Route = createFileRoute("/region-systems/")({
 
 function RegionSystemsListPage() {
   const [rows] = usePersistentState<RegionSystem[]>(REGION_SYSTEMS_KEY, INITIAL_REGION_SYSTEMS);
+  const [query, setQuery] = useState("");
+  const [fCountry, setFCountry] = useState("");
   const sort = useSort();
-  const sorted = sortRows(rows, sort);
+  const q = query.trim().toLowerCase();
+  const filtered = rows.filter((r) =>
+    (!q || r.name.toLowerCase().includes(q)) &&
+    (!fCountry || r.country === fCountry),
+  );
+  const sorted = sortRows(filtered, sort);
   const navigate = useNavigate();
 
   return (
@@ -27,8 +35,8 @@ function RegionSystemsListPage() {
             <Link to="/region-systems/new"><Plus className="h-4 w-4" /> New region system</Link>
           </Button>
         </div>
-        <FilterBar search="Search by region system name">
-          <FilterChip label="Countries" icon={Flag} />
+        <FilterBar search="Search by region system name" searchValue={query} onSearchChange={setQuery}>
+          <FilterChip label="Countries" icon={Flag} options={distinct(rows, (r) => r.country)} value={fCountry} onChange={setFCountry} />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />
         </FilterBar>
@@ -54,7 +62,7 @@ function RegionSystemsListPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={rows.length} />
+        <Pagination total={sorted.length} />
       </div>
     </AppShell>
   );

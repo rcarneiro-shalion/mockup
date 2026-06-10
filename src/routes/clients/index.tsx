@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import {
@@ -12,6 +13,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
@@ -25,9 +27,19 @@ export const Route = createFileRoute("/clients/")({
 
 function ClientsListPage() {
   const [clients] = usePersistentState<Client[]>(CLIENTS_KEY, INITIAL_CLIENTS);
+  const [query, setQuery] = useState("");
+  const [fAcronym, setFAcronym] = useState("");
+  const [fIsTest, setFIsTest] = useState("");
   const sort = useSort();
-  const sorted = sortRows(clients, sort);
   const navigate = useNavigate();
+
+  const q = query.trim().toLowerCase();
+  const filtered = clients.filter((c) =>
+    (!q || c.name.toLowerCase().includes(q)) &&
+    (!fAcronym || c.acronym === fAcronym) &&
+    (!fIsTest || (c.isTest ? "TRUE" : "FALSE") === fIsTest),
+  );
+  const sorted = sortRows(filtered, sort);
 
   return (
     <AppShell>
@@ -42,9 +54,9 @@ function ClientsListPage() {
           </Button>
         </div>
 
-        <FilterBar search="Search by client name">
-          <FilterChip label="Acronym" />
-          <FilterChip label="Is test" />
+        <FilterBar search="Search by client name" searchValue={query} onSearchChange={setQuery}>
+          <FilterChip label="Acronym" options={distinct(clients, (c) => c.acronym)} value={fAcronym} onChange={setFAcronym} />
+          <FilterChip label="Is test" options={["TRUE", "FALSE"]} value={fIsTest} onChange={setFIsTest} />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />
         </FilterBar>
@@ -83,7 +95,7 @@ function ClientsListPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={clients.length} />
+        <Pagination total={sorted.length} />
       </div>
     </AppShell>
   );
