@@ -32,6 +32,7 @@ const nav: NavItem[] = [
     icon: Sprout,
     defaultOpen: true,
     children: [
+      { label: "Projects", to: "/seeds-api/projects" },
       { label: "Store packages", to: "/seeds-api/store-packages" },
       { label: "Seeds", to: "/seeds-api/seeds" },
       { label: "Scrapping options", to: "/seeds-api/scrapping-options" },

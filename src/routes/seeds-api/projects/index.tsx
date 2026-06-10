@@ -1,0 +1,107 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { AppShell } from "@/components/layout/AppShell";
+import { FilterChip } from "@/components/seeds/FilterChip";
+import {
+  FilterBar,
+  TableShell,
+  Th,
+  Td,
+  Pagination,
+  LinkText,
+  UserCell,
+} from "@/components/seeds/ListPrimitives";
+import { Button } from "@/components/ui/button";
+import { usePersistentState } from "@/hooks/usePersistentState";
+import { PROJECTS_KEY, INITIAL_PROJECTS, type Project } from "@/lib/projects";
+import { cn } from "@/lib/utils";
+import { Plus, Calendar, MoreVertical, MoreHorizontal, HelpCircle } from "lucide-react";
+
+export const Route = createFileRoute("/seeds-api/projects/")({
+  head: () => ({ meta: [{ title: "Projects — Shalion" }] }),
+  component: ProjectsListPage,
+});
+
+function StatusPill({ status }: { status: Project["status"] }) {
+  const active = status === "Active";
+  return (
+    <span className="inline-flex items-center gap-1.5 text-sm text-foreground/80">
+      <span className={cn("h-1.5 w-1.5 rounded-full", active ? "bg-emerald-500" : "bg-slate-400")} />
+      {status}
+    </span>
+  );
+}
+
+function ProjectsListPage() {
+  const [projects] = usePersistentState<Project[]>(PROJECTS_KEY, INITIAL_PROJECTS);
+  const navigate = useNavigate();
+
+  return (
+    <AppShell>
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between px-6 pt-5">
+          <h1 className="text-[17px] font-semibold text-foreground">Projects</h1>
+          <div className="flex items-center gap-2">
+            <button className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-secondary" aria-label="More options">
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+            <Button asChild size="sm" className="h-8 gap-1.5">
+              <Link to="/seeds-api/projects/new">
+                <Plus className="h-4 w-4" />
+                New project
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        <FilterBar search="Search by project name">
+          <FilterChip label="Status" />
+          <FilterChip label="BoM" />
+          <FilterChip label="Created at" icon={Calendar} />
+          <FilterChip label="Updated at" icon={Calendar} />
+        </FilterBar>
+
+        <TableShell>
+          <thead className="bg-secondary/60">
+            <tr>
+              <Th>Name</Th>
+              <Th>
+                <span className="inline-flex items-center gap-1">
+                  BoM <HelpCircle className="h-3 w-3" />
+                </span>
+              </Th>
+              <Th>Created at</Th>
+              <Th>Updated at</Th>
+              <Th>Created by</Th>
+              <Th>Updated by</Th>
+              <Th>Status</Th>
+              <Th className="w-10" />
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map((p) => (
+              <tr key={p.id} className="border-t border-border hover:bg-secondary/40">
+                <Td>
+                  <LinkText onClick={() => navigate({ to: "/seeds-api/projects/$projectId", params: { projectId: p.id } })}>
+                    {p.name}
+                  </LinkText>
+                </Td>
+                <Td className="text-foreground/80">{p.bom || "-"}</Td>
+                <Td className="text-muted-foreground">{p.createdAt}</Td>
+                <Td className="text-muted-foreground">{p.updatedAt}</Td>
+                <Td><UserCell email={p.createdBy} /></Td>
+                <Td><UserCell email={p.updatedBy} /></Td>
+                <Td><StatusPill status={p.status} /></Td>
+                <Td>
+                  <button className="rounded p-1 text-muted-foreground hover:bg-secondary">
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </TableShell>
+        <Pagination total={projects.length} />
+      </div>
+    </AppShell>
+  );
+}
