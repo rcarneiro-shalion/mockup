@@ -1,0 +1,5 @@
+# This is the CODEOWNERS file for this repository
+
+# Assign all pull requests to the repository owner
+
+* @rcarneiro-shalion
