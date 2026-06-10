@@ -1,5 +1,14 @@
 import { readPersistedList } from "./seedOptions";
 
+// client-project relationship: a project assigned to a client for a date range.
+export type AssignedProject = {
+  projectId: string;
+  name: string;
+  bom: string;
+  activeFrom: string;
+  activeTo: string;
+};
+
 export type Client = {
   id: string;
   name: string;
@@ -8,13 +17,14 @@ export type Client = {
   meta: string; // JSON string of meta properties
   createdAt: string;
   updatedAt: string;
+  assignedProjects?: AssignedProject[];
 };
 
 export const CLIENTS_KEY = "clients";
 
 // Seeded from the production mockup.
 export const INITIAL_CLIENTS: Client[] = [
-  { id: "abin", name: "Ab Inbev", acronym: "ABIN", isTest: false, meta: "{}", createdAt: "2025-06-26, 10:10:51", updatedAt: "2025-06-26, 10:19:18" },
+  { id: "abin", name: "Ab Inbev", acronym: "ABIN", isTest: false, meta: "{}", createdAt: "2025-06-26, 10:10:51", updatedAt: "2025-06-26, 10:19:18", assignedProjects: [{ projectId: "abinmx", name: "Ab Inbev MX", bom: "SHL0131", activeFrom: "Wed, Jun 25, 2025", activeTo: "Mon, May 31, 2027" }] },
   { id: "affi", name: "Affinity", acronym: "AFFI", isTest: false, meta: "{}", createdAt: "2024-03-27, 12:06:32", updatedAt: "2024-08-06, 10:28:16" },
   { id: "baca", name: "Bacardi", acronym: "BACA", isTest: false, meta: "{}", createdAt: "2023-12-12, 13:11:41", updatedAt: "2024-07-25, 10:10:23" },
   { id: "baye", name: "Bayer", acronym: "BAYE", isTest: false, meta: "{}", createdAt: "2024-12-19, 16:37:50", updatedAt: "2024-12-19, 16:53:15" },
@@ -49,6 +59,7 @@ export function emptyClient(): Client {
     meta: "{}",
     createdAt: nowStamp(),
     updatedAt: nowStamp(),
+    assignedProjects: [],
   };
 }
 

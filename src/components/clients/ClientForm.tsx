@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -13,10 +14,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AssignProjectDialog } from "@/components/clients/AssignProjectDialog";
+import { LinkText, Pagination, Th, Td } from "@/components/seeds/ListPrimitives";
 import type { Client } from "@/lib/clients";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ArrowLeft, ChevronUp, HelpCircle, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronUp, HelpCircle, Pencil, Plus, Trash2, X } from "lucide-react";
 
 export function ClientForm({
   mode,
@@ -34,11 +37,16 @@ export function ClientForm({
   const [client, setClient] = useState<Client>(initial);
   const [metaOpen, setMetaOpen] = useState(true);
   const [metaEditing, setMetaEditing] = useState(false);
+  const [projectsOpen, setProjectsOpen] = useState(true);
+  const [assignOpen, setAssignOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const navigate = useNavigate();
 
   const set = <K extends keyof Client>(k: K, v: Client[K]) =>
     setClient((prev) => ({ ...prev, [k]: v }));
+
+  const assignedProjects = client.assignedProjects ?? [];
 
   const canSave = client.name.trim() && client.acronym.trim();
 
@@ -178,6 +186,81 @@ export function ClientForm({
                 />
               )}
             </div>
+
+            {/* Projects (client-project relationship) */}
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setProjectsOpen((v) => !v)}
+                  className="flex items-center gap-2"
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-md bg-secondary text-muted-foreground">
+                    <ChevronUp className={cn("h-4 w-4 transition-transform", !projectsOpen && "rotate-180")} />
+                  </span>
+                  <span className="text-base font-semibold text-foreground">Projects</span>
+                </button>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setAssignOpen(true)}>
+                  <Plus className="h-3.5 w-3.5" />
+                  Assign project
+                </Button>
+              </div>
+
+              {projectsOpen && (
+                <>
+                  <div className="mt-4 overflow-hidden rounded-lg border border-border">
+                    <table className="w-full text-sm">
+                      <thead className="bg-secondary/60">
+                        <tr>
+                          <Th>Name</Th>
+                          <Th>
+                            <span className="inline-flex items-center gap-1">
+                              BoM <HelpCircle className="h-3 w-3" />
+                            </span>
+                          </Th>
+                          <Th>Active from</Th>
+                          <Th>Active to</Th>
+                          <Th className="w-10" />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {assignedProjects.length === 0 ? (
+                          <tr>
+                            <Td className="text-muted-foreground" >
+                              <span className="block py-2">No projects assigned yet.</span>
+                            </Td>
+                            <Td /><Td /><Td /><Td />
+                          </tr>
+                        ) : (
+                          assignedProjects.map((p) => (
+                            <tr key={p.projectId} className="border-t border-border hover:bg-secondary/40">
+                              <Td>
+                                <LinkText onClick={() => navigate({ to: "/seeds-api/projects/$projectId", params: { projectId: p.projectId } })}>
+                                  {p.name}
+                                </LinkText>
+                              </Td>
+                              <Td className="text-foreground/80">{p.bom || "-"}</Td>
+                              <Td className="text-muted-foreground">{p.activeFrom}</Td>
+                              <Td className="text-muted-foreground">{p.activeTo}</Td>
+                              <Td>
+                                <button
+                                  onClick={() => set("assignedProjects", assignedProjects.filter((x) => x.projectId !== p.projectId))}
+                                  className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
+                                  aria-label={`Remove ${p.name}`}
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </Td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  <Pagination total={assignedProjects.length} />
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -211,6 +294,13 @@ export function ClientForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AssignProjectDialog
+        open={assignOpen}
+        onOpenChange={setAssignOpen}
+        assignedIds={assignedProjects.map((p) => p.projectId)}
+        onAssign={(p) => set("assignedProjects", [...assignedProjects, p])}
+      />
     </AppShell>
   );
 }

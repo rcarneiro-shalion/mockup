@@ -1,4 +1,15 @@
 import { nowStamp } from "./clients";
+import { readPersistedList } from "./seedOptions";
+
+// project-storepackage relationship: a store package assigned to a project.
+export type AssignedStorePackage = {
+  id: string;
+  name: string;
+  store: string;
+  geo: string;
+  type: string; // BASE, ADDON, ...
+  expiration: string;
+};
 
 export type Project = {
   id: string;
@@ -9,9 +20,12 @@ export type Project = {
   updatedAt: string;
   createdBy: string;
   updatedBy: string;
+  assignedStorePackages?: AssignedStorePackage[];
 };
 
 export const PROJECTS_KEY = "seeds-api:projects";
+
+export const ASSIGN_TYPE_OPTIONS = ["BASE", "ADDON"];
 
 const EC = "ecometry@shalion.com";
 
@@ -30,7 +44,21 @@ export const INITIAL_PROJECTS: Project[] = [
   { id: "p11", name: "BAB>GEA_CVS US", bom: "GRPM_02", status: "Active", createdAt: "Thu, May 2, 2024 3:21", updatedAt: "Mon, Oct 27, 2025 1:20", createdBy: EC, updatedBy: EC },
   { id: "p12", name: "FRE>YOG_Carrefour ES", bom: "GRPM_02", status: "Active", createdAt: "Tue, Jun 25, 2024 1:30", updatedAt: "Mon, Oct 27, 2025 1:40", createdBy: EC, updatedBy: EC },
   { id: "p13", name: "PAN>COF_Amazon SE", bom: "GRPM_02", status: "Active", createdAt: "Tue, Jun 25, 2024 1:40", updatedAt: "Mon, Oct 27, 2025 1:50", createdBy: EC, updatedBy: EC },
+  {
+    id: "abinmx", name: "Ab Inbev MX", bom: "SHL0131", status: "Active",
+    createdAt: "Wed, Jun 25, 2025 10:00", updatedAt: "Mon, Oct 27, 2025 1:50", createdBy: EC, updatedBy: EC,
+    assignedStorePackages: [
+      { id: "asp1", name: "PKG Amazon US", store: "Amazon US", geo: "MANUAL", type: "BASE", expiration: "-" },
+      { id: "asp2", name: "PKG - MAT Amazon US", store: "Amazon US", geo: "VIRTUAL STORE", type: "BASE", expiration: "-" },
+    ],
+  },
 ];
+
+/** Projects list, sourced from the persisted store (SSR-safe fallback to seed). */
+export function getProjects(): Project[] {
+  const list = readPersistedList<Project>(PROJECTS_KEY);
+  return list.length ? list : INITIAL_PROJECTS;
+}
 
 export function emptyProject(): Project {
   return {
