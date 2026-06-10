@@ -4,10 +4,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Th, Td, Pagination, LinkText } from "@/components/seeds/ListPrimitives";
 import { emptyRegion, ASSIGNABLE_LOCATIONS, type Region, type RegionLocation } from "@/lib/retailers";
 import { toast } from "sonner";
-import { Plus, Trash2, FileSpreadsheet, X } from "lucide-react";
+import { Plus, Trash2, FileSpreadsheet, X, ChevronDown } from "lucide-react";
 
 export function RegionDetailDialog({
   open,
@@ -24,13 +26,18 @@ export function RegionDetailDialog({
 }) {
   const [r, setR] = useState<Region>(emptyRegion());
   const [assignOpen, setAssignOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [locFilter, setLocFilter] = useState("");
 
   useEffect(() => {
-    if (open && region) { setR({ ...region, locations: region.locations ?? [] }); setAssignOpen(false); }
+    if (open && region) { setR({ ...region, locations: region.locations ?? [] }); setAssignOpen(false); setLocFilter(""); }
   }, [open, region]);
 
   const set = <K extends keyof Region>(k: K, v: Region[K]) => setR((p) => ({ ...p, [k]: v }));
-  const locations = r.locations ?? [];
+  const allLocations = r.locations ?? [];
+  const locations = locFilter
+    ? allLocations.filter((l) => l.name.toLowerCase().includes(locFilter.toLowerCase()))
+    : allLocations;
 
   const assignLocation = (name: string) => {
     const loc: RegionLocation = {
@@ -76,13 +83,38 @@ export function RegionDetailDialog({
             </div>
 
             <div className="mt-3">
-              <Select defaultValue="Locations">
-                <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Locations">Locations</SelectItem>
-                  <SelectItem value="Stores">Stores</SelectItem>
-                </SelectContent>
-              </Select>
+              <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+                <PopoverTrigger asChild>
+                  <button className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm text-foreground/80 hover:bg-secondary">
+                    {locFilter || "Locations"}
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[320px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search" />
+                    <CommandList>
+                      <CommandEmpty>No results.</CommandEmpty>
+                      <CommandGroup>
+                        {ASSIGNABLE_LOCATIONS.map((n) => (
+                          <CommandItem key={n} value={n} onSelect={() => { setLocFilter(n); setFilterOpen(false); }}>
+                            {n}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                    <div className="border-t border-border p-1">
+                      <button
+                        type="button"
+                        onClick={() => { setLocFilter(""); setFilterOpen(false); }}
+                        className="w-full rounded px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-secondary"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="mt-3 overflow-hidden rounded-lg border border-border">
