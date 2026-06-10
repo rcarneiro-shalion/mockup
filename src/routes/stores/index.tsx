@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { FilterBar, TableShell, Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimitives";
+import { FilterBar, TableShell, Th, Td, Pagination, LinkText, Pill, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePersistentState } from "@/hooks/usePersistentState";
@@ -25,6 +25,8 @@ function StatusPill({ status }: { status: Store["status"] }) {
 
 function StoresListPage() {
   const [rows] = usePersistentState<Store[]>(STORES_KEY, INITIAL_STORES);
+  const sort = useSort();
+  const sorted = sortRows(rows, sort);
   const navigate = useNavigate();
 
   return (
@@ -47,18 +49,18 @@ function StoresListPage() {
         <TableShell>
           <thead className="bg-secondary/60">
             <tr>
-              <Th>Name</Th>
-              <Th>Domain</Th>
-              <Th>Retailer</Th>
-              <Th>Type</Th>
-              <Th>Class</Th>
-              <Th>Device</Th>
-              <Th>Status</Th>
+              <SortTh label="Name" sortKey="name" sort={sort} />
+              <SortTh label="Domain" sortKey="domain" sort={sort} />
+              <SortTh label="Retailer" sortKey="retailer" sort={sort} />
+              <SortTh label="Type" sortKey="type" sort={sort} />
+              <SortTh label="Class" sortKey="klass" sort={sort} />
+              <SortTh label="Device" sortKey="device" sort={sort} />
+              <SortTh label="Status" sortKey="status" sort={sort} />
               <Th className="w-10" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((s) => (
+            {sorted.map((s) => (
               <tr key={s.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => navigate({ to: "/stores/$storeId", params: { storeId: s.id } })}>{s.name}</LinkText></Td>
                 <Td><LinkText>{s.domain}</LinkText></Td>

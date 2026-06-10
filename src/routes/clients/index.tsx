@@ -9,11 +9,14 @@ import {
   Pagination,
   LinkText,
   Pill,
+  SortTh,
+  useSort,
+  sortRows,
 } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { CLIENTS_KEY, INITIAL_CLIENTS, type Client } from "@/lib/clients";
-import { Plus, Calendar, MoreVertical, ArrowUp } from "lucide-react";
+import { Plus, Calendar, MoreVertical } from "lucide-react";
 
 export const Route = createFileRoute("/clients/")({
   head: () => ({ meta: [{ title: "Clients — Shalion" }] }),
@@ -22,6 +25,8 @@ export const Route = createFileRoute("/clients/")({
 
 function ClientsListPage() {
   const [clients] = usePersistentState<Client[]>(CLIENTS_KEY, INITIAL_CLIENTS);
+  const sort = useSort();
+  const sorted = sortRows(clients, sort);
   const navigate = useNavigate();
 
   return (
@@ -47,20 +52,16 @@ function ClientsListPage() {
         <TableShell>
           <thead className="bg-secondary/60">
             <tr>
-              <Th>
-                <span className="inline-flex items-center gap-1">
-                  Name <ArrowUp className="h-3 w-3" />
-                </span>
-              </Th>
-              <Th>Acronym</Th>
-              <Th>Is test?</Th>
-              <Th>Created at</Th>
-              <Th>Updated at</Th>
+              <SortTh label="Name" sortKey="name" sort={sort} />
+              <SortTh label="Acronym" sortKey="acronym" sort={sort} />
+              <SortTh label="Is test?" sortKey="isTest" sort={sort} />
+              <SortTh label="Created at" sortKey="createdAt" sort={sort} />
+              <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <Th className="w-10" />
             </tr>
           </thead>
           <tbody>
-            {clients.map((c) => (
+            {sorted.map((c) => (
               <tr key={c.id} className="border-t border-border hover:bg-secondary/40">
                 <Td>
                   <LinkText onClick={() => navigate({ to: "/clients/$clientId", params: { clientId: c.id } })}>

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { FilterBar, TableShell, Th, Td, Pagination, LinkText } from "@/components/seeds/ListPrimitives";
+import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { REGION_SYSTEMS_KEY, INITIAL_REGION_SYSTEMS, flag, type RegionSystem } from "@/lib/retailers";
@@ -14,6 +14,8 @@ export const Route = createFileRoute("/region-systems/")({
 
 function RegionSystemsListPage() {
   const [rows] = usePersistentState<RegionSystem[]>(REGION_SYSTEMS_KEY, INITIAL_REGION_SYSTEMS);
+  const sort = useSort();
+  const sorted = sortRows(rows, sort);
   const navigate = useNavigate();
 
   return (
@@ -33,15 +35,15 @@ function RegionSystemsListPage() {
         <TableShell>
           <thead className="bg-secondary/60">
             <tr>
-              <Th>Name</Th>
-              <Th>Country</Th>
-              <Th>Created at</Th>
-              <Th>Updated at</Th>
+              <SortTh label="Name" sortKey="name" sort={sort} />
+              <SortTh label="Country" sortKey="country" sort={sort} />
+              <SortTh label="Created at" sortKey="createdAt" sort={sort} />
+              <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <Th className="w-10" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {sorted.map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => navigate({ to: "/region-systems/$regionId", params: { regionId: r.id } })}>{r.name}</LinkText></Td>
                 <Td className="text-foreground/80"><span className="mr-1.5">{flag(r.country)}</span>{r.country}</Td>

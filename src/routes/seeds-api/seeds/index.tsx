@@ -15,6 +15,9 @@ import {
   Pagination,
   LinkText,
   Pill,
+  SortTh,
+  useSort,
+  sortRows,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -37,9 +40,11 @@ function SeedsPage() {
   const [rows, setRows] = usePersistentState<Seed[]>(SEEDS_KEY, INITIAL_SEEDS);
   const [selected, setSelected] = useState<Seed | null>(null);
   const [seedType, setSeedType] = useState("All");
+  const sort = useSort();
   const navigate = useNavigate();
 
-  const visible = seedType === "All" ? rows : rows.filter((r) => (r.type ?? "") === seedType);
+  const filtered = seedType === "All" ? rows : rows.filter((r) => (r.type ?? "") === seedType);
+  const visible = sortRows(filtered, sort, { description: (r) => r.d, type: (r) => r.type ?? "", category: (r) => r.cat, createdAt: (r) => r.c, updatedAt: (r) => r.u });
 
   const editFields: FieldDef[] = selected
     ? [
@@ -84,12 +89,12 @@ function SeedsPage() {
         <TableShell>
           <thead className="bg-secondary/60">
             <tr>
-              <Th>Description</Th>
-              <Th>Seed type</Th>
-              <Th>Store</Th>
-              <Th>Category</Th>
-              <Th>Created at</Th>
-              <Th>Updated at</Th>
+              <SortTh label="Description" sortKey="description" sort={sort} />
+              <SortTh label="Seed type" sortKey="type" sort={sort} />
+              <SortTh label="Store" sortKey="store" sort={sort} />
+              <SortTh label="Category" sortKey="category" sort={sort} />
+              <SortTh label="Created at" sortKey="createdAt" sort={sort} />
+              <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <Th>Active</Th>
               <Th className="w-10" />
             </tr>

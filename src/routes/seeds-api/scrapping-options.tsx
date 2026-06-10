@@ -17,9 +17,12 @@ import {
   Pagination,
   LinkText,
   Pill,
+  SortTh,
+  useSort,
+  sortRows,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, MoreVertical, ArrowUp, Store, PlayCircle } from "lucide-react";
+import { Calendar, MoreVertical, Store, PlayCircle } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/scrapping-options")({
   head: () => ({ meta: [{ title: "Scrapping options — Shalion" }] }),
@@ -61,8 +64,13 @@ function ScrappingOptionsPage() {
     "seeds-api:scrapping-options",
     INITIAL_ROWS,
   );
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [selected, setSelected] = useState<ScrappingOptionValues | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const sort = useSort();
+  const sorted = sortRows(rows, sort, {
+    stores: (r) => (r.stores ?? []).join(", "),
+    options: (r) => summaryPills(r).length,
+  });
 
   return (
     <AppShell>
@@ -82,22 +90,18 @@ function ScrappingOptionsPage() {
         <TableShell>
           <thead className="bg-secondary/60">
             <tr>
-              <Th>
-                <span className="inline-flex items-center gap-1">
-                  Name <ArrowUp className="h-3 w-3" />
-                </span>
-              </Th>
-              <Th>Extraction type</Th>
-              <Th>Stores</Th>
-              <Th>Options</Th>
+              <SortTh label="Name" sortKey="name" sort={sort} />
+              <SortTh label="Extraction type" sortKey="extractionType" sort={sort} />
+              <SortTh label="Stores" sortKey="stores" sort={sort} />
+              <SortTh label="Options" sortKey="options" sort={sort} />
               <Th>Active</Th>
               <Th className="w-10" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
+            {sorted.map((r, i) => (
               <tr key={i} className="border-t border-border hover:bg-secondary/40">
-                <Td><LinkText onClick={() => setSelectedIdx(i)}>{r.name}</LinkText></Td>
+                <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
                 <Td><Pill tone="slate">{r.extractionType}</Pill></Td>
                 <Td>
                   <div className="flex flex-wrap gap-1">
@@ -141,17 +145,17 @@ function ScrappingOptionsPage() {
       />
 
       <ScrappingOptionDialog
-        open={selectedIdx !== null}
-        onOpenChange={(v) => { if (!v) setSelectedIdx(null); }}
+        open={selected !== null}
+        onOpenChange={(v) => { if (!v) setSelected(null); }}
         mode="edit"
-        initial={selectedIdx !== null ? rows[selectedIdx] : null}
+        initial={selected}
         onSave={(values) => {
-          setRows((prev) => prev.map((r, i) => (i === selectedIdx ? values : r)));
-          setSelectedIdx(null);
+          setRows((prev) => prev.map((r) => (r === selected ? values : r)));
+          setSelected(null);
         }}
         onDelete={() => {
-          setRows((prev) => prev.filter((_, i) => i !== selectedIdx));
-          setSelectedIdx(null);
+          setRows((prev) => prev.filter((r) => r !== selected));
+          setSelected(null);
         }}
       />
     </AppShell>

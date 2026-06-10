@@ -13,9 +13,12 @@ import {
   Pagination,
   LinkText,
   Pill,
+  SortTh,
+  useSort,
+  sortRows,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, MoreVertical, ArrowUp, Store, Sprout } from "lucide-react";
+import { Calendar, MoreVertical, Store, Sprout } from "lucide-react";
 import {
   SUBSCRIPTIONS_KEY,
   INITIAL_SUBSCRIPTIONS,
@@ -29,8 +32,11 @@ export const Route = createFileRoute("/seeds-api/subscriptions")({
 
 function SubscriptionsPage() {
   const [rows, setRows] = usePersistentState<Subscription[]>(SUBSCRIPTIONS_KEY, INITIAL_SUBSCRIPTIONS);
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const sort = useSort();
+  const sorted = sortRows(rows, sort, { seeds: (r) => (r.seeds ?? []).length });
+  const selected = rows.find((r) => r.id === selectedId) ?? null;
 
   return (
     <AppShell>
@@ -50,23 +56,19 @@ function SubscriptionsPage() {
         <TableShell>
           <thead className="bg-secondary/60">
             <tr>
-              <Th>
-                <span className="inline-flex items-center gap-1">
-                  Name <ArrowUp className="h-3 w-3" />
-                </span>
-              </Th>
-              <Th>Project</Th>
-              <Th>Seeds</Th>
-              <Th>Scrapping option</Th>
-              <Th>Geoloc</Th>
+              <SortTh label="Name" sortKey="name" sort={sort} />
+              <SortTh label="Project" sortKey="project" sort={sort} />
+              <SortTh label="Seeds" sortKey="seeds" sort={sort} />
+              <SortTh label="Scrapping option" sortKey="scrappingOption" sort={sort} />
+              <SortTh label="Geoloc" sortKey="geo" sort={sort} />
               <Th>Active</Th>
               <Th className="w-10" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
+            {sorted.map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
-                <Td><LinkText onClick={() => setSelectedIdx(i)}>{r.name}</LinkText></Td>
+                <Td><LinkText onClick={() => setSelectedId(r.id)}>{r.name}</LinkText></Td>
                 <Td className="text-foreground/80">{r.project}</Td>
                 <Td>
                   <div className="flex flex-wrap gap-1">
@@ -101,17 +103,17 @@ function SubscriptionsPage() {
       />
 
       <SubscriptionDialog
-        open={selectedIdx !== null}
-        onOpenChange={(v) => { if (!v) setSelectedIdx(null); }}
+        open={selectedId !== null}
+        onOpenChange={(v) => { if (!v) setSelectedId(null); }}
         mode="edit"
-        initial={selectedIdx !== null ? rows[selectedIdx] : null}
+        initial={selected}
         onSave={(values) => {
-          setRows((prev) => prev.map((r, i) => (i === selectedIdx ? values : r)));
-          setSelectedIdx(null);
+          setRows((prev) => prev.map((r) => (r.id === selectedId ? values : r)));
+          setSelectedId(null);
         }}
         onDelete={() => {
-          setRows((prev) => prev.filter((_, i) => i !== selectedIdx));
-          setSelectedIdx(null);
+          setRows((prev) => prev.filter((r) => r.id !== selectedId));
+          setSelectedId(null);
         }}
       />
     </AppShell>

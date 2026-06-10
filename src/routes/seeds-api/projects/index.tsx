@@ -11,6 +11,9 @@ import {
   LinkText,
   UserCell,
   Pill,
+  SortTh,
+  useSort,
+  sortRows,
 } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
@@ -37,12 +40,17 @@ function StatusPill({ status }: { status: Project["status"] }) {
 function ProjectsListPage() {
   const [projects] = usePersistentState<Project[]>(PROJECTS_KEY, INITIAL_PROJECTS);
   const [query, setQuery] = useState("");
+  const sort = useSort();
   const navigate = useNavigate();
 
   const q = query.trim().toLowerCase();
   const filtered = q
     ? projects.filter((p) => p.name.toLowerCase().includes(q))
     : projects;
+  const sorted = sortRows(filtered, sort, {
+    clients: (p) => getClientsForProject(p.id).length,
+    subscriptions: (p) => (p.assignedSubscriptions ?? []).length,
+  });
 
   return (
     <AppShell>
@@ -72,19 +80,15 @@ function ProjectsListPage() {
         <TableShell>
           <thead className="bg-secondary/60">
             <tr>
-              <Th>Name</Th>
-              <Th>Clients</Th>
-              <Th>Subscriptions</Th>
-              <Th>
-                <span className="inline-flex items-center gap-1">
-                  BoM <HelpCircle className="h-3 w-3" />
-                </span>
-              </Th>
-              <Th>Created at</Th>
-              <Th>Updated at</Th>
-              <Th>Created by</Th>
-              <Th>Updated by</Th>
-              <Th>Status</Th>
+              <SortTh label="Name" sortKey="name" sort={sort} />
+              <SortTh label="Clients" sortKey="clients" sort={sort} />
+              <SortTh label="Subscriptions" sortKey="subscriptions" sort={sort} />
+              <SortTh label={<span className="inline-flex items-center gap-1">BoM <HelpCircle className="h-3 w-3" /></span>} sortKey="bom" sort={sort} />
+              <SortTh label="Created at" sortKey="createdAt" sort={sort} />
+              <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
+              <SortTh label="Created by" sortKey="createdBy" sort={sort} />
+              <SortTh label="Updated by" sortKey="updatedBy" sort={sort} />
+              <SortTh label="Status" sortKey="status" sort={sort} />
               <Th className="w-10" />
             </tr>
           </thead>
@@ -97,7 +101,7 @@ function ProjectsListPage() {
                 <Td /><Td /><Td /><Td /><Td /><Td /><Td /><Td /><Td />
               </tr>
             )}
-            {filtered.map((p) => (
+            {sorted.map((p) => (
               <tr key={p.id} className="border-t border-border hover:bg-secondary/40">
                 <Td>
                   <LinkText onClick={() => navigate({ to: "/seeds-api/projects/$projectId", params: { projectId: p.id } })}>

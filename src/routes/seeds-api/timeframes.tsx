@@ -16,9 +16,12 @@ import {
   LinkText,
   UserCell,
   Pill,
+  SortTh,
+  useSort,
+  sortRows,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, MoreVertical, ArrowUp, PlayCircle } from "lucide-react";
+import { Calendar, MoreVertical, PlayCircle } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/timeframes")({
   head: () => ({ meta: [{ title: "Timeframes — Shalion" }] }),
@@ -47,6 +50,8 @@ function TimeframesPage() {
   const [rows, setRows] = usePersistentState<Row[]>("seeds-api:timeframes", INITIAL_ROWS);
   const [selected, setSelected] = useState<Row | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const sort = useSort();
+  const sorted = sortRows(rows, sort, { locationFrequency: (r) => r.locFreq, seedFrequency: (r) => r.seedFreq });
 
   const editFields: FieldDef[] = selected
     ? [
@@ -86,15 +91,11 @@ function TimeframesPage() {
         <TableShell>
           <thead className="bg-secondary/60">
             <tr>
-              <Th>
-                <span className="inline-flex items-center gap-1">
-                  Name <ArrowUp className="h-3 w-3" />
-                </span>
-              </Th>
-              <Th>Location frequency</Th>
-              <Th>Seed frequency</Th>
-              <Th>Timeframe group</Th>
-              <Th>Product</Th>
+              <SortTh label="Name" sortKey="name" sort={sort} />
+              <SortTh label="Location frequency" sortKey="locationFrequency" sort={sort} />
+              <SortTh label="Seed frequency" sortKey="seedFrequency" sort={sort} />
+              <SortTh label="Timeframe group" sortKey="group" sort={sort} />
+              <SortTh label="Product" sortKey="product" sort={sort} />
               <Th>Created by</Th>
               <Th>Updated by</Th>
               <Th>Cr...</Th>
@@ -103,7 +104,7 @@ function TimeframesPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {sorted.map((r) => (
               <tr key={r.name} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
                 <Td><Pill tone="slate">{r.locFreq}</Pill></Td>

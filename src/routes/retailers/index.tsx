@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { FilterBar, TableShell, Th, Td, Pagination, LinkText } from "@/components/seeds/ListPrimitives";
+import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { RETAILERS_KEY, INITIAL_RETAILERS, type Retailer } from "@/lib/retailers";
-import { Plus, Calendar, MoreVertical, ArrowUp } from "lucide-react";
+import { Plus, Calendar, MoreVertical } from "lucide-react";
 
 export const Route = createFileRoute("/retailers/")({
   head: () => ({ meta: [{ title: "Retailers — Shalion" }] }),
@@ -14,6 +14,8 @@ export const Route = createFileRoute("/retailers/")({
 
 function RetailersListPage() {
   const [rows] = usePersistentState<Retailer[]>(RETAILERS_KEY, INITIAL_RETAILERS);
+  const sort = useSort();
+  const sorted = sortRows(rows, sort);
   const navigate = useNavigate();
 
   return (
@@ -32,14 +34,14 @@ function RetailersListPage() {
         <TableShell>
           <thead className="bg-secondary/60">
             <tr>
-              <Th><span className="inline-flex items-center gap-1">Name <ArrowUp className="h-3 w-3" /></span></Th>
-              <Th>Created at</Th>
-              <Th>Updated at</Th>
+              <SortTh label="Name" sortKey="name" sort={sort} />
+              <SortTh label="Created at" sortKey="createdAt" sort={sort} />
+              <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <Th className="w-10" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {sorted.map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => navigate({ to: "/retailers/$retailerId", params: { retailerId: r.id } })}>{r.name}</LinkText></Td>
                 <Td className="text-muted-foreground">{r.createdAt}</Td>

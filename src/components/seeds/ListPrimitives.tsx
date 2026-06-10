@@ -1,8 +1,78 @@
-import type { ReactNode } from "react";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// ---- Sorting ----------------------------------------------------------------
+
+export type SortState = { key: string | null; dir: "asc" | "desc"; toggle: (k: string) => void };
+
+/** Click-to-sort state: first click on a column sorts asc, next toggles desc. */
+export function useSort(initialKey: string | null = null, initialDir: "asc" | "desc" = "asc"): SortState {
+  const [key, setKey] = useState<string | null>(initialKey);
+  const [dir, setDir] = useState<"asc" | "desc">(initialDir);
+  const toggle = (k: string) => {
+    if (key === k) setDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setKey(k); setDir("asc"); }
+  };
+  return { key, dir, toggle };
+}
+
+function sortValue(v: unknown): string | number {
+  if (Array.isArray(v)) return v.length;
+  if (typeof v === "boolean") return v ? 1 : 0;
+  if (typeof v === "number") return v;
+  return (v ?? "") as string;
+}
+
+/** Returns a sorted copy of rows per the sort state. `accessors` overrides the
+ *  default `row[key]` lookup for derived columns. */
+export function sortRows<T>(rows: T[], sort: SortState, accessors?: Record<string, (row: T) => unknown>): T[] {
+  if (!sort.key) return rows;
+  const key = sort.key;
+  const acc = accessors?.[key] ?? ((row: T) => (row as Record<string, unknown>)[key]);
+  const out = [...rows].sort((a, b) => {
+    const x = sortValue(acc(a));
+    const y = sortValue(acc(b));
+    if (typeof x === "number" && typeof y === "number") return x - y;
+    return String(x).localeCompare(String(y), undefined, { numeric: true });
+  });
+  return sort.dir === "desc" ? out.reverse() : out;
+}
+
+/** Clickable, sortable table header cell. */
+export function SortTh({
+  label,
+  sortKey,
+  sort,
+  className,
+}: {
+  label: ReactNode;
+  sortKey: string;
+  sort: SortState;
+  className?: string;
+}) {
+  const active = sort.key === sortKey;
+  return (
+    <th
+      onClick={() => sort.toggle(sortKey)}
+      className={cn(
+        "cursor-pointer select-none px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-foreground/70 transition-colors hover:text-foreground",
+        className,
+      )}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {active ? (
+          sort.dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+        ) : (
+          <ChevronsUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </span>
+    </th>
+  );
+}
 
 export function PageHeader({
   title,

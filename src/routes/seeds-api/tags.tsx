@@ -15,6 +15,9 @@ import {
   Pagination,
   LinkText,
   UserCell,
+  SortTh,
+  useSort,
+  sortRows,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import { Calendar, MoreVertical } from "lucide-react";
@@ -38,6 +41,8 @@ function TagsPage() {
   const [selected, setSelected] = useState<Row | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const clientOptions = getClientNames();
+  const sort = useSort();
+  const sorted = sortRows(rows, sort, { createdAt: (r) => r.c, updatedAt: (r) => r.u });
 
   const editFields: FieldDef[] = selected
     ? [
@@ -70,18 +75,18 @@ function TagsPage() {
         <TableShell>
           <thead className="bg-secondary/60">
             <tr>
-              <Th>Name</Th>
-              <Th>Client</Th>
-              <Th>Parent</Th>
-              <Th>Created at</Th>
-              <Th>Updated at</Th>
+              <SortTh label="Name" sortKey="name" sort={sort} />
+              <SortTh label="Client" sortKey="client" sort={sort} />
+              <SortTh label="Parent" sortKey="parent" sort={sort} />
+              <SortTh label="Created at" sortKey="createdAt" sort={sort} />
+              <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <Th>Created by</Th>
               <Th>Active</Th>
               <Th className="w-10" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {sorted.map((r) => (
               <tr key={r.name} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
                 <Td><LinkText>{r.client}</LinkText></Td>
