@@ -8,6 +8,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+# This project uses bun (bun.lock); ignore npm's lockfile to avoid mixing package managers
+package-lock.json
 dist
 dist-ssr
 .output

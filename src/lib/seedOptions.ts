@@ -55,6 +55,56 @@ export const SEED_FREQUENCY_OPTIONS = [
 
 export const LOCATION_FREQUENCY_OPTIONS = ["NO_ROTATE_DAILY", "ROTATE_MONTHLY"];
 
+// --- Scrapping Options / Stuff (2026 reframe) ---
+
+// Timeframes a scrapping option can run under (mock values).
+export const TIMEFRAME_OPTIONS = [
+  "All Day (1 x day)",
+  "Morning (1 x day)",
+  "Twice Daily (2 x day)",
+  "Weekly (1 x week)",
+];
+
+// Disjoint option: modalities (mutually exclusive distribution modes).
+export const MODALITY_OPTIONS = ["pickup", "delivery", "shipping"];
+
+// Disjoint option: sorting — encoded as a URL parameter appended to the seed URL.
+export const SORT_OPTIONS = [
+  "best_seller",
+  "price_low_high",
+  "price_high_low",
+  "relevance",
+  "newest",
+];
+
+// Output templates ("plantillas") that drive the extraction schema.
+export const TEMPLATE_OPTIONS = [
+  "Default",
+  "ECOMETRYSEARCH",
+  "ECOMETRYMEDIA",
+  "ECOMETRYPDP",
+  "ECOMETRYPLP",
+];
+
+// Client-oriented option: how often the Stuff re-runs.
+export const FREQUENCY_OPTIONS = [
+  "NO_ROTATE_DAILY",
+  "ROTATE_WEEKLY",
+  "ROTATE_MONTHLY",
+];
+
+// Location SET — a named group of locations referenced by a Stuff.
+export const LOCATION_SET_OPTIONS = [
+  "Amazon US — All locations",
+  "Walmart East Coast — 50 locations",
+  "Walmart East Coast — 100 locations",
+  "No geolocation",
+];
+
+// New seed model (3+1): seed type + scrapping type (PDP carries no scrapping type).
+export const SEED_TYPE_OPTIONS = ["PDP", "URL", "API", "Keyword"];
+export const SCRAPPING_TYPE_OPTIONS = ["SHELF/SEARCH", "PLP", "AD", "MEDIA"];
+
 export function readPersistedList<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
   try {

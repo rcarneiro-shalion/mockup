@@ -14,11 +14,13 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type NavChild = { label: string; to: string; legacy?: boolean };
+
 type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   to?: string;
-  children?: { label: string; to: string }[];
+  children?: NavChild[];
   defaultOpen?: boolean;
 };
 
@@ -32,10 +34,11 @@ const nav: NavItem[] = [
     children: [
       { label: "Store packages", to: "/seeds-api/store-packages" },
       { label: "Seeds", to: "/seeds-api/seeds" },
-      { label: "Jobs", to: "/seeds-api/jobs" },
+      { label: "Scrapping options", to: "/seeds-api/scrapping-options" },
+      { label: "Stuff", to: "/seeds-api/stuff" },
       { label: "Tags", to: "/seeds-api/tags" },
       { label: "Timeframes", to: "/seeds-api/timeframes" },
-      { label: "Seed subscriptions", to: "/seeds-api/seed-subscriptions" },
+      { label: "Seed subscriptions", to: "/seeds-api/seed-subscriptions", legacy: true },
     ],
   },
   { label: "Tasks", icon: ListTodo, children: [] },
@@ -130,13 +133,22 @@ export function Sidebar() {
                           key={c.to}
                           to={c.to}
                           className={cn(
-                            "rounded-md px-2.5 py-1.5 text-sm transition-colors",
+                            "flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors",
                             active
                               ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-fg)] font-medium"
-                              : "text-foreground/70 hover:bg-[var(--sidebar-hover)]",
+                              : c.legacy
+                                ? "text-foreground/40 hover:bg-[var(--sidebar-hover)]"
+                                : "text-foreground/70 hover:bg-[var(--sidebar-hover)]",
                           )}
                         >
-                          {c.label}
+                          <span className={cn(c.legacy && "line-through decoration-foreground/30")}>
+                            {c.label}
+                          </span>
+                          {c.legacy && (
+                            <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                              Legacy
+                            </span>
+                          )}
                         </Link>
                       );
                     })}

@@ -17,10 +17,11 @@ import { Route as BulkRouteImport } from './routes/bulk'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SeedsApiTimeframesRouteImport } from './routes/seeds-api/timeframes'
 import { Route as SeedsApiTagsRouteImport } from './routes/seeds-api/tags'
+import { Route as SeedsApiStuffRouteImport } from './routes/seeds-api/stuff'
 import { Route as SeedsApiStorePackagesRouteImport } from './routes/seeds-api/store-packages'
 import { Route as SeedsApiSeedsRouteImport } from './routes/seeds-api/seeds'
 import { Route as SeedsApiSeedSubscriptionsRouteImport } from './routes/seeds-api/seed-subscriptions'
-import { Route as SeedsApiJobsRouteImport } from './routes/seeds-api/jobs'
+import { Route as SeedsApiScrappingOptionsRouteImport } from './routes/seeds-api/scrapping-options'
 
 const RetailersRoute = RetailersRouteImport.update({
   id: '/retailers',
@@ -62,6 +63,11 @@ const SeedsApiTagsRoute = SeedsApiTagsRouteImport.update({
   path: '/seeds-api/tags',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SeedsApiStuffRoute = SeedsApiStuffRouteImport.update({
+  id: '/seeds-api/stuff',
+  path: '/seeds-api/stuff',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SeedsApiStorePackagesRoute = SeedsApiStorePackagesRouteImport.update({
   id: '/seeds-api/store-packages',
   path: '/seeds-api/store-packages',
@@ -78,11 +84,12 @@ const SeedsApiSeedSubscriptionsRoute =
     path: '/seeds-api/seed-subscriptions',
     getParentRoute: () => rootRouteImport,
   } as any)
-const SeedsApiJobsRoute = SeedsApiJobsRouteImport.update({
-  id: '/seeds-api/jobs',
-  path: '/seeds-api/jobs',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const SeedsApiScrappingOptionsRoute =
+  SeedsApiScrappingOptionsRouteImport.update({
+    id: '/seeds-api/scrapping-options',
+    path: '/seeds-api/scrapping-options',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -91,10 +98,11 @@ export interface FileRoutesByFullPath {
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
   '/retailers': typeof RetailersRoute
-  '/seeds-api/jobs': typeof SeedsApiJobsRoute
+  '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
   '/seeds-api/store-packages': typeof SeedsApiStorePackagesRoute
+  '/seeds-api/stuff': typeof SeedsApiStuffRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
 }
@@ -105,10 +113,11 @@ export interface FileRoutesByTo {
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
   '/retailers': typeof RetailersRoute
-  '/seeds-api/jobs': typeof SeedsApiJobsRoute
+  '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
   '/seeds-api/store-packages': typeof SeedsApiStorePackagesRoute
+  '/seeds-api/stuff': typeof SeedsApiStuffRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
 }
@@ -120,10 +129,11 @@ export interface FileRoutesById {
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
   '/retailers': typeof RetailersRoute
-  '/seeds-api/jobs': typeof SeedsApiJobsRoute
+  '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
   '/seeds-api/store-packages': typeof SeedsApiStorePackagesRoute
+  '/seeds-api/stuff': typeof SeedsApiStuffRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
 }
@@ -136,10 +146,11 @@ export interface FileRouteTypes {
     | '/data-collector'
     | '/iam'
     | '/retailers'
-    | '/seeds-api/jobs'
+    | '/seeds-api/scrapping-options'
     | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
     | '/seeds-api/store-packages'
+    | '/seeds-api/stuff'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
   fileRoutesByTo: FileRoutesByTo
@@ -150,10 +161,11 @@ export interface FileRouteTypes {
     | '/data-collector'
     | '/iam'
     | '/retailers'
-    | '/seeds-api/jobs'
+    | '/seeds-api/scrapping-options'
     | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
     | '/seeds-api/store-packages'
+    | '/seeds-api/stuff'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
   id:
@@ -164,10 +176,11 @@ export interface FileRouteTypes {
     | '/data-collector'
     | '/iam'
     | '/retailers'
-    | '/seeds-api/jobs'
+    | '/seeds-api/scrapping-options'
     | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
     | '/seeds-api/store-packages'
+    | '/seeds-api/stuff'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
   fileRoutesById: FileRoutesById
@@ -179,10 +192,11 @@ export interface RootRouteChildren {
   DataCollectorRoute: typeof DataCollectorRoute
   IamRoute: typeof IamRoute
   RetailersRoute: typeof RetailersRoute
-  SeedsApiJobsRoute: typeof SeedsApiJobsRoute
+  SeedsApiScrappingOptionsRoute: typeof SeedsApiScrappingOptionsRoute
   SeedsApiSeedSubscriptionsRoute: typeof SeedsApiSeedSubscriptionsRoute
   SeedsApiSeedsRoute: typeof SeedsApiSeedsRoute
   SeedsApiStorePackagesRoute: typeof SeedsApiStorePackagesRoute
+  SeedsApiStuffRoute: typeof SeedsApiStuffRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
   SeedsApiTimeframesRoute: typeof SeedsApiTimeframesRoute
 }
@@ -245,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiTagsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/seeds-api/stuff': {
+      id: '/seeds-api/stuff'
+      path: '/seeds-api/stuff'
+      fullPath: '/seeds-api/stuff'
+      preLoaderRoute: typeof SeedsApiStuffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/seeds-api/store-packages': {
       id: '/seeds-api/store-packages'
       path: '/seeds-api/store-packages'
@@ -266,11 +287,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiSeedSubscriptionsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/seeds-api/jobs': {
-      id: '/seeds-api/jobs'
-      path: '/seeds-api/jobs'
-      fullPath: '/seeds-api/jobs'
-      preLoaderRoute: typeof SeedsApiJobsRouteImport
+    '/seeds-api/scrapping-options': {
+      id: '/seeds-api/scrapping-options'
+      path: '/seeds-api/scrapping-options'
+      fullPath: '/seeds-api/scrapping-options'
+      preLoaderRoute: typeof SeedsApiScrappingOptionsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -283,10 +304,11 @@ const rootRouteChildren: RootRouteChildren = {
   DataCollectorRoute: DataCollectorRoute,
   IamRoute: IamRoute,
   RetailersRoute: RetailersRoute,
-  SeedsApiJobsRoute: SeedsApiJobsRoute,
+  SeedsApiScrappingOptionsRoute: SeedsApiScrappingOptionsRoute,
   SeedsApiSeedSubscriptionsRoute: SeedsApiSeedSubscriptionsRoute,
   SeedsApiSeedsRoute: SeedsApiSeedsRoute,
   SeedsApiStorePackagesRoute: SeedsApiStorePackagesRoute,
+  SeedsApiStuffRoute: SeedsApiStuffRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
   SeedsApiTimeframesRoute: SeedsApiTimeframesRoute,
 }

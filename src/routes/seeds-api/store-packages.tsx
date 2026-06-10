@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { EditRecordDialog, type FieldDef } from "@/components/seeds/EditRecordDialog";
+import {
+  StorePackageDetailDialog,
+  type StorePackageValues,
+} from "@/components/seeds/StorePackageDetailDialog";
 import { AddRecordDialog, type AddFieldDef } from "@/components/seeds/AddRecordDialog";
 import { useState } from "react";
 import { usePersistentState } from "@/hooks/usePersistentState";
@@ -26,11 +29,18 @@ export const Route = createFileRoute("/seeds-api/store-packages")({
   component: StorePackagesPage,
 });
 
-type Row = { name: string; store: string };
+type Row = {
+  name: string;
+  store: string;
+  status?: string;
+  geo?: string;
+  isAdHoc?: boolean;
+  limit?: string;
+};
 
 const INITIAL_ROWS: Row[] = [
-  { name: "PKG Amazon US", store: "Amazon US" },
-  { name: "PKG - MAT Amazon US", store: "Amazon US" },
+  { name: "PKG Amazon US", store: "Amazon US", status: "Active", geo: "MANUAL", isAdHoc: false, limit: "5" },
+  { name: "PKG - MAT Amazon US", store: "Amazon US", status: "Active", geo: "MANUAL", isAdHoc: false, limit: "5" },
 ];
 
 function StorePackagesPage() {
@@ -38,14 +48,16 @@ function StorePackagesPage() {
   const [selected, setSelected] = useState<Row | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
-  const editFields: FieldDef[] = selected
-    ? [
-        { kind: "text", label: "Name", value: selected.name, required: true, span: 2 },
-        { kind: "select", label: "Store", value: selected.store, required: true, options: STORE_OPTIONS },
-        { kind: "select", label: "Geolocation mode", value: "MANUAL", required: true, options: GEOLOC_OPTIONS },
-        { kind: "checkbox", label: "Is AdHoc" },
-      ]
-    : [];
+  const detailValues: StorePackageValues | null = selected
+    ? {
+        name: selected.name,
+        store: selected.store,
+        status: selected.status ?? "Active",
+        geo: selected.geo ?? "MANUAL",
+        isAdHoc: selected.isAdHoc ?? false,
+        limit: selected.limit ?? "5",
+      }
+    : null;
 
   const addFields: AddFieldDef[] = [
     { kind: "text", label: "Name", required: true, span: 2 },
@@ -91,8 +103,8 @@ function StorePackagesPage() {
               <tr key={r.name} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
                 <Td><LinkText>{r.store}</LinkText></Td>
-                <Td><Pill tone="violet">MANUAL</Pill></Td>
-                <Td><NoBadge /></Td>
+                <Td><Pill tone="violet">{r.geo ?? "MANUAL"}</Pill></Td>
+                <Td>{r.isAdHoc ? <Pill tone="green">Yes</Pill> : <NoBadge />}</Td>
                 <Td><UserCell email="rcarneiro@..." /></Td>
                 <Td><UserCell email="rcarneiro@..." /></Td>
                 <Td className="text-muted-foreground">20...</Td>
@@ -119,25 +131,31 @@ function StorePackagesPage() {
           const newRow: Row = {
             name: (values["Name"] as string) || "Untitled",
             store: values["Store"] as string,
+            status: "Active",
+            geo: (values["Geolocation mode"] as string) ?? "MANUAL",
+            isAdHoc: !!values["Is AdHoc"],
+            limit: "5",
           };
           setRows((prev) => [...prev, newRow]);
         }}
       />
 
-      <EditRecordDialog
+      <StorePackageDetailDialog
         open={!!selected}
         onOpenChange={(v) => { if (!v) setSelected(null); }}
-        title={selected?.name ?? ""}
-        saveLabel="Save store package"
-        fields={editFields}
+        initial={detailValues}
         onSave={(values) => {
           setRows((prev) =>
             prev.map((r) =>
               r.name === selected!.name
                 ? {
                     ...r,
-                    name: values["Name"] as string,
-                    store: values["Store"] as string,
+                    name: values.name,
+                    store: values.store,
+                    status: values.status,
+                    geo: values.geo,
+                    isAdHoc: values.isAdHoc,
+                    limit: values.limit,
                   }
                 : r,
             ),
