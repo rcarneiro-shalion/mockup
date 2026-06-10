@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { AppShell } from "@/components/layout/AppShell";
@@ -45,6 +45,7 @@ function SubscriptionsPage() {
   const [fScrap, setFScrap] = useState("");
   const [fGeo, setFGeo] = useState("");
   const sort = useSort();
+  const navigate = useNavigate();
 
   const q = query.trim().toLowerCase();
   const seedOptions = [...new Set(rows.flatMap((r) => r.seeds ?? []))].sort();
@@ -99,7 +100,22 @@ function SubscriptionsPage() {
             {sorted.map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelectedId(r.id)}>{r.name}</LinkText></Td>
-                <Td className="text-foreground/80">{r.project}</Td>
+                <Td>
+                  {projectIdByName.get(r.project) ? (
+                    <LinkText
+                      onClick={() =>
+                        navigate({
+                          to: "/seeds-api/projects/$projectId",
+                          params: { projectId: projectIdByName.get(r.project)! },
+                        })
+                      }
+                    >
+                      {r.project}
+                    </LinkText>
+                  ) : (
+                    <span className="text-foreground/80">{r.project}</span>
+                  )}
+                </Td>
                 <Td>
                   <div className="flex flex-wrap gap-1">
                     {clientsForSub(r).length ? (
