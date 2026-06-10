@@ -17,7 +17,16 @@ import {
   NoBadge,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, MoreVertical, ChevronDown, Store } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar, MoreVertical, Store } from "lucide-react";
+
+const SEED_TYPE_FILTER_OPTIONS = ["All", "URL", "API", "KEYWORD"];
 
 export const Route = createFileRoute("/seeds-api/seeds")({
   head: () => ({ meta: [{ title: "Seeds — Shalion" }] }),
@@ -38,6 +47,7 @@ function SeedsPage() {
   const [rows, setRows] = usePersistentState<Row[]>("seeds-api:seeds", INITIAL_ROWS);
   const [selected, setSelected] = useState<Row | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [seedType, setSeedType] = useState("All");
 
   const editFields: FieldDef[] = selected
     ? [
@@ -61,9 +71,16 @@ function SeedsPage() {
         <PageHeader
           title="Seeds"
           trailing={
-            <button className="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm">
-              All <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
+            <Select value={seedType} onValueChange={setSeedType}>
+              <SelectTrigger className="h-8 w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SEED_TYPE_FILTER_OPTIONS.map((o) => (
+                  <SelectItem key={o} value={o}>{o}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           }
           action={{ label: "Add seed", onClick: () => setAddOpen(true) }}
         />
