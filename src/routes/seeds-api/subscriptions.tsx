@@ -25,6 +25,8 @@ import {
   INITIAL_SUBSCRIPTIONS,
   type Subscription,
 } from "@/lib/subscriptions";
+import { getClientNames, getClientsForProject } from "@/lib/clients";
+import { getProjects } from "@/lib/projects";
 
 export const Route = createFileRoute("/seeds-api/subscriptions")({
   head: () => ({ meta: [{ title: "Subscriptions — Shalion" }] }),
@@ -36,6 +38,7 @@ function SubscriptionsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [fClient, setFClient] = useState("");
   const [fProject, setFProject] = useState("");
   const [fStore, setFStore] = useState("");
   const [fSeed, setFSeed] = useState("");
@@ -45,8 +48,12 @@ function SubscriptionsPage() {
 
   const q = query.trim().toLowerCase();
   const seedOptions = [...new Set(rows.flatMap((r) => r.seeds ?? []))].sort();
+  // subscription → project → client(s)
+  const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
+  const clientsForSub = (sub: Subscription) => getClientsForProject(projectIdByName.get(sub.project) ?? "");
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&
+    (!fClient || clientsForSub(r).includes(fClient)) &&
     (!fProject || r.project === fProject) &&
     (!fStore || r.store === fStore) &&
     (!fSeed || (r.seeds ?? []).includes(fSeed)) &&
@@ -64,6 +71,7 @@ function SubscriptionsPage() {
           action={{ label: "Add subscription", onClick: () => setAddOpen(true) }}
         />
         <FilterBar search="Search by name" searchValue={query} onSearchChange={setQuery}>
+          <FilterChip label="Clients" options={getClientNames()} value={fClient} onChange={setFClient} searchable />
           <FilterChip label="Projects" options={distinct(rows, (r) => r.project)} value={fProject} onChange={setFProject} />
           <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
           <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} />
