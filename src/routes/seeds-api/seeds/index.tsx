@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { EditRecordDialog, type FieldDef } from "@/components/seeds/EditRecordDialog";
-import { AddRecordDialog, type AddFieldDef } from "@/components/seeds/AddRecordDialog";
 import { STORE_OPTIONS, CATEGORY_OPTIONS } from "@/lib/seedOptions";
+import { SEEDS_KEY, INITIAL_SEEDS, type Seed } from "@/lib/seeds";
 import {
   PageHeader,
   FilterBar,
@@ -28,26 +28,18 @@ import { Calendar, MoreVertical, Store } from "lucide-react";
 
 const SEED_TYPE_FILTER_OPTIONS = ["All", "URL", "API", "KEYWORD"];
 
-export const Route = createFileRoute("/seeds-api/seeds")({
+export const Route = createFileRoute("/seeds-api/seeds/")({
   head: () => ({ meta: [{ title: "Seeds — Shalion" }] }),
   component: SeedsPage,
 });
 
-type Row = { d: string; store: string; cat: string; c: string; u: string };
-
-const INITIAL_ROWS: Row[] = [
-  { d: "chocolate", store: "Walmart US", cat: "Pantry > Chocolate > Choco...", c: "2025-04-25, 11:11:33", u: "2025-04-25, 11:11:33" },
-  { d: "water", store: "Amazon US", cat: "Beverages > Waters > Other", c: "2026-06-08, 16:03:09", u: "2026-06-08, 16:03:09" },
-  { d: "coffee", store: "Amazon US", cat: "Pantry > Coffee > Beans", c: "2026-01-30, 13:41:14", u: "2026-01-30, 13:41:14" },
-  { d: "Milk", store: "Walmart US", cat: "Pantry > Coffee > Beans", c: "2026-01-30, 13:42:59", u: "2026-06-09, 10:00:00" },
-  { d: "sample of keyword", store: "Walmart Mismo Dia MX", cat: "Beauty > Hair Care > Sham...", c: "2026-04-27, 12:43:10", u: "2026-04-27, 12:43:10" },
-];
-
 function SeedsPage() {
-  const [rows, setRows] = usePersistentState<Row[]>("seeds-api:seeds", INITIAL_ROWS);
-  const [selected, setSelected] = useState<Row | null>(null);
-  const [addOpen, setAddOpen] = useState(false);
+  const [rows, setRows] = usePersistentState<Seed[]>(SEEDS_KEY, INITIAL_SEEDS);
+  const [selected, setSelected] = useState<Seed | null>(null);
   const [seedType, setSeedType] = useState("All");
+  const navigate = useNavigate();
+
+  const visible = seedType === "All" ? rows : rows.filter((r) => (r.type ?? "") === seedType);
 
   const editFields: FieldDef[] = selected
     ? [
@@ -57,13 +49,6 @@ function SeedsPage() {
         { kind: "checkbox", label: "Is QA candidate" },
       ]
     : [];
-
-  const addFields: AddFieldDef[] = [
-    { kind: "text", label: "Description", required: true, span: 2 },
-    { kind: "select", label: "Store", required: true, options: STORE_OPTIONS },
-    { kind: "select", label: "Category", required: true, options: CATEGORY_OPTIONS },
-    { kind: "checkbox", label: "Is QA candidate" },
-  ];
 
   return (
     <AppShell>
@@ -82,7 +67,12 @@ function SeedsPage() {
               </SelectContent>
             </Select>
           }
-          action={{ label: "Add seed", onClick: () => setAddOpen(true) }}
+          action={{
+            label: "Add seed",
+            disabled: seedType === "All",
+            onClick: () =>
+              navigate({ to: "/seeds-api/seeds/new", search: { type: seedType as "URL" | "API" | "KEYWORD" } }),
+          }}
         />
         <FilterBar search="Search by Seed description">
           <FilterChip label="Ids" />
@@ -108,8 +98,8 @@ function SeedsPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.d} className="border-t border-border hover:bg-secondary/40">
+            {visible.map((r) => (
+              <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.d}</LinkText></Td>
                 <Td><LinkText>{r.store}</LinkText></Td>
                 <Td className="text-foreground/80">{r.cat}</Td>
@@ -126,27 +116,8 @@ function SeedsPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={rows.length} />
+        <Pagination total={visible.length} />
       </div>
-
-      <AddRecordDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        title="Add new seed"
-        saveLabel="Add seed"
-        fields={addFields}
-        onSave={(values) => {
-          const now = new Date().toISOString().replace("T", ", ").slice(0, 19);
-          const newRow: Row = {
-            d: (values["Description"] as string) || "Untitled",
-            store: values["Store"] as string,
-            cat: values["Category"] as string,
-            c: now,
-            u: now,
-          };
-          setRows((prev) => [...prev, newRow]);
-        }}
-      />
 
       <EditRecordDialog
         open={!!selected}
@@ -157,20 +128,15 @@ function SeedsPage() {
         onSave={(values) => {
           setRows((prev) =>
             prev.map((r) =>
-              r.d === selected!.d
-                ? {
-                    ...r,
-                    d: values["Description"] as string,
-                    store: values["Store"] as string,
-                    cat: values["Category"] as string,
-                  }
+              r.id === selected!.id
+                ? { ...r, d: values["Description"] as string, store: values["Store"] as string, cat: values["Category"] as string }
                 : r,
             ),
           );
           setSelected(null);
         }}
         onDelete={() => {
-          setRows((prev) => prev.filter((r) => r.d !== selected!.d));
+          setRows((prev) => prev.filter((r) => r.id !== selected!.id));
           setSelected(null);
         }}
       />

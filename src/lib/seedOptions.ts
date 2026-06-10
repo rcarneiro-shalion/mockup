@@ -87,6 +87,9 @@ export const LOCATION_SET_OPTIONS = [
 export const SEED_TYPE_OPTIONS = ["PDP", "URL", "API", "Keyword"];
 export const SCRAPPING_TYPE_OPTIONS = ["SHELF/SEARCH", "PLP", "AD", "MEDIA"];
 
+// Page type for a seed (used by the Add seed form).
+export const PAGE_TYPE_OPTIONS = ["SEARCH", "PLP", "PDP", "SHELF", "AD", "MEDIA"];
+
 export function readPersistedList<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
   try {
