@@ -3,13 +3,17 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Check, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { getProjects } from "@/lib/projects";
 import type { AssignedProject } from "@/lib/clients";
 
@@ -25,12 +29,14 @@ export function AssignProjectDialog({
   onAssign: (p: AssignedProject) => void;
 }) {
   const [projectId, setProjectId] = useState("");
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [activeFrom, setActiveFrom] = useState("");
   const [activeTo, setActiveTo] = useState("");
 
   useEffect(() => {
     if (open) {
       setProjectId("");
+      setPickerOpen(false);
       setActiveFrom("");
       setActiveTo("");
     }
@@ -62,18 +68,45 @@ export function AssignProjectDialog({
             <Label className="text-sm font-medium text-foreground/80">
               Project <span className="text-destructive">*</span>
             </Label>
-            <Select value={projectId || undefined} onValueChange={setProjectId}>
-              <SelectTrigger>
-                <SelectValue placeholder={available.length ? "Select a project" : "No projects available"} />
-              </SelectTrigger>
-              <SelectContent>
-                {available.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name} {p.bom ? `· ${p.bom}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  role="combobox"
+                  disabled={!available.length}
+                  className="flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
+                >
+                  <span className={cn(!selected && "text-muted-foreground")}>
+                    {selected
+                      ? `${selected.name}${selected.bom ? ` · ${selected.bom}` : ""}`
+                      : available.length
+                        ? "Select a project"
+                        : "No projects available"}
+                  </span>
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-0">
+                <Command>
+                  <CommandInput placeholder="Search projects" />
+                  <CommandList>
+                    <CommandEmpty>No projects found.</CommandEmpty>
+                    <CommandGroup>
+                      {available.map((p) => (
+                        <CommandItem
+                          key={p.id}
+                          value={`${p.name} ${p.bom ?? ""}`}
+                          onSelect={() => { setProjectId(p.id); setPickerOpen(false); }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", projectId === p.id ? "opacity-100" : "opacity-0")} />
+                          {p.name} {p.bom ? `· ${p.bom}` : ""}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
