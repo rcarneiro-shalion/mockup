@@ -1,3 +1,5 @@
+import { readPersistedList } from "./seedOptions";
+
 export type Client = {
   id: string;
   name: string;
@@ -26,6 +28,17 @@ export const INITIAL_CLIENTS: Client[] = [
   { id: "dent", name: "Dentsu", acronym: "DENT", isTest: false, meta: "{}", createdAt: "2025-06-16, 13:43:44", updatedAt: "2025-06-16, 15:16:11" },
   { id: "deol", name: "Deoleo", acronym: "DEOL", isTest: false, meta: "{}", createdAt: "2023-01-09, 08:05:29", updatedAt: "2024-08-06, 10:28:29" },
 ];
+
+/**
+ * Dynamic client list, sourced from the persisted Clients store (falling back
+ * to the seeded list / SSR). Use this everywhere a client dropdown is needed so
+ * the options stay in sync with the Clients datagrid instead of a static array.
+ */
+export function getClientNames(): string[] {
+  const list = readPersistedList<Client>(CLIENTS_KEY);
+  const src = list.length ? list : INITIAL_CLIENTS;
+  return src.map((c) => c.name);
+}
 
 export function emptyClient(): Client {
   return {

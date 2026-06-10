@@ -34,18 +34,9 @@ export const EXTRACTION_TYPE_OPTIONS = [
   "MEDIA",
 ];
 
-export const CLIENT_OPTIONS = [
-  "Coca cola",
-  "Nestlé",
-  "Pepsico",
-  "Lego",
-  "De Longhi",
-  "Dentsu",
-  "Samsumg",
-  "Bayer",
-  "AB Inbev",
-  "Unilever",
-];
+// Client options are no longer static — derive them from the Clients store via
+// getClientNames() in src/lib/clients.ts so dropdowns stay in sync with the
+// Clients datagrid.
 
 export const SEED_FREQUENCY_OPTIONS = [
   "NO_ROTATE_DAILY",

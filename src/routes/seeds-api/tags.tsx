@@ -5,7 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { EditRecordDialog, type FieldDef } from "@/components/seeds/EditRecordDialog";
 import { AddRecordDialog, type AddFieldDef } from "@/components/seeds/AddRecordDialog";
-import { CLIENT_OPTIONS } from "@/lib/seedOptions";
+import { getClientNames } from "@/lib/clients";
 import {
   PageHeader,
   FilterBar,
@@ -37,18 +37,19 @@ function TagsPage() {
   const [rows, setRows] = usePersistentState<Row[]>("seeds-api:tags", INITIAL_ROWS);
   const [selected, setSelected] = useState<Row | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const clientOptions = getClientNames();
 
   const editFields: FieldDef[] = selected
     ? [
         { kind: "text", label: "Name", value: selected.name, required: true, span: 2 },
-        { kind: "select", label: "Client", value: selected.client, required: true, options: CLIENT_OPTIONS },
+        { kind: "select", label: "Client", value: selected.client, required: true, options: clientOptions },
         { kind: "select", label: "Parent tag", value: selected.parent, muted: true },
       ]
     : [];
 
   const addFields: AddFieldDef[] = [
     { kind: "text", label: "Name", required: true, span: 2 },
-    { kind: "select", label: "Client", required: true, options: CLIENT_OPTIONS },
+    { kind: "select", label: "Client", required: true, options: clientOptions },
     { kind: "select", label: "Parent tag", muted: true },
   ];
 

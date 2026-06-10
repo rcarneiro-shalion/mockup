@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "lucide-react";
 import { toast } from "sonner";
-import { CLIENT_OPTIONS, readPersistedList } from "@/lib/seedOptions";
+import { readPersistedList } from "@/lib/seedOptions";
+import { getClientNames } from "@/lib/clients";
 
 export type SubscriptionRow = {
   id: string;
@@ -96,7 +97,7 @@ export function AddSubscriptionDialog({
             <Field label="Client" required>
               <OptionSelect
                 value={form.client ?? ""}
-                options={CLIENT_OPTIONS}
+                options={getClientNames()}
                 onChange={(v) => setForm((prev) => ({ ...prev, client: v }))}
               />
             </Field>
