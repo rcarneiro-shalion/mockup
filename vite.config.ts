@@ -12,4 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Force Nitro on with the Node server preset so the app can be self-hosted
+  // (e.g. Heroku). Outside a Lovable build the default would skip server
+  // bundling; node-server emits a standalone server at .output/server/index.mjs
+  // that listens on $PORT. (Inside Lovable the preset is forced to Cloudflare.)
+  nitro: { preset: "node-server" },
 });
