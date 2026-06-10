@@ -194,6 +194,22 @@ export function emptyRegion(): Region {
   return { id: genId(), name: "New region", locations: [] };
 }
 
+// Pool of locations that can be assigned to a region (mock).
+export const ASSIGNABLE_LOCATIONS = [
+  "2041619 Mobile County Health Department Newburn Clinic",
+  "208418 Dukuhan",
+  "1085495 White Pond",
+  "871713 Ashburnham State Forest",
+  "133270 Kebonpala",
+  "130565 Cemitério São Sebastião",
+  "50577 Walker Spring",
+  "Hytop",
+  "Rinvyle House",
+  "1003727 Township of Vesta",
+  "994210 Praça da Sé",
+  "77120 Riverside Market",
+];
+
 export const REGION_SYSTEMS_KEY = "retailers:region-systems";
 
 export const INITIAL_REGION_SYSTEMS: RegionSystem[] = [

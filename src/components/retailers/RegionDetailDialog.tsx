@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Th, Td, Pagination, LinkText } from "@/components/seeds/ListPrimitives";
-import { emptyRegion, type Region, type RegionLocation } from "@/lib/retailers";
+import { emptyRegion, ASSIGNABLE_LOCATIONS, type Region, type RegionLocation } from "@/lib/retailers";
 import { toast } from "sonner";
-import { Plus, Trash2, FileSpreadsheet } from "lucide-react";
+import { Plus, Trash2, FileSpreadsheet, X } from "lucide-react";
 
 export function RegionDetailDialog({
   open,
@@ -23,18 +23,19 @@ export function RegionDetailDialog({
   onDelete: () => void;
 }) {
   const [r, setR] = useState<Region>(emptyRegion());
+  const [assignOpen, setAssignOpen] = useState(false);
 
   useEffect(() => {
-    if (open && region) setR({ ...region, locations: region.locations ?? [] });
+    if (open && region) { setR({ ...region, locations: region.locations ?? [] }); setAssignOpen(false); }
   }, [open, region]);
 
   const set = <K extends keyof Region>(k: K, v: Region[K]) => setR((p) => ({ ...p, [k]: v }));
   const locations = r.locations ?? [];
 
-  const addLocation = () => {
+  const assignLocation = (name: string) => {
     const loc: RegionLocation = {
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-      name: "New location", city: "", address: "", postal: "", store: "",
+      name, city: "", address: "", postal: "", store: "",
     };
     set("locations", [...locations, loc]);
   };
@@ -68,7 +69,7 @@ export function RegionDetailDialog({
                 <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => toast.info("Export to Excel — coming soon")}>
                   <FileSpreadsheet className="h-3.5 w-3.5" /> Export to Excel (.xlsx)
                 </Button>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={addLocation}>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setAssignOpen(true)}>
                   <Plus className="h-3.5 w-3.5" /> Assign location
                 </Button>
               </div>
@@ -117,6 +118,34 @@ export function RegionDetailDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={() => { onSave(r); onOpenChange(false); }} disabled={!r.name.trim()}>Save region</Button>
         </div>
+
+        {/* Nested: Assign location picker */}
+        <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+          <DialogContent className="gap-0 p-0" style={{ maxWidth: 520 }}>
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <DialogTitle className="text-base font-semibold tracking-tight">Assign location</DialogTitle>
+              <button type="button" onClick={() => setAssignOpen(false)} className="mr-6 rounded-md p-1 text-muted-foreground hover:bg-secondary" aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="px-5 py-5">
+              <Label className="text-sm font-medium text-foreground/80">Location <span className="text-destructive">*</span></Label>
+              <div className="mt-1.5">
+                <Select
+                  value=""
+                  onValueChange={(v) => { assignLocation(v); setAssignOpen(false); }}
+                >
+                  <SelectTrigger><SelectValue placeholder=" " /></SelectTrigger>
+                  <SelectContent>
+                    {ASSIGNABLE_LOCATIONS.filter((n) => !locations.some((l) => l.name === n)).map((n) => (
+                      <SelectItem key={n} value={n}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
