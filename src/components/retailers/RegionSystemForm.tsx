@@ -9,7 +9,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Th, Td, Pagination, LinkText } from "@/components/seeds/ListPrimitives";
-import { COUNTRY_OPTIONS, countryLabel, type RegionSystem } from "@/lib/retailers";
+import { RegionDetailDialog } from "@/components/retailers/RegionDetailDialog";
+import { COUNTRY_OPTIONS, countryLabel, emptyRegion, type RegionSystem, type Region } from "@/lib/retailers";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, FileSpreadsheet } from "lucide-react";
 
@@ -28,8 +29,16 @@ export function RegionSystemForm({
   const set = <K extends keyof RegionSystem>(k: K, v: RegionSystem[K]) => setR((p) => ({ ...p, [k]: v }));
   const canSave = r.name.trim() && r.country.trim();
   const regions = r.regions ?? [];
-  const addRegion = () => set("regions", [...regions, "New region"]);
-  const removeRegion = (i: number) => set("regions", regions.filter((_, idx) => idx !== i));
+  const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
+  const selectedRegion = regions.find((x) => x.id === selectedRegionId) ?? null;
+  const addRegion = () => {
+    const reg = emptyRegion();
+    set("regions", [...regions, reg]);
+    setSelectedRegionId(reg.id);
+  };
+  const removeRegion = (id: string) => set("regions", regions.filter((x) => x.id !== id));
+  const saveRegion = (updated: Region) =>
+    set("regions", regions.map((x) => (x.id === updated.id ? updated : x)));
 
   const handleSave = async () => {
     if (!canSave) { toast.error("Name and Country are required"); return; }
@@ -92,11 +101,11 @@ export function RegionSystemForm({
                     <tbody>
                       {regions.length === 0 ? (
                         <tr><Td className="text-muted-foreground"><span className="block py-2">No regions yet.</span></Td><Td /></tr>
-                      ) : regions.map((name, i) => (
-                        <tr key={i} className="border-t border-border hover:bg-secondary/40">
-                          <Td><LinkText>{name}</LinkText></Td>
+                      ) : regions.map((reg) => (
+                        <tr key={reg.id} className="border-t border-border hover:bg-secondary/40">
+                          <Td><LinkText onClick={() => setSelectedRegionId(reg.id)}>{reg.name}</LinkText></Td>
                           <Td>
-                            <button onClick={() => removeRegion(i)} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive" aria-label={`Remove ${name}`}>
+                            <button onClick={() => removeRegion(reg.id)} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive" aria-label={`Remove ${reg.name}`}>
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </Td>
@@ -129,6 +138,14 @@ export function RegionSystemForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <RegionDetailDialog
+        open={selectedRegionId !== null}
+        onOpenChange={(v) => { if (!v) setSelectedRegionId(null); }}
+        region={selectedRegion}
+        onSave={saveRegion}
+        onDelete={() => { if (selectedRegionId) removeRegion(selectedRegionId); setSelectedRegionId(null); }}
+      />
     </AppShell>
   );
 }

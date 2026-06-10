@@ -148,21 +148,51 @@ export function emptyStore(): Store {
 
 // ---------- Region system ----------
 
+export type RegionLocation = {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
+  postal: string;
+  store: string;
+};
+
+export type Region = {
+  id: string;
+  name: string;
+  locations: RegionLocation[];
+};
+
 export type RegionSystem = {
   id: string;
   name: string;
   country: string;
-  regions?: string[];
+  regions?: Region[];
   createdAt: string;
   updatedAt: string;
 };
 
-const BR_STATES = [
+const BR_STATE_NAMES = [
   "Paraíba", "Rondônia", "Alagoas", "Mato Grosso", "Minas Gerais", "Mato Grosso do Sul",
   "Rio Grande do Sul", "Rio de Janeiro", "São Paulo", "Bahia", "Ceará", "Pará", "Paraná",
   "Pernambuco", "Santa Catarina", "Goiás", "Maranhão", "Espírito Santo", "Amazonas",
   "Rio Grande do Norte", "Piauí", "Distrito Federal", "Sergipe", "Tocantins", "Acre",
 ];
+
+const BR_STATES: Region[] = BR_STATE_NAMES.map((name, i) => ({
+  id: `br-${i}`,
+  name,
+  locations: i === 0
+    ? [
+        { id: "rl1", name: "Pao de Acucar BR", city: "João Pessoa - Paraíba", address: "Av. Governador Flávio Ribeiro Coutinho", postal: "58037-000", store: "Pao de Acucar BR" },
+        { id: "rl2", name: "João Pessoa - Carrefour BR", city: "João Pessoa - Paraíba", address: "Carrefour BR - R Brasília", postal: "58036-460", store: "Carrefour BR" },
+      ]
+    : [],
+}));
+
+export function emptyRegion(): Region {
+  return { id: genId(), name: "New region", locations: [] };
+}
 
 export const REGION_SYSTEMS_KEY = "retailers:region-systems";
 
