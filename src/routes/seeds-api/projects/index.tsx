@@ -19,7 +19,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { PROJECTS_KEY, INITIAL_PROJECTS, type Project } from "@/lib/projects";
-import { getClientsForProject } from "@/lib/clients";
+import { getClientsForProject, getClientNames } from "@/lib/clients";
+import { getSubscriptions } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
 import { Plus, Calendar, MoreVertical, MoreHorizontal, HelpCircle } from "lucide-react";
 
@@ -43,14 +44,26 @@ function ProjectsListPage() {
   const [query, setQuery] = useState("");
   const [fStatus, setFStatus] = useState("");
   const [fBom, setFBom] = useState("");
+  const [fClient, setFClient] = useState("");
+  const [fSubscription, setFSubscription] = useState("");
   const sort = useSort();
   const navigate = useNavigate();
+
+  const clientOptions = getClientNames();
+  const subscriptionOptions = [
+    ...new Set([
+      ...getSubscriptions().map((s) => s.name),
+      ...projects.flatMap((p) => (p.assignedSubscriptions ?? []).map((s) => s.name)),
+    ]),
+  ].sort();
 
   const q = query.trim().toLowerCase();
   const filtered = projects.filter((p) =>
     (!q || p.name.toLowerCase().includes(q)) &&
     (!fStatus || p.status === fStatus) &&
-    (!fBom || p.bom === fBom),
+    (!fBom || p.bom === fBom) &&
+    (!fClient || getClientsForProject(p.id).includes(fClient)) &&
+    (!fSubscription || (p.assignedSubscriptions ?? []).some((s) => s.name === fSubscription)),
   );
   const sorted = sortRows(filtered, sort, {
     clients: (p) => getClientsForProject(p.id).length,
@@ -76,6 +89,8 @@ function ProjectsListPage() {
         </div>
 
         <FilterBar search="Search by project name" searchValue={query} onSearchChange={setQuery}>
+          <FilterChip label="Clients" options={clientOptions} value={fClient} onChange={setFClient} searchable />
+          <FilterChip label="Subscriptions" options={subscriptionOptions} value={fSubscription} onChange={setFSubscription} searchable />
           <FilterChip label="Status" options={["Active", "Inactive"]} value={fStatus} onChange={setFStatus} />
           <FilterChip label="BoM" options={distinct(projects, (p) => p.bom)} value={fBom} onChange={setFBom} />
           <FilterChip label="Created at" icon={Calendar} />

@@ -21,6 +21,7 @@ export function FilterChip({
   value,
   onChange,
   getLabel,
+  searchable,
 }: {
   label: string;
   icon?: LucideIcon;
@@ -30,6 +31,8 @@ export function FilterChip({
   onChange?: (value: string) => void;
   /** Optional pretty label for an option value (e.g. country code → flag + name). */
   getLabel?: (value: string) => string;
+  /** Force the searchable popover even with ≤10 options. */
+  searchable?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const interactive = !!options && !!onChange;
@@ -54,8 +57,8 @@ export function FilterChip({
 
   if (!interactive) return trigger;
 
-  // Long lists → searchable popover.
-  if (options!.length > SEARCHABLE_THRESHOLD) {
+  // Long lists (or forced) → searchable popover.
+  if (searchable || options!.length > SEARCHABLE_THRESHOLD) {
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
