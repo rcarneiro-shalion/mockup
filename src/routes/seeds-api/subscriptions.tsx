@@ -60,7 +60,10 @@ function SubscriptionsPage() {
     (!fScrap || r.scrappingOption === fScrap) &&
     (!fGeo || r.geo === fGeo),
   );
-  const sorted = sortRows(filtered, sort, { seeds: (r) => (r.seeds ?? []).length });
+  const sorted = sortRows(filtered, sort, {
+    seeds: (r) => (r.seeds ?? []).length,
+    clients: (r) => clientsForSub(r).join(", "),
+  });
   const selected = rows.find((r) => r.id === selectedId) ?? null;
 
   return (
@@ -84,6 +87,7 @@ function SubscriptionsPage() {
             <tr>
               <SortTh label="Name" sortKey="name" sort={sort} />
               <SortTh label="Project" sortKey="project" sort={sort} />
+              <SortTh label="Clients" sortKey="clients" sort={sort} />
               <SortTh label="Seeds" sortKey="seeds" sort={sort} />
               <SortTh label="Scrapping option" sortKey="scrappingOption" sort={sort} />
               <SortTh label="Geoloc" sortKey="geo" sort={sort} />
@@ -96,6 +100,15 @@ function SubscriptionsPage() {
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelectedId(r.id)}>{r.name}</LinkText></Td>
                 <Td className="text-foreground/80">{r.project}</Td>
+                <Td>
+                  <div className="flex flex-wrap gap-1">
+                    {clientsForSub(r).length ? (
+                      clientsForSub(r).map((c) => <Pill key={c} tone="green">{c}</Pill>)
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
+                </Td>
                 <Td>
                   <div className="flex flex-wrap gap-1">
                     {(r.seeds ?? []).length ? (
