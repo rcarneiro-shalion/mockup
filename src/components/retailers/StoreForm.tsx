@@ -10,6 +10,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { FilterChip } from "@/components/seeds/FilterChip";
+import { StoreLocationDialog } from "@/components/retailers/StoreLocationDialog";
 import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimitives";
 import {
   getRetailers, STORE_CLASS_OPTIONS, DEVICE_OPTIONS, COUNTRY_OPTIONS, countryLabel,
@@ -41,10 +42,14 @@ export function StoreForm({
   const [tab, setTab] = useState<Tab>("locations");
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const set = <K extends keyof Store>(k: K, v: Store[K]) => setS((p) => ({ ...p, [k]: v }));
   const canSave = s.name.trim() && s.domain.trim() && s.retailer.trim();
   const retailerNames = getRetailers().map((r) => r.name);
   const locations = s.locations ?? [];
+  const selectedLocation = locations.find((l) => l.id === selectedLocationId) ?? null;
+  const saveLocation = (updated: StoreLocation) => set("locations", locations.map((l) => (l.id === updated.id ? updated : l)));
+  const removeLocation = (id: string) => set("locations", locations.filter((l) => l.id !== id));
 
   const handleSave = async () => {
     if (!canSave) { toast.error("Name, Domain url and Retailer are required"); return; }
@@ -57,6 +62,7 @@ export function StoreForm({
   const addLocation = () => {
     const loc: StoreLocation = { id: crypto.randomUUID?.() ?? String(Date.now()), name: "New location", locator: "{}", address: "", city: "", postal: "", status: "Active" };
     set("locations", [...locations, loc]);
+    setSelectedLocationId(loc.id);
   };
 
   return (
@@ -200,7 +206,7 @@ export function StoreForm({
                             <tr><Td className="text-muted-foreground"><span className="block py-2">No locations yet.</span></Td><Td /><Td /><Td /><Td /><Td /><Td /></tr>
                           ) : locations.map((l) => (
                             <tr key={l.id} className="border-t border-border hover:bg-secondary/40">
-                              <Td><LinkText>{l.name}</LinkText></Td>
+                              <Td><LinkText onClick={() => setSelectedLocationId(l.id)}>{l.name}</LinkText></Td>
                               <Td className="max-w-[140px] truncate font-mono text-xs text-muted-foreground">{l.locator}</Td>
                               <Td className="text-foreground/80">{l.address}</Td>
                               <Td className="text-foreground/80">{l.city}</Td>
@@ -240,6 +246,14 @@ export function StoreForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <StoreLocationDialog
+        open={selectedLocationId !== null}
+        onOpenChange={(v) => { if (!v) setSelectedLocationId(null); }}
+        location={selectedLocation}
+        onSave={saveLocation}
+        onDelete={() => { if (selectedLocationId) removeLocation(selectedLocationId); setSelectedLocationId(null); }}
+      />
     </AppShell>
   );
 }
