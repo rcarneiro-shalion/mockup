@@ -12,9 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RetailersRouteImport } from './routes/retailers'
 import { Route as IamRouteImport } from './routes/iam'
 import { Route as DataCollectorRouteImport } from './routes/data-collector'
-import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as BulkRouteImport } from './routes/bulk'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClientsIndexRouteImport } from './routes/clients/index'
 import { Route as SeedsApiTimeframesRouteImport } from './routes/seeds-api/timeframes'
 import { Route as SeedsApiTagsRouteImport } from './routes/seeds-api/tags'
 import { Route as SeedsApiStuffRouteImport } from './routes/seeds-api/stuff'
@@ -22,6 +22,8 @@ import { Route as SeedsApiStorePackagesRouteImport } from './routes/seeds-api/st
 import { Route as SeedsApiSeedsRouteImport } from './routes/seeds-api/seeds'
 import { Route as SeedsApiSeedSubscriptionsRouteImport } from './routes/seeds-api/seed-subscriptions'
 import { Route as SeedsApiScrappingOptionsRouteImport } from './routes/seeds-api/scrapping-options'
+import { Route as ClientsNewRouteImport } from './routes/clients/new'
+import { Route as ClientsClientIdRouteImport } from './routes/clients/$clientId'
 
 const RetailersRoute = RetailersRouteImport.update({
   id: '/retailers',
@@ -38,11 +40,6 @@ const DataCollectorRoute = DataCollectorRouteImport.update({
   path: '/data-collector',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClientsRoute = ClientsRouteImport.update({
-  id: '/clients',
-  path: '/clients',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const BulkRoute = BulkRouteImport.update({
   id: '/bulk',
   path: '/bulk',
@@ -51,6 +48,11 @@ const BulkRoute = BulkRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientsIndexRoute = ClientsIndexRouteImport.update({
+  id: '/clients/',
+  path: '/clients/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SeedsApiTimeframesRoute = SeedsApiTimeframesRouteImport.update({
@@ -90,14 +92,25 @@ const SeedsApiScrappingOptionsRoute =
     path: '/seeds-api/scrapping-options',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ClientsNewRoute = ClientsNewRouteImport.update({
+  id: '/clients/new',
+  path: '/clients/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientsClientIdRoute = ClientsClientIdRouteImport.update({
+  id: '/clients/$clientId',
+  path: '/clients/$clientId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bulk': typeof BulkRoute
-  '/clients': typeof ClientsRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
   '/retailers': typeof RetailersRoute
+  '/clients/$clientId': typeof ClientsClientIdRoute
+  '/clients/new': typeof ClientsNewRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
@@ -105,14 +118,16 @@ export interface FileRoutesByFullPath {
   '/seeds-api/stuff': typeof SeedsApiStuffRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
+  '/clients/': typeof ClientsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bulk': typeof BulkRoute
-  '/clients': typeof ClientsRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
   '/retailers': typeof RetailersRoute
+  '/clients/$clientId': typeof ClientsClientIdRoute
+  '/clients/new': typeof ClientsNewRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
@@ -120,15 +135,17 @@ export interface FileRoutesByTo {
   '/seeds-api/stuff': typeof SeedsApiStuffRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
+  '/clients': typeof ClientsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bulk': typeof BulkRoute
-  '/clients': typeof ClientsRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
   '/retailers': typeof RetailersRoute
+  '/clients/$clientId': typeof ClientsClientIdRoute
+  '/clients/new': typeof ClientsNewRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
@@ -136,16 +153,18 @@ export interface FileRoutesById {
   '/seeds-api/stuff': typeof SeedsApiStuffRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
+  '/clients/': typeof ClientsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/bulk'
-    | '/clients'
     | '/data-collector'
     | '/iam'
     | '/retailers'
+    | '/clients/$clientId'
+    | '/clients/new'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
@@ -153,14 +172,16 @@ export interface FileRouteTypes {
     | '/seeds-api/stuff'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
+    | '/clients/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/bulk'
-    | '/clients'
     | '/data-collector'
     | '/iam'
     | '/retailers'
+    | '/clients/$clientId'
+    | '/clients/new'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
@@ -168,14 +189,16 @@ export interface FileRouteTypes {
     | '/seeds-api/stuff'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
+    | '/clients'
   id:
     | '__root__'
     | '/'
     | '/bulk'
-    | '/clients'
     | '/data-collector'
     | '/iam'
     | '/retailers'
+    | '/clients/$clientId'
+    | '/clients/new'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
@@ -183,15 +206,17 @@ export interface FileRouteTypes {
     | '/seeds-api/stuff'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
+    | '/clients/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BulkRoute: typeof BulkRoute
-  ClientsRoute: typeof ClientsRoute
   DataCollectorRoute: typeof DataCollectorRoute
   IamRoute: typeof IamRoute
   RetailersRoute: typeof RetailersRoute
+  ClientsClientIdRoute: typeof ClientsClientIdRoute
+  ClientsNewRoute: typeof ClientsNewRoute
   SeedsApiScrappingOptionsRoute: typeof SeedsApiScrappingOptionsRoute
   SeedsApiSeedSubscriptionsRoute: typeof SeedsApiSeedSubscriptionsRoute
   SeedsApiSeedsRoute: typeof SeedsApiSeedsRoute
@@ -199,6 +224,7 @@ export interface RootRouteChildren {
   SeedsApiStuffRoute: typeof SeedsApiStuffRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
   SeedsApiTimeframesRoute: typeof SeedsApiTimeframesRoute
+  ClientsIndexRoute: typeof ClientsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -224,13 +250,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DataCollectorRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/clients': {
-      id: '/clients'
-      path: '/clients'
-      fullPath: '/clients'
-      preLoaderRoute: typeof ClientsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/bulk': {
       id: '/bulk'
       path: '/bulk'
@@ -243,6 +262,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clients/': {
+      id: '/clients/'
+      path: '/clients'
+      fullPath: '/clients/'
+      preLoaderRoute: typeof ClientsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seeds-api/timeframes': {
@@ -294,16 +320,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiScrappingOptionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clients/new': {
+      id: '/clients/new'
+      path: '/clients/new'
+      fullPath: '/clients/new'
+      preLoaderRoute: typeof ClientsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clients/$clientId': {
+      id: '/clients/$clientId'
+      path: '/clients/$clientId'
+      fullPath: '/clients/$clientId'
+      preLoaderRoute: typeof ClientsClientIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BulkRoute: BulkRoute,
-  ClientsRoute: ClientsRoute,
   DataCollectorRoute: DataCollectorRoute,
   IamRoute: IamRoute,
   RetailersRoute: RetailersRoute,
+  ClientsClientIdRoute: ClientsClientIdRoute,
+  ClientsNewRoute: ClientsNewRoute,
   SeedsApiScrappingOptionsRoute: SeedsApiScrappingOptionsRoute,
   SeedsApiSeedSubscriptionsRoute: SeedsApiSeedSubscriptionsRoute,
   SeedsApiSeedsRoute: SeedsApiSeedsRoute,
@@ -311,6 +352,7 @@ const rootRouteChildren: RootRouteChildren = {
   SeedsApiStuffRoute: SeedsApiStuffRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
   SeedsApiTimeframesRoute: SeedsApiTimeframesRoute,
+  ClientsIndexRoute: ClientsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
