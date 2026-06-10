@@ -1,5 +1,6 @@
-# This is the CODEOWNERS file for this repository
+# Tech team owns all code by default
+* @shalion/tech-general @shalion/tech-managers
 
-# Assign all pull requests to the repository owner
-
-* @rcarneiro-shalion
+# Platform team overrides for GitHub config and Terraform infrastructure
+.github/ @shalion/platforms-general @shalion/platforms-manager
+terraform/ @shalion/platforms-general @shalion/platforms-manager
