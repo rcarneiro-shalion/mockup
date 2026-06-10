@@ -13,10 +13,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Retailer } from "@/lib/retailers";
+import { Link } from "@tanstack/react-router";
+import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimitives";
+import { getStores, type Retailer } from "@/lib/retailers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ArrowLeft, ChevronUp, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
 
 export function RetailerForm({
   mode,
@@ -34,8 +36,11 @@ export function RetailerForm({
   const [r, setR] = useState<Retailer>(initial);
   const [metaOpen, setMetaOpen] = useState(true);
   const [metaEditing, setMetaEditing] = useState(false);
+  const [storesOpen, setStoresOpen] = useState(true);
+  const [dashOpen, setDashOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const retailerStores = getStores().filter((st) => st.retailer === r.name);
 
   const set = <K extends keyof Retailer>(k: K, v: Retailer[K]) => setR((p) => ({ ...p, [k]: v }));
   const canSave = r.name.trim() && r.logoUrl.trim();
@@ -59,9 +64,12 @@ export function RetailerForm({
             <button type="button" onClick={onCancel} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-4 w-4" /> Retailers
             </button>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight text-foreground">
-              {mode === "add" ? "Add retailer" : r.name || "Retailer"}
-            </h1>
+            <div className="mt-1 flex items-center gap-2">
+              {mode === "edit" && r.logoUrl ? <img src={r.logoUrl} alt="" className="h-7 max-w-[110px] object-contain" /> : null}
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                {mode === "add" ? "Add retailer" : r.name || "Retailer"}
+              </h1>
+            </div>
           </div>
           {mode === "edit" && onDelete && (
             <button type="button" onClick={() => setShowDeleteConfirm(true)} className="rounded-md border border-border p-2 text-muted-foreground hover:bg-secondary hover:text-destructive" aria-label="Delete retailer">
@@ -110,6 +118,71 @@ export function RetailerForm({
                 />
               )}
             </div>
+
+            {/* Stores (belonging to this retailer) */}
+            {mode === "edit" && (
+              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <button type="button" onClick={() => setStoresOpen((v) => !v)} className="flex items-center gap-2">
+                    <span className="grid h-7 w-7 place-items-center rounded-md bg-secondary text-muted-foreground">
+                      <ChevronUp className={cn("h-4 w-4 transition-transform", !storesOpen && "rotate-180")} />
+                    </span>
+                    <span className="text-base font-semibold text-foreground">Stores</span>
+                  </button>
+                  <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
+                    <Link to="/stores/new"><Plus className="h-3.5 w-3.5" /> Add store</Link>
+                  </Button>
+                </div>
+                {storesOpen && (
+                  <>
+                    <div className="mt-4 overflow-hidden rounded-lg border border-border">
+                      <table className="w-full text-sm">
+                        <thead className="bg-secondary/60">
+                          <tr><Th>Name</Th><Th>Domain</Th><Th>Type</Th><Th>Class</Th><Th>Device</Th><Th>Created at</Th><Th>Status</Th><Th className="w-10" /></tr>
+                        </thead>
+                        <tbody>
+                          {retailerStores.length === 0 ? (
+                            <tr><Td className="text-muted-foreground"><span className="block py-2">No stores for this retailer yet.</span></Td><Td /><Td /><Td /><Td /><Td /><Td /><Td /></tr>
+                          ) : retailerStores.map((st) => (
+                            <tr key={st.id} className="border-t border-border hover:bg-secondary/40">
+                              <Td><LinkText>{st.name}</LinkText></Td>
+                              <Td><LinkText>{st.domain}</LinkText></Td>
+                              <Td><Pill tone={st.type === "GEOLOC" ? "amber" : "blue"}>{st.type}</Pill></Td>
+                              <Td><Pill tone="slate">{st.klass}</Pill></Td>
+                              <Td><Pill tone="slate">{st.device}</Pill></Td>
+                              <Td className="text-muted-foreground">{st.createdAt}</Td>
+                              <Td>
+                                <span className="inline-flex items-center gap-1.5 text-sm text-foreground/80">
+                                  <span className={cn("h-1.5 w-1.5 rounded-full", st.status === "Active" ? "bg-emerald-500" : "bg-slate-400")} />
+                                  {st.status}
+                                </span>
+                              </Td>
+                              <Td><button className="rounded p-1 text-muted-foreground hover:bg-secondary"><Pencil className="h-3.5 w-3.5" /></button></Td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <Pagination total={retailerStores.length} />
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Dashboard sections (placeholder) */}
+            {mode === "edit" && (
+              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+                <button type="button" onClick={() => setDashOpen((v) => !v)} className="flex items-center gap-2">
+                  <span className="grid h-7 w-7 place-items-center rounded-md bg-secondary text-muted-foreground">
+                    <ChevronUp className={cn("h-4 w-4 transition-transform", !dashOpen && "rotate-180")} />
+                  </span>
+                  <span className="text-base font-semibold text-foreground">Dashboard sections</span>
+                </button>
+                {dashOpen && (
+                  <p className="mt-4 text-sm text-muted-foreground">No dashboard sections configured for this retailer yet.</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

@@ -6,6 +6,15 @@ export const STORE_TYPE_OPTIONS = ["GEOLOC", "FLAGSHIP"];
 export const STORE_CLASS_OPTIONS = ["BRICK_AND_CLICK", "MARKETPLACE", "SPECIALIST", "AGGREGATOR"];
 export const DEVICE_OPTIONS = ["WEB", "APP"];
 
+export const TIMEZONE_OPTIONS = [
+  "UTC", "America/New_York", "America/Chicago", "America/Mexico_City", "America/Sao_Paulo",
+  "Europe/Madrid", "Europe/Amsterdam", "Europe/Paris", "Europe/Berlin", "Asia/Bangkok", "Africa/Johannesburg",
+];
+
+export const LOCALE_OPTIONS = [
+  "en-US", "es-ES", "es-MX", "pt-BR", "nl-NL", "fr-FR", "de-DE", "it-IT", "en-ZA", "th-TH",
+];
+
 export const COUNTRY_OPTIONS = [
   "US", "ES", "BR", "MX", "FR", "DE", "IT", "NL", "BE", "GR",
   "HU", "ZA", "TH", "PE", "RO", "CO", "UY", "PA", "QA", "AR", "CL", "CA", "EC", "MM", "LT",
@@ -15,6 +24,19 @@ export const COUNTRY_OPTIONS = [
 export function flag(code?: string): string {
   if (!code || code.length !== 2) return "";
   return code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
+
+export const COUNTRY_NAMES: Record<string, string> = {
+  US: "United States", ES: "Spain", BR: "Brazil", MX: "Mexico", FR: "France",
+  DE: "Germany", IT: "Italy", NL: "Netherlands", BE: "Belgium", GR: "Greece",
+  HU: "Hungary", ZA: "South Africa", TH: "Thailand", PE: "Peru", RO: "Romania",
+  CO: "Colombia", UY: "Uruguay", PA: "Panama", QA: "Qatar", AR: "Argentina",
+  CL: "Chile", CA: "Canada", EC: "Ecuador", MM: "Myanmar", LT: "Lithuania",
+};
+
+export function countryLabel(code?: string): string {
+  if (!code) return "";
+  return `${flag(code)} ${COUNTRY_NAMES[code] ?? code}`;
 }
 
 function genId() {
@@ -61,6 +83,16 @@ export function emptyRetailer(): Retailer {
 
 // ---------- Store ----------
 
+export type StoreLocation = {
+  id: string;
+  name: string;
+  locator: string;
+  address: string;
+  city: string;
+  postal: string;
+  status: "Active" | "Inactive";
+};
+
 export type Store = {
   id: string;
   name: string;
@@ -71,6 +103,12 @@ export type Store = {
   device: string; // WEB | APP
   country: string;
   status: "Active" | "Inactive";
+  ecometryId?: string;
+  timezone?: string;
+  locale?: string;
+  logoUrl?: string;
+  meta?: string; // JSON string
+  locations?: StoreLocation[];
   createdAt: string;
   updatedAt: string;
 };
@@ -78,7 +116,13 @@ export type Store = {
 export const STORES_KEY = "retailers:stores";
 
 export const INITIAL_STORES: Store[] = [
-  { id: "st1", name: "Walmart Mismo Dia MX", domain: "walmart.com.mx", retailer: "Walmart MX", type: "GEOLOC", klass: "BRICK_AND_CLICK", device: "WEB", country: "MX", status: "Active", createdAt: "Mon, Jan 9, 2023 8:00", updatedAt: "Mon, Jan 9, 2023 8:00" },
+  { id: "st1", name: "Walmart Mismo Dia MX", domain: "walmart.com.mx", retailer: "Walmart MX", type: "GEOLOC", klass: "BRICK_AND_CLICK", device: "WEB", country: "MX", status: "Active", ecometryId: "4530", timezone: "America/Mexico_City", locale: "es-MX", logoUrl: "https://media.shalion.com/console-images/stores/walmart.svg", meta: "{}", locations: [
+    { id: "loc1", name: "Villahermosa I - 88060", locator: "{\"cookie\":\"...\"}", address: "Blvd. Adolfo Ruiz Cortinez 496 Col. Casa", city: "Tabasco", postal: "86060", status: "Active" },
+    { id: "loc2", name: "Av Patria No 2051, Col Real Acueducto", locator: "{\"cookie\":\"...\"}", address: "Av Patria No 2051, Col Real Acueducto", city: "Jalisco", postal: "45116", status: "Active" },
+    { id: "loc3", name: "Navarte - Superama - Navarte", locator: "{\"cookie\":\"...\"}", address: "Superama - Calzada de Tlalpan", city: "Ciudad de Mexico", postal: "03650", status: "Active" },
+    { id: "loc4", name: "WE BOSQUES DE MINAS", locator: "{\"isExplicitInterc\":true}", address: "BOSQUES DE MINAS A XX HUIXQUILUC", city: "Estado de Mexico", postal: "52785", status: "Active" },
+    { id: "loc5", name: "Cd Jardin - Walmart - Av. Bord...", locator: "{\"cookie\":\"...\"}", address: "Walmart - Av. Bordo de Xochiaca 3", city: "Estado de Mexico", postal: "50000", status: "Active" },
+  ], createdAt: "Mon, Jan 9, 2023 8:00", updatedAt: "Mon, Jan 9, 2023 8:00" },
   { id: "st2", name: "Magazine Luiza BR - The Bar", domain: "magazineluiza.com.br-th...", retailer: "Magazine Luiza BR", type: "GEOLOC", klass: "MARKETPLACE", device: "WEB", country: "BR", status: "Active", createdAt: "Wed, Jan 1, 2025 9:00", updatedAt: "Wed, Jan 1, 2025 9:00" },
   { id: "st3", name: "Fnac ES", domain: "fnac.es", retailer: "Fnac ES", type: "FLAGSHIP", klass: "BRICK_AND_CLICK", device: "WEB", country: "ES", status: "Active", createdAt: "Wed, Jan 1, 2025 9:00", updatedAt: "Wed, Jan 1, 2025 9:00" },
   { id: "st4", name: "Petsmart US", domain: "petsmart.com", retailer: "Petsmart US", type: "GEOLOC", klass: "SPECIALIST", device: "WEB", country: "US", status: "Active", createdAt: "Thu, Jan 2, 2025 9:00", updatedAt: "Thu, Jan 2, 2025 9:00" },
@@ -99,7 +143,7 @@ export function getStores(): Store[] {
 }
 
 export function emptyStore(): Store {
-  return { id: genId(), name: "", domain: "", retailer: "", type: "GEOLOC", klass: "BRICK_AND_CLICK", device: "WEB", country: "", status: "Active", createdAt: nowStamp(), updatedAt: nowStamp() };
+  return { id: genId(), name: "", domain: "", retailer: "", type: "GEOLOC", klass: "BRICK_AND_CLICK", device: "WEB", country: "", status: "Active", ecometryId: "", timezone: "", locale: "", logoUrl: "", meta: "{}", locations: [], createdAt: nowStamp(), updatedAt: nowStamp() };
 }
 
 // ---------- Region system ----------
@@ -108,9 +152,17 @@ export type RegionSystem = {
   id: string;
   name: string;
   country: string;
+  regions?: string[];
   createdAt: string;
   updatedAt: string;
 };
+
+const BR_STATES = [
+  "Paraíba", "Rondônia", "Alagoas", "Mato Grosso", "Minas Gerais", "Mato Grosso do Sul",
+  "Rio Grande do Sul", "Rio de Janeiro", "São Paulo", "Bahia", "Ceará", "Pará", "Paraná",
+  "Pernambuco", "Santa Catarina", "Goiás", "Maranhão", "Espírito Santo", "Amazonas",
+  "Rio Grande do Norte", "Piauí", "Distrito Federal", "Sergipe", "Tocantins", "Acre",
+];
 
 export const REGION_SYSTEMS_KEY = "retailers:region-systems";
 
@@ -118,7 +170,7 @@ export const INITIAL_REGION_SYSTEMS: RegionSystem[] = [
   { id: "rs1", name: "LT - Administrative Region", country: "LT", createdAt: "Tue, Apr 8, 2025 2:49", updatedAt: "Tue, Apr 8, 2025 2:49" },
   { id: "rs2", name: "ZA - Provinces", country: "ZA", createdAt: "Mon, Aug 12, 2024 8:00", updatedAt: "Mon, Aug 12, 2024 8:00" },
   { id: "rs3", name: "CO - Coke Bottlers", country: "CO", createdAt: "Mon, May 19, 2025 8:00", updatedAt: "Mon, May 19, 2025 8:00" },
-  { id: "rs4", name: "BR - Unidades Federativas do Brasil", country: "BR", createdAt: "Thu, Jun 20, 2024 11:10", updatedAt: "Sun, Jul 21, 2024 9:30" },
+  { id: "rs4", name: "BR - Unidades Federativas do Brasil", country: "BR", regions: BR_STATES, createdAt: "Thu, Jun 20, 2024 11:10", updatedAt: "Sun, Jul 21, 2024 9:30" },
   { id: "rs5", name: "UY - Coke Bottlers", country: "UY", createdAt: "Mon, May 19, 2025 8:00", updatedAt: "Mon, May 19, 2025 8:00" },
   { id: "rs6", name: "PA - Coke Bottlers", country: "PA", createdAt: "Mon, May 19, 2025 8:00", updatedAt: "Mon, May 19, 2025 8:00" },
   { id: "rs7", name: "QA - Municipality", country: "QA", createdAt: "Tue, Dec 24, 2024 6:30", updatedAt: "Thu, Dec 26, 2024 6:00" },
@@ -136,7 +188,7 @@ export function getRegionSystems(): RegionSystem[] {
 }
 
 export function emptyRegionSystem(): RegionSystem {
-  return { id: genId(), name: "", country: "", createdAt: nowStamp(), updatedAt: nowStamp() };
+  return { id: genId(), name: "", country: "", regions: [], createdAt: nowStamp(), updatedAt: nowStamp() };
 }
 
 // ---------- shared persistence read (SSR-safe) ----------
