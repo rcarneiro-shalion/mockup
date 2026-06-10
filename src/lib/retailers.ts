@@ -60,7 +60,7 @@ export const RETAILERS_KEY = "retailers:retailers";
 // Representative subset — the full list has ~1,191 retailers.
 const R = (id: string, name: string, createdAt: string, updatedAt: string): Retailer => ({ id, name, logoUrl: "", meta: "{}", createdAt, updatedAt });
 
-export const INITIAL_RETAILERS: Retailer[] = [
+const BASE_RETAILERS: Retailer[] = [
   R("r1", "24 Pharma BE", "Mon, Jan 9, 2023 8:05 AM", "Tue, Dec 12, 2023 9:22 AM"),
   R("r2", "7 - Eleven APP TH", "Wed, Aug 13, 2025 3:22 PM", "Wed, Aug 13, 2025 3:22 PM"),
   R("r3", "99Food BR", "Thu, Nov 13, 2025 11:35 AM", "Thu, Nov 13, 2025 11:35 AM"),
@@ -288,6 +288,20 @@ export const INITIAL_STORES: Store[] = [
   S("st80", "e-Leclerc FR", "e-leclerc.com", "Leclerc FR", "FLAGSHIP", "BRICK_AND_CLICK", "WEB", "FR"),
   S("st81", "Olovo RO - FSA", "gotovaapp.com/ro", "Olovo RO", "GEOLOC", "AGGREGATOR", "WEB", "RO"),
 ];
+
+// Every retailer referenced by a store's "Retailer" column should exist as a
+// Retailer record (so its Stores sub-table is populated). Merge the distinct
+// store retailers that aren't already in the base list.
+function retailerSlugId(name: string): string {
+  return "ret-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+const baseRetailerNames = new Set(BASE_RETAILERS.map((r) => r.name));
+const derivedRetailers: Retailer[] = [...new Set(INITIAL_STORES.map((s) => s.retailer))]
+  .filter((name) => name && !baseRetailerNames.has(name))
+  .map((name) => R(retailerSlugId(name), name, "Mon, Jan 9, 2023 8:05 AM", "Mon, Dec 11, 2023 11:24 AM"));
+
+export const INITIAL_RETAILERS: Retailer[] = [...BASE_RETAILERS, ...derivedRetailers];
 
 export function getStores(): Store[] {
   const list = readList<Store>(STORES_KEY);
