@@ -38,7 +38,6 @@ const nav: NavItem[] = [
       { label: "Subscriptions", to: "/seeds-api/subscriptions" },
       { label: "Tags", to: "/seeds-api/tags" },
       { label: "Timeframes", to: "/seeds-api/timeframes" },
-      { label: "Seed subscriptions", to: "/seeds-api/seed-subscriptions", legacy: true },
     ],
   },
   { label: "Tasks", icon: ListTodo, children: [] },

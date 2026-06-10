@@ -19,7 +19,6 @@ import { Route as SeedsApiTimeframesRouteImport } from './routes/seeds-api/timef
 import { Route as SeedsApiTagsRouteImport } from './routes/seeds-api/tags'
 import { Route as SeedsApiSubscriptionsRouteImport } from './routes/seeds-api/subscriptions'
 import { Route as SeedsApiSeedsRouteImport } from './routes/seeds-api/seeds'
-import { Route as SeedsApiSeedSubscriptionsRouteImport } from './routes/seeds-api/seed-subscriptions'
 import { Route as SeedsApiScrappingOptionsRouteImport } from './routes/seeds-api/scrapping-options'
 import { Route as ClientsNewRouteImport } from './routes/clients/new'
 import { Route as ClientsClientIdRouteImport } from './routes/clients/$clientId'
@@ -77,12 +76,6 @@ const SeedsApiSeedsRoute = SeedsApiSeedsRouteImport.update({
   path: '/seeds-api/seeds',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SeedsApiSeedSubscriptionsRoute =
-  SeedsApiSeedSubscriptionsRouteImport.update({
-    id: '/seeds-api/seed-subscriptions',
-    path: '/seeds-api/seed-subscriptions',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const SeedsApiScrappingOptionsRoute =
   SeedsApiScrappingOptionsRouteImport.update({
     id: '/seeds-api/scrapping-options',
@@ -125,7 +118,6 @@ export interface FileRoutesByFullPath {
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/new': typeof ClientsNewRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
-  '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
@@ -144,7 +136,6 @@ export interface FileRoutesByTo {
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/new': typeof ClientsNewRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
-  '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
@@ -164,7 +155,6 @@ export interface FileRoutesById {
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/new': typeof ClientsNewRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
-  '/seeds-api/seed-subscriptions': typeof SeedsApiSeedSubscriptionsRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
@@ -185,7 +175,6 @@ export interface FileRouteTypes {
     | '/clients/$clientId'
     | '/clients/new'
     | '/seeds-api/scrapping-options'
-    | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
@@ -204,7 +193,6 @@ export interface FileRouteTypes {
     | '/clients/$clientId'
     | '/clients/new'
     | '/seeds-api/scrapping-options'
-    | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
@@ -223,7 +211,6 @@ export interface FileRouteTypes {
     | '/clients/$clientId'
     | '/clients/new'
     | '/seeds-api/scrapping-options'
-    | '/seeds-api/seed-subscriptions'
     | '/seeds-api/seeds'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
@@ -243,7 +230,6 @@ export interface RootRouteChildren {
   ClientsClientIdRoute: typeof ClientsClientIdRoute
   ClientsNewRoute: typeof ClientsNewRoute
   SeedsApiScrappingOptionsRoute: typeof SeedsApiScrappingOptionsRoute
-  SeedsApiSeedSubscriptionsRoute: typeof SeedsApiSeedSubscriptionsRoute
   SeedsApiSeedsRoute: typeof SeedsApiSeedsRoute
   SeedsApiSubscriptionsRoute: typeof SeedsApiSubscriptionsRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
@@ -326,13 +312,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiSeedsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/seeds-api/seed-subscriptions': {
-      id: '/seeds-api/seed-subscriptions'
-      path: '/seeds-api/seed-subscriptions'
-      fullPath: '/seeds-api/seed-subscriptions'
-      preLoaderRoute: typeof SeedsApiSeedSubscriptionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/seeds-api/scrapping-options': {
       id: '/seeds-api/scrapping-options'
       path: '/seeds-api/scrapping-options'
@@ -387,7 +366,6 @@ const rootRouteChildren: RootRouteChildren = {
   ClientsClientIdRoute: ClientsClientIdRoute,
   ClientsNewRoute: ClientsNewRoute,
   SeedsApiScrappingOptionsRoute: SeedsApiScrappingOptionsRoute,
-  SeedsApiSeedSubscriptionsRoute: SeedsApiSeedSubscriptionsRoute,
   SeedsApiSeedsRoute: SeedsApiSeedsRoute,
   SeedsApiSubscriptionsRoute: SeedsApiSubscriptionsRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
