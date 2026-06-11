@@ -87,8 +87,9 @@ function MethodCard({ m, open, onToggle }: { m: BulkMethod; open: boolean; onTog
   );
 }
 
-/** The bulk-methods manual/helper, shown in a modal triggered from the Bulk page. */
-export function BulkMethodsModal({ trigger }: { trigger?: React.ReactNode }) {
+/** The bulk-methods catalogue body (filters + grouped cards). Fills its parent
+ *  flex column; reused by the Bulk page modal and the help modal appendix. */
+export function BulkMethodsCatalogue() {
   const [q, setQ] = useState("");
   const [actions, setActions] = useState<string[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
@@ -107,6 +108,56 @@ export function BulkMethodsModal({ trigger }: { trigger?: React.ReactNode }) {
   });
   const id = (m: BulkMethod) => `${m.entity}::${m.action}`;
 
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-6 py-3">
+        <div className="relative min-w-[220px] flex-1">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search methods by entity, goal or field"
+            className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+        <FilterChip label="Group" icon={Layers} options={[...BULK_GROUPS]} value={groups} onChange={setGroups} />
+        <FilterChip label="Action" icon={Wand2} options={allActions} value={actions} onChange={setActions} />
+      </div>
+
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
+        {BULK_GROUPS.filter((g) => filtered.some((m) => m.group === g)).map((g) => {
+          const methods = filtered.filter((m) => m.group === g);
+          return (
+            <div key={g}>
+              <div className="mb-2 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-foreground">{g}</h3>
+                <span className="text-xs text-muted-foreground">{methods.length}</span>
+              </div>
+              <div className="space-y-2">
+                {methods.map((m) => (
+                  <MethodCard
+                    key={id(m)}
+                    m={m}
+                    open={!!open[id(m)]}
+                    onToggle={() => setOpen((p) => ({ ...p, [id(m)]: !p[id(m)] }))}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        {filtered.length === 0 && (
+          <div className="flex flex-col items-center gap-2 py-16 text-center">
+            <FileSpreadsheet className="h-8 w-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">No bulk methods match your filters.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** The bulk-methods manual/helper, shown in a modal triggered from the Bulk page. */
+export function BulkMethodsModal({ trigger }: { trigger?: React.ReactNode }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -130,49 +181,7 @@ export function BulkMethodsModal({ trigger }: { trigger?: React.ReactNode }) {
             fill it in following the mandatory fields and particularities, then upload it on this page.
           </p>
         </DialogHeader>
-
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-6 py-3">
-          <div className="relative min-w-[220px] flex-1">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search methods by entity, goal or field"
-              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <FilterChip label="Group" icon={Layers} options={[...BULK_GROUPS]} value={groups} onChange={setGroups} />
-          <FilterChip label="Action" icon={Wand2} options={allActions} value={actions} onChange={setActions} />
-        </div>
-
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
-          {BULK_GROUPS.filter((g) => filtered.some((m) => m.group === g)).map((g) => {
-            const methods = filtered.filter((m) => m.group === g);
-            return (
-              <div key={g}>
-                <div className="mb-2 flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-foreground">{g}</h3>
-                  <span className="text-xs text-muted-foreground">{methods.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {methods.map((m) => (
-                    <MethodCard
-                      key={id(m)}
-                      m={m}
-                      open={!!open[id(m)]}
-                      onToggle={() => setOpen((p) => ({ ...p, [id(m)]: !p[id(m)] }))}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-          {filtered.length === 0 && (
-            <div className="flex flex-col items-center gap-2 py-16 text-center">
-              <FileSpreadsheet className="h-8 w-8 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">No bulk methods match your filters.</p>
-            </div>
-          )}
-        </div>
+        <BulkMethodsCatalogue />
       </DialogContent>
     </Dialog>
   );

@@ -100,6 +100,17 @@ export const DASHBOARD_CONFIG_GROUPS: GuideGroup[] = [
     ],
   },
   {
+    category: "Brand vs Agency dashboards",
+    rules: [
+      "A data group is typed Brand or Agency, and the type decides how dashboard sections are attached and how the client is scoped.",
+      "Brand — sections are attached directly to the data group (Clients → Data groups → Dashboard sections), giving one consolidated view across the client's scope, with no forced retailer filter. Used for brand-scoped products (e.g. Market Share, Digital Shelf or CMI for a single brand).",
+      "Agency — sections are attached per retailer (Retailers → Dashboard sections), so each retailer can surface different dashboards and the client picks a retailer to view it. It is \"Agency\" precisely because retailers differ. Used by Retail Media (RMM / RMMS), where data is syndicated and sold per retailer.",
+      "To set up a Brand dashboard: in the client's data group, assign the dashboard sections (and whole section groups) it should expose, give them an order, and set the countries it covers — those become the dashboards the client can open.",
+      "To set up an Agency dashboard: open each retailer and define its Dashboard sections (which dashboards that retailer surfaces); the agency client then sees, per retailer, the sections configured on that retailer.",
+      "Why an Agency dashboard needs a client-retailer-tag: Agency views force a country + retailer filter, so the client must be linked to the retailers (and their categories) it is entitled to. The client-retailer-tag defines those retailer & category options and feeds the dashboard's retailer and category filters — without it the Agency dashboard has no retailers to scope to.",
+    ],
+  },
+  {
     category: "The data behind it (cubes, rules, scopes)",
     rules: [
       "Cubes are the analytics datasets (e.g. Sales, Share of Shelf); each is bound to a data group, which decides what data a dashboard can query.",

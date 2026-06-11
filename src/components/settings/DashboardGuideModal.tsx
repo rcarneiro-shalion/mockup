@@ -8,21 +8,91 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  DASHBOARD_PRODUCTS,
-  DASHBOARD_CONFIG_GROUPS,
-} from "@/lib/dashboardGuide";
+import { DASHBOARD_PRODUCTS, DASHBOARD_CONFIG_GROUPS } from "@/lib/dashboardGuide";
 import { BookOpen, LayoutDashboard, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Tab = "products" | "config";
 
+/** The dashboard guide body (Products / Configuration tabs). Fills its parent
+ *  flex column; reused by the dashboard modal and the help modal appendix. */
+export function DashboardGuideContent() {
+  const [tab, setTab] = useState<Tab>("products");
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex shrink-0 gap-1.5 border-b border-border px-6 py-3">
+        <TabBtn active={tab === "products"} onClick={() => setTab("products")} icon={LayoutDashboard}>
+          Products
+        </TabBtn>
+        <TabBtn active={tab === "config"} onClick={() => setTab("config")} icon={Settings2}>
+          How configuration drives the dashboard
+        </TabBtn>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        {tab === "products" ? (
+          <div className="space-y-3">
+            {DASHBOARD_PRODUCTS.map((p) => (
+              <div key={p.code} className="rounded-lg border border-border bg-card p-4">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-md bg-[var(--sidebar-active)] px-2 py-0.5 text-xs font-semibold text-[var(--sidebar-active-fg)]">
+                    {p.code}
+                  </span>
+                  <h3 className="text-sm font-semibold text-foreground">{p.name}</h3>
+                </div>
+                <p className="mt-1.5 text-sm text-foreground/90">{p.tagline}</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{p.measures}</p>
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {p.dashboards.map((d) => (
+                    <span
+                      key={d}
+                      className="rounded-full border border-border bg-secondary/60 px-2 py-0.5 text-[11px] text-foreground/80"
+                    >
+                      {d}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {DASHBOARD_CONFIG_GROUPS.map((g) => (
+              <div key={g.category}>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {g.category}
+                </h3>
+                <ul className="mt-2 space-y-2">
+                  {g.rules.map((r, i) => (
+                    <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-foreground/90">
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--sidebar-active-fg)]" />
+                      <span>{r}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="shrink-0 border-t border-border px-6 py-3 text-right">
+        <Link
+          to="/settings/dashboard-applications/manual"
+          className="text-sm text-[var(--sidebar-active-fg)] hover:underline"
+        >
+          Open the full dashboard manual →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 /** Helper modal explaining the Maestro products and how the Ecometry
  *  configuration drives the client dashboards. Triggered from the
  *  Dashboard applications page. */
 export function DashboardGuideModal({ trigger }: { trigger?: React.ReactNode }) {
-  const [tab, setTab] = useState<Tab>("products");
-
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -43,72 +113,7 @@ export function DashboardGuideModal({ trigger }: { trigger?: React.ReactNode }) 
             Ecometry drives the dashboards clients see.
           </p>
         </DialogHeader>
-
-        {/* Tab switch */}
-        <div className="flex shrink-0 gap-1.5 border-b border-border px-6 py-3">
-          <TabBtn active={tab === "products"} onClick={() => setTab("products")} icon={LayoutDashboard}>
-            Products
-          </TabBtn>
-          <TabBtn active={tab === "config"} onClick={() => setTab("config")} icon={Settings2}>
-            How configuration drives the dashboard
-          </TabBtn>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-          {tab === "products" ? (
-            <div className="space-y-3">
-              {DASHBOARD_PRODUCTS.map((p) => (
-                <div key={p.code} className="rounded-lg border border-border bg-card p-4">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-md bg-[var(--sidebar-active)] px-2 py-0.5 text-xs font-semibold text-[var(--sidebar-active-fg)]">
-                      {p.code}
-                    </span>
-                    <h3 className="text-sm font-semibold text-foreground">{p.name}</h3>
-                  </div>
-                  <p className="mt-1.5 text-sm text-foreground/90">{p.tagline}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{p.measures}</p>
-                  <div className="mt-2.5 flex flex-wrap gap-1.5">
-                    {p.dashboards.map((d) => (
-                      <span
-                        key={d}
-                        className="rounded-full border border-border bg-secondary/60 px-2 py-0.5 text-[11px] text-foreground/80"
-                      >
-                        {d}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {DASHBOARD_CONFIG_GROUPS.map((g) => (
-                <div key={g.category}>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {g.category}
-                  </h3>
-                  <ul className="mt-2 space-y-2">
-                    {g.rules.map((r, i) => (
-                      <li key={i} className="flex gap-2.5 text-sm leading-relaxed text-foreground/90">
-                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--sidebar-active-fg)]" />
-                        <span>{r}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="shrink-0 border-t border-border px-6 py-3 text-right">
-          <Link
-            to="/settings/dashboard-applications/manual"
-            className="text-sm text-[var(--sidebar-active-fg)] hover:underline"
-          >
-            Open the full dashboard manual →
-          </Link>
-        </div>
+        <DashboardGuideContent />
       </DialogContent>
     </Dialog>
   );
