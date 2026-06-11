@@ -7,6 +7,8 @@ import {
   DASHBOARD_SECTION_CATALOGUE,
   DASHBOARD_CREATION_STEPS,
   DASHBOARD_PIPELINE,
+  DASHBOARD_DATA_SOURCES,
+  DASHBOARD_DATA_SOURCES_NOTE,
 } from "@/lib/dashboardGuide";
 import { ArrowLeft } from "lucide-react";
 
@@ -19,6 +21,7 @@ const TOC: { id: string; title: string }[] = [
   { id: "products", title: "The Maestro products" },
   ...DASHBOARD_CONFIG_GROUPS.map((g) => ({ id: slug(g.category), title: g.category })),
   { id: "section-catalogue", title: "Dashboard sections catalogue" },
+  { id: "data-sources", title: "Where the dashboard gets its data" },
   { id: "creating", title: "Creating a dashboard" },
   { id: "pipeline", title: "Behind the scenes (dbt & Snowflake)" },
 ];
@@ -155,6 +158,28 @@ export function DashboardManual() {
                     </div>
                   ))}
                 </div>
+              </section>
+
+              <section className="space-y-3">
+                <SectionTitle id="data-sources">Where the dashboard gets its data</SectionTitle>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  The client dashboard (dashboard-frontend) is a thin layer — it reads everything
+                  from backend services:
+                </p>
+                <div className="space-y-2.5">
+                  {DASHBOARD_DATA_SOURCES.map((s) => (
+                    <div key={s.api} className="rounded-lg border border-border bg-card p-4">
+                      <div className="flex items-baseline gap-2">
+                        <h3 className="text-sm font-semibold text-foreground">{s.api}</h3>
+                        <span className="text-xs text-muted-foreground">— {s.via}</span>
+                      </div>
+                      <Bullets items={s.calls} />
+                    </div>
+                  ))}
+                </div>
+                <p className="rounded-lg border border-dashed border-border bg-secondary/30 p-3 text-sm leading-relaxed text-muted-foreground">
+                  {DASHBOARD_DATA_SOURCES_NOTE}
+                </p>
               </section>
 
               <section className="space-y-3">

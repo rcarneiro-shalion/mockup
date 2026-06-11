@@ -148,6 +148,70 @@ export const DASHBOARD_CREATION_STEPS: { title: string; text: string }[] = [
   { title: "Final approval", text: "Signed off by the Project Owner and Product Manager before going live." },
 ];
 
+// Backend services the client dashboard (dashboard-frontend) queries, and for what.
+export const DASHBOARD_DATA_SOURCES: { api: string; via: string; calls: string[] }[] = [
+  {
+    api: "Visualization API",
+    via: "the dashboard config + data groups + Looker",
+    calls: [
+      "The dashboard application structure — applications, groups, sections, tabs, panels (/dashboardapplications).",
+      "Which sections a client opens: Brand sections for their data group (/datagroup-dashboardsections) and Agency sections per retailer (/retailers/{id}/retailer-dashboardsections).",
+      "The signed-in user, their data groups and the active one (/user-info, /datagroups, /user-info/datagroups/{id}).",
+      "Retailers and category tags used to populate filters (/client-retailer-tags…).",
+      "Looker embed URLs for legacy dashboards (/looker/embed).",
+    ],
+  },
+  {
+    api: "IAM",
+    via: "auth & permissions",
+    calls: [
+      "The account/tenant resolved from the subdomain (/accounts/slug/{subdomain}).",
+      "The user's authorities/permissions for each application (/users/authorities/application-slug=…).",
+    ],
+  },
+  {
+    api: "Cube.dev",
+    via: "the actual KPI data",
+    calls: [
+      "Runs the real metric queries (/cubejs-api/v1/load) and reads the cube schema (/cubejs-api/v1/meta).",
+      "Every query carries a Cube JWT scoped to the data group + client + user, so a client can only read its own data.",
+    ],
+  },
+  {
+    api: "Product API",
+    via: "image validation",
+    calls: [
+      "SKU image-comparison validations and exports (/image-comparison-validations, /retailer-image-comparison-validations, /image-references/exports).",
+    ],
+  },
+  {
+    api: "Clients API",
+    via: "perfect store",
+    calls: [
+      "Perfect-store filters and data (/perfect-store/filters/{retailers,stores,brands,client-skus}, /perfect-store/data).",
+    ],
+  },
+  {
+    api: "Maestro API",
+    via: "the AI assistant",
+    calls: [
+      "Conversations, messages, feedback and highlights per application (/{app}/conversations…).",
+    ],
+  },
+  {
+    api: "Embeddable, Slides & Alerts",
+    via: "embedding, reports & alerts",
+    calls: [
+      "Embeddable: a security token to embed dashboards (/security-token).",
+      "Slides API: report templates and generated reports (/templates, /reports).",
+      "Alerts API: client alerts (/alerts).",
+    ],
+  },
+];
+
+export const DASHBOARD_DATA_SOURCES_NOTE =
+  "The dashboard does not call backoffice-api directly. The client, retailer and dashboard configuration it relies on is set up in Ecometry / backoffice and reaches the dashboard through the Visualization API (and the dbt pipeline).";
+
 export const DASHBOARD_PIPELINE: string[] = [
   "All dashboard configuration originates in Ecometry and is replicated (via Airbyte) into Snowflake staging models: dashboard application, group and section, plus the data-group, retailer and cube bindings.",
   "dbt builds the marts (e.g. market share, digital shelf) and tags each row with its data group and dashboard type, so dashboards can slice the data correctly.",
