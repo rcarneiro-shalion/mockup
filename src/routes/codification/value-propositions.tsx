@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/layout/PlaceholderPage";
+import { EntityListPage } from "@/components/common/EntityListPage";
+import { SPECS } from "@/lib/approxEntities";
 
 export const Route = createFileRoute("/codification/value-propositions")({
-  component: () => <PlaceholderPage title="Value propositions" />,
+  head: () => ({ meta: [{ title: "Value propositions — Shalion" }] }),
+  component: () => <EntityListPage spec={SPECS["value-propositions"]} />,
 });

@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/layout/PlaceholderPage";
+import { EntityListPage } from "@/components/common/EntityListPage";
+import { SPECS } from "@/lib/approxEntities";
 
 export const Route = createFileRoute("/bulk")({
-  component: () => <PlaceholderPage title="Bulk" />,
+  head: () => ({ meta: [{ title: "Bulk — Shalion" }] }),
+  component: () => <EntityListPage spec={SPECS["bulk"]} />,
 });

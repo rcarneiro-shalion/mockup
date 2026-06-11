@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/layout/PlaceholderPage";
+import { EntityListPage } from "@/components/common/EntityListPage";
+import { SPECS } from "@/lib/approxEntities";
 
 export const Route = createFileRoute("/codification/fsa-listings")({
-  component: () => <PlaceholderPage title="Fsa listings" />,
+  head: () => ({ meta: [{ title: "FSA listings — Shalion" }] }),
+  component: () => <EntityListPage spec={SPECS["fsa-listings"]} />,
 });

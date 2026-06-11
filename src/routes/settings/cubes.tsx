@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/layout/PlaceholderPage";
+import { EntityListPage } from "@/components/common/EntityListPage";
+import { SPECS } from "@/lib/approxEntities";
 
 export const Route = createFileRoute("/settings/cubes")({
-  component: () => <PlaceholderPage title="Cubes" />,
+  head: () => ({ meta: [{ title: "Cubes — Shalion" }] }),
+  component: () => <EntityListPage spec={SPECS["settings-cubes"]} />,
 });

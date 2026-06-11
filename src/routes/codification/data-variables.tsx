@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/layout/PlaceholderPage";
+import { EntityListPage } from "@/components/common/EntityListPage";
+import { SPECS } from "@/lib/approxEntities";
 
 export const Route = createFileRoute("/codification/data-variables")({
-  component: () => <PlaceholderPage title="Data variables" />,
+  head: () => ({ meta: [{ title: "Data variables — Shalion" }] }),
+  component: () => <EntityListPage spec={SPECS["data-variables"]} />,
 });

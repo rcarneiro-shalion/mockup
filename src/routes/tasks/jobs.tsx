@@ -1,11 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/layout/PlaceholderPage";
+import { EntityListPage } from "@/components/common/EntityListPage";
+import { SPECS } from "@/lib/approxEntities";
 
 export const Route = createFileRoute("/tasks/jobs")({
-  component: () => (
-    <PlaceholderPage
-      title="Jobs"
-      notice="The Tasks section is being replaced by the new Seeds API. The migration is rolling out over the coming weeks — new configuration should be created in Seeds API."
-    />
-  ),
+  head: () => ({ meta: [{ title: "Jobs — Shalion" }] }),
+  component: () => <EntityListPage spec={SPECS["tasks-jobs"]} />,
 });

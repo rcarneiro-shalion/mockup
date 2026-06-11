@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/layout/PlaceholderPage";
+import { EntityListPage } from "@/components/common/EntityListPage";
+import { SPECS } from "@/lib/approxEntities";
 
 export const Route = createFileRoute("/product/sku-text-references")({
-  component: () => <PlaceholderPage title="Sku text references" />,
+  head: () => ({ meta: [{ title: "Sku text references — Shalion" }] }),
+  component: () => <EntityListPage spec={SPECS["sku-text-references"]} />,
 });
