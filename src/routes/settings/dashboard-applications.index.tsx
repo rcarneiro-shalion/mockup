@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { SettingsList, type SettingsColumn } from "@/components/settings/SettingsList";
+import { DashboardGuideModal } from "@/components/settings/DashboardGuideModal";
 import { LinkText } from "@/components/seeds/ListPrimitives";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { toast } from "sonner";
@@ -63,6 +64,7 @@ function DashboardApplicationsPage() {
       columns={columns}
       rows={rows}
       onDelete={(id) => setRows((prev) => prev.filter((r) => r.id !== id))}
+      headerActions={<DashboardGuideModal />}
     />
   );
 }

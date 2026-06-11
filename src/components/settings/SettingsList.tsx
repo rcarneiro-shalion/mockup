@@ -27,6 +27,7 @@ export function SettingsList<T extends { id: string }>({
   rows,
   onDelete,
   extra,
+  headerActions,
 }: {
   title: string;
   newLabel: string;
@@ -38,6 +39,8 @@ export function SettingsList<T extends { id: string }>({
   rows: T[];
   onDelete: (id: string) => void;
   extra?: ReactNode;
+  /** Extra controls rendered in the header, before the New button. */
+  headerActions?: ReactNode;
 }) {
   const [query, setQuery] = useState("");
   const sort = useSort();
@@ -53,10 +56,13 @@ export function SettingsList<T extends { id: string }>({
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between px-6 pt-5">
           <h1 className="text-[17px] font-semibold text-foreground">{title}</h1>
-          <Button size="sm" className="h-8 gap-1.5" onClick={onNew ?? (() => toast.info(`${newLabel} — coming soon`))}>
-            <Plus className="h-4 w-4" />
-            {newLabel}
-          </Button>
+          <div className="flex items-center gap-2">
+            {headerActions}
+            <Button size="sm" className="h-8 gap-1.5" onClick={onNew ?? (() => toast.info(`${newLabel} — coming soon`))}>
+              <Plus className="h-4 w-4" />
+              {newLabel}
+            </Button>
+          </div>
         </div>
         <FilterBar search={searchPlaceholder} searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Created at" icon={Calendar} />
