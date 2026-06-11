@@ -19,6 +19,13 @@ import { Route as RegionSystemsIndexRouteImport } from './routes/region-systems/
 import { Route as ClientsIndexRouteImport } from './routes/clients/index'
 import { Route as StoresNewRouteImport } from './routes/stores/new'
 import { Route as StoresStoreIdRouteImport } from './routes/stores/$storeId'
+import { Route as SettingsTimeframesRouteImport } from './routes/settings/timeframes'
+import { Route as SettingsTargetsRouteImport } from './routes/settings/targets'
+import { Route as SettingsRulesRouteImport } from './routes/settings/rules'
+import { Route as SettingsDashboardApplicationsRouteImport } from './routes/settings/dashboard-applications'
+import { Route as SettingsCountryGroupsRouteImport } from './routes/settings/country-groups'
+import { Route as SettingsCategoriesRouteImport } from './routes/settings/categories'
+import { Route as SettingsBoxesRouteImport } from './routes/settings/boxes'
 import { Route as SeedsApiTimeframesRouteImport } from './routes/seeds-api/timeframes'
 import { Route as SeedsApiTagsRouteImport } from './routes/seeds-api/tags'
 import { Route as SeedsApiSubscriptionsRouteImport } from './routes/seeds-api/subscriptions'
@@ -88,6 +95,42 @@ const StoresNewRoute = StoresNewRouteImport.update({
 const StoresStoreIdRoute = StoresStoreIdRouteImport.update({
   id: '/stores/$storeId',
   path: '/stores/$storeId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsTimeframesRoute = SettingsTimeframesRouteImport.update({
+  id: '/settings/timeframes',
+  path: '/settings/timeframes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsTargetsRoute = SettingsTargetsRouteImport.update({
+  id: '/settings/targets',
+  path: '/settings/targets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRulesRoute = SettingsRulesRouteImport.update({
+  id: '/settings/rules',
+  path: '/settings/rules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsDashboardApplicationsRoute =
+  SettingsDashboardApplicationsRouteImport.update({
+    id: '/settings/dashboard-applications',
+    path: '/settings/dashboard-applications',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SettingsCountryGroupsRoute = SettingsCountryGroupsRouteImport.update({
+  id: '/settings/country-groups',
+  path: '/settings/country-groups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsCategoriesRoute = SettingsCategoriesRouteImport.update({
+  id: '/settings/categories',
+  path: '/settings/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsBoxesRoute = SettingsBoxesRouteImport.update({
+  id: '/settings/boxes',
+  path: '/settings/boxes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SeedsApiTimeframesRoute = SeedsApiTimeframesRouteImport.update({
@@ -211,6 +254,13 @@ export interface FileRoutesByFullPath {
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
+  '/settings/boxes': typeof SettingsBoxesRoute
+  '/settings/categories': typeof SettingsCategoriesRoute
+  '/settings/country-groups': typeof SettingsCountryGroupsRoute
+  '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRoute
+  '/settings/rules': typeof SettingsRulesRoute
+  '/settings/targets': typeof SettingsTargetsRoute
+  '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
   '/stores/new': typeof StoresNewRoute
   '/clients/': typeof ClientsIndexRoute
@@ -242,6 +292,13 @@ export interface FileRoutesByTo {
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
+  '/settings/boxes': typeof SettingsBoxesRoute
+  '/settings/categories': typeof SettingsCategoriesRoute
+  '/settings/country-groups': typeof SettingsCountryGroupsRoute
+  '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRoute
+  '/settings/rules': typeof SettingsRulesRoute
+  '/settings/targets': typeof SettingsTargetsRoute
+  '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
   '/stores/new': typeof StoresNewRoute
   '/clients': typeof ClientsIndexRoute
@@ -275,6 +332,13 @@ export interface FileRoutesById {
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
+  '/settings/boxes': typeof SettingsBoxesRoute
+  '/settings/categories': typeof SettingsCategoriesRoute
+  '/settings/country-groups': typeof SettingsCountryGroupsRoute
+  '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRoute
+  '/settings/rules': typeof SettingsRulesRoute
+  '/settings/targets': typeof SettingsTargetsRoute
+  '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
   '/stores/new': typeof StoresNewRoute
   '/clients/': typeof ClientsIndexRoute
@@ -309,6 +373,13 @@ export interface FileRouteTypes {
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
+    | '/settings/boxes'
+    | '/settings/categories'
+    | '/settings/country-groups'
+    | '/settings/dashboard-applications'
+    | '/settings/rules'
+    | '/settings/targets'
+    | '/settings/timeframes'
     | '/stores/$storeId'
     | '/stores/new'
     | '/clients/'
@@ -340,6 +411,13 @@ export interface FileRouteTypes {
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
+    | '/settings/boxes'
+    | '/settings/categories'
+    | '/settings/country-groups'
+    | '/settings/dashboard-applications'
+    | '/settings/rules'
+    | '/settings/targets'
+    | '/settings/timeframes'
     | '/stores/$storeId'
     | '/stores/new'
     | '/clients'
@@ -372,6 +450,13 @@ export interface FileRouteTypes {
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
+    | '/settings/boxes'
+    | '/settings/categories'
+    | '/settings/country-groups'
+    | '/settings/dashboard-applications'
+    | '/settings/rules'
+    | '/settings/targets'
+    | '/settings/timeframes'
     | '/stores/$storeId'
     | '/stores/new'
     | '/clients/'
@@ -405,6 +490,13 @@ export interface RootRouteChildren {
   SeedsApiSubscriptionsRoute: typeof SeedsApiSubscriptionsRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
   SeedsApiTimeframesRoute: typeof SeedsApiTimeframesRoute
+  SettingsBoxesRoute: typeof SettingsBoxesRoute
+  SettingsCategoriesRoute: typeof SettingsCategoriesRoute
+  SettingsCountryGroupsRoute: typeof SettingsCountryGroupsRoute
+  SettingsDashboardApplicationsRoute: typeof SettingsDashboardApplicationsRoute
+  SettingsRulesRoute: typeof SettingsRulesRoute
+  SettingsTargetsRoute: typeof SettingsTargetsRoute
+  SettingsTimeframesRoute: typeof SettingsTimeframesRoute
   StoresStoreIdRoute: typeof StoresStoreIdRoute
   StoresNewRoute: typeof StoresNewRoute
   ClientsIndexRoute: typeof ClientsIndexRoute
@@ -489,6 +581,55 @@ declare module '@tanstack/react-router' {
       path: '/stores/$storeId'
       fullPath: '/stores/$storeId'
       preLoaderRoute: typeof StoresStoreIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/timeframes': {
+      id: '/settings/timeframes'
+      path: '/settings/timeframes'
+      fullPath: '/settings/timeframes'
+      preLoaderRoute: typeof SettingsTimeframesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/targets': {
+      id: '/settings/targets'
+      path: '/settings/targets'
+      fullPath: '/settings/targets'
+      preLoaderRoute: typeof SettingsTargetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/rules': {
+      id: '/settings/rules'
+      path: '/settings/rules'
+      fullPath: '/settings/rules'
+      preLoaderRoute: typeof SettingsRulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/dashboard-applications': {
+      id: '/settings/dashboard-applications'
+      path: '/settings/dashboard-applications'
+      fullPath: '/settings/dashboard-applications'
+      preLoaderRoute: typeof SettingsDashboardApplicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/country-groups': {
+      id: '/settings/country-groups'
+      path: '/settings/country-groups'
+      fullPath: '/settings/country-groups'
+      preLoaderRoute: typeof SettingsCountryGroupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/categories': {
+      id: '/settings/categories'
+      path: '/settings/categories'
+      fullPath: '/settings/categories'
+      preLoaderRoute: typeof SettingsCategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/boxes': {
+      id: '/settings/boxes'
+      path: '/settings/boxes'
+      fullPath: '/settings/boxes'
+      preLoaderRoute: typeof SettingsBoxesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seeds-api/timeframes': {
@@ -667,6 +808,13 @@ const rootRouteChildren: RootRouteChildren = {
   SeedsApiSubscriptionsRoute: SeedsApiSubscriptionsRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
   SeedsApiTimeframesRoute: SeedsApiTimeframesRoute,
+  SettingsBoxesRoute: SettingsBoxesRoute,
+  SettingsCategoriesRoute: SettingsCategoriesRoute,
+  SettingsCountryGroupsRoute: SettingsCountryGroupsRoute,
+  SettingsDashboardApplicationsRoute: SettingsDashboardApplicationsRoute,
+  SettingsRulesRoute: SettingsRulesRoute,
+  SettingsTargetsRoute: SettingsTargetsRoute,
+  SettingsTimeframesRoute: SettingsTimeframesRoute,
   StoresStoreIdRoute: StoresStoreIdRoute,
   StoresNewRoute: StoresNewRoute,
   ClientsIndexRoute: ClientsIndexRoute,

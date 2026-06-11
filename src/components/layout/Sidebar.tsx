@@ -59,7 +59,19 @@ const nav: NavItem[] = [
     ],
   },
   { label: "Bulk", icon: ShoppingBag, to: "/bulk" },
-  { label: "Settings", icon: Settings, children: [] },
+  {
+    label: "Settings",
+    icon: Settings,
+    children: [
+      { label: "Dashboard applications", to: "/settings/dashboard-applications" },
+      { label: "Targets", to: "/settings/targets" },
+      { label: "Timeframes", to: "/settings/timeframes" },
+      { label: "Categories", to: "/settings/categories" },
+      { label: "Boxes", to: "/settings/boxes" },
+      { label: "Country groups", to: "/settings/country-groups" },
+      { label: "Rules", to: "/settings/rules" },
+    ],
+  },
 ];
 
 export function Sidebar() {
