@@ -33,9 +33,10 @@ import {
   emptySubscription,
   type Subscription,
 } from "@/lib/subscriptions";
+import { AssignedSeeds } from "@/components/seeds/AssignedSeeds";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Plus, Trash2, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 export function SubscriptionDialog({
   open,
@@ -68,14 +69,8 @@ export function SubscriptionDialog({
   const set = <K extends keyof Subscription>(k: K, val: Subscription[K]) =>
     setV((prev) => ({ ...prev, [k]: val }));
 
-  const seedOptions = readPersistedList<{ d: string }>("seeds-api:seeds").map((s) => s.d);
-  const allSeeds = seedOptions.length ? seedOptions : ["water", "coffee", "chocolate", "Milk"];
   const scrappingOptionNames = readPersistedList<{ name: string }>("seeds-api:scrapping-options").map((s) => s.name);
   const projectNames = getProjects().map((p) => p.name);
-
-  const addSeed = (s: string) => { if (!v.seeds.includes(s)) set("seeds", [...v.seeds, s]); };
-  const removeSeed = (s: string) => set("seeds", v.seeds.filter((x) => x !== s));
-  const availableSeeds = allSeeds.filter((s) => !v.seeds.includes(s));
 
   const locationEnabled = v.geo === "MANUAL";
 
@@ -133,36 +128,6 @@ export function SubscriptionDialog({
                 <SelectBox value={v.store} onChange={(x) => set("store", x)} options={STORE_OPTIONS} />
               </Field>
 
-              {/* Seeds — list of seeds (1:N) */}
-              <Field label="Seeds" required className="sm:col-span-2">
-                <div className="flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5">
-                  {v.seeds.length === 0 && (
-                    <span className="px-1 text-sm text-muted-foreground">No seeds selected</span>
-                  )}
-                  {v.seeds.map((s) => (
-                    <span key={s} className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
-                      {s}
-                      <button type="button" onClick={() => removeSeed(s)} className="text-muted-foreground hover:text-destructive" aria-label={`Remove ${s}`}>
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                  {availableSeeds.length > 0 && (
-                    <Select value="" onValueChange={addSeed}>
-                      <SelectTrigger className="h-6 w-auto gap-1 border-dashed px-2 text-xs text-muted-foreground">
-                        <Plus className="h-3 w-3" />
-                        <span>Add seed</span>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableSeeds.map((s) => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              </Field>
-
               <Field label="Scrapping option" required className="sm:col-span-2">
                 <SelectBox value={v.scrappingOption} onChange={(x) => set("scrappingOption", x)} options={scrappingOptionNames} />
               </Field>
@@ -183,6 +148,10 @@ export function SubscriptionDialog({
               <Field label="Frequency">
                 <SelectBox value={v.frequency} onChange={(x) => set("frequency", x)} options={FREQUENCY_OPTIONS} />
               </Field>
+            </section>
+
+            <section className="mt-6 border-t border-border pt-5">
+              <AssignedSeeds seeds={v.seeds} onChange={(next) => set("seeds", next)} />
             </section>
           </div>
 
