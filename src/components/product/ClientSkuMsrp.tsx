@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { ChevronUp, Plus, HelpCircle, Calendar as CalendarIcon, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronUp, Plus, HelpCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { toast } from "sonner";
 
 type Scope = "global" | "region" | "store" | "regionStore";
@@ -179,19 +179,7 @@ export function ClientSkuMsrp() {
                       <Td className="text-muted-foreground">{row.createdAt}</Td>
                       <Td className="text-muted-foreground">{row.updatedAt}</Td>
                       <Td>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="rounded p-1 hover:bg-secondary">
-                              <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => toast.info("Edit (prototype)")}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(row.id)} className="text-destructive">
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <RowActionsMenu id={row.id} onDelete={() => handleDelete(row.id)} entityLabel="MSRP entry" />
                       </Td>
                     </tr>
                   ))}

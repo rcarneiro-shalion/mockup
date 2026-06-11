@@ -17,8 +17,9 @@ import {
 } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { CLIENTS_KEY, INITIAL_CLIENTS, type Client } from "@/lib/clients";
-import { Plus, Calendar, MoreVertical } from "lucide-react";
+import { Plus, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/clients/")({
   head: () => ({ meta: [{ title: "Clients — Shalion" }] }),
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/clients/")({
 });
 
 function ClientsListPage() {
-  const [clients] = usePersistentState<Client[]>(CLIENTS_KEY, INITIAL_CLIENTS);
+  const [clients, setClients] = usePersistentState<Client[]>(CLIENTS_KEY, INITIAL_CLIENTS);
   const [query, setQuery] = useState("");
   const [fAcronym, setFAcronym] = useState<string[]>([]);
   const [fIsTest, setFIsTest] = useState<string[]>([]);
@@ -87,9 +88,7 @@ function ClientsListPage() {
                 <Td className="text-muted-foreground">{c.createdAt}</Td>
                 <Td className="text-muted-foreground">{c.updatedAt}</Td>
                 <Td>
-                  <button className="rounded p-1 text-muted-foreground hover:bg-secondary">
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
+                  <RowActionsMenu id={c.id} onDelete={() => setClients((prev) => prev.filter((x) => x.id !== c.id))} entityLabel="client" />
                 </Td>
               </tr>
             ))}

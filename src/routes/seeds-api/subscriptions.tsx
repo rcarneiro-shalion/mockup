@@ -19,7 +19,8 @@ import {
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, MoreVertical, Store, Sprout } from "lucide-react";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
+import { Calendar, Store, Sprout } from "lucide-react";
 import {
   SUBSCRIPTIONS_KEY,
   INITIAL_SUBSCRIPTIONS,
@@ -138,9 +139,11 @@ function SubscriptionsPage() {
                 <Td><Pill tone="violet">{r.geo}</Pill></Td>
                 <Td><Switch defaultChecked /></Td>
                 <Td>
-                  <button className="rounded p-1 text-muted-foreground hover:bg-secondary">
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
+                  <RowActionsMenu
+                    id={r.id}
+                    onDelete={() => setRows((prev) => prev.filter((x) => x.id !== r.id))}
+                    entityLabel="subscription"
+                  />
                 </Td>
               </tr>
             ))}

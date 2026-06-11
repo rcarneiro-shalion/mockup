@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { STORES_KEY, INITIAL_STORES, COUNTRY_OPTIONS, countryLabel, getRetailers, type Store } from "@/lib/retailers";
-import { Plus, Calendar, MoreVertical, Flag } from "lucide-react";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
+import { Plus, Calendar, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/stores/")({
   head: () => ({ meta: [{ title: "Stores — Shalion" }] }),
@@ -25,7 +26,7 @@ function StatusPill({ status }: { status: Store["status"] }) {
 }
 
 function StoresListPage() {
-  const [rows] = usePersistentState<Store[]>(STORES_KEY, INITIAL_STORES);
+  const [rows, setRows] = usePersistentState<Store[]>(STORES_KEY, INITIAL_STORES);
   const [query, setQuery] = useState("");
   const [fDomain, setFDomain] = useState<string[]>([]);
   const [fCountry, setFCountry] = useState<string[]>([]);
@@ -93,7 +94,7 @@ function StoresListPage() {
                 <Td><Pill tone="slate">{s.klass}</Pill></Td>
                 <Td><Pill tone="slate">{s.device}</Pill></Td>
                 <Td><StatusPill status={s.status} /></Td>
-                <Td><button className="rounded p-1 text-muted-foreground hover:bg-secondary"><MoreVertical className="h-4 w-4" /></button></Td>
+                <Td><RowActionsMenu id={s.id} onDelete={() => setRows((prev) => prev.filter((y) => y.id !== s.id))} entityLabel="store" /></Td>
               </tr>
             ))}
           </tbody>

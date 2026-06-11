@@ -12,13 +12,14 @@ import {
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { StoreLocationDialog } from "@/components/retailers/StoreLocationDialog";
 import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimitives";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import {
   getRetailers, STORE_CLASS_OPTIONS, DEVICE_OPTIONS, COUNTRY_OPTIONS, countryLabel,
   TIMEZONE_OPTIONS, LOCALE_OPTIONS, emptyStore, type Store, type StoreLocation,
 } from "@/lib/retailers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ArrowLeft, ChevronUp, MapPin, PlayCircle, Sprout, Pencil, Plus, Trash2, FileSpreadsheet, MoreVertical, Calendar } from "lucide-react";
+import { ArrowLeft, ChevronUp, MapPin, PlayCircle, Sprout, Pencil, Plus, Trash2, FileSpreadsheet, Calendar } from "lucide-react";
 
 type Tab = "locations" | "jobs" | "seeds";
 
@@ -212,7 +213,7 @@ export function StoreForm({
                               <Td className="text-foreground/80">{l.city}</Td>
                               <Td className="text-muted-foreground">{l.postal}</Td>
                               <Td><Pill tone={l.status === "Active" ? "green" : "slate"}>{l.status}</Pill></Td>
-                              <Td><button className="rounded p-1 text-muted-foreground hover:bg-secondary"><MoreVertical className="h-4 w-4" /></button></Td>
+                              <Td><RowActionsMenu id={l.id} onDelete={() => removeLocation(l.id)} entityLabel="location" /></Td>
                             </tr>
                           ))}
                         </tbody>

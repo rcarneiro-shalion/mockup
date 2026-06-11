@@ -23,7 +23,8 @@ import {
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, MoreVertical, Store, PlayCircle } from "lucide-react";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
+import { Calendar, Store, PlayCircle } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/scrapping-options")({
   head: () => ({ meta: [{ title: "Scrapping options — Shalion" }] }),
@@ -137,9 +138,11 @@ function ScrappingOptionsPage() {
                 </Td>
                 <Td><Switch defaultChecked={r.status === "Active"} /></Td>
                 <Td>
-                  <button className="rounded p-1 text-muted-foreground hover:bg-secondary">
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
+                  <RowActionsMenu
+                    id={r.name}
+                    onDelete={() => setRows((prev) => prev.filter((x) => x !== r))}
+                    entityLabel="scrapping option"
+                  />
                 </Td>
               </tr>
             ))}

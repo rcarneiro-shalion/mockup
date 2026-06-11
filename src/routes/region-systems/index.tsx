@@ -6,7 +6,8 @@ import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, s
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { REGION_SYSTEMS_KEY, INITIAL_REGION_SYSTEMS, flag, COUNTRY_OPTIONS, countryLabel, type RegionSystem } from "@/lib/retailers";
-import { Plus, Calendar, MoreVertical, Flag } from "lucide-react";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
+import { Plus, Calendar, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/region-systems/")({
   head: () => ({ meta: [{ title: "Region systems — Shalion" }] }),
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/region-systems/")({
 });
 
 function RegionSystemsListPage() {
-  const [rows] = usePersistentState<RegionSystem[]>(REGION_SYSTEMS_KEY, INITIAL_REGION_SYSTEMS);
+  const [rows, setRows] = usePersistentState<RegionSystem[]>(REGION_SYSTEMS_KEY, INITIAL_REGION_SYSTEMS);
   const [query, setQuery] = useState("");
   const [fCountry, setFCountry] = useState<string[]>([]);
   const sort = useSort();
@@ -57,7 +58,7 @@ function RegionSystemsListPage() {
                 <Td className="text-foreground/80"><span className="mr-1.5">{flag(r.country)}</span>{r.country}</Td>
                 <Td className="text-muted-foreground">{r.createdAt}</Td>
                 <Td className="text-muted-foreground">{r.updatedAt}</Td>
-                <Td><button className="rounded p-1 text-muted-foreground hover:bg-secondary"><MoreVertical className="h-4 w-4" /></button></Td>
+                <Td><RowActionsMenu id={r.id} onDelete={() => setRows((prev) => prev.filter((y) => y.id !== r.id))} entityLabel="region system" /></Td>
               </tr>
             ))}
           </tbody>

@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { LinkText, Pagination, Th, Td, Pill, FilterBar } from "@/components/seeds/ListPrimitives";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { flag } from "@/lib/retailers";
 import { readPersistedList } from "@/lib/seedOptions";
 import { SEEDS_KEY, INITIAL_SEEDS, type Seed, type SeedType } from "@/lib/seeds";
 import type { Client } from "@/lib/clients";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Plus, X, MoreVertical, LayoutGrid, Globe, Factory, Crosshair, Tag, Store, Sprout, Calendar } from "lucide-react";
+import { Plus, X, LayoutGrid, Globe, Factory, Crosshair, Tag, Store, Sprout, Calendar } from "lucide-react";
 
 const TABS = [
   { key: "data-groups", label: "Data groups", icon: LayoutGrid },
@@ -86,7 +87,7 @@ export function ClientBottomTabs({
                   <Td><Pill tone="slate">{g.dashboardType}</Pill></Td>
                   <Td className="text-muted-foreground">{g.createdAt}</Td>
                   <Td className="text-muted-foreground">{g.updatedAt}</Td>
-                  <Td><KebabBtn /></Td>
+                  <Td><RowActionsMenu id={g.id} onDelete={() => set("dataGroups", dataGroups.filter((x) => x.id !== g.id))} entityLabel="data group" /></Td>
                 </>
               )}
             />
@@ -147,7 +148,7 @@ export function ClientBottomTabs({
                       </span>
                     )}
                   </Td>
-                  <Td><KebabBtn /></Td>
+                  <Td><RowActionsMenu id={c.id} onDelete={() => set("competitors", competitors.filter((x) => x.id !== c.id))} entityLabel="competitor" /></Td>
                 </>
               )}
             />
@@ -216,13 +217,6 @@ function RemoveBtn({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button onClick={onClick} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive" aria-label={`Remove ${label}`}>
       <X className="h-4 w-4" />
-    </button>
-  );
-}
-function KebabBtn() {
-  return (
-    <button className="rounded p-1 text-muted-foreground hover:bg-secondary">
-      <MoreVertical className="h-4 w-4" />
     </button>
   );
 }

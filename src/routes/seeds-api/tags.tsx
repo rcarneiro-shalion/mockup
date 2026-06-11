@@ -21,7 +21,8 @@ import {
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, MoreVertical } from "lucide-react";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
+import { Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/tags")({
   head: () => ({ meta: [{ title: "Tags — Shalion" }] }),
@@ -104,9 +105,11 @@ function TagsPage() {
                 <Td><UserCell email="rcarneiro@..." /></Td>
                 <Td><Switch defaultChecked /></Td>
                 <Td>
-                  <button className="rounded p-1 text-muted-foreground hover:bg-secondary">
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
+                  <RowActionsMenu
+                    id={r.name}
+                    onDelete={() => setRows((prev) => prev.filter((x) => x.name !== r.name))}
+                    entityLabel="tag"
+                  />
                 </Td>
               </tr>
             ))}

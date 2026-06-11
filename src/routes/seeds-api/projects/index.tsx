@@ -18,11 +18,12 @@ import {
 } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { PROJECTS_KEY, INITIAL_PROJECTS, type Project } from "@/lib/projects";
 import { getClientsForProject, getClientNames } from "@/lib/clients";
 import { getSubscriptions } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
-import { Plus, Calendar, MoreVertical, MoreHorizontal, HelpCircle } from "lucide-react";
+import { Plus, Calendar, MoreHorizontal, HelpCircle } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/projects/")({
   head: () => ({ meta: [{ title: "Projects — Shalion" }] }),
@@ -40,7 +41,7 @@ function StatusPill({ status }: { status: Project["status"] }) {
 }
 
 function ProjectsListPage() {
-  const [projects] = usePersistentState<Project[]>(PROJECTS_KEY, INITIAL_PROJECTS);
+  const [projects, setProjects] = usePersistentState<Project[]>(PROJECTS_KEY, INITIAL_PROJECTS);
   const [query, setQuery] = useState("");
   const [fStatus, setFStatus] = useState<string[]>([]);
   const [fBom, setFBom] = useState<string[]>([]);
@@ -153,9 +154,7 @@ function ProjectsListPage() {
                 <Td><UserCell email={p.updatedBy} /></Td>
                 <Td><StatusPill status={p.status} /></Td>
                 <Td>
-                  <button className="rounded p-1 text-muted-foreground hover:bg-secondary">
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
+                  <RowActionsMenu id={p.id} onDelete={() => setProjects((prev) => prev.filter((x) => x.id !== p.id))} entityLabel="project" />
                 </Td>
               </tr>
             ))}

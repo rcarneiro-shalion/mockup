@@ -34,7 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Calendar, MoreVertical, Store } from "lucide-react";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
+import { Calendar, Store } from "lucide-react";
 
 const SEED_TYPE_FILTER_OPTIONS = ["All", "URL", "API", "KEYWORD"];
 
@@ -58,7 +59,7 @@ function StatusCell({ status }: { status?: Seed["status"] }) {
 type Col = { key: string; label: ReactNode; sortKey?: string; cell: (r: Seed) => ReactNode };
 
 function SeedsPage() {
-  const [rows] = usePersistentState<Seed[]>(SEEDS_KEY, INITIAL_SEEDS);
+  const [rows, setRows] = usePersistentState<Seed[]>(SEEDS_KEY, INITIAL_SEEDS);
   const [seedType, setSeedType] = useState("All");
   const [query, setQuery] = useState("");
   const [fValue, setFValue] = useState<string[]>([]);
@@ -230,9 +231,11 @@ function SeedsPage() {
                   <Td key={c.key}>{c.cell(r)}</Td>
                 ))}
                 <Td>
-                  <button className="rounded p-1 text-muted-foreground hover:bg-secondary" onClick={() => goEdit(r)}>
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
+                  <RowActionsMenu
+                    id={r.id}
+                    onDelete={() => setRows((prev) => prev.filter((x) => x.id !== r.id))}
+                    entityLabel="seed"
+                  />
                 </Td>
               </tr>
             ))}

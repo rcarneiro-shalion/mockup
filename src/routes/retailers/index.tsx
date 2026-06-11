@@ -6,7 +6,8 @@ import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, s
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { RETAILERS_KEY, INITIAL_RETAILERS, deriveStoreRetailers, type Retailer } from "@/lib/retailers";
-import { Plus, Calendar, MoreVertical } from "lucide-react";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
+import { Plus, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/retailers/")({
   head: () => ({ meta: [{ title: "Retailers — Shalion" }] }),
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/retailers/")({
 });
 
 function RetailersListPage() {
-  const [persisted] = usePersistentState<Retailer[]>(RETAILERS_KEY, INITIAL_RETAILERS);
+  const [persisted, setPersisted] = usePersistentState<Retailer[]>(RETAILERS_KEY, INITIAL_RETAILERS);
   const rows = [...persisted, ...deriveStoreRetailers(persisted)];
   const [query, setQuery] = useState("");
   const sort = useSort();
@@ -51,7 +52,7 @@ function RetailersListPage() {
                 <Td><LinkText onClick={() => navigate({ to: "/retailers/$retailerId", params: { retailerId: r.id } })}>{r.name}</LinkText></Td>
                 <Td className="text-muted-foreground">{r.createdAt}</Td>
                 <Td className="text-muted-foreground">{r.updatedAt}</Td>
-                <Td><button className="rounded p-1 text-muted-foreground hover:bg-secondary"><MoreVertical className="h-4 w-4" /></button></Td>
+                <Td><RowActionsMenu id={r.id} onDelete={() => setPersisted((prev) => prev.filter((y) => y.id !== r.id))} entityLabel="retailer" /></Td>
               </tr>
             ))}
           </tbody>

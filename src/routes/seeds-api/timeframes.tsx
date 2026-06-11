@@ -22,7 +22,8 @@ import {
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, MoreVertical, PlayCircle } from "lucide-react";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
+import { Calendar, PlayCircle } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/timeframes")({
   head: () => ({ meta: [{ title: "Timeframes — Shalion" }] }),
@@ -130,9 +131,11 @@ function TimeframesPage() {
                 <Td className="text-muted-foreground">20...</Td>
                 <Td><Switch defaultChecked /></Td>
                 <Td>
-                  <button className="rounded p-1 text-muted-foreground hover:bg-secondary">
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
+                  <RowActionsMenu
+                    id={r.name}
+                    onDelete={() => setRows((prev) => prev.filter((x) => x.name !== r.name))}
+                    entityLabel="timeframe"
+                  />
                 </Td>
               </tr>
             ))}
