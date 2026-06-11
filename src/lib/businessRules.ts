@@ -616,6 +616,49 @@ const settingsRules: RulePage = {
   ],
 };
 
+// ---------- Codification ---------------------------------------------------
+
+const brands: RulePage = {
+  key: "brands",
+  label: "Brands",
+  match: "/codification/brands",
+  groups: [
+    {
+      category: "Creating & editing",
+      rules: [
+        "A brand must have a name, and that name must be unique across all brands.",
+        "A brand requires a default category and a default manufacturer; a parent brand is optional.",
+        "When editing, the name is only re-checked for uniqueness if you actually change it.",
+        "A brand's default category can't be changed while it has editions that use the current default category.",
+      ],
+    },
+    {
+      category: "White label & multi-brand",
+      rules: [
+        "A brand can be flagged as white label (a retailer's own/private label).",
+        "A multi-brand brand is an umbrella that groups several editions.",
+        "Multi-brand can't be switched off while the brand still has editions — remove the editions first.",
+      ],
+    },
+    {
+      category: "Deleting",
+      rules: [
+        "A brand can only be deleted when nothing uses it: it isn't a parent of another brand, and isn't referenced by any brand-category, brand-country-manufacturer, regular expression, edition, listing, client SKU, competitor SKU or seed.",
+      ],
+    },
+    {
+      category: "Search & listing",
+      rules: [
+        "Brands can be searched by name (full or starts-with) and filtered by default category, default manufacturer, parent, white-label and multi-brand flags, plus created/updated dates.",
+      ],
+    },
+    {
+      category: "Good to know",
+      rules: ["Every brand keeps an audit trail — who created and updated it, and when."],
+    },
+  ],
+};
+
 // ---------- Sections -------------------------------------------------------
 
 export const RULE_SECTIONS: RuleSection[] = [
@@ -636,6 +679,12 @@ export const RULE_SECTIONS: RuleSection[] = [
     intro:
       "The Seeds API is what we monitor across the web and how that work is organised — projects, subscriptions, the seeds themselves, scrapping options, tags and timeframes.",
     pages: [projects, subscriptions, seeds, scrappingOptions, tags, seedsTimeframes],
+  },
+  {
+    section: "Codification",
+    intro:
+      "Codification is where raw product data is cleaned up and matched to the right brand, category and product. These rules govern the Brands catalogue.",
+    pages: [brands],
   },
   {
     section: "Product",

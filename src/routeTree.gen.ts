@@ -57,7 +57,6 @@ import { Route as CodificationListingsRouteImport } from './routes/codification/
 import { Route as CodificationFsaSectionsRouteImport } from './routes/codification/fsa-sections'
 import { Route as CodificationFsaListingsRouteImport } from './routes/codification/fsa-listings'
 import { Route as CodificationDataVariablesRouteImport } from './routes/codification/data-variables'
-import { Route as CodificationBrandsRouteImport } from './routes/codification/brands'
 import { Route as CodificationAttributesRouteImport } from './routes/codification/attributes'
 import { Route as CodificationAdsRouteImport } from './routes/codification/ads'
 import { Route as ClientsNewRouteImport } from './routes/clients/new'
@@ -69,6 +68,7 @@ import { Route as SettingsCategoriesIndexRouteImport } from './routes/settings/c
 import { Route as SeedsApiSeedsIndexRouteImport } from './routes/seeds-api/seeds/index'
 import { Route as SeedsApiProjectsIndexRouteImport } from './routes/seeds-api/projects/index'
 import { Route as ProductClientSkusIndexRouteImport } from './routes/product/client-skus.index'
+import { Route as CodificationBrandsIndexRouteImport } from './routes/codification/brands/index'
 import { Route as ClientsClientIdIndexRouteImport } from './routes/clients/$clientId.index'
 import { Route as SettingsRulesNewRouteImport } from './routes/settings/rules.new'
 import { Route as SettingsRulesRuleIdRouteImport } from './routes/settings/rules.$ruleId'
@@ -81,6 +81,8 @@ import { Route as SeedsApiSeedsSeedIdRouteImport } from './routes/seeds-api/seed
 import { Route as SeedsApiProjectsNewRouteImport } from './routes/seeds-api/projects/new'
 import { Route as SeedsApiProjectsProjectIdRouteImport } from './routes/seeds-api/projects/$projectId'
 import { Route as ProductClientSkusSkuIdRouteImport } from './routes/product/client-skus.$skuId'
+import { Route as CodificationBrandsNewRouteImport } from './routes/codification/brands/new'
+import { Route as CodificationBrandsBrandIdRouteImport } from './routes/codification/brands/$brandId'
 import { Route as SettingsDashboardApplicationsAppIdIndexRouteImport } from './routes/settings/dashboard-applications.$appId.index'
 import { Route as ClientsClientIdDataGroupsNewRouteImport } from './routes/clients/$clientId.data-groups.new'
 import { Route as ClientsClientIdDataGroupsDataGroupIdRouteImport } from './routes/clients/$clientId.data-groups.$dataGroupId'
@@ -339,11 +341,6 @@ const CodificationDataVariablesRoute =
     path: '/codification/data-variables',
     getParentRoute: () => rootRouteImport,
   } as any)
-const CodificationBrandsRoute = CodificationBrandsRouteImport.update({
-  id: '/codification/brands',
-  path: '/codification/brands',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CodificationAttributesRoute = CodificationAttributesRouteImport.update({
   id: '/codification/attributes',
   path: '/codification/attributes',
@@ -400,6 +397,11 @@ const ProductClientSkusIndexRoute = ProductClientSkusIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProductClientSkusRoute,
+} as any)
+const CodificationBrandsIndexRoute = CodificationBrandsIndexRouteImport.update({
+  id: '/codification/brands/',
+  path: '/codification/brands/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsClientIdIndexRoute = ClientsClientIdIndexRouteImport.update({
   id: '/',
@@ -465,6 +467,17 @@ const ProductClientSkusSkuIdRoute = ProductClientSkusSkuIdRouteImport.update({
   path: '/$skuId',
   getParentRoute: () => ProductClientSkusRoute,
 } as any)
+const CodificationBrandsNewRoute = CodificationBrandsNewRouteImport.update({
+  id: '/codification/brands/new',
+  path: '/codification/brands/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodificationBrandsBrandIdRoute =
+  CodificationBrandsBrandIdRouteImport.update({
+    id: '/codification/brands/$brandId',
+    path: '/codification/brands/$brandId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SettingsDashboardApplicationsAppIdIndexRoute =
   SettingsDashboardApplicationsAppIdIndexRouteImport.update({
     id: '/',
@@ -514,7 +527,6 @@ export interface FileRoutesByFullPath {
   '/clients/new': typeof ClientsNewRoute
   '/codification/ads': typeof CodificationAdsRoute
   '/codification/attributes': typeof CodificationAttributesRoute
-  '/codification/brands': typeof CodificationBrandsRoute
   '/codification/data-variables': typeof CodificationDataVariablesRoute
   '/codification/fsa-listings': typeof CodificationFsaListingsRoute
   '/codification/fsa-sections': typeof CodificationFsaSectionsRoute
@@ -559,6 +571,8 @@ export interface FileRoutesByFullPath {
   '/region-systems/': typeof RegionSystemsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
+  '/codification/brands/$brandId': typeof CodificationBrandsBrandIdRoute
+  '/codification/brands/new': typeof CodificationBrandsNewRoute
   '/product/client-skus/$skuId': typeof ProductClientSkusSkuIdRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
@@ -571,6 +585,7 @@ export interface FileRoutesByFullPath {
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
   '/clients/$clientId/': typeof ClientsClientIdIndexRoute
+  '/codification/brands/': typeof CodificationBrandsIndexRoute
   '/product/client-skus/': typeof ProductClientSkusIndexRoute
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
@@ -593,7 +608,6 @@ export interface FileRoutesByTo {
   '/clients/new': typeof ClientsNewRoute
   '/codification/ads': typeof CodificationAdsRoute
   '/codification/attributes': typeof CodificationAttributesRoute
-  '/codification/brands': typeof CodificationBrandsRoute
   '/codification/data-variables': typeof CodificationDataVariablesRoute
   '/codification/fsa-listings': typeof CodificationFsaListingsRoute
   '/codification/fsa-sections': typeof CodificationFsaSectionsRoute
@@ -633,6 +647,8 @@ export interface FileRoutesByTo {
   '/region-systems': typeof RegionSystemsIndexRoute
   '/retailers': typeof RetailersIndexRoute
   '/stores': typeof StoresIndexRoute
+  '/codification/brands/$brandId': typeof CodificationBrandsBrandIdRoute
+  '/codification/brands/new': typeof CodificationBrandsNewRoute
   '/product/client-skus/$skuId': typeof ProductClientSkusSkuIdRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
@@ -644,6 +660,7 @@ export interface FileRoutesByTo {
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
   '/clients/$clientId': typeof ClientsClientIdIndexRoute
+  '/codification/brands': typeof CodificationBrandsIndexRoute
   '/product/client-skus': typeof ProductClientSkusIndexRoute
   '/seeds-api/projects': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsIndexRoute
@@ -667,7 +684,6 @@ export interface FileRoutesById {
   '/clients/new': typeof ClientsNewRoute
   '/codification/ads': typeof CodificationAdsRoute
   '/codification/attributes': typeof CodificationAttributesRoute
-  '/codification/brands': typeof CodificationBrandsRoute
   '/codification/data-variables': typeof CodificationDataVariablesRoute
   '/codification/fsa-listings': typeof CodificationFsaListingsRoute
   '/codification/fsa-sections': typeof CodificationFsaSectionsRoute
@@ -712,6 +728,8 @@ export interface FileRoutesById {
   '/region-systems/': typeof RegionSystemsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
+  '/codification/brands/$brandId': typeof CodificationBrandsBrandIdRoute
+  '/codification/brands/new': typeof CodificationBrandsNewRoute
   '/product/client-skus/$skuId': typeof ProductClientSkusSkuIdRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
@@ -724,6 +742,7 @@ export interface FileRoutesById {
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
   '/clients/$clientId/': typeof ClientsClientIdIndexRoute
+  '/codification/brands/': typeof CodificationBrandsIndexRoute
   '/product/client-skus/': typeof ProductClientSkusIndexRoute
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
@@ -749,7 +768,6 @@ export interface FileRouteTypes {
     | '/clients/new'
     | '/codification/ads'
     | '/codification/attributes'
-    | '/codification/brands'
     | '/codification/data-variables'
     | '/codification/fsa-listings'
     | '/codification/fsa-sections'
@@ -794,6 +812,8 @@ export interface FileRouteTypes {
     | '/region-systems/'
     | '/retailers/'
     | '/stores/'
+    | '/codification/brands/$brandId'
+    | '/codification/brands/new'
     | '/product/client-skus/$skuId'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
@@ -806,6 +826,7 @@ export interface FileRouteTypes {
     | '/settings/rules/$ruleId'
     | '/settings/rules/new'
     | '/clients/$clientId/'
+    | '/codification/brands/'
     | '/product/client-skus/'
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
@@ -828,7 +849,6 @@ export interface FileRouteTypes {
     | '/clients/new'
     | '/codification/ads'
     | '/codification/attributes'
-    | '/codification/brands'
     | '/codification/data-variables'
     | '/codification/fsa-listings'
     | '/codification/fsa-sections'
@@ -868,6 +888,8 @@ export interface FileRouteTypes {
     | '/region-systems'
     | '/retailers'
     | '/stores'
+    | '/codification/brands/$brandId'
+    | '/codification/brands/new'
     | '/product/client-skus/$skuId'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
@@ -879,6 +901,7 @@ export interface FileRouteTypes {
     | '/settings/rules/$ruleId'
     | '/settings/rules/new'
     | '/clients/$clientId'
+    | '/codification/brands'
     | '/product/client-skus'
     | '/seeds-api/projects'
     | '/seeds-api/seeds'
@@ -901,7 +924,6 @@ export interface FileRouteTypes {
     | '/clients/new'
     | '/codification/ads'
     | '/codification/attributes'
-    | '/codification/brands'
     | '/codification/data-variables'
     | '/codification/fsa-listings'
     | '/codification/fsa-sections'
@@ -946,6 +968,8 @@ export interface FileRouteTypes {
     | '/region-systems/'
     | '/retailers/'
     | '/stores/'
+    | '/codification/brands/$brandId'
+    | '/codification/brands/new'
     | '/product/client-skus/$skuId'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
@@ -958,6 +982,7 @@ export interface FileRouteTypes {
     | '/settings/rules/$ruleId'
     | '/settings/rules/new'
     | '/clients/$clientId/'
+    | '/codification/brands/'
     | '/product/client-skus/'
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
@@ -982,7 +1007,6 @@ export interface RootRouteChildren {
   ClientsNewRoute: typeof ClientsNewRoute
   CodificationAdsRoute: typeof CodificationAdsRoute
   CodificationAttributesRoute: typeof CodificationAttributesRoute
-  CodificationBrandsRoute: typeof CodificationBrandsRoute
   CodificationDataVariablesRoute: typeof CodificationDataVariablesRoute
   CodificationFsaListingsRoute: typeof CodificationFsaListingsRoute
   CodificationFsaSectionsRoute: typeof CodificationFsaSectionsRoute
@@ -1027,10 +1051,13 @@ export interface RootRouteChildren {
   RegionSystemsIndexRoute: typeof RegionSystemsIndexRoute
   RetailersIndexRoute: typeof RetailersIndexRoute
   StoresIndexRoute: typeof StoresIndexRoute
+  CodificationBrandsBrandIdRoute: typeof CodificationBrandsBrandIdRoute
+  CodificationBrandsNewRoute: typeof CodificationBrandsNewRoute
   SeedsApiProjectsProjectIdRoute: typeof SeedsApiProjectsProjectIdRoute
   SeedsApiProjectsNewRoute: typeof SeedsApiProjectsNewRoute
   SeedsApiSeedsSeedIdRoute: typeof SeedsApiSeedsSeedIdRoute
   SeedsApiSeedsNewRoute: typeof SeedsApiSeedsNewRoute
+  CodificationBrandsIndexRoute: typeof CodificationBrandsIndexRoute
   SeedsApiProjectsIndexRoute: typeof SeedsApiProjectsIndexRoute
   SeedsApiSeedsIndexRoute: typeof SeedsApiSeedsIndexRoute
 }
@@ -1373,13 +1400,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CodificationDataVariablesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/codification/brands': {
-      id: '/codification/brands'
-      path: '/codification/brands'
-      fullPath: '/codification/brands'
-      preLoaderRoute: typeof CodificationBrandsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/codification/attributes': {
       id: '/codification/attributes'
       path: '/codification/attributes'
@@ -1456,6 +1476,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/product/client-skus/'
       preLoaderRoute: typeof ProductClientSkusIndexRouteImport
       parentRoute: typeof ProductClientSkusRoute
+    }
+    '/codification/brands/': {
+      id: '/codification/brands/'
+      path: '/codification/brands'
+      fullPath: '/codification/brands/'
+      preLoaderRoute: typeof CodificationBrandsIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/clients/$clientId/': {
       id: '/clients/$clientId/'
@@ -1540,6 +1567,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/product/client-skus/$skuId'
       preLoaderRoute: typeof ProductClientSkusSkuIdRouteImport
       parentRoute: typeof ProductClientSkusRoute
+    }
+    '/codification/brands/new': {
+      id: '/codification/brands/new'
+      path: '/codification/brands/new'
+      fullPath: '/codification/brands/new'
+      preLoaderRoute: typeof CodificationBrandsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/brands/$brandId': {
+      id: '/codification/brands/$brandId'
+      path: '/codification/brands/$brandId'
+      fullPath: '/codification/brands/$brandId'
+      preLoaderRoute: typeof CodificationBrandsBrandIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/settings/dashboard-applications/$appId/': {
       id: '/settings/dashboard-applications/$appId/'
@@ -1725,7 +1766,6 @@ const rootRouteChildren: RootRouteChildren = {
   ClientsNewRoute: ClientsNewRoute,
   CodificationAdsRoute: CodificationAdsRoute,
   CodificationAttributesRoute: CodificationAttributesRoute,
-  CodificationBrandsRoute: CodificationBrandsRoute,
   CodificationDataVariablesRoute: CodificationDataVariablesRoute,
   CodificationFsaListingsRoute: CodificationFsaListingsRoute,
   CodificationFsaSectionsRoute: CodificationFsaSectionsRoute,
@@ -1772,10 +1812,13 @@ const rootRouteChildren: RootRouteChildren = {
   RegionSystemsIndexRoute: RegionSystemsIndexRoute,
   RetailersIndexRoute: RetailersIndexRoute,
   StoresIndexRoute: StoresIndexRoute,
+  CodificationBrandsBrandIdRoute: CodificationBrandsBrandIdRoute,
+  CodificationBrandsNewRoute: CodificationBrandsNewRoute,
   SeedsApiProjectsProjectIdRoute: SeedsApiProjectsProjectIdRoute,
   SeedsApiProjectsNewRoute: SeedsApiProjectsNewRoute,
   SeedsApiSeedsSeedIdRoute: SeedsApiSeedsSeedIdRoute,
   SeedsApiSeedsNewRoute: SeedsApiSeedsNewRoute,
+  CodificationBrandsIndexRoute: CodificationBrandsIndexRoute,
   SeedsApiProjectsIndexRoute: SeedsApiProjectsIndexRoute,
   SeedsApiSeedsIndexRoute: SeedsApiSeedsIndexRoute,
 }
