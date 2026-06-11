@@ -87,8 +87,8 @@ const B = (
   editions,
   createdAt,
   updatedAt,
-  createdBy: "rcarneiro@shalion.com",
-  updatedBy: "rcarneiro@shalion.com",
+  createdBy: "ecometry@shalion.com",
+  updatedBy: "ecometry@shalion.com",
 });
 
 export const INITIAL_BRANDS: Brand[] = [
@@ -134,6 +134,26 @@ export const INITIAL_BRANDS: Brand[] = [
   B("br-selecta", "Selecta", "Beverages > Soft Drinks > Soda", "The Coca-Cola Company", undefined, true, false,
     "Tue, Dec 10, 2024 1:58 PM", "Tue, Dec 10, 2024 1:58 PM"),
 ];
+
+// Vary the audit users for realism (mirrors the console's mix of editors).
+const USER_BY_ID: Record<string, string> = {
+  "br-decorte": "dmolini@shalion.com",
+  "br-nerf": "mflores@shalion.com",
+  "br-selecta": "alarco@shalion.com",
+  "br-prada": "dmolini@shalion.com",
+  "br-mentos": "mflores@shalion.com",
+};
+for (const b of INITIAL_BRANDS) {
+  const u = USER_BY_ID[b.id];
+  if (u) {
+    b.createdBy = u;
+    b.updatedBy = u;
+  }
+}
+
+/** Display totals for the paginator (sampled rows are a small subset). */
+export const BRANDS_TOTAL = 247204;
+export const BRANDS_PAGES = 2473;
 
 export function getBrands(): Brand[] {
   const list = readPersistedList<Brand>(BRANDS_KEY);
