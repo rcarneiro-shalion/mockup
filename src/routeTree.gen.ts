@@ -27,6 +27,7 @@ import { Route as RetailersNewRouteImport } from './routes/retailers/new'
 import { Route as RetailersRetailerIdRouteImport } from './routes/retailers/$retailerId'
 import { Route as RegionSystemsNewRouteImport } from './routes/region-systems/new'
 import { Route as RegionSystemsRegionIdRouteImport } from './routes/region-systems/$regionId'
+import { Route as ProductClientSkusRouteImport } from './routes/product/client-skus'
 import { Route as ClientsNewRouteImport } from './routes/clients/new'
 import { Route as ClientsClientIdRouteImport } from './routes/clients/$clientId'
 import { Route as SeedsApiSeedsIndexRouteImport } from './routes/seeds-api/seeds/index'
@@ -127,6 +128,11 @@ const RegionSystemsRegionIdRoute = RegionSystemsRegionIdRouteImport.update({
   path: '/region-systems/$regionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductClientSkusRoute = ProductClientSkusRouteImport.update({
+  id: '/product/client-skus',
+  path: '/product/client-skus',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientsNewRoute = ClientsNewRouteImport.update({
   id: '/clients/new',
   path: '/clients/new',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/iam': typeof IamRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/new': typeof ClientsNewRoute
+  '/product/client-skus': typeof ProductClientSkusRoute
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/iam': typeof IamRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/new': typeof ClientsNewRoute
+  '/product/client-skus': typeof ProductClientSkusRoute
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/iam': typeof IamRoute
   '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/new': typeof ClientsNewRoute
+  '/product/client-skus': typeof ProductClientSkusRoute
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/iam'
     | '/clients/$clientId'
     | '/clients/new'
+    | '/product/client-skus'
     | '/region-systems/$regionId'
     | '/region-systems/new'
     | '/retailers/$retailerId'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/iam'
     | '/clients/$clientId'
     | '/clients/new'
+    | '/product/client-skus'
     | '/region-systems/$regionId'
     | '/region-systems/new'
     | '/retailers/$retailerId'
@@ -319,6 +330,7 @@ export interface FileRouteTypes {
     | '/iam'
     | '/clients/$clientId'
     | '/clients/new'
+    | '/product/client-skus'
     | '/region-systems/$regionId'
     | '/region-systems/new'
     | '/retailers/$retailerId'
@@ -348,6 +360,7 @@ export interface RootRouteChildren {
   IamRoute: typeof IamRoute
   ClientsClientIdRoute: typeof ClientsClientIdRoute
   ClientsNewRoute: typeof ClientsNewRoute
+  ProductClientSkusRoute: typeof ProductClientSkusRoute
   RegionSystemsRegionIdRoute: typeof RegionSystemsRegionIdRoute
   RegionSystemsNewRoute: typeof RegionSystemsNewRoute
   RetailersRetailerIdRoute: typeof RetailersRetailerIdRoute
@@ -498,6 +511,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegionSystemsRegionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/product/client-skus': {
+      id: '/product/client-skus'
+      path: '/product/client-skus'
+      fullPath: '/product/client-skus'
+      preLoaderRoute: typeof ProductClientSkusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clients/new': {
       id: '/clients/new'
       path: '/clients/new'
@@ -564,6 +584,7 @@ const rootRouteChildren: RootRouteChildren = {
   IamRoute: IamRoute,
   ClientsClientIdRoute: ClientsClientIdRoute,
   ClientsNewRoute: ClientsNewRoute,
+  ProductClientSkusRoute: ProductClientSkusRoute,
   RegionSystemsRegionIdRoute: RegionSystemsRegionIdRoute,
   RegionSystemsNewRoute: RegionSystemsNewRoute,
   RetailersRetailerIdRoute: RetailersRetailerIdRoute,

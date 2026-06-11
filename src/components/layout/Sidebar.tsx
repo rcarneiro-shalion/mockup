@@ -51,7 +51,13 @@ const nav: NavItem[] = [
   },
   { label: "Tasks", icon: ListTodo, children: [] },
   { label: "Codification", icon: Megaphone, children: [] },
-  { label: "Product", icon: Package, children: [] },
+  {
+    label: "Product",
+    icon: Package,
+    children: [
+      { label: "Client SKUs", to: "/product/client-skus" },
+    ],
+  },
   { label: "Bulk", icon: ShoppingBag, to: "/bulk" },
   { label: "Settings", icon: Settings, children: [] },
 ];
