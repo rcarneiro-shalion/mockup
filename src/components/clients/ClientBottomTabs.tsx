@@ -251,7 +251,6 @@ function SeedTagsTab() {
           <FilterChip label="Ids" />
           <FilterChip label="Stores" icon={Store} />
           <FilterChip label="Jobs" />
-          <FilterChip label="Boxes" />
           <FilterChip label="Category" />
           <FilterChip label="Status" />
           <FilterChip label="Keyword" icon={Sprout} />

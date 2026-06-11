@@ -67,7 +67,6 @@ const nav: NavItem[] = [
       { label: "Targets", to: "/settings/targets" },
       { label: "Timeframes", to: "/settings/timeframes" },
       { label: "Categories", to: "/settings/categories" },
-      { label: "Boxes", to: "/settings/boxes" },
       { label: "Country groups", to: "/settings/country-groups" },
       { label: "Rules", to: "/settings/rules" },
     ],

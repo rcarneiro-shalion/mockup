@@ -25,7 +25,6 @@ import { Route as SettingsRulesRouteImport } from './routes/settings/rules'
 import { Route as SettingsDashboardApplicationsRouteImport } from './routes/settings/dashboard-applications'
 import { Route as SettingsCountryGroupsRouteImport } from './routes/settings/country-groups'
 import { Route as SettingsCategoriesRouteImport } from './routes/settings/categories'
-import { Route as SettingsBoxesRouteImport } from './routes/settings/boxes'
 import { Route as SeedsApiTimeframesRouteImport } from './routes/seeds-api/timeframes'
 import { Route as SeedsApiTagsRouteImport } from './routes/seeds-api/tags'
 import { Route as SeedsApiSubscriptionsRouteImport } from './routes/seeds-api/subscriptions'
@@ -126,11 +125,6 @@ const SettingsCountryGroupsRoute = SettingsCountryGroupsRouteImport.update({
 const SettingsCategoriesRoute = SettingsCategoriesRouteImport.update({
   id: '/settings/categories',
   path: '/settings/categories',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsBoxesRoute = SettingsBoxesRouteImport.update({
-  id: '/settings/boxes',
-  path: '/settings/boxes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SeedsApiTimeframesRoute = SeedsApiTimeframesRouteImport.update({
@@ -254,7 +248,6 @@ export interface FileRoutesByFullPath {
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
-  '/settings/boxes': typeof SettingsBoxesRoute
   '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/country-groups': typeof SettingsCountryGroupsRoute
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRoute
@@ -292,7 +285,6 @@ export interface FileRoutesByTo {
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
-  '/settings/boxes': typeof SettingsBoxesRoute
   '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/country-groups': typeof SettingsCountryGroupsRoute
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRoute
@@ -332,7 +324,6 @@ export interface FileRoutesById {
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
-  '/settings/boxes': typeof SettingsBoxesRoute
   '/settings/categories': typeof SettingsCategoriesRoute
   '/settings/country-groups': typeof SettingsCountryGroupsRoute
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRoute
@@ -373,7 +364,6 @@ export interface FileRouteTypes {
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
-    | '/settings/boxes'
     | '/settings/categories'
     | '/settings/country-groups'
     | '/settings/dashboard-applications'
@@ -411,7 +401,6 @@ export interface FileRouteTypes {
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
-    | '/settings/boxes'
     | '/settings/categories'
     | '/settings/country-groups'
     | '/settings/dashboard-applications'
@@ -450,7 +439,6 @@ export interface FileRouteTypes {
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
-    | '/settings/boxes'
     | '/settings/categories'
     | '/settings/country-groups'
     | '/settings/dashboard-applications'
@@ -490,7 +478,6 @@ export interface RootRouteChildren {
   SeedsApiSubscriptionsRoute: typeof SeedsApiSubscriptionsRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
   SeedsApiTimeframesRoute: typeof SeedsApiTimeframesRoute
-  SettingsBoxesRoute: typeof SettingsBoxesRoute
   SettingsCategoriesRoute: typeof SettingsCategoriesRoute
   SettingsCountryGroupsRoute: typeof SettingsCountryGroupsRoute
   SettingsDashboardApplicationsRoute: typeof SettingsDashboardApplicationsRoute
@@ -623,13 +610,6 @@ declare module '@tanstack/react-router' {
       path: '/settings/categories'
       fullPath: '/settings/categories'
       preLoaderRoute: typeof SettingsCategoriesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings/boxes': {
-      id: '/settings/boxes'
-      path: '/settings/boxes'
-      fullPath: '/settings/boxes'
-      preLoaderRoute: typeof SettingsBoxesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seeds-api/timeframes': {
@@ -808,7 +788,6 @@ const rootRouteChildren: RootRouteChildren = {
   SeedsApiSubscriptionsRoute: SeedsApiSubscriptionsRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
   SeedsApiTimeframesRoute: SeedsApiTimeframesRoute,
-  SettingsBoxesRoute: SettingsBoxesRoute,
   SettingsCategoriesRoute: SettingsCategoriesRoute,
   SettingsCountryGroupsRoute: SettingsCountryGroupsRoute,
   SettingsDashboardApplicationsRoute: SettingsDashboardApplicationsRoute,
