@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   Dialog,
   DialogContent,
@@ -98,6 +99,15 @@ export function DashboardGuideModal({ trigger }: { trigger?: React.ReactNode }) 
               ))}
             </div>
           )}
+        </div>
+
+        <div className="shrink-0 border-t border-border px-6 py-3 text-right">
+          <Link
+            to="/settings/dashboard-applications/manual"
+            className="text-sm text-[var(--sidebar-active-fg)] hover:underline"
+          >
+            Open the full dashboard manual →
+          </Link>
         </div>
       </DialogContent>
     </Dialog>

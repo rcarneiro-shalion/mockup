@@ -1,7 +1,9 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SettingsList, type SettingsColumn } from "@/components/settings/SettingsList";
 import { DashboardGuideModal } from "@/components/settings/DashboardGuideModal";
 import { LinkText } from "@/components/seeds/ListPrimitives";
+import { Button } from "@/components/ui/button";
+import { BookOpen } from "lucide-react";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { toast } from "sonner";
 import { DASHBOARD_APPS_KEY, INITIAL_DASHBOARD_APPS, type DashboardApp } from "@/lib/dashboardApps";
@@ -64,7 +66,16 @@ function DashboardApplicationsPage() {
       columns={columns}
       rows={rows}
       onDelete={(id) => setRows((prev) => prev.filter((r) => r.id !== id))}
-      headerActions={<DashboardGuideModal />}
+      headerActions={
+        <>
+          <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
+            <Link to="/settings/dashboard-applications/manual">
+              <BookOpen className="h-4 w-4" /> Manual
+            </Link>
+          </Button>
+          <DashboardGuideModal />
+        </>
+      }
     />
   );
 }

@@ -120,3 +120,37 @@ export const DASHBOARD_CONFIG_GROUPS: GuideGroup[] = [
     ],
   },
 ];
+
+// ---- Extra content used by the full in-app Dashboard manual ----------------
+
+export const DASHBOARD_OVERVIEW: string[] = [
+  "Ecometry, Data Collector and IAM are the internal stack that sets up and governs data extraction. The extracted data then runs through a large transformation pipeline (dbt models) that computes every KPI and measure, and the results are presented to clients in the dashboards (the dashboard-frontend product).",
+  "Dashboards are not hard-coded: they are assembled from configuration that lives in Ecometry. Two surfaces matter — Settings → Dashboard applications (the structure of each dashboard) and Clients → Data groups → Dashboard sections (which dashboards a given client can open). This manual explains the products that consume that configuration and the rules that govern it.",
+];
+
+export const DASHBOARD_SECTION_CATALOGUE: { name: string; items: string[] }[] = [
+  { name: "Category", items: ["Overview", "Availability", "Price & Promos", "Rating & Reviews", "Content", "Historical Analysis", "New products"] },
+  { name: "Selected Items", items: ["Overview", "Assortment", "Availability", "Price", "Rating & Reviews", "Perfect Store", "Image validation", "Raw Data", "Adhocs"] },
+  { name: "Discovery", items: ["New Products", "Availability", "Price & Promos"] },
+  { name: "Visibility", items: ["Overview", "Ads", "Search", "Shelf", "Promotions"] },
+  { name: "Geoloc", items: ["Overview", "Product", "Raw Data"] },
+  { name: "Marketplace", items: ["Products", "Sellers", "1P3P"] },
+];
+
+export const DASHBOARD_CREATION_STEPS: { title: string; text: string }[] = [
+  { title: "Request", text: "A ticket from Customer Success, a client, Product or Sales captures the business context, goal, priority and main KPIs." },
+  { title: "Mockup", text: "An initial mockup is built (in Lovable) following the storytelling, visualization and hierarchy standards." },
+  { title: "First validation", text: "Reviewed with the Product Owner and Product Manager before any build." },
+  { title: "Build", text: "Built in Embeddable, validating large and small screens and coordinating dataset/filter needs with Frontend early." },
+  { title: "Internal release & pilot", text: "Released behind Shalion-only visibility, then piloted with one large and one small client (e.g. Danone ES, Coca-Cola LATAM) to validate filters, data volume, performance and visualization." },
+  { title: "Visualization review", text: "A second Product/Visualization member reviews the visualization." },
+  { title: "Data QA", text: "Data validated via the Cube Playground, Snowflake queries and filter checks." },
+  { title: "Final approval", text: "Signed off by the Project Owner and Product Manager before going live." },
+];
+
+export const DASHBOARD_PIPELINE: string[] = [
+  "All dashboard configuration originates in Ecometry and is replicated (via Airbyte) into Snowflake staging models: dashboard application, group and section, plus the data-group, retailer and cube bindings.",
+  "dbt builds the marts (e.g. market share, digital shelf) and tags each row with its data group and dashboard type, so dashboards can slice the data correctly.",
+  "A cube's dashboard type acts as a domain boundary — cubes are only queryable by data groups of the same domain.",
+  "A section's type decides which visualization engine renders it; new dashboard + data-group + cube combinations need no code change, only configuration.",
+];
