@@ -10,11 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IamRouteImport } from './routes/iam'
-import { Route as DataCollectorRouteImport } from './routes/data-collector'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoresIndexRouteImport } from './routes/stores/index'
 import { Route as RetailersIndexRouteImport } from './routes/retailers/index'
 import { Route as RegionSystemsIndexRouteImport } from './routes/region-systems/index'
+import { Route as DataCollectorIndexRouteImport } from './routes/data-collector/index'
 import { Route as ClientsIndexRouteImport } from './routes/clients/index'
 import { Route as BulkIndexRouteImport } from './routes/bulk/index'
 import { Route as StoresNewRouteImport } from './routes/stores/new'
@@ -61,6 +61,11 @@ import { Route as ProductClientSkusIndexRouteImport } from './routes/product/cli
 import { Route as ProductClientCategoriesIndexRouteImport } from './routes/product/client-categories/index'
 import { Route as ProductBusinessUnitsIndexRouteImport } from './routes/product/business-units/index'
 import { Route as ProductAssortmentsIndexRouteImport } from './routes/product/assortments/index'
+import { Route as DataCollectorTemplatesIndexRouteImport } from './routes/data-collector/templates/index'
+import { Route as DataCollectorTasksIndexRouteImport } from './routes/data-collector/tasks/index'
+import { Route as DataCollectorProjectsIndexRouteImport } from './routes/data-collector/projects/index'
+import { Route as DataCollectorOrdersIndexRouteImport } from './routes/data-collector/orders/index'
+import { Route as DataCollectorExecutionsIndexRouteImport } from './routes/data-collector/executions/index'
 import { Route as CodificationValuePropositionsIndexRouteImport } from './routes/codification/value-propositions/index'
 import { Route as CodificationPromotionsIndexRouteImport } from './routes/codification/promotions/index'
 import { Route as CodificationManufacturersIndexRouteImport } from './routes/codification/manufacturers/index'
@@ -116,6 +121,15 @@ import { Route as ProductBusinessUnitsNewRouteImport } from './routes/product/bu
 import { Route as ProductBusinessUnitsIdRouteImport } from './routes/product/business-units/$id'
 import { Route as ProductAssortmentsNewRouteImport } from './routes/product/assortments/new'
 import { Route as ProductAssortmentsIdRouteImport } from './routes/product/assortments/$id'
+import { Route as DataCollectorTemplatesNewRouteImport } from './routes/data-collector/templates/new'
+import { Route as DataCollectorTemplatesIdRouteImport } from './routes/data-collector/templates/$id'
+import { Route as DataCollectorTasksIdRouteImport } from './routes/data-collector/tasks/$id'
+import { Route as DataCollectorProjectsNewRouteImport } from './routes/data-collector/projects/new'
+import { Route as DataCollectorProjectsIdRouteImport } from './routes/data-collector/projects/$id'
+import { Route as DataCollectorOrdersNewRouteImport } from './routes/data-collector/orders/new'
+import { Route as DataCollectorOrdersIdRouteImport } from './routes/data-collector/orders/$id'
+import { Route as DataCollectorExecutionsNewRouteImport } from './routes/data-collector/executions/new'
+import { Route as DataCollectorExecutionsIdRouteImport } from './routes/data-collector/executions/$id'
 import { Route as CodificationValuePropositionsNewRouteImport } from './routes/codification/value-propositions/new'
 import { Route as CodificationValuePropositionsIdRouteImport } from './routes/codification/value-propositions/$id'
 import { Route as CodificationPromotionsNewRouteImport } from './routes/codification/promotions/new'
@@ -137,20 +151,33 @@ import { Route as CodificationAttributesIdRouteImport } from './routes/codificat
 import { Route as CodificationAdsNewRouteImport } from './routes/codification/ads/new'
 import { Route as CodificationAdsIdRouteImport } from './routes/codification/ads/$id'
 import { Route as SettingsDashboardApplicationsAppIdIndexRouteImport } from './routes/settings/dashboard-applications.$appId.index'
+import { Route as DataCollectorSettingsErrorIndicatorsIndexRouteImport } from './routes/data-collector/settings/error-indicators/index'
+import { Route as DataCollectorProjectsTagsIndexRouteImport } from './routes/data-collector/projects/tags/index'
+import { Route as DataCollectorOutputsSchemasIndexRouteImport } from './routes/data-collector/outputs/schemas/index'
+import { Route as DataCollectorOutputsDataTypesIndexRouteImport } from './routes/data-collector/outputs/data-types/index'
+import { Route as DataCollectorSettingsErrorIndicatorsNewRouteImport } from './routes/data-collector/settings/error-indicators/new'
+import { Route as DataCollectorSettingsErrorIndicatorsIdRouteImport } from './routes/data-collector/settings/error-indicators/$id'
+import { Route as DataCollectorProjectsTagsNewRouteImport } from './routes/data-collector/projects/tags/new'
+import { Route as DataCollectorProjectsTagsIdRouteImport } from './routes/data-collector/projects/tags/$id'
+import { Route as DataCollectorOutputsSchemasNewRouteImport } from './routes/data-collector/outputs/schemas/new'
+import { Route as DataCollectorOutputsSchemasIdRouteImport } from './routes/data-collector/outputs/schemas/$id'
+import { Route as DataCollectorOutputsDataTypesNewRouteImport } from './routes/data-collector/outputs/data-types/new'
+import { Route as DataCollectorOutputsDataTypesIdRouteImport } from './routes/data-collector/outputs/data-types/$id'
 import { Route as ClientsClientIdDataGroupsNewRouteImport } from './routes/clients/$clientId.data-groups.new'
 import { Route as ClientsClientIdDataGroupsDataGroupIdRouteImport } from './routes/clients/$clientId.data-groups.$dataGroupId'
+import { Route as DataCollectorSettingsProxiesProvidersIndexRouteImport } from './routes/data-collector/settings/proxies/providers/index'
+import { Route as DataCollectorSettingsProxiesAccountsIndexRouteImport } from './routes/data-collector/settings/proxies/accounts/index'
 import { Route as SettingsDashboardApplicationsAppIdGroupsGroupIdRouteImport } from './routes/settings/dashboard-applications.$appId.groups.$groupId'
+import { Route as DataCollectorSettingsProxiesProvidersNewRouteImport } from './routes/data-collector/settings/proxies/providers/new'
+import { Route as DataCollectorSettingsProxiesProvidersIdRouteImport } from './routes/data-collector/settings/proxies/providers/$id'
+import { Route as DataCollectorSettingsProxiesAccountsNewRouteImport } from './routes/data-collector/settings/proxies/accounts/new'
+import { Route as DataCollectorSettingsProxiesAccountsIdRouteImport } from './routes/data-collector/settings/proxies/accounts/$id'
 import { Route as SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRouteImport } from './routes/settings/dashboard-applications.$appId.groups.$groupId.index'
 import { Route as SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRouteImport } from './routes/settings/dashboard-applications.$appId.groups.$groupId.sections.$sectionId'
 
 const IamRoute = IamRouteImport.update({
   id: '/iam',
   path: '/iam',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DataCollectorRoute = DataCollectorRouteImport.update({
-  id: '/data-collector',
-  path: '/data-collector',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -171,6 +198,11 @@ const RetailersIndexRoute = RetailersIndexRouteImport.update({
 const RegionSystemsIndexRoute = RegionSystemsIndexRouteImport.update({
   id: '/region-systems/',
   path: '/region-systems/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataCollectorIndexRoute = DataCollectorIndexRouteImport.update({
+  id: '/data-collector/',
+  path: '/data-collector/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsIndexRoute = ClientsIndexRouteImport.update({
@@ -415,6 +447,35 @@ const ProductAssortmentsIndexRoute = ProductAssortmentsIndexRouteImport.update({
   path: '/product/assortments/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DataCollectorTemplatesIndexRoute =
+  DataCollectorTemplatesIndexRouteImport.update({
+    id: '/data-collector/templates/',
+    path: '/data-collector/templates/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorTasksIndexRoute = DataCollectorTasksIndexRouteImport.update({
+  id: '/data-collector/tasks/',
+  path: '/data-collector/tasks/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataCollectorProjectsIndexRoute =
+  DataCollectorProjectsIndexRouteImport.update({
+    id: '/data-collector/projects/',
+    path: '/data-collector/projects/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorOrdersIndexRoute =
+  DataCollectorOrdersIndexRouteImport.update({
+    id: '/data-collector/orders/',
+    path: '/data-collector/orders/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorExecutionsIndexRoute =
+  DataCollectorExecutionsIndexRouteImport.update({
+    id: '/data-collector/executions/',
+    path: '/data-collector/executions/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CodificationValuePropositionsIndexRoute =
   CodificationValuePropositionsIndexRouteImport.update({
     id: '/codification/value-propositions/',
@@ -717,6 +778,56 @@ const ProductAssortmentsIdRoute = ProductAssortmentsIdRouteImport.update({
   path: '/product/assortments/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DataCollectorTemplatesNewRoute =
+  DataCollectorTemplatesNewRouteImport.update({
+    id: '/data-collector/templates/new',
+    path: '/data-collector/templates/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorTemplatesIdRoute =
+  DataCollectorTemplatesIdRouteImport.update({
+    id: '/data-collector/templates/$id',
+    path: '/data-collector/templates/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorTasksIdRoute = DataCollectorTasksIdRouteImport.update({
+  id: '/data-collector/tasks/$id',
+  path: '/data-collector/tasks/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataCollectorProjectsNewRoute =
+  DataCollectorProjectsNewRouteImport.update({
+    id: '/data-collector/projects/new',
+    path: '/data-collector/projects/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorProjectsIdRoute = DataCollectorProjectsIdRouteImport.update({
+  id: '/data-collector/projects/$id',
+  path: '/data-collector/projects/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataCollectorOrdersNewRoute = DataCollectorOrdersNewRouteImport.update({
+  id: '/data-collector/orders/new',
+  path: '/data-collector/orders/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataCollectorOrdersIdRoute = DataCollectorOrdersIdRouteImport.update({
+  id: '/data-collector/orders/$id',
+  path: '/data-collector/orders/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DataCollectorExecutionsNewRoute =
+  DataCollectorExecutionsNewRouteImport.update({
+    id: '/data-collector/executions/new',
+    path: '/data-collector/executions/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorExecutionsIdRoute =
+  DataCollectorExecutionsIdRouteImport.update({
+    id: '/data-collector/executions/$id',
+    path: '/data-collector/executions/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CodificationValuePropositionsNewRoute =
   CodificationValuePropositionsNewRouteImport.update({
     id: '/codification/value-propositions/new',
@@ -838,6 +949,78 @@ const SettingsDashboardApplicationsAppIdIndexRoute =
     path: '/',
     getParentRoute: () => SettingsDashboardApplicationsAppIdRoute,
   } as any)
+const DataCollectorSettingsErrorIndicatorsIndexRoute =
+  DataCollectorSettingsErrorIndicatorsIndexRouteImport.update({
+    id: '/data-collector/settings/error-indicators/',
+    path: '/data-collector/settings/error-indicators/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorProjectsTagsIndexRoute =
+  DataCollectorProjectsTagsIndexRouteImport.update({
+    id: '/data-collector/projects/tags/',
+    path: '/data-collector/projects/tags/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorOutputsSchemasIndexRoute =
+  DataCollectorOutputsSchemasIndexRouteImport.update({
+    id: '/data-collector/outputs/schemas/',
+    path: '/data-collector/outputs/schemas/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorOutputsDataTypesIndexRoute =
+  DataCollectorOutputsDataTypesIndexRouteImport.update({
+    id: '/data-collector/outputs/data-types/',
+    path: '/data-collector/outputs/data-types/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorSettingsErrorIndicatorsNewRoute =
+  DataCollectorSettingsErrorIndicatorsNewRouteImport.update({
+    id: '/data-collector/settings/error-indicators/new',
+    path: '/data-collector/settings/error-indicators/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorSettingsErrorIndicatorsIdRoute =
+  DataCollectorSettingsErrorIndicatorsIdRouteImport.update({
+    id: '/data-collector/settings/error-indicators/$id',
+    path: '/data-collector/settings/error-indicators/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorProjectsTagsNewRoute =
+  DataCollectorProjectsTagsNewRouteImport.update({
+    id: '/data-collector/projects/tags/new',
+    path: '/data-collector/projects/tags/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorProjectsTagsIdRoute =
+  DataCollectorProjectsTagsIdRouteImport.update({
+    id: '/data-collector/projects/tags/$id',
+    path: '/data-collector/projects/tags/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorOutputsSchemasNewRoute =
+  DataCollectorOutputsSchemasNewRouteImport.update({
+    id: '/data-collector/outputs/schemas/new',
+    path: '/data-collector/outputs/schemas/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorOutputsSchemasIdRoute =
+  DataCollectorOutputsSchemasIdRouteImport.update({
+    id: '/data-collector/outputs/schemas/$id',
+    path: '/data-collector/outputs/schemas/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorOutputsDataTypesNewRoute =
+  DataCollectorOutputsDataTypesNewRouteImport.update({
+    id: '/data-collector/outputs/data-types/new',
+    path: '/data-collector/outputs/data-types/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorOutputsDataTypesIdRoute =
+  DataCollectorOutputsDataTypesIdRouteImport.update({
+    id: '/data-collector/outputs/data-types/$id',
+    path: '/data-collector/outputs/data-types/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ClientsClientIdDataGroupsNewRoute =
   ClientsClientIdDataGroupsNewRouteImport.update({
     id: '/data-groups/new',
@@ -850,11 +1033,47 @@ const ClientsClientIdDataGroupsDataGroupIdRoute =
     path: '/data-groups/$dataGroupId',
     getParentRoute: () => ClientsClientIdRoute,
   } as any)
+const DataCollectorSettingsProxiesProvidersIndexRoute =
+  DataCollectorSettingsProxiesProvidersIndexRouteImport.update({
+    id: '/data-collector/settings/proxies/providers/',
+    path: '/data-collector/settings/proxies/providers/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorSettingsProxiesAccountsIndexRoute =
+  DataCollectorSettingsProxiesAccountsIndexRouteImport.update({
+    id: '/data-collector/settings/proxies/accounts/',
+    path: '/data-collector/settings/proxies/accounts/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SettingsDashboardApplicationsAppIdGroupsGroupIdRoute =
   SettingsDashboardApplicationsAppIdGroupsGroupIdRouteImport.update({
     id: '/groups/$groupId',
     path: '/groups/$groupId',
     getParentRoute: () => SettingsDashboardApplicationsAppIdRoute,
+  } as any)
+const DataCollectorSettingsProxiesProvidersNewRoute =
+  DataCollectorSettingsProxiesProvidersNewRouteImport.update({
+    id: '/data-collector/settings/proxies/providers/new',
+    path: '/data-collector/settings/proxies/providers/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorSettingsProxiesProvidersIdRoute =
+  DataCollectorSettingsProxiesProvidersIdRouteImport.update({
+    id: '/data-collector/settings/proxies/providers/$id',
+    path: '/data-collector/settings/proxies/providers/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorSettingsProxiesAccountsNewRoute =
+  DataCollectorSettingsProxiesAccountsNewRouteImport.update({
+    id: '/data-collector/settings/proxies/accounts/new',
+    path: '/data-collector/settings/proxies/accounts/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DataCollectorSettingsProxiesAccountsIdRoute =
+  DataCollectorSettingsProxiesAccountsIdRouteImport.update({
+    id: '/data-collector/settings/proxies/accounts/$id',
+    path: '/data-collector/settings/proxies/accounts/$id',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute =
   SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRouteImport.update({
@@ -874,7 +1093,6 @@ const SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
   '/bulk/$id': typeof BulkIdRoute
   '/bulk/new': typeof BulkNewRoute
@@ -899,6 +1117,7 @@ export interface FileRoutesByFullPath {
   '/stores/new': typeof StoresNewRoute
   '/bulk/': typeof BulkIndexRoute
   '/clients/': typeof ClientsIndexRoute
+  '/data-collector/': typeof DataCollectorIndexRoute
   '/region-systems/': typeof RegionSystemsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
@@ -922,6 +1141,15 @@ export interface FileRoutesByFullPath {
   '/codification/promotions/new': typeof CodificationPromotionsNewRoute
   '/codification/value-propositions/$id': typeof CodificationValuePropositionsIdRoute
   '/codification/value-propositions/new': typeof CodificationValuePropositionsNewRoute
+  '/data-collector/executions/$id': typeof DataCollectorExecutionsIdRoute
+  '/data-collector/executions/new': typeof DataCollectorExecutionsNewRoute
+  '/data-collector/orders/$id': typeof DataCollectorOrdersIdRoute
+  '/data-collector/orders/new': typeof DataCollectorOrdersNewRoute
+  '/data-collector/projects/$id': typeof DataCollectorProjectsIdRoute
+  '/data-collector/projects/new': typeof DataCollectorProjectsNewRoute
+  '/data-collector/tasks/$id': typeof DataCollectorTasksIdRoute
+  '/data-collector/templates/$id': typeof DataCollectorTemplatesIdRoute
+  '/data-collector/templates/new': typeof DataCollectorTemplatesNewRoute
   '/product/assortments/$id': typeof ProductAssortmentsIdRoute
   '/product/assortments/new': typeof ProductAssortmentsNewRoute
   '/product/business-units/$id': typeof ProductBusinessUnitsIdRoute
@@ -977,6 +1205,11 @@ export interface FileRoutesByFullPath {
   '/codification/manufacturers/': typeof CodificationManufacturersIndexRoute
   '/codification/promotions/': typeof CodificationPromotionsIndexRoute
   '/codification/value-propositions/': typeof CodificationValuePropositionsIndexRoute
+  '/data-collector/executions/': typeof DataCollectorExecutionsIndexRoute
+  '/data-collector/orders/': typeof DataCollectorOrdersIndexRoute
+  '/data-collector/projects/': typeof DataCollectorProjectsIndexRoute
+  '/data-collector/tasks/': typeof DataCollectorTasksIndexRoute
+  '/data-collector/templates/': typeof DataCollectorTemplatesIndexRoute
   '/product/assortments/': typeof ProductAssortmentsIndexRoute
   '/product/business-units/': typeof ProductBusinessUnitsIndexRoute
   '/product/client-categories/': typeof ProductClientCategoriesIndexRoute
@@ -1002,14 +1235,31 @@ export interface FileRoutesByFullPath {
   '/tasks/seeds/': typeof TasksSeedsIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
   '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
+  '/data-collector/outputs/data-types/$id': typeof DataCollectorOutputsDataTypesIdRoute
+  '/data-collector/outputs/data-types/new': typeof DataCollectorOutputsDataTypesNewRoute
+  '/data-collector/outputs/schemas/$id': typeof DataCollectorOutputsSchemasIdRoute
+  '/data-collector/outputs/schemas/new': typeof DataCollectorOutputsSchemasNewRoute
+  '/data-collector/projects/tags/$id': typeof DataCollectorProjectsTagsIdRoute
+  '/data-collector/projects/tags/new': typeof DataCollectorProjectsTagsNewRoute
+  '/data-collector/settings/error-indicators/$id': typeof DataCollectorSettingsErrorIndicatorsIdRoute
+  '/data-collector/settings/error-indicators/new': typeof DataCollectorSettingsErrorIndicatorsNewRoute
+  '/data-collector/outputs/data-types/': typeof DataCollectorOutputsDataTypesIndexRoute
+  '/data-collector/outputs/schemas/': typeof DataCollectorOutputsSchemasIndexRoute
+  '/data-collector/projects/tags/': typeof DataCollectorProjectsTagsIndexRoute
+  '/data-collector/settings/error-indicators/': typeof DataCollectorSettingsErrorIndicatorsIndexRoute
   '/settings/dashboard-applications/$appId/': typeof SettingsDashboardApplicationsAppIdIndexRoute
+  '/data-collector/settings/proxies/accounts/$id': typeof DataCollectorSettingsProxiesAccountsIdRoute
+  '/data-collector/settings/proxies/accounts/new': typeof DataCollectorSettingsProxiesAccountsNewRoute
+  '/data-collector/settings/proxies/providers/$id': typeof DataCollectorSettingsProxiesProvidersIdRoute
+  '/data-collector/settings/proxies/providers/new': typeof DataCollectorSettingsProxiesProvidersNewRoute
   '/settings/dashboard-applications/$appId/groups/$groupId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdRouteWithChildren
+  '/data-collector/settings/proxies/accounts/': typeof DataCollectorSettingsProxiesAccountsIndexRoute
+  '/data-collector/settings/proxies/providers/': typeof DataCollectorSettingsProxiesProvidersIndexRoute
   '/settings/dashboard-applications/$appId/groups/$groupId/': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute
   '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
   '/bulk/$id': typeof BulkIdRoute
   '/bulk/new': typeof BulkNewRoute
@@ -1028,6 +1278,7 @@ export interface FileRoutesByTo {
   '/stores/new': typeof StoresNewRoute
   '/bulk': typeof BulkIndexRoute
   '/clients': typeof ClientsIndexRoute
+  '/data-collector': typeof DataCollectorIndexRoute
   '/region-systems': typeof RegionSystemsIndexRoute
   '/retailers': typeof RetailersIndexRoute
   '/stores': typeof StoresIndexRoute
@@ -1051,6 +1302,15 @@ export interface FileRoutesByTo {
   '/codification/promotions/new': typeof CodificationPromotionsNewRoute
   '/codification/value-propositions/$id': typeof CodificationValuePropositionsIdRoute
   '/codification/value-propositions/new': typeof CodificationValuePropositionsNewRoute
+  '/data-collector/executions/$id': typeof DataCollectorExecutionsIdRoute
+  '/data-collector/executions/new': typeof DataCollectorExecutionsNewRoute
+  '/data-collector/orders/$id': typeof DataCollectorOrdersIdRoute
+  '/data-collector/orders/new': typeof DataCollectorOrdersNewRoute
+  '/data-collector/projects/$id': typeof DataCollectorProjectsIdRoute
+  '/data-collector/projects/new': typeof DataCollectorProjectsNewRoute
+  '/data-collector/tasks/$id': typeof DataCollectorTasksIdRoute
+  '/data-collector/templates/$id': typeof DataCollectorTemplatesIdRoute
+  '/data-collector/templates/new': typeof DataCollectorTemplatesNewRoute
   '/product/assortments/$id': typeof ProductAssortmentsIdRoute
   '/product/assortments/new': typeof ProductAssortmentsNewRoute
   '/product/business-units/$id': typeof ProductBusinessUnitsIdRoute
@@ -1105,6 +1365,11 @@ export interface FileRoutesByTo {
   '/codification/manufacturers': typeof CodificationManufacturersIndexRoute
   '/codification/promotions': typeof CodificationPromotionsIndexRoute
   '/codification/value-propositions': typeof CodificationValuePropositionsIndexRoute
+  '/data-collector/executions': typeof DataCollectorExecutionsIndexRoute
+  '/data-collector/orders': typeof DataCollectorOrdersIndexRoute
+  '/data-collector/projects': typeof DataCollectorProjectsIndexRoute
+  '/data-collector/tasks': typeof DataCollectorTasksIndexRoute
+  '/data-collector/templates': typeof DataCollectorTemplatesIndexRoute
   '/product/assortments': typeof ProductAssortmentsIndexRoute
   '/product/business-units': typeof ProductBusinessUnitsIndexRoute
   '/product/client-categories': typeof ProductClientCategoriesIndexRoute
@@ -1130,14 +1395,31 @@ export interface FileRoutesByTo {
   '/tasks/seeds': typeof TasksSeedsIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
   '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
+  '/data-collector/outputs/data-types/$id': typeof DataCollectorOutputsDataTypesIdRoute
+  '/data-collector/outputs/data-types/new': typeof DataCollectorOutputsDataTypesNewRoute
+  '/data-collector/outputs/schemas/$id': typeof DataCollectorOutputsSchemasIdRoute
+  '/data-collector/outputs/schemas/new': typeof DataCollectorOutputsSchemasNewRoute
+  '/data-collector/projects/tags/$id': typeof DataCollectorProjectsTagsIdRoute
+  '/data-collector/projects/tags/new': typeof DataCollectorProjectsTagsNewRoute
+  '/data-collector/settings/error-indicators/$id': typeof DataCollectorSettingsErrorIndicatorsIdRoute
+  '/data-collector/settings/error-indicators/new': typeof DataCollectorSettingsErrorIndicatorsNewRoute
+  '/data-collector/outputs/data-types': typeof DataCollectorOutputsDataTypesIndexRoute
+  '/data-collector/outputs/schemas': typeof DataCollectorOutputsSchemasIndexRoute
+  '/data-collector/projects/tags': typeof DataCollectorProjectsTagsIndexRoute
+  '/data-collector/settings/error-indicators': typeof DataCollectorSettingsErrorIndicatorsIndexRoute
   '/settings/dashboard-applications/$appId': typeof SettingsDashboardApplicationsAppIdIndexRoute
+  '/data-collector/settings/proxies/accounts/$id': typeof DataCollectorSettingsProxiesAccountsIdRoute
+  '/data-collector/settings/proxies/accounts/new': typeof DataCollectorSettingsProxiesAccountsNewRoute
+  '/data-collector/settings/proxies/providers/$id': typeof DataCollectorSettingsProxiesProvidersIdRoute
+  '/data-collector/settings/proxies/providers/new': typeof DataCollectorSettingsProxiesProvidersNewRoute
+  '/data-collector/settings/proxies/accounts': typeof DataCollectorSettingsProxiesAccountsIndexRoute
+  '/data-collector/settings/proxies/providers': typeof DataCollectorSettingsProxiesProvidersIndexRoute
   '/settings/dashboard-applications/$appId/groups/$groupId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute
   '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
   '/bulk/$id': typeof BulkIdRoute
   '/bulk/new': typeof BulkNewRoute
@@ -1162,6 +1444,7 @@ export interface FileRoutesById {
   '/stores/new': typeof StoresNewRoute
   '/bulk/': typeof BulkIndexRoute
   '/clients/': typeof ClientsIndexRoute
+  '/data-collector/': typeof DataCollectorIndexRoute
   '/region-systems/': typeof RegionSystemsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
@@ -1185,6 +1468,15 @@ export interface FileRoutesById {
   '/codification/promotions/new': typeof CodificationPromotionsNewRoute
   '/codification/value-propositions/$id': typeof CodificationValuePropositionsIdRoute
   '/codification/value-propositions/new': typeof CodificationValuePropositionsNewRoute
+  '/data-collector/executions/$id': typeof DataCollectorExecutionsIdRoute
+  '/data-collector/executions/new': typeof DataCollectorExecutionsNewRoute
+  '/data-collector/orders/$id': typeof DataCollectorOrdersIdRoute
+  '/data-collector/orders/new': typeof DataCollectorOrdersNewRoute
+  '/data-collector/projects/$id': typeof DataCollectorProjectsIdRoute
+  '/data-collector/projects/new': typeof DataCollectorProjectsNewRoute
+  '/data-collector/tasks/$id': typeof DataCollectorTasksIdRoute
+  '/data-collector/templates/$id': typeof DataCollectorTemplatesIdRoute
+  '/data-collector/templates/new': typeof DataCollectorTemplatesNewRoute
   '/product/assortments/$id': typeof ProductAssortmentsIdRoute
   '/product/assortments/new': typeof ProductAssortmentsNewRoute
   '/product/business-units/$id': typeof ProductBusinessUnitsIdRoute
@@ -1240,6 +1532,11 @@ export interface FileRoutesById {
   '/codification/manufacturers/': typeof CodificationManufacturersIndexRoute
   '/codification/promotions/': typeof CodificationPromotionsIndexRoute
   '/codification/value-propositions/': typeof CodificationValuePropositionsIndexRoute
+  '/data-collector/executions/': typeof DataCollectorExecutionsIndexRoute
+  '/data-collector/orders/': typeof DataCollectorOrdersIndexRoute
+  '/data-collector/projects/': typeof DataCollectorProjectsIndexRoute
+  '/data-collector/tasks/': typeof DataCollectorTasksIndexRoute
+  '/data-collector/templates/': typeof DataCollectorTemplatesIndexRoute
   '/product/assortments/': typeof ProductAssortmentsIndexRoute
   '/product/business-units/': typeof ProductBusinessUnitsIndexRoute
   '/product/client-categories/': typeof ProductClientCategoriesIndexRoute
@@ -1265,8 +1562,26 @@ export interface FileRoutesById {
   '/tasks/seeds/': typeof TasksSeedsIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
   '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
+  '/data-collector/outputs/data-types/$id': typeof DataCollectorOutputsDataTypesIdRoute
+  '/data-collector/outputs/data-types/new': typeof DataCollectorOutputsDataTypesNewRoute
+  '/data-collector/outputs/schemas/$id': typeof DataCollectorOutputsSchemasIdRoute
+  '/data-collector/outputs/schemas/new': typeof DataCollectorOutputsSchemasNewRoute
+  '/data-collector/projects/tags/$id': typeof DataCollectorProjectsTagsIdRoute
+  '/data-collector/projects/tags/new': typeof DataCollectorProjectsTagsNewRoute
+  '/data-collector/settings/error-indicators/$id': typeof DataCollectorSettingsErrorIndicatorsIdRoute
+  '/data-collector/settings/error-indicators/new': typeof DataCollectorSettingsErrorIndicatorsNewRoute
+  '/data-collector/outputs/data-types/': typeof DataCollectorOutputsDataTypesIndexRoute
+  '/data-collector/outputs/schemas/': typeof DataCollectorOutputsSchemasIndexRoute
+  '/data-collector/projects/tags/': typeof DataCollectorProjectsTagsIndexRoute
+  '/data-collector/settings/error-indicators/': typeof DataCollectorSettingsErrorIndicatorsIndexRoute
   '/settings/dashboard-applications/$appId/': typeof SettingsDashboardApplicationsAppIdIndexRoute
+  '/data-collector/settings/proxies/accounts/$id': typeof DataCollectorSettingsProxiesAccountsIdRoute
+  '/data-collector/settings/proxies/accounts/new': typeof DataCollectorSettingsProxiesAccountsNewRoute
+  '/data-collector/settings/proxies/providers/$id': typeof DataCollectorSettingsProxiesProvidersIdRoute
+  '/data-collector/settings/proxies/providers/new': typeof DataCollectorSettingsProxiesProvidersNewRoute
   '/settings/dashboard-applications/$appId/groups/$groupId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdRouteWithChildren
+  '/data-collector/settings/proxies/accounts/': typeof DataCollectorSettingsProxiesAccountsIndexRoute
+  '/data-collector/settings/proxies/providers/': typeof DataCollectorSettingsProxiesProvidersIndexRoute
   '/settings/dashboard-applications/$appId/groups/$groupId/': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute
   '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute
 }
@@ -1274,7 +1589,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/data-collector'
     | '/iam'
     | '/bulk/$id'
     | '/bulk/new'
@@ -1299,6 +1613,7 @@ export interface FileRouteTypes {
     | '/stores/new'
     | '/bulk/'
     | '/clients/'
+    | '/data-collector/'
     | '/region-systems/'
     | '/retailers/'
     | '/stores/'
@@ -1322,6 +1637,15 @@ export interface FileRouteTypes {
     | '/codification/promotions/new'
     | '/codification/value-propositions/$id'
     | '/codification/value-propositions/new'
+    | '/data-collector/executions/$id'
+    | '/data-collector/executions/new'
+    | '/data-collector/orders/$id'
+    | '/data-collector/orders/new'
+    | '/data-collector/projects/$id'
+    | '/data-collector/projects/new'
+    | '/data-collector/tasks/$id'
+    | '/data-collector/templates/$id'
+    | '/data-collector/templates/new'
     | '/product/assortments/$id'
     | '/product/assortments/new'
     | '/product/business-units/$id'
@@ -1377,6 +1701,11 @@ export interface FileRouteTypes {
     | '/codification/manufacturers/'
     | '/codification/promotions/'
     | '/codification/value-propositions/'
+    | '/data-collector/executions/'
+    | '/data-collector/orders/'
+    | '/data-collector/projects/'
+    | '/data-collector/tasks/'
+    | '/data-collector/templates/'
     | '/product/assortments/'
     | '/product/business-units/'
     | '/product/client-categories/'
@@ -1402,14 +1731,31 @@ export interface FileRouteTypes {
     | '/tasks/seeds/'
     | '/clients/$clientId/data-groups/$dataGroupId'
     | '/clients/$clientId/data-groups/new'
+    | '/data-collector/outputs/data-types/$id'
+    | '/data-collector/outputs/data-types/new'
+    | '/data-collector/outputs/schemas/$id'
+    | '/data-collector/outputs/schemas/new'
+    | '/data-collector/projects/tags/$id'
+    | '/data-collector/projects/tags/new'
+    | '/data-collector/settings/error-indicators/$id'
+    | '/data-collector/settings/error-indicators/new'
+    | '/data-collector/outputs/data-types/'
+    | '/data-collector/outputs/schemas/'
+    | '/data-collector/projects/tags/'
+    | '/data-collector/settings/error-indicators/'
     | '/settings/dashboard-applications/$appId/'
+    | '/data-collector/settings/proxies/accounts/$id'
+    | '/data-collector/settings/proxies/accounts/new'
+    | '/data-collector/settings/proxies/providers/$id'
+    | '/data-collector/settings/proxies/providers/new'
     | '/settings/dashboard-applications/$appId/groups/$groupId'
+    | '/data-collector/settings/proxies/accounts/'
+    | '/data-collector/settings/proxies/providers/'
     | '/settings/dashboard-applications/$appId/groups/$groupId/'
     | '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/data-collector'
     | '/iam'
     | '/bulk/$id'
     | '/bulk/new'
@@ -1428,6 +1774,7 @@ export interface FileRouteTypes {
     | '/stores/new'
     | '/bulk'
     | '/clients'
+    | '/data-collector'
     | '/region-systems'
     | '/retailers'
     | '/stores'
@@ -1451,6 +1798,15 @@ export interface FileRouteTypes {
     | '/codification/promotions/new'
     | '/codification/value-propositions/$id'
     | '/codification/value-propositions/new'
+    | '/data-collector/executions/$id'
+    | '/data-collector/executions/new'
+    | '/data-collector/orders/$id'
+    | '/data-collector/orders/new'
+    | '/data-collector/projects/$id'
+    | '/data-collector/projects/new'
+    | '/data-collector/tasks/$id'
+    | '/data-collector/templates/$id'
+    | '/data-collector/templates/new'
     | '/product/assortments/$id'
     | '/product/assortments/new'
     | '/product/business-units/$id'
@@ -1505,6 +1861,11 @@ export interface FileRouteTypes {
     | '/codification/manufacturers'
     | '/codification/promotions'
     | '/codification/value-propositions'
+    | '/data-collector/executions'
+    | '/data-collector/orders'
+    | '/data-collector/projects'
+    | '/data-collector/tasks'
+    | '/data-collector/templates'
     | '/product/assortments'
     | '/product/business-units'
     | '/product/client-categories'
@@ -1530,13 +1891,30 @@ export interface FileRouteTypes {
     | '/tasks/seeds'
     | '/clients/$clientId/data-groups/$dataGroupId'
     | '/clients/$clientId/data-groups/new'
+    | '/data-collector/outputs/data-types/$id'
+    | '/data-collector/outputs/data-types/new'
+    | '/data-collector/outputs/schemas/$id'
+    | '/data-collector/outputs/schemas/new'
+    | '/data-collector/projects/tags/$id'
+    | '/data-collector/projects/tags/new'
+    | '/data-collector/settings/error-indicators/$id'
+    | '/data-collector/settings/error-indicators/new'
+    | '/data-collector/outputs/data-types'
+    | '/data-collector/outputs/schemas'
+    | '/data-collector/projects/tags'
+    | '/data-collector/settings/error-indicators'
     | '/settings/dashboard-applications/$appId'
+    | '/data-collector/settings/proxies/accounts/$id'
+    | '/data-collector/settings/proxies/accounts/new'
+    | '/data-collector/settings/proxies/providers/$id'
+    | '/data-collector/settings/proxies/providers/new'
+    | '/data-collector/settings/proxies/accounts'
+    | '/data-collector/settings/proxies/providers'
     | '/settings/dashboard-applications/$appId/groups/$groupId'
     | '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId'
   id:
     | '__root__'
     | '/'
-    | '/data-collector'
     | '/iam'
     | '/bulk/$id'
     | '/bulk/new'
@@ -1561,6 +1939,7 @@ export interface FileRouteTypes {
     | '/stores/new'
     | '/bulk/'
     | '/clients/'
+    | '/data-collector/'
     | '/region-systems/'
     | '/retailers/'
     | '/stores/'
@@ -1584,6 +1963,15 @@ export interface FileRouteTypes {
     | '/codification/promotions/new'
     | '/codification/value-propositions/$id'
     | '/codification/value-propositions/new'
+    | '/data-collector/executions/$id'
+    | '/data-collector/executions/new'
+    | '/data-collector/orders/$id'
+    | '/data-collector/orders/new'
+    | '/data-collector/projects/$id'
+    | '/data-collector/projects/new'
+    | '/data-collector/tasks/$id'
+    | '/data-collector/templates/$id'
+    | '/data-collector/templates/new'
     | '/product/assortments/$id'
     | '/product/assortments/new'
     | '/product/business-units/$id'
@@ -1639,6 +2027,11 @@ export interface FileRouteTypes {
     | '/codification/manufacturers/'
     | '/codification/promotions/'
     | '/codification/value-propositions/'
+    | '/data-collector/executions/'
+    | '/data-collector/orders/'
+    | '/data-collector/projects/'
+    | '/data-collector/tasks/'
+    | '/data-collector/templates/'
     | '/product/assortments/'
     | '/product/business-units/'
     | '/product/client-categories/'
@@ -1664,15 +2057,32 @@ export interface FileRouteTypes {
     | '/tasks/seeds/'
     | '/clients/$clientId/data-groups/$dataGroupId'
     | '/clients/$clientId/data-groups/new'
+    | '/data-collector/outputs/data-types/$id'
+    | '/data-collector/outputs/data-types/new'
+    | '/data-collector/outputs/schemas/$id'
+    | '/data-collector/outputs/schemas/new'
+    | '/data-collector/projects/tags/$id'
+    | '/data-collector/projects/tags/new'
+    | '/data-collector/settings/error-indicators/$id'
+    | '/data-collector/settings/error-indicators/new'
+    | '/data-collector/outputs/data-types/'
+    | '/data-collector/outputs/schemas/'
+    | '/data-collector/projects/tags/'
+    | '/data-collector/settings/error-indicators/'
     | '/settings/dashboard-applications/$appId/'
+    | '/data-collector/settings/proxies/accounts/$id'
+    | '/data-collector/settings/proxies/accounts/new'
+    | '/data-collector/settings/proxies/providers/$id'
+    | '/data-collector/settings/proxies/providers/new'
     | '/settings/dashboard-applications/$appId/groups/$groupId'
+    | '/data-collector/settings/proxies/accounts/'
+    | '/data-collector/settings/proxies/providers/'
     | '/settings/dashboard-applications/$appId/groups/$groupId/'
     | '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DataCollectorRoute: typeof DataCollectorRoute
   IamRoute: typeof IamRoute
   BulkIdRoute: typeof BulkIdRoute
   BulkNewRoute: typeof BulkNewRoute
@@ -1697,6 +2107,7 @@ export interface RootRouteChildren {
   StoresNewRoute: typeof StoresNewRoute
   BulkIndexRoute: typeof BulkIndexRoute
   ClientsIndexRoute: typeof ClientsIndexRoute
+  DataCollectorIndexRoute: typeof DataCollectorIndexRoute
   RegionSystemsIndexRoute: typeof RegionSystemsIndexRoute
   RetailersIndexRoute: typeof RetailersIndexRoute
   StoresIndexRoute: typeof StoresIndexRoute
@@ -1720,6 +2131,15 @@ export interface RootRouteChildren {
   CodificationPromotionsNewRoute: typeof CodificationPromotionsNewRoute
   CodificationValuePropositionsIdRoute: typeof CodificationValuePropositionsIdRoute
   CodificationValuePropositionsNewRoute: typeof CodificationValuePropositionsNewRoute
+  DataCollectorExecutionsIdRoute: typeof DataCollectorExecutionsIdRoute
+  DataCollectorExecutionsNewRoute: typeof DataCollectorExecutionsNewRoute
+  DataCollectorOrdersIdRoute: typeof DataCollectorOrdersIdRoute
+  DataCollectorOrdersNewRoute: typeof DataCollectorOrdersNewRoute
+  DataCollectorProjectsIdRoute: typeof DataCollectorProjectsIdRoute
+  DataCollectorProjectsNewRoute: typeof DataCollectorProjectsNewRoute
+  DataCollectorTasksIdRoute: typeof DataCollectorTasksIdRoute
+  DataCollectorTemplatesIdRoute: typeof DataCollectorTemplatesIdRoute
+  DataCollectorTemplatesNewRoute: typeof DataCollectorTemplatesNewRoute
   ProductAssortmentsIdRoute: typeof ProductAssortmentsIdRoute
   ProductAssortmentsNewRoute: typeof ProductAssortmentsNewRoute
   ProductBusinessUnitsIdRoute: typeof ProductBusinessUnitsIdRoute
@@ -1766,6 +2186,11 @@ export interface RootRouteChildren {
   CodificationManufacturersIndexRoute: typeof CodificationManufacturersIndexRoute
   CodificationPromotionsIndexRoute: typeof CodificationPromotionsIndexRoute
   CodificationValuePropositionsIndexRoute: typeof CodificationValuePropositionsIndexRoute
+  DataCollectorExecutionsIndexRoute: typeof DataCollectorExecutionsIndexRoute
+  DataCollectorOrdersIndexRoute: typeof DataCollectorOrdersIndexRoute
+  DataCollectorProjectsIndexRoute: typeof DataCollectorProjectsIndexRoute
+  DataCollectorTasksIndexRoute: typeof DataCollectorTasksIndexRoute
+  DataCollectorTemplatesIndexRoute: typeof DataCollectorTemplatesIndexRoute
   ProductAssortmentsIndexRoute: typeof ProductAssortmentsIndexRoute
   ProductBusinessUnitsIndexRoute: typeof ProductBusinessUnitsIndexRoute
   ProductClientCategoriesIndexRoute: typeof ProductClientCategoriesIndexRoute
@@ -1784,6 +2209,24 @@ export interface RootRouteChildren {
   TasksJobsIndexRoute: typeof TasksJobsIndexRoute
   TasksProjectsIndexRoute: typeof TasksProjectsIndexRoute
   TasksSeedsIndexRoute: typeof TasksSeedsIndexRoute
+  DataCollectorOutputsDataTypesIdRoute: typeof DataCollectorOutputsDataTypesIdRoute
+  DataCollectorOutputsDataTypesNewRoute: typeof DataCollectorOutputsDataTypesNewRoute
+  DataCollectorOutputsSchemasIdRoute: typeof DataCollectorOutputsSchemasIdRoute
+  DataCollectorOutputsSchemasNewRoute: typeof DataCollectorOutputsSchemasNewRoute
+  DataCollectorProjectsTagsIdRoute: typeof DataCollectorProjectsTagsIdRoute
+  DataCollectorProjectsTagsNewRoute: typeof DataCollectorProjectsTagsNewRoute
+  DataCollectorSettingsErrorIndicatorsIdRoute: typeof DataCollectorSettingsErrorIndicatorsIdRoute
+  DataCollectorSettingsErrorIndicatorsNewRoute: typeof DataCollectorSettingsErrorIndicatorsNewRoute
+  DataCollectorOutputsDataTypesIndexRoute: typeof DataCollectorOutputsDataTypesIndexRoute
+  DataCollectorOutputsSchemasIndexRoute: typeof DataCollectorOutputsSchemasIndexRoute
+  DataCollectorProjectsTagsIndexRoute: typeof DataCollectorProjectsTagsIndexRoute
+  DataCollectorSettingsErrorIndicatorsIndexRoute: typeof DataCollectorSettingsErrorIndicatorsIndexRoute
+  DataCollectorSettingsProxiesAccountsIdRoute: typeof DataCollectorSettingsProxiesAccountsIdRoute
+  DataCollectorSettingsProxiesAccountsNewRoute: typeof DataCollectorSettingsProxiesAccountsNewRoute
+  DataCollectorSettingsProxiesProvidersIdRoute: typeof DataCollectorSettingsProxiesProvidersIdRoute
+  DataCollectorSettingsProxiesProvidersNewRoute: typeof DataCollectorSettingsProxiesProvidersNewRoute
+  DataCollectorSettingsProxiesAccountsIndexRoute: typeof DataCollectorSettingsProxiesAccountsIndexRoute
+  DataCollectorSettingsProxiesProvidersIndexRoute: typeof DataCollectorSettingsProxiesProvidersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1793,13 +2236,6 @@ declare module '@tanstack/react-router' {
       path: '/iam'
       fullPath: '/iam'
       preLoaderRoute: typeof IamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/data-collector': {
-      id: '/data-collector'
-      path: '/data-collector'
-      fullPath: '/data-collector'
-      preLoaderRoute: typeof DataCollectorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -1828,6 +2264,13 @@ declare module '@tanstack/react-router' {
       path: '/region-systems'
       fullPath: '/region-systems/'
       preLoaderRoute: typeof RegionSystemsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/': {
+      id: '/data-collector/'
+      path: '/data-collector'
+      fullPath: '/data-collector/'
+      preLoaderRoute: typeof DataCollectorIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients/': {
@@ -2150,6 +2593,41 @@ declare module '@tanstack/react-router' {
       path: '/product/assortments'
       fullPath: '/product/assortments/'
       preLoaderRoute: typeof ProductAssortmentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/templates/': {
+      id: '/data-collector/templates/'
+      path: '/data-collector/templates'
+      fullPath: '/data-collector/templates/'
+      preLoaderRoute: typeof DataCollectorTemplatesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/tasks/': {
+      id: '/data-collector/tasks/'
+      path: '/data-collector/tasks'
+      fullPath: '/data-collector/tasks/'
+      preLoaderRoute: typeof DataCollectorTasksIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/projects/': {
+      id: '/data-collector/projects/'
+      path: '/data-collector/projects'
+      fullPath: '/data-collector/projects/'
+      preLoaderRoute: typeof DataCollectorProjectsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/orders/': {
+      id: '/data-collector/orders/'
+      path: '/data-collector/orders'
+      fullPath: '/data-collector/orders/'
+      preLoaderRoute: typeof DataCollectorOrdersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/executions/': {
+      id: '/data-collector/executions/'
+      path: '/data-collector/executions'
+      fullPath: '/data-collector/executions/'
+      preLoaderRoute: typeof DataCollectorExecutionsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/codification/value-propositions/': {
@@ -2537,6 +3015,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductAssortmentsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/data-collector/templates/new': {
+      id: '/data-collector/templates/new'
+      path: '/data-collector/templates/new'
+      fullPath: '/data-collector/templates/new'
+      preLoaderRoute: typeof DataCollectorTemplatesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/templates/$id': {
+      id: '/data-collector/templates/$id'
+      path: '/data-collector/templates/$id'
+      fullPath: '/data-collector/templates/$id'
+      preLoaderRoute: typeof DataCollectorTemplatesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/tasks/$id': {
+      id: '/data-collector/tasks/$id'
+      path: '/data-collector/tasks/$id'
+      fullPath: '/data-collector/tasks/$id'
+      preLoaderRoute: typeof DataCollectorTasksIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/projects/new': {
+      id: '/data-collector/projects/new'
+      path: '/data-collector/projects/new'
+      fullPath: '/data-collector/projects/new'
+      preLoaderRoute: typeof DataCollectorProjectsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/projects/$id': {
+      id: '/data-collector/projects/$id'
+      path: '/data-collector/projects/$id'
+      fullPath: '/data-collector/projects/$id'
+      preLoaderRoute: typeof DataCollectorProjectsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/orders/new': {
+      id: '/data-collector/orders/new'
+      path: '/data-collector/orders/new'
+      fullPath: '/data-collector/orders/new'
+      preLoaderRoute: typeof DataCollectorOrdersNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/orders/$id': {
+      id: '/data-collector/orders/$id'
+      path: '/data-collector/orders/$id'
+      fullPath: '/data-collector/orders/$id'
+      preLoaderRoute: typeof DataCollectorOrdersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/executions/new': {
+      id: '/data-collector/executions/new'
+      path: '/data-collector/executions/new'
+      fullPath: '/data-collector/executions/new'
+      preLoaderRoute: typeof DataCollectorExecutionsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/executions/$id': {
+      id: '/data-collector/executions/$id'
+      path: '/data-collector/executions/$id'
+      fullPath: '/data-collector/executions/$id'
+      preLoaderRoute: typeof DataCollectorExecutionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/codification/value-propositions/new': {
       id: '/codification/value-propositions/new'
       path: '/codification/value-propositions/new'
@@ -2684,6 +3225,90 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsDashboardApplicationsAppIdIndexRouteImport
       parentRoute: typeof SettingsDashboardApplicationsAppIdRoute
     }
+    '/data-collector/settings/error-indicators/': {
+      id: '/data-collector/settings/error-indicators/'
+      path: '/data-collector/settings/error-indicators'
+      fullPath: '/data-collector/settings/error-indicators/'
+      preLoaderRoute: typeof DataCollectorSettingsErrorIndicatorsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/projects/tags/': {
+      id: '/data-collector/projects/tags/'
+      path: '/data-collector/projects/tags'
+      fullPath: '/data-collector/projects/tags/'
+      preLoaderRoute: typeof DataCollectorProjectsTagsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/outputs/schemas/': {
+      id: '/data-collector/outputs/schemas/'
+      path: '/data-collector/outputs/schemas'
+      fullPath: '/data-collector/outputs/schemas/'
+      preLoaderRoute: typeof DataCollectorOutputsSchemasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/outputs/data-types/': {
+      id: '/data-collector/outputs/data-types/'
+      path: '/data-collector/outputs/data-types'
+      fullPath: '/data-collector/outputs/data-types/'
+      preLoaderRoute: typeof DataCollectorOutputsDataTypesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/settings/error-indicators/new': {
+      id: '/data-collector/settings/error-indicators/new'
+      path: '/data-collector/settings/error-indicators/new'
+      fullPath: '/data-collector/settings/error-indicators/new'
+      preLoaderRoute: typeof DataCollectorSettingsErrorIndicatorsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/settings/error-indicators/$id': {
+      id: '/data-collector/settings/error-indicators/$id'
+      path: '/data-collector/settings/error-indicators/$id'
+      fullPath: '/data-collector/settings/error-indicators/$id'
+      preLoaderRoute: typeof DataCollectorSettingsErrorIndicatorsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/projects/tags/new': {
+      id: '/data-collector/projects/tags/new'
+      path: '/data-collector/projects/tags/new'
+      fullPath: '/data-collector/projects/tags/new'
+      preLoaderRoute: typeof DataCollectorProjectsTagsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/projects/tags/$id': {
+      id: '/data-collector/projects/tags/$id'
+      path: '/data-collector/projects/tags/$id'
+      fullPath: '/data-collector/projects/tags/$id'
+      preLoaderRoute: typeof DataCollectorProjectsTagsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/outputs/schemas/new': {
+      id: '/data-collector/outputs/schemas/new'
+      path: '/data-collector/outputs/schemas/new'
+      fullPath: '/data-collector/outputs/schemas/new'
+      preLoaderRoute: typeof DataCollectorOutputsSchemasNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/outputs/schemas/$id': {
+      id: '/data-collector/outputs/schemas/$id'
+      path: '/data-collector/outputs/schemas/$id'
+      fullPath: '/data-collector/outputs/schemas/$id'
+      preLoaderRoute: typeof DataCollectorOutputsSchemasIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/outputs/data-types/new': {
+      id: '/data-collector/outputs/data-types/new'
+      path: '/data-collector/outputs/data-types/new'
+      fullPath: '/data-collector/outputs/data-types/new'
+      preLoaderRoute: typeof DataCollectorOutputsDataTypesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/outputs/data-types/$id': {
+      id: '/data-collector/outputs/data-types/$id'
+      path: '/data-collector/outputs/data-types/$id'
+      fullPath: '/data-collector/outputs/data-types/$id'
+      preLoaderRoute: typeof DataCollectorOutputsDataTypesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clients/$clientId/data-groups/new': {
       id: '/clients/$clientId/data-groups/new'
       path: '/data-groups/new'
@@ -2698,12 +3323,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientsClientIdDataGroupsDataGroupIdRouteImport
       parentRoute: typeof ClientsClientIdRoute
     }
+    '/data-collector/settings/proxies/providers/': {
+      id: '/data-collector/settings/proxies/providers/'
+      path: '/data-collector/settings/proxies/providers'
+      fullPath: '/data-collector/settings/proxies/providers/'
+      preLoaderRoute: typeof DataCollectorSettingsProxiesProvidersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/settings/proxies/accounts/': {
+      id: '/data-collector/settings/proxies/accounts/'
+      path: '/data-collector/settings/proxies/accounts'
+      fullPath: '/data-collector/settings/proxies/accounts/'
+      preLoaderRoute: typeof DataCollectorSettingsProxiesAccountsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/dashboard-applications/$appId/groups/$groupId': {
       id: '/settings/dashboard-applications/$appId/groups/$groupId'
       path: '/groups/$groupId'
       fullPath: '/settings/dashboard-applications/$appId/groups/$groupId'
       preLoaderRoute: typeof SettingsDashboardApplicationsAppIdGroupsGroupIdRouteImport
       parentRoute: typeof SettingsDashboardApplicationsAppIdRoute
+    }
+    '/data-collector/settings/proxies/providers/new': {
+      id: '/data-collector/settings/proxies/providers/new'
+      path: '/data-collector/settings/proxies/providers/new'
+      fullPath: '/data-collector/settings/proxies/providers/new'
+      preLoaderRoute: typeof DataCollectorSettingsProxiesProvidersNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/settings/proxies/providers/$id': {
+      id: '/data-collector/settings/proxies/providers/$id'
+      path: '/data-collector/settings/proxies/providers/$id'
+      fullPath: '/data-collector/settings/proxies/providers/$id'
+      preLoaderRoute: typeof DataCollectorSettingsProxiesProvidersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/settings/proxies/accounts/new': {
+      id: '/data-collector/settings/proxies/accounts/new'
+      path: '/data-collector/settings/proxies/accounts/new'
+      fullPath: '/data-collector/settings/proxies/accounts/new'
+      preLoaderRoute: typeof DataCollectorSettingsProxiesAccountsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/data-collector/settings/proxies/accounts/$id': {
+      id: '/data-collector/settings/proxies/accounts/$id'
+      path: '/data-collector/settings/proxies/accounts/$id'
+      fullPath: '/data-collector/settings/proxies/accounts/$id'
+      preLoaderRoute: typeof DataCollectorSettingsProxiesAccountsIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/settings/dashboard-applications/$appId/groups/$groupId/': {
       id: '/settings/dashboard-applications/$appId/groups/$groupId/'
@@ -2857,7 +3524,6 @@ const SettingsRulesRouteWithChildren = SettingsRulesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DataCollectorRoute: DataCollectorRoute,
   IamRoute: IamRoute,
   BulkIdRoute: BulkIdRoute,
   BulkNewRoute: BulkNewRoute,
@@ -2883,6 +3549,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoresNewRoute: StoresNewRoute,
   BulkIndexRoute: BulkIndexRoute,
   ClientsIndexRoute: ClientsIndexRoute,
+  DataCollectorIndexRoute: DataCollectorIndexRoute,
   RegionSystemsIndexRoute: RegionSystemsIndexRoute,
   RetailersIndexRoute: RetailersIndexRoute,
   StoresIndexRoute: StoresIndexRoute,
@@ -2906,6 +3573,15 @@ const rootRouteChildren: RootRouteChildren = {
   CodificationPromotionsNewRoute: CodificationPromotionsNewRoute,
   CodificationValuePropositionsIdRoute: CodificationValuePropositionsIdRoute,
   CodificationValuePropositionsNewRoute: CodificationValuePropositionsNewRoute,
+  DataCollectorExecutionsIdRoute: DataCollectorExecutionsIdRoute,
+  DataCollectorExecutionsNewRoute: DataCollectorExecutionsNewRoute,
+  DataCollectorOrdersIdRoute: DataCollectorOrdersIdRoute,
+  DataCollectorOrdersNewRoute: DataCollectorOrdersNewRoute,
+  DataCollectorProjectsIdRoute: DataCollectorProjectsIdRoute,
+  DataCollectorProjectsNewRoute: DataCollectorProjectsNewRoute,
+  DataCollectorTasksIdRoute: DataCollectorTasksIdRoute,
+  DataCollectorTemplatesIdRoute: DataCollectorTemplatesIdRoute,
+  DataCollectorTemplatesNewRoute: DataCollectorTemplatesNewRoute,
   ProductAssortmentsIdRoute: ProductAssortmentsIdRoute,
   ProductAssortmentsNewRoute: ProductAssortmentsNewRoute,
   ProductBusinessUnitsIdRoute: ProductBusinessUnitsIdRoute,
@@ -2958,6 +3634,11 @@ const rootRouteChildren: RootRouteChildren = {
   CodificationPromotionsIndexRoute: CodificationPromotionsIndexRoute,
   CodificationValuePropositionsIndexRoute:
     CodificationValuePropositionsIndexRoute,
+  DataCollectorExecutionsIndexRoute: DataCollectorExecutionsIndexRoute,
+  DataCollectorOrdersIndexRoute: DataCollectorOrdersIndexRoute,
+  DataCollectorProjectsIndexRoute: DataCollectorProjectsIndexRoute,
+  DataCollectorTasksIndexRoute: DataCollectorTasksIndexRoute,
+  DataCollectorTemplatesIndexRoute: DataCollectorTemplatesIndexRoute,
   ProductAssortmentsIndexRoute: ProductAssortmentsIndexRoute,
   ProductBusinessUnitsIndexRoute: ProductBusinessUnitsIndexRoute,
   ProductClientCategoriesIndexRoute: ProductClientCategoriesIndexRoute,
@@ -2980,6 +3661,34 @@ const rootRouteChildren: RootRouteChildren = {
   TasksJobsIndexRoute: TasksJobsIndexRoute,
   TasksProjectsIndexRoute: TasksProjectsIndexRoute,
   TasksSeedsIndexRoute: TasksSeedsIndexRoute,
+  DataCollectorOutputsDataTypesIdRoute: DataCollectorOutputsDataTypesIdRoute,
+  DataCollectorOutputsDataTypesNewRoute: DataCollectorOutputsDataTypesNewRoute,
+  DataCollectorOutputsSchemasIdRoute: DataCollectorOutputsSchemasIdRoute,
+  DataCollectorOutputsSchemasNewRoute: DataCollectorOutputsSchemasNewRoute,
+  DataCollectorProjectsTagsIdRoute: DataCollectorProjectsTagsIdRoute,
+  DataCollectorProjectsTagsNewRoute: DataCollectorProjectsTagsNewRoute,
+  DataCollectorSettingsErrorIndicatorsIdRoute:
+    DataCollectorSettingsErrorIndicatorsIdRoute,
+  DataCollectorSettingsErrorIndicatorsNewRoute:
+    DataCollectorSettingsErrorIndicatorsNewRoute,
+  DataCollectorOutputsDataTypesIndexRoute:
+    DataCollectorOutputsDataTypesIndexRoute,
+  DataCollectorOutputsSchemasIndexRoute: DataCollectorOutputsSchemasIndexRoute,
+  DataCollectorProjectsTagsIndexRoute: DataCollectorProjectsTagsIndexRoute,
+  DataCollectorSettingsErrorIndicatorsIndexRoute:
+    DataCollectorSettingsErrorIndicatorsIndexRoute,
+  DataCollectorSettingsProxiesAccountsIdRoute:
+    DataCollectorSettingsProxiesAccountsIdRoute,
+  DataCollectorSettingsProxiesAccountsNewRoute:
+    DataCollectorSettingsProxiesAccountsNewRoute,
+  DataCollectorSettingsProxiesProvidersIdRoute:
+    DataCollectorSettingsProxiesProvidersIdRoute,
+  DataCollectorSettingsProxiesProvidersNewRoute:
+    DataCollectorSettingsProxiesProvidersNewRoute,
+  DataCollectorSettingsProxiesAccountsIndexRoute:
+    DataCollectorSettingsProxiesAccountsIndexRoute,
+  DataCollectorSettingsProxiesProvidersIndexRoute:
+    DataCollectorSettingsProxiesProvidersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -59,7 +59,7 @@ function fmtCell(v: unknown): string {
  * Add and row clicks are stubs ("coming soon").
  */
 export function EntityListPage({ spec, editBase }: { spec: ApproxSpec; editBase?: string }) {
-  const [rows, setRows] = usePersistentState<ApproxRow[]>(`approx:${spec.key}:v1`, spec.rows);
+  const [rows, setRows] = usePersistentState<ApproxRow[]>(`approx:${spec.key}:v2`, spec.rows);
   const [q, setQ] = useState("");
   const sort = useSort();
   const navigate = useNavigate();

@@ -727,6 +727,287 @@ const brands: RulePage = {
   ],
 };
 
+// ---------- Data Collector -------------------------------------------------
+// Rules recovered from ecometry-tasks-api (domain: Project, Job, Seed, Order,
+// Execution, Task, Timeframe + status/extraction/geoloc enums) and mirrored to
+// the console-frontend data-collector pages.
+
+const dcTags: RulePage = {
+  key: "dc-tags",
+  label: "Tags",
+  match: "/data-collector/projects/tags",
+  groups: [
+    {
+      category: "What tags are",
+      rules: [
+        "Tags are free-form labels used to group and filter projects (e.g. by client, business unit or quarter).",
+        "Each tag shows how many projects currently use it.",
+      ],
+    },
+    {
+      category: "Rules",
+      rules: [
+        "A tag needs a name.",
+        "Deleting a tag removes it from the projects that carry it — it does not delete those projects.",
+      ],
+    },
+  ],
+};
+
+const dcProjects: RulePage = {
+  key: "dc-projects",
+  label: "Projects",
+  match: "/data-collector/projects",
+  groups: [
+    {
+      category: "What a project is",
+      rules: [
+        "A project defines a single scraper: its extraction code/config, the output schema it produces, the template it inherits from, and the proxy account its traffic is routed through.",
+        "Projects are the unit that groups the extraction work and carry tags for organisation.",
+      ],
+    },
+    {
+      category: "Status & lifecycle",
+      rules: [
+        "A project's status is ACTIVE, INACTIVE or ARCHIVED; only an active project produces new executions.",
+        "A project name must be unique.",
+        "You can clone a project to start from an existing one, or download its configuration.",
+      ],
+    },
+    {
+      category: "What it connects to",
+      rules: [
+        "Output schema — the shape of the data the project must return.",
+        "Project template — the environment variables and the set of proxy accounts the project is allowed to use.",
+        "Proxy account — the specific account traffic is routed through.",
+      ],
+    },
+  ],
+};
+
+const dcTemplates: RulePage = {
+  key: "dc-templates",
+  label: "Templates",
+  match: "/data-collector/templates",
+  groups: [
+    {
+      category: "What a template is",
+      rules: [
+        "A template is a reusable base for projects — it carries default environment variables and the list of proxy accounts a project built from it is allowed to use.",
+      ],
+    },
+    {
+      category: "Rules",
+      rules: [
+        "A template needs a name.",
+        "Archiving a template does not break projects that were already created from it.",
+      ],
+    },
+  ],
+};
+
+const dcOutputSchemas: RulePage = {
+  key: "dc-output-schemas",
+  label: "Output schemas",
+  match: "/data-collector/outputs/schemas",
+  groups: [
+    {
+      category: "What an output schema is",
+      rules: [
+        "An output schema declares which fields an extraction must produce and the data type of each field.",
+        "It is the contract between the scraper and everything downstream (delivery + dashboards).",
+      ],
+    },
+    {
+      category: "Good to know",
+      rules: [
+        "Schemas are identified by name; clone a schema to evolve it without breaking existing projects.",
+        "Each field references a data type that validates and normalises the value.",
+      ],
+    },
+  ],
+};
+
+const dcDataTypes: RulePage = {
+  key: "dc-data-types",
+  label: "Data types",
+  match: "/data-collector/outputs/data-types",
+  groups: [
+    {
+      category: "What a data type is",
+      rules: [
+        "A data type is a named validation / normalisation rule applied to an output field — for example price → decimal with the currency symbol stripped, or rank → integer ≥ 1.",
+        "Output-schema fields point at a data type so extracted values arrive in a consistent shape.",
+      ],
+    },
+  ],
+};
+
+const dcOrders: RulePage = {
+  key: "dc-orders",
+  label: "Orders",
+  match: "/data-collector/orders",
+  groups: [
+    {
+      category: "What an order is",
+      rules: [
+        "An order is the recurring configuration for collecting data from one store: it binds a project + store with an extraction type, a timeframe, a cron schedule, a delivery method and resource settings (machine size, parallelism, cache validity).",
+        "It answers “what do we collect from this store, how often, with what machine, and where do the results go?”.",
+      ],
+    },
+    {
+      category: "Extraction type & delivery",
+      rules: [
+        "Extraction (stream) type is one of AD, SEARCH, SHELF, PLP, PDP, PDP_REVIEWS, PDP_MARKETPLACE, MARKETPLACE, MEDIA, QCA_PLP, FSA_CITY, FSA_MENU or FSA_RESTAURANT.",
+        "Delivery method is None, Firehose (stream), S3 (bucket + folder) or Rabbitmq (key + exchange).",
+        "Machine size is one of XXS, XS, S, M, L, XL, XXL, Boost or Custom (Custom sets explicit CPU + memory).",
+        "Cache validity is 0–86400 seconds (one day); 0 means results are never cached.",
+      ],
+    },
+    {
+      category: "Scheduling, activation & re-execution",
+      rules: [
+        "Active orders fire on their cron schedule; an order cannot be archived and activated at the same time, and deactivating it stops new executions without deleting history.",
+        "There is a system limit on how many orders can be scheduled.",
+        "Optional re-execution rules retry failed tasks automatically: 1–5 retries, a next-trigger delay of 0/15/30/45/60 minutes, and a non-empty set of error categories (UNCLASSIFIED is not allowed).",
+      ],
+    },
+    {
+      category: "Rules",
+      rules: ["An order's name must be unique among non-archived orders."],
+    },
+  ],
+};
+
+const dcExecutions: RulePage = {
+  key: "dc-executions",
+  label: "Executions",
+  match: "/data-collector/executions",
+  groups: [
+    {
+      category: "What an execution is",
+      rules: [
+        "An execution is one run of an order. It fans out into many tasks and tracks status, proxy usage (number of requests + bandwidth), a task summary and an error ratio.",
+        "Mode is MANUAL or AUTO; type is FULL, RE_EXECUTION or REPROCESSING. A groupId batches related executions.",
+        "An execution may have no order (orderId is null) when it was triggered manually or created as a re-execution.",
+      ],
+    },
+    {
+      category: "Status flow",
+      rules: [
+        "PENDING → STARTED, EMPTY, CANCELLED or ERROR.",
+        "STARTED → FINISHED, CANCELLED, ERROR or HANGED; a HANGED execution can go back to STARTED or to FINISHED.",
+        "EMPTY, CANCELLED, ERROR and FINISHED are terminal; details are required when it moves to ERROR or HANGED.",
+      ],
+    },
+    {
+      category: "Good to know",
+      rules: [
+        "An execution can only receive tasks while none have been generated yet.",
+        "You can trigger, clone (optionally with the project), cancel, and inspect CPU / memory for an execution.",
+      ],
+    },
+  ],
+};
+
+const dcTasks: RulePage = {
+  key: "dc-tasks",
+  label: "Tasks",
+  match: "/data-collector/tasks",
+  groups: [
+    {
+      category: "What a task is",
+      rules: [
+        "A task is the atomic scraping unit inside an execution — one input (e.g. a product code or URL) processed by the scraper.",
+        "Its id is sequential within its execution (the key is id + executionId); it records start/end time, runtime, proxy statistics and, on failure, a matched error indicator.",
+      ],
+    },
+    {
+      category: "Status flow",
+      rules: [
+        "PENDING → STARTED, ERROR, CANCELLED or UNPROCESSED.",
+        "STARTED → SUCCESS, WARNING, ERROR, VOID or UNPROCESSED.",
+        "SUCCESS, WARNING, ERROR and VOID are the finalised states; a CANCELLED task can be re-queued (back to STARTED).",
+      ],
+    },
+    {
+      category: "Re-execution",
+      rules: [
+        "Failed tasks can be re-executed in bulk.",
+        "The matched error indicator's category decides whether a failure is eligible for automatic re-execution.",
+      ],
+    },
+  ],
+};
+
+const dcProxyAccounts: RulePage = {
+  key: "dc-proxy-accounts",
+  label: "Proxy accounts",
+  match: "/data-collector/settings/proxies/accounts",
+  groups: [
+    {
+      category: "What a proxy account is",
+      rules: [
+        "A proxy account is a credentialed endpoint at a provider: name, slug, provider, proxy type, host, port, authentication (username required, password optional) and the regions it is limited to.",
+        "Executions route their traffic through a proxy account and roll up its request + bandwidth usage.",
+      ],
+    },
+    {
+      category: "Rules",
+      rules: [
+        "Name and slug are unique per provider (archived accounts are excluded); slug is lowercase with no spaces.",
+        "The proxy type must belong to the same provider, and both the provider and the type must be active when the account is created or kept active.",
+        "An account cannot be archived and activated at once; archiving forces it inactive.",
+        "Limited regions are ISO codes such as es, gb, br-sp or fr-972.",
+      ],
+    },
+  ],
+};
+
+const dcProxyProviders: RulePage = {
+  key: "dc-proxy-providers",
+  label: "Proxy providers",
+  match: "/data-collector/settings/proxies/providers",
+  groups: [
+    {
+      category: "What a provider is",
+      rules: [
+        "A provider is the upstream proxy vendor (Bright Data, Oxylabs, Smartproxy…) that owns the proxy types and proxy accounts.",
+      ],
+    },
+    {
+      category: "Rules",
+      rules: [
+        "Name and slug must be unique; the slug is lowercase with no spaces.",
+        "A provider cannot be deactivated while any of its accounts are still active.",
+        "Proxy types are scoped to a provider — a type name is unique within its provider and can't be used by another provider's accounts.",
+      ],
+    },
+  ],
+};
+
+const dcErrorIndicators: RulePage = {
+  key: "dc-error-indicators",
+  label: "Error indicators",
+  match: "/data-collector/settings/error-indicators",
+  groups: [
+    {
+      category: "What an error indicator is",
+      rules: [
+        "An error indicator is a regex matched against a task's output that classifies a failure into one error category: SEED_ERROR, CONNECTION_ERROR, TEMPLATE_ERROR, DATA_COLLECTOR_ERROR, PROXY_ERROR or UNCLASSIFIED.",
+        "It carries an output sample, can be archived, and lives alongside Orders/Executions in orders-management-api.",
+      ],
+    },
+    {
+      category: "Automatic re-execution",
+      rules: [
+        "An indicator with “allow automatic re-execution” on makes matching tasks eligible to be retried.",
+        "An order's re-execution rules pick which error categories actually trigger a retry — UNCLASSIFIED can never be one of them.",
+      ],
+    },
+  ],
+};
+
 // ---------- Sections -------------------------------------------------------
 
 export const RULE_SECTIONS: RuleSection[] = [
@@ -809,6 +1090,25 @@ export const RULE_SECTIONS: RuleSection[] = [
     intro:
       "Tasks is the legacy operational area (projects, jobs and seeds). It is being replaced by the new Seeds API over the coming weeks.",
     pages: [AP["tasks-projects"], AP["tasks-jobs"], AP["tasks-seeds"]],
+  },
+  {
+    section: "Data Collector",
+    intro:
+      "The Data Collector is Shalion's extraction engine. Projects define the scrapers, orders schedule them per store, and each run becomes an execution made of tasks — routed through proxy accounts and classified by error indicators.",
+    // Tags is listed before Projects so the more specific /projects/tags path resolves correctly.
+    pages: [
+      dcTags,
+      dcProjects,
+      dcTemplates,
+      dcOutputSchemas,
+      dcDataTypes,
+      dcOrders,
+      dcExecutions,
+      dcTasks,
+      dcProxyAccounts,
+      dcProxyProviders,
+      dcErrorIndicators,
+    ],
   },
 ];
 

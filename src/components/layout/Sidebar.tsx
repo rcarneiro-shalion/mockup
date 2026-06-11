@@ -10,6 +10,14 @@ import {
   Package,
   ShoppingBag,
   Settings,
+  FolderKanban,
+  LayoutTemplate,
+  Braces,
+  ClipboardList,
+  PlayCircle,
+  ListChecks,
+  Network,
+  ShieldCheck,
   ChevronDown,
   ChevronLeft,
 } from "lucide-react";
@@ -27,7 +35,7 @@ type NavItem = {
   badge?: string;
 };
 
-const nav: NavItem[] = [
+const ecometryNav: NavItem[] = [
   { label: "Home", icon: Home, to: "/" },
   { label: "Clients", icon: Briefcase, to: "/clients" },
   {
@@ -114,8 +122,57 @@ const nav: NavItem[] = [
   },
 ];
 
+// Data Collector ("DC") menu — mirrors console-frontend's data-collector area
+// (Projects/Tags, Templates, Outputs, Orders, Executions, Tasks, Settings).
+const dataCollectorNav: NavItem[] = [
+  {
+    label: "Projects",
+    icon: FolderKanban,
+    defaultOpen: true,
+    children: [
+      { label: "Projects", to: "/data-collector/projects" },
+      { label: "Tags", to: "/data-collector/projects/tags" },
+    ],
+  },
+  { label: "Templates", icon: LayoutTemplate, to: "/data-collector/templates" },
+  {
+    label: "Outputs",
+    icon: Braces,
+    children: [
+      { label: "Schemas", to: "/data-collector/outputs/schemas" },
+      { label: "Data types", to: "/data-collector/outputs/data-types" },
+    ],
+  },
+  { label: "Orders", icon: ClipboardList, to: "/data-collector/orders" },
+  { label: "Executions", icon: PlayCircle, to: "/data-collector/executions" },
+  { label: "Tasks", icon: ListChecks, to: "/data-collector/tasks" },
+  {
+    label: "Settings",
+    icon: Settings,
+    children: [
+      { label: "Proxy accounts", to: "/data-collector/settings/proxies/accounts" },
+      { label: "Proxy providers", to: "/data-collector/settings/proxies/providers" },
+      { label: "Error indicators", to: "/data-collector/settings/error-indicators" },
+    ],
+  },
+];
+
+// IAM is still a placeholder area in this mockup.
+const iamNav: NavItem[] = [
+  { label: "Overview", icon: ShieldCheck, to: "/iam" },
+  { label: "Connections", icon: Network, to: "/iam" },
+];
+
+/** Pick the left-menu for the active top-bar section from the current path. */
+function navForPath(pathname: string): NavItem[] {
+  if (pathname.startsWith("/data-collector")) return dataCollectorNav;
+  if (pathname.startsWith("/iam")) return iamNav;
+  return ecometryNav;
+}
+
 export function Sidebar() {
   const { pathname } = useLocation();
+  const nav = navForPath(pathname);
   const [collapsed, setCollapsed] = useState(false);
   // Groups open automatically when one of their items is the active route;
   // otherwise closed by default. A manual toggle overrides the auto behavior.
