@@ -18,6 +18,7 @@ export const LOCALE_OPTIONS = [
 export const COUNTRY_OPTIONS = [
   "US", "ES", "BR", "MX", "FR", "DE", "IT", "NL", "BE", "GR",
   "HU", "ZA", "TH", "PE", "RO", "CO", "UY", "PA", "QA", "AR", "CL", "CA", "EC", "MM", "LT",
+  "PT", "CH", "DK", "JP",
 ];
 
 /** Country code → flag emoji (regional indicator symbols). */
@@ -32,6 +33,7 @@ export const COUNTRY_NAMES: Record<string, string> = {
   HU: "Hungary", ZA: "South Africa", TH: "Thailand", PE: "Peru", RO: "Romania",
   CO: "Colombia", UY: "Uruguay", PA: "Panama", QA: "Qatar", AR: "Argentina",
   CL: "Chile", CA: "Canada", EC: "Ecuador", MM: "Myanmar", LT: "Lithuania",
+  PT: "Portugal", CH: "Switzerland", DK: "Denmark", JP: "Japan",
 };
 
 export function countryLabel(code?: string): string {

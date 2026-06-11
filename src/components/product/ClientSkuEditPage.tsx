@@ -8,22 +8,50 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toaster } from "@/components/ui/sonner";
 import { ClientSkuMsrp } from "@/components/product/ClientSkuMsrp";
+import { COUNTRY_NAMES } from "@/lib/retailers";
+import { getClientNames } from "@/lib/clients";
+import type { ClientSku } from "@/lib/clientSkus";
 
-export function ClientSkuEditPage() {
-  const [title, setTitle] = useState("REFRESCO COCA-COLA LIGHT 1L");
-  const [country, setCountry] = useState("Mexico");
-  const [skuId] = useState("71ad4a1c-9a86-3b60-a772-435d9f48e468");
-  const [skuCode, setSkuCode] = useState("7501055305346");
-  const [brand, setBrand] = useState("Coca-Cola Light");
-  const [client, setClient] = useState("Coca Cola");
-  const [category, setCategory] = useState("Beverages > Soft Drinks > Soda");
-  const [codes, setCodes] = useState<{ type: string; value: string }[]>([{ type: "ean", value: "7501055305346" }]);
+const uniq = (arr: (string | undefined)[]) => [...new Set(arr.filter((v): v is string => !!v))];
+const countryName = (code?: string) => (code && COUNTRY_NAMES[code]) || code || "";
+
+export function ClientSkuEditPage({
+  sku,
+  isNew,
+  onBack,
+}: {
+  sku?: Partial<ClientSku>;
+  isNew?: boolean;
+  onBack?: () => void;
+} = {}) {
+  const fallbackCodes = isNew ? [] : [{ type: "ean", value: "7501055305346" }];
+  const [title, setTitle] = useState(sku?.title ?? (isNew ? "" : "REFRESCO COCA-COLA LIGHT 1L"));
+  const [country, setCountry] = useState(countryName(sku?.country) || "Mexico");
+  const [skuId] = useState(sku?.id ?? "71ad4a1c-9a86-3b60-a772-435d9f48e468");
+  const [codes, setCodes] = useState<{ type: string; value: string }[]>(
+    sku?.codes?.length ? sku.codes : fallbackCodes,
+  );
+  const [skuCode, setSkuCode] = useState(codes[0]?.value ?? "");
+  const [brand, setBrand] = useState(sku?.brand || (isNew ? "" : "Coca-Cola Light"));
+  const [client, setClient] = useState(sku?.client || (isNew ? "" : "Coca Cola"));
+  const [category, setCategory] = useState(
+    sku?.category || (isNew ? "" : "Beverages > Soft Drinks > Soda"),
+  );
   const [activeFrom, setActiveFrom] = useState("");
   const [activeTo, setActiveTo] = useState("");
   const [units, setUnits] = useState("1");
   const [hasVolume, setHasVolume] = useState(true);
   const [volumeValue, setVolumeValue] = useState("1000");
   const [volumeUnits, setVolumeUnits] = useState("ml");
+
+  const countryOptions = uniq([country, ...Object.values(COUNTRY_NAMES)]);
+  const brandOptions = uniq([brand, "Coca-Cola Light", "Coca-Cola", "Fanta"]);
+  const clientOptions = uniq([client, ...getClientNames()]);
+  const categoryOptions = uniq([
+    category,
+    "Beverages > Soft Drinks > Soda",
+    "Beverages > Water",
+  ]);
 
   return (
     <AppShell>
@@ -33,10 +61,15 @@ export function ClientSkuEditPage() {
           {/* Breadcrumb / title */}
           <div className="mb-4 flex items-start justify-between">
             <div>
-              <button className="mb-1 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+              <button
+                onClick={onBack}
+                className="mb-1 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+              >
                 <ArrowLeft className="h-4 w-4" /> Client skus
               </button>
-              <h1 className="text-base font-semibold tracking-tight">{title}</h1>
+              <h1 className="text-base font-semibold tracking-tight">
+                {isNew ? "Add client sku" : title || "Client sku"}
+              </h1>
             </div>
             <Button variant="outline" size="icon" className="rounded-full">
               <MoreHorizontal className="h-4 w-4" />
@@ -54,9 +87,9 @@ export function ClientSkuEditPage() {
                 <Select value={country} onValueChange={setCountry}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Mexico">Mexico</SelectItem>
-                    <SelectItem value="Spain">Spain</SelectItem>
-                    <SelectItem value="USA">USA</SelectItem>
+                    {countryOptions.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </FieldGroup>
@@ -73,20 +106,21 @@ export function ClientSkuEditPage() {
               <div className="grid grid-cols-2 gap-4">
                 <FieldGroup label="Brand" required>
                   <Select value={brand} onValueChange={setBrand}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select a brand" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Coca-Cola Light">Coca-Cola Light</SelectItem>
-                      <SelectItem value="Coca-Cola">Coca-Cola</SelectItem>
-                      <SelectItem value="Fanta">Fanta</SelectItem>
+                      {brandOptions.map((b) => (
+                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </FieldGroup>
                 <FieldGroup label="Client" required>
                   <Select value={client} onValueChange={setClient}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select a client" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Coca Cola">Coca Cola</SelectItem>
-                      <SelectItem value="Pepsi">Pepsi</SelectItem>
+                      {clientOptions.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </FieldGroup>
@@ -94,10 +128,11 @@ export function ClientSkuEditPage() {
 
               <FieldGroup label="Category">
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Beverages > Soft Drinks > Soda">Beverages &gt; Soft Drinks &gt; Soda</SelectItem>
-                    <SelectItem value="Beverages > Water">Beverages &gt; Water</SelectItem>
+                    {categoryOptions.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </FieldGroup>
