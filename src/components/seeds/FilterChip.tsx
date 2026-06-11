@@ -1,17 +1,10 @@
-import { ChevronDown, type LucideIcon } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Check, ChevronDown, type LucideIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-/** Filters with more option values than this switch to a searchable dropdown. */
+/** Filters with more option values than this show a search box. */
 const SEARCHABLE_THRESHOLD = 10;
 
 export function FilterChip({
@@ -25,19 +18,29 @@ export function FilterChip({
 }: {
   label: string;
   icon?: LucideIcon;
-  /** When provided (with onChange), the chip becomes a functional filter dropdown. */
+  /** When provided (with onChange), the chip becomes a functional multi-select filter. */
   options?: string[];
-  value?: string;
-  onChange?: (value: string) => void;
+  /** Selected values (multi-select). */
+  value?: string[];
+  onChange?: (value: string[]) => void;
   /** Optional pretty label for an option value (e.g. country code → flag + name). */
   getLabel?: (value: string) => string;
-  /** Force the searchable popover even with ≤10 options. */
+  /** Force the search box even with ≤10 options. */
   searchable?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const interactive = !!options && !!onChange;
-  const active = interactive && !!value;
+  const selected = value ?? [];
+  const active = interactive && selected.length > 0;
   const display = (v: string) => (getLabel ? getLabel(v) : v);
+  const useSearch = !!searchable || (options?.length ?? 0) > SEARCHABLE_THRESHOLD;
+
+  const toggle = (o: string) =>
+    onChange!(selected.includes(o) ? selected.filter((x) => x !== o) : [...selected, o]);
+
+  const chipText = active
+    ? `${label}: ${selected.length === 1 ? display(selected[0]) : selected.length}`
+    : label;
 
   const trigger = (
     <button
@@ -50,58 +53,46 @@ export function FilterChip({
       )}
     >
       {Icon ? <Icon className="h-3.5 w-3.5 text-muted-foreground" /> : null}
-      {active ? `${label}: ${display(value!)}` : label}
+      {chipText}
       <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
     </button>
   );
 
   if (!interactive) return trigger;
 
-  // Long lists (or forced) → searchable popover.
-  if (searchable || options!.length > SEARCHABLE_THRESHOLD) {
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-        <PopoverContent align="start" className="w-64 p-0">
-          <Command>
-            <CommandInput placeholder="Search" />
-            <CommandList>
-              <CommandEmpty>No results.</CommandEmpty>
-              <CommandGroup>
-                {options!.map((o) => (
-                  <CommandItem key={o} value={display(o)} onSelect={() => { onChange!(o); setOpen(false); }}>
-                    {display(o)}
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent align="start" className="w-64 p-0">
+        <Command>
+          {useSearch && <CommandInput placeholder="Search" />}
+          <CommandList>
+            <CommandEmpty>No results.</CommandEmpty>
+            <CommandGroup>
+              {options!.map((o) => {
+                const checked = selected.includes(o);
+                return (
+                  <CommandItem key={o} value={display(o)} onSelect={() => toggle(o)}>
+                    <Check className={cn("mr-2 h-4 w-4 shrink-0", checked ? "opacity-100" : "opacity-0")} />
+                    <span className="truncate">{display(o)}</span>
                   </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+          {selected.length > 0 && (
             <div className="border-t border-border p-1">
               <button
                 type="button"
-                onClick={() => { onChange!(""); setOpen(false); }}
+                onClick={() => { onChange!([]); setOpen(false); }}
                 className="w-full rounded px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-secondary"
               >
-                Clear
+                Clear ({selected.length})
               </button>
             </div>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    );
-  }
-
-  // Short lists → simple radio dropdown.
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="max-h-72 w-56 overflow-auto">
-        <DropdownMenuRadioGroup value={value ?? ""} onValueChange={(v) => onChange!(v)}>
-          <DropdownMenuRadioItem value="">All</DropdownMenuRadioItem>
-          {options!.map((o) => (
-            <DropdownMenuRadioItem key={o} value={o}>{display(o)}</DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          )}
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

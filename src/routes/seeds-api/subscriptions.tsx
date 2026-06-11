@@ -38,12 +38,12 @@ function SubscriptionsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [fClient, setFClient] = useState("");
-  const [fProject, setFProject] = useState("");
-  const [fStore, setFStore] = useState("");
-  const [fSeed, setFSeed] = useState("");
-  const [fScrap, setFScrap] = useState("");
-  const [fGeo, setFGeo] = useState("");
+  const [fClient, setFClient] = useState<string[]>([]);
+  const [fProject, setFProject] = useState<string[]>([]);
+  const [fStore, setFStore] = useState<string[]>([]);
+  const [fSeed, setFSeed] = useState<string[]>([]);
+  const [fScrap, setFScrap] = useState<string[]>([]);
+  const [fGeo, setFGeo] = useState<string[]>([]);
   const sort = useSort();
   const navigate = useNavigate();
 
@@ -54,12 +54,12 @@ function SubscriptionsPage() {
   const clientsForSub = (sub: Subscription) => getClientsForProject(projectIdByName.get(sub.project) ?? "");
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&
-    (!fClient || clientsForSub(r).includes(fClient)) &&
-    (!fProject || r.project === fProject) &&
-    (!fStore || r.store === fStore) &&
-    (!fSeed || (r.seeds ?? []).includes(fSeed)) &&
-    (!fScrap || r.scrappingOption === fScrap) &&
-    (!fGeo || r.geo === fGeo),
+    (!fClient.length || fClient.some((c) => clientsForSub(r).includes(c))) &&
+    (!fProject.length || fProject.includes(r.project)) &&
+    (!fStore.length || fStore.includes(r.store)) &&
+    (!fSeed.length || (r.seeds ?? []).some((s) => fSeed.includes(s))) &&
+    (!fScrap.length || fScrap.includes(r.scrappingOption)) &&
+    (!fGeo.length || fGeo.includes(r.geo)),
   );
   const sorted = sortRows(filtered, sort, {
     seeds: (r) => (r.seeds ?? []).length,

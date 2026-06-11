@@ -52,18 +52,18 @@ function TimeframesPage() {
   const [selected, setSelected] = useState<Row | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [fLocFreq, setFLocFreq] = useState("");
-  const [fSeedFreq, setFSeedFreq] = useState("");
-  const [fGroup, setFGroup] = useState("");
-  const [fProduct, setFProduct] = useState("");
+  const [fLocFreq, setFLocFreq] = useState<string[]>([]);
+  const [fSeedFreq, setFSeedFreq] = useState<string[]>([]);
+  const [fGroup, setFGroup] = useState<string[]>([]);
+  const [fProduct, setFProduct] = useState<string[]>([]);
   const sort = useSort();
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&
-    (!fLocFreq || r.locFreq === fLocFreq) &&
-    (!fSeedFreq || r.seedFreq === fSeedFreq) &&
-    (!fGroup || r.group === fGroup) &&
-    (!fProduct || r.product === fProduct),
+    (!fLocFreq.length || fLocFreq.includes(r.locFreq)) &&
+    (!fSeedFreq.length || fSeedFreq.includes(r.seedFreq)) &&
+    (!fGroup.length || fGroup.includes(r.group)) &&
+    (!fProduct.length || fProduct.includes(r.product)),
   );
   const sorted = sortRows(filtered, sort, { locationFrequency: (r) => r.locFreq, seedFrequency: (r) => r.seedFreq });
 

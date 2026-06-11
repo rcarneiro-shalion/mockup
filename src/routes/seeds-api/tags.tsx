@@ -43,12 +43,12 @@ function TagsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const clientOptions = getClientNames();
   const [query, setQuery] = useState("");
-  const [fClient, setFClient] = useState("");
+  const [fClient, setFClient] = useState<string[]>([]);
   const sort = useSort();
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&
-    (!fClient || r.client === fClient),
+    (!fClient.length || fClient.includes(r.client)),
   );
   const sorted = sortRows(filtered, sort, { createdAt: (r) => r.c, updatedAt: (r) => r.u });
 

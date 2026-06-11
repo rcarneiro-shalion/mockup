@@ -61,21 +61,21 @@ function SeedsPage() {
   const [rows] = usePersistentState<Seed[]>(SEEDS_KEY, INITIAL_SEEDS);
   const [seedType, setSeedType] = useState("All");
   const [query, setQuery] = useState("");
-  const [fValue, setFValue] = useState("");
-  const [fStore, setFStore] = useState("");
-  const [fCat, setFCat] = useState("");
-  const [fPageType, setFPageType] = useState("");
-  const [fKwType, setFKwType] = useState("");
-  const [fStatus, setFStatus] = useState("");
+  const [fValue, setFValue] = useState<string[]>([]);
+  const [fStore, setFStore] = useState<string[]>([]);
+  const [fCat, setFCat] = useState<string[]>([]);
+  const [fPageType, setFPageType] = useState<string[]>([]);
+  const [fKwType, setFKwType] = useState<string[]>([]);
+  const [fStatus, setFStatus] = useState<string[]>([]);
   const sort = useSort();
   const navigate = useNavigate();
 
   // Switching the seed type resets the type-specific filters.
   const changeSeedType = (t: string) => {
     setSeedType(t);
-    setFValue("");
-    setFPageType("");
-    setFKwType("");
+    setFValue([]);
+    setFPageType([]);
+    setFKwType([]);
   };
 
   const goEdit = (r: Seed) => navigate({ to: "/seeds-api/seeds/$seedId", params: { seedId: r.id } });
@@ -84,12 +84,12 @@ function SeedsPage() {
   const filtered = rows.filter((r) =>
     (seedType === "All" || (r.type ?? "") === seedType) &&
     (!q || r.d.toLowerCase().includes(q) || (r.value ?? "").toLowerCase().includes(q)) &&
-    (!fValue || r.value === fValue) &&
-    (!fStore || r.store === fStore) &&
-    (!fCat || r.cat === fCat) &&
-    (!fPageType || r.pageType === fPageType) &&
-    (!fKwType || r.keywordType === fKwType) &&
-    (!fStatus || (r.status ?? "Active") === fStatus),
+    (!fValue.length || fValue.includes(r.value ?? "")) &&
+    (!fStore.length || fStore.includes(r.store)) &&
+    (!fCat.length || fCat.includes(r.cat)) &&
+    (!fPageType.length || fPageType.includes(r.pageType ?? "")) &&
+    (!fKwType.length || fKwType.includes(r.keywordType ?? "")) &&
+    (!fStatus.length || fStatus.includes(r.status ?? "Active")),
   );
 
   // Searchable value filter — its label + options follow the selected seed type.

@@ -27,18 +27,18 @@ function StatusPill({ status }: { status: Store["status"] }) {
 function StoresListPage() {
   const [rows] = usePersistentState<Store[]>(STORES_KEY, INITIAL_STORES);
   const [query, setQuery] = useState("");
-  const [fDomain, setFDomain] = useState("");
-  const [fCountry, setFCountry] = useState("");
-  const [fType, setFType] = useState("");
-  const [fStatus, setFStatus] = useState("");
+  const [fDomain, setFDomain] = useState<string[]>([]);
+  const [fCountry, setFCountry] = useState<string[]>([]);
+  const [fType, setFType] = useState<string[]>([]);
+  const [fStatus, setFStatus] = useState<string[]>([]);
   const sort = useSort();
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((s) =>
     (!q || s.name.toLowerCase().includes(q)) &&
-    (!fDomain || s.domain === fDomain) &&
-    (!fCountry || s.country === fCountry) &&
-    (!fType || s.type === fType) &&
-    (!fStatus || s.status === fStatus),
+    (!fDomain.length || fDomain.includes(s.domain)) &&
+    (!fCountry.length || fCountry.includes(s.country)) &&
+    (!fType.length || fType.includes(s.type)) &&
+    (!fStatus.length || fStatus.includes(s.status)),
   );
   const sorted = sortRows(filtered, sort);
   const navigate = useNavigate();

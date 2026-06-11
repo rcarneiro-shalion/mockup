@@ -68,16 +68,16 @@ function ScrappingOptionsPage() {
   const [selected, setSelected] = useState<ScrappingOptionValues | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [fStore, setFStore] = useState("");
-  const [fExtraction, setFExtraction] = useState("");
+  const [fStore, setFStore] = useState<string[]>([]);
+  const [fExtraction, setFExtraction] = useState<string[]>([]);
   const sort = useSort();
 
   const q = query.trim().toLowerCase();
   const storeOptions = [...new Set(rows.flatMap((r) => r.stores ?? []))].sort();
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&
-    (!fStore || (r.stores ?? []).includes(fStore)) &&
-    (!fExtraction || r.extractionType === fExtraction),
+    (!fStore.length || (r.stores ?? []).some((s) => fStore.includes(s))) &&
+    (!fExtraction.length || fExtraction.includes(r.extractionType)),
   );
   const sorted = sortRows(filtered, sort, {
     stores: (r) => (r.stores ?? []).join(", "),

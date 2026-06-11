@@ -42,10 +42,10 @@ function StatusPill({ status }: { status: Project["status"] }) {
 function ProjectsListPage() {
   const [projects] = usePersistentState<Project[]>(PROJECTS_KEY, INITIAL_PROJECTS);
   const [query, setQuery] = useState("");
-  const [fStatus, setFStatus] = useState("");
-  const [fBom, setFBom] = useState("");
-  const [fClient, setFClient] = useState("");
-  const [fSubscription, setFSubscription] = useState("");
+  const [fStatus, setFStatus] = useState<string[]>([]);
+  const [fBom, setFBom] = useState<string[]>([]);
+  const [fClient, setFClient] = useState<string[]>([]);
+  const [fSubscription, setFSubscription] = useState<string[]>([]);
   const sort = useSort();
   const navigate = useNavigate();
 
@@ -60,10 +60,10 @@ function ProjectsListPage() {
   const q = query.trim().toLowerCase();
   const filtered = projects.filter((p) =>
     (!q || p.name.toLowerCase().includes(q)) &&
-    (!fStatus || p.status === fStatus) &&
-    (!fBom || p.bom === fBom) &&
-    (!fClient || getClientsForProject(p.id).includes(fClient)) &&
-    (!fSubscription || (p.assignedSubscriptions ?? []).some((s) => s.name === fSubscription)),
+    (!fStatus.length || fStatus.includes(p.status)) &&
+    (!fBom.length || fBom.includes(p.bom)) &&
+    (!fClient.length || fClient.some((c) => getClientsForProject(p.id).includes(c))) &&
+    (!fSubscription.length || fSubscription.some((name) => (p.assignedSubscriptions ?? []).some((s) => s.name === name))),
   );
   const sorted = sortRows(filtered, sort, {
     clients: (p) => getClientsForProject(p.id).length,

@@ -16,12 +16,12 @@ export const Route = createFileRoute("/region-systems/")({
 function RegionSystemsListPage() {
   const [rows] = usePersistentState<RegionSystem[]>(REGION_SYSTEMS_KEY, INITIAL_REGION_SYSTEMS);
   const [query, setQuery] = useState("");
-  const [fCountry, setFCountry] = useState("");
+  const [fCountry, setFCountry] = useState<string[]>([]);
   const sort = useSort();
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&
-    (!fCountry || r.country === fCountry),
+    (!fCountry.length || fCountry.includes(r.country)),
   );
   const sorted = sortRows(filtered, sort);
   const navigate = useNavigate();

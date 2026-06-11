@@ -28,16 +28,16 @@ export const Route = createFileRoute("/clients/")({
 function ClientsListPage() {
   const [clients] = usePersistentState<Client[]>(CLIENTS_KEY, INITIAL_CLIENTS);
   const [query, setQuery] = useState("");
-  const [fAcronym, setFAcronym] = useState("");
-  const [fIsTest, setFIsTest] = useState("");
+  const [fAcronym, setFAcronym] = useState<string[]>([]);
+  const [fIsTest, setFIsTest] = useState<string[]>([]);
   const sort = useSort();
   const navigate = useNavigate();
 
   const q = query.trim().toLowerCase();
   const filtered = clients.filter((c) =>
     (!q || c.name.toLowerCase().includes(q)) &&
-    (!fAcronym || c.acronym === fAcronym) &&
-    (!fIsTest || (c.isTest ? "TRUE" : "FALSE") === fIsTest),
+    (!fAcronym.length || fAcronym.includes(c.acronym)) &&
+    (!fIsTest.length || fIsTest.includes(c.isTest ? "TRUE" : "FALSE")),
   );
   const sorted = sortRows(filtered, sort);
 
