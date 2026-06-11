@@ -288,7 +288,13 @@ export function ClientForm({
             </div>
 
             {/* Bottom tabbed section */}
-            <ClientBottomTabs client={client} set={set} />
+            <ClientBottomTabs
+              client={client}
+              set={set}
+              onOpenDataGroup={(id) =>
+                navigate({ to: "/clients/$clientId/data-groups/$dataGroupId", params: { clientId: client.id, dataGroupId: id } })
+              }
+            />
           </div>
         </div>
 

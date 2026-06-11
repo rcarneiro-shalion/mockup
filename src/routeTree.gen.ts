@@ -32,10 +32,12 @@ import { Route as ClientsNewRouteImport } from './routes/clients/new'
 import { Route as ClientsClientIdRouteImport } from './routes/clients/$clientId'
 import { Route as SeedsApiSeedsIndexRouteImport } from './routes/seeds-api/seeds/index'
 import { Route as SeedsApiProjectsIndexRouteImport } from './routes/seeds-api/projects/index'
+import { Route as ClientsClientIdIndexRouteImport } from './routes/clients/$clientId.index'
 import { Route as SeedsApiSeedsNewRouteImport } from './routes/seeds-api/seeds/new'
 import { Route as SeedsApiSeedsSeedIdRouteImport } from './routes/seeds-api/seeds/$seedId'
 import { Route as SeedsApiProjectsNewRouteImport } from './routes/seeds-api/projects/new'
 import { Route as SeedsApiProjectsProjectIdRouteImport } from './routes/seeds-api/projects/$projectId'
+import { Route as ClientsClientIdDataGroupsDataGroupIdRouteImport } from './routes/clients/$clientId.data-groups.$dataGroupId'
 
 const IamRoute = IamRouteImport.update({
   id: '/iam',
@@ -153,6 +155,11 @@ const SeedsApiProjectsIndexRoute = SeedsApiProjectsIndexRouteImport.update({
   path: '/seeds-api/projects/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClientsClientIdIndexRoute = ClientsClientIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ClientsClientIdRoute,
+} as any)
 const SeedsApiSeedsNewRoute = SeedsApiSeedsNewRouteImport.update({
   id: '/seeds-api/seeds/new',
   path: '/seeds-api/seeds/new',
@@ -174,13 +181,19 @@ const SeedsApiProjectsProjectIdRoute =
     path: '/seeds-api/projects/$projectId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ClientsClientIdDataGroupsDataGroupIdRoute =
+  ClientsClientIdDataGroupsDataGroupIdRouteImport.update({
+    id: '/data-groups/$dataGroupId',
+    path: '/data-groups/$dataGroupId',
+    getParentRoute: () => ClientsClientIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bulk': typeof BulkRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
-  '/clients/$clientId': typeof ClientsClientIdRoute
+  '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
   '/clients/new': typeof ClientsNewRoute
   '/product/client-skus': typeof ProductClientSkusRoute
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
@@ -201,15 +214,16 @@ export interface FileRoutesByFullPath {
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
+  '/clients/$clientId/': typeof ClientsClientIdIndexRoute
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
+  '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bulk': typeof BulkRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
-  '/clients/$clientId': typeof ClientsClientIdRoute
   '/clients/new': typeof ClientsNewRoute
   '/product/client-skus': typeof ProductClientSkusRoute
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
@@ -230,8 +244,10 @@ export interface FileRoutesByTo {
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
+  '/clients/$clientId': typeof ClientsClientIdIndexRoute
   '/seeds-api/projects': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsIndexRoute
+  '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -239,7 +255,7 @@ export interface FileRoutesById {
   '/bulk': typeof BulkRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
-  '/clients/$clientId': typeof ClientsClientIdRoute
+  '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
   '/clients/new': typeof ClientsNewRoute
   '/product/client-skus': typeof ProductClientSkusRoute
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
@@ -260,8 +276,10 @@ export interface FileRoutesById {
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
+  '/clients/$clientId/': typeof ClientsClientIdIndexRoute
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
+  '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -291,15 +309,16 @@ export interface FileRouteTypes {
     | '/seeds-api/projects/new'
     | '/seeds-api/seeds/$seedId'
     | '/seeds-api/seeds/new'
+    | '/clients/$clientId/'
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
+    | '/clients/$clientId/data-groups/$dataGroupId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/bulk'
     | '/data-collector'
     | '/iam'
-    | '/clients/$clientId'
     | '/clients/new'
     | '/product/client-skus'
     | '/region-systems/$regionId'
@@ -320,8 +339,10 @@ export interface FileRouteTypes {
     | '/seeds-api/projects/new'
     | '/seeds-api/seeds/$seedId'
     | '/seeds-api/seeds/new'
+    | '/clients/$clientId'
     | '/seeds-api/projects'
     | '/seeds-api/seeds'
+    | '/clients/$clientId/data-groups/$dataGroupId'
   id:
     | '__root__'
     | '/'
@@ -349,8 +370,10 @@ export interface FileRouteTypes {
     | '/seeds-api/projects/new'
     | '/seeds-api/seeds/$seedId'
     | '/seeds-api/seeds/new'
+    | '/clients/$clientId/'
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
+    | '/clients/$clientId/data-groups/$dataGroupId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -358,7 +381,7 @@ export interface RootRouteChildren {
   BulkRoute: typeof BulkRoute
   DataCollectorRoute: typeof DataCollectorRoute
   IamRoute: typeof IamRoute
-  ClientsClientIdRoute: typeof ClientsClientIdRoute
+  ClientsClientIdRoute: typeof ClientsClientIdRouteWithChildren
   ClientsNewRoute: typeof ClientsNewRoute
   ProductClientSkusRoute: typeof ProductClientSkusRoute
   RegionSystemsRegionIdRoute: typeof RegionSystemsRegionIdRoute
@@ -546,6 +569,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiProjectsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clients/$clientId/': {
+      id: '/clients/$clientId/'
+      path: '/'
+      fullPath: '/clients/$clientId/'
+      preLoaderRoute: typeof ClientsClientIdIndexRouteImport
+      parentRoute: typeof ClientsClientIdRoute
+    }
     '/seeds-api/seeds/new': {
       id: '/seeds-api/seeds/new'
       path: '/seeds-api/seeds/new'
@@ -574,15 +604,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiProjectsProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clients/$clientId/data-groups/$dataGroupId': {
+      id: '/clients/$clientId/data-groups/$dataGroupId'
+      path: '/data-groups/$dataGroupId'
+      fullPath: '/clients/$clientId/data-groups/$dataGroupId'
+      preLoaderRoute: typeof ClientsClientIdDataGroupsDataGroupIdRouteImport
+      parentRoute: typeof ClientsClientIdRoute
+    }
   }
 }
+
+interface ClientsClientIdRouteChildren {
+  ClientsClientIdIndexRoute: typeof ClientsClientIdIndexRoute
+  ClientsClientIdDataGroupsDataGroupIdRoute: typeof ClientsClientIdDataGroupsDataGroupIdRoute
+}
+
+const ClientsClientIdRouteChildren: ClientsClientIdRouteChildren = {
+  ClientsClientIdIndexRoute: ClientsClientIdIndexRoute,
+  ClientsClientIdDataGroupsDataGroupIdRoute:
+    ClientsClientIdDataGroupsDataGroupIdRoute,
+}
+
+const ClientsClientIdRouteWithChildren = ClientsClientIdRoute._addFileChildren(
+  ClientsClientIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BulkRoute: BulkRoute,
   DataCollectorRoute: DataCollectorRoute,
   IamRoute: IamRoute,
-  ClientsClientIdRoute: ClientsClientIdRoute,
+  ClientsClientIdRoute: ClientsClientIdRouteWithChildren,
   ClientsNewRoute: ClientsNewRoute,
   ProductClientSkusRoute: ProductClientSkusRoute,
   RegionSystemsRegionIdRoute: RegionSystemsRegionIdRoute,
