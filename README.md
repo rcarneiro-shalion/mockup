@@ -1,32 +1,35 @@
-# Shalion — Seeds-API Mockup
+# Shalion — Ecometry admin mockup
 
-An interactive **UI mockup** of the redesigned **Seeds-API** section of Shalion's
-Ecometry admin app. It exists to validate the *data flow and navigation* of the
-new data‑extraction configuration model with end users before the supporting
-services are built — the design here is the reference from which the real
-architecture and entities are derived.
+An interactive **UI mockup** of Shalion's internal **Ecometry** admin app. It exists
+to validate the *data flow, navigation and business rules* of the platform with end
+users before the supporting services are built — the design here is the reference
+from which the real architecture and entities are derived. Its original focus is the
+redesigned **Seeds API** (the new data‑extraction configuration model that replaces
+the legacy Tasks area).
 
 > This is a **prototype**: there is no backend. All data is seeded in-memory and
 > persisted to the browser's `localStorage`, so changes are local to each browser.
 
 ## What it covers
 
-The app models how a data-extraction project is configured and what feeds the
-**Data Collector** (the downstream extraction engine). Main sections (under **Seeds API**):
+The top bar switches between three product areas — **Ecometry**, **Data Collector**
+and **IAM** — and each renders its own left-hand menu.
 
-- **Projects** — the landing page. A project groups the configuration sold to a
-  client. Lists show which **Clients** it belongs to and which **Subscriptions**
-  are assigned. Full-page add/edit with an *Assigned subscriptions* table.
-- **Subscriptions** — the job-like hub entity (placeholder name): ties a Project
-  to a **list of Seeds**, a **Scrapping option**, and (when geolocation is
-  `MANUAL`) a **Location set**, plus client-oriented options (geoloc, frequency).
-- **Seeds** — 3 types (**URL / API / KEYWORD**). The type dropdown filters the
-  grid and gates a type-aware *Add seed* form (Url / Keyword / API origin).
-- **Scrapping options** — the extraction options layer: **Joints** (Multivariants,
-  Pagination `max_page`, Limited discovery `max_rank`) and **Disjoints**
-  (Modalities, Sorting), with multi-select **Timeframes** and an n:n relation to Stores.
-- **Tags**, **Timeframes** — supporting lists.
-- **Clients** — datagrid + full-page form, including the **client ↔ project** relationship.
+**Ecometry** (the main console):
+
+- **Clients** and **Retailers** (Retailers / Stores / Region systems).
+- **Seeds API** — the focus: **Projects**, **Subscriptions**, **Seeds** (URL / API /
+  KEYWORD), **Scrapping options**, **Tags** and **Timeframes**.
+- **Tasks** — the legacy operational area, being deprecated by the Seeds API.
+- **Codification**, **Product** (client SKUs, assortments, …), **Bulk** and
+  **Settings** (dashboard applications, targets, cubes, …).
+
+**Data Collector** (the downstream extraction engine): **Projects**, **Tags**,
+**Templates**, **Outputs** (Schemas / Data types), **Orders**, **Executions**,
+**Tasks** and **Settings** (Proxy accounts / providers, Error indicators).
+
+Every page carries a **(?) manual** in the top‑right that summarises that section's
+business rules, recovered from the production service repositories.
 
 ## Tech stack
 
@@ -36,30 +39,38 @@ The app models how a data-extraction project is configured and what feeds the
 
 ## Local development
 
-Requires **Node 22** (`engines.node = 22.x`).
+Requires **Node 22** (`engines.node = 22.x`). The repo's committed lockfile is
+**`bun.lock`**, so [bun](https://bun.sh) is the canonical package manager:
+
+```bash
+bun install
+bun dev
+```
+
+The dev server runs on **http://localhost:8080**.
+
+npm also works — `package-lock.json` is gitignored so the two managers don't get
+mixed:
 
 ```bash
 npm install
 npm run dev
 ```
 
-The dev server runs on **http://localhost:8080**.
-
-Other scripts:
+Other scripts (run with `bun run <script>` or `npm run <script>`):
 
 ```bash
-npm run build     # production build (see Deploy below)
-npm run preview   # preview the production build locally
-npm run lint      # eslint
+build       # production build (Vercel Build Output API — see Deploy below)
+build:dev   # build in development mode
+preview     # preview the production build locally
+lint        # eslint
+format      # prettier --write .
 ```
-
-> The repo's lockfile is `bun.lock`; `package-lock.json` is gitignored. `npm install`
-> works fine (no lockfile is created in the repo).
 
 ## Deploy (Vercel)
 
 The build is configured for Vercel via the Nitro `vercel` preset in
-`vite.config.ts` (`nitro: { preset: "vercel" }`), so `npm run build` emits the
+`vite.config.ts` (`nitro: { preset: "vercel" }`), so the build emits the
 **Build Output API** at `.vercel/output` and deploys with zero extra config.
 
 **Dashboard (recommended):**
@@ -67,9 +78,9 @@ The build is configured for Vercel via the Nitro `vercel` preset in
 1. In [Vercel](https://vercel.com/new), **Import** this Git repository.
 2. Configure:
    - **Framework Preset:** `Other`
-   - **Build Command:** `npm run build`
+   - **Build Command:** `bun run build` (or `npm run build`)
    - **Output Directory:** *leave blank* (the Build Output API is auto-detected)
-   - **Install Command:** default (`npm install`)
+   - **Install Command:** default (Vercel auto-detects `bun.lock`)
 3. **Deploy.** Every push to the production branch auto-deploys.
 
 **CLI:**
