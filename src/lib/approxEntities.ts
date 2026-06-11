@@ -1,6 +1,4 @@
-// AUTO-GENERATED approximated-listing specs.
-// Columns/filters/titles were mined from console-frontend (our frontend repo);
-// sample rows are illustrative. Regenerate by re-running the mining workflow.
+// AUTO-GENERATED approximated-listing specs (columns/filters/fields from console-frontend).
 import type { ApproxSpec } from "@/components/common/EntityListPage";
 
 export const SPECS: Record<string, ApproxSpec> = {
@@ -65,6 +63,14 @@ export const SPECS: Record<string, ApproxSpec> = {
         "name": "Hyundai Motor Company",
         "creationDateTime": "2024-10-25 11:05:22",
         "lastUpdatedDateTime": "2025-02-28 10:18:40"
+      }
+    ],
+    "fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
       }
     ]
   },
@@ -150,6 +156,35 @@ export const SPECS: Record<string, ApproxSpec> = {
         "promotionGroup": "referral promotion",
         "createdAt": "2026-04-12 15:30:15",
         "updatedAt": "2026-06-02 10:25:50"
+      }
+    ],
+    "fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "promoCode",
+        "label": "Promo code",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "promotionGroup",
+        "label": "Promotion group",
+        "type": "select",
+        "required": false,
+        "options": [
+          "Base promotion",
+          "Bundle promotion",
+          "Discount promotion",
+          "Gift promotion",
+          "Loyalty promotion",
+          "Recurring promotion",
+          "Volume promotion"
+        ]
       }
     ]
   },
@@ -303,6 +338,20 @@ export const SPECS: Record<string, ApproxSpec> = {
         "last_date_found": "2025-06-08T15:08:00Z",
         "matching_type": "exact",
         "matching_count": 56
+      }
+    ],
+    "fields": [
+      {
+        "key": "brand",
+        "label": "Brand",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "brandCategory",
+        "label": "Category",
+        "type": "text",
+        "required": false
       }
     ]
   },
@@ -464,6 +513,14 @@ export const SPECS: Record<string, ApproxSpec> = {
         "last_date_found": "2026-06-08T10:05:00Z",
         "matching_type": "EXACT",
         "matching_count": 91
+      }
+    ],
+    "fields": [
+      {
+        "key": "note",
+        "label": "Note",
+        "type": "textarea",
+        "required": true
       }
     ]
   },
@@ -656,6 +713,26 @@ export const SPECS: Record<string, ApproxSpec> = {
         "conversionStatus": "success",
         "textDetectionStatus": "success"
       }
+    ],
+    "fields": [
+      {
+        "key": "brand",
+        "label": "Brand",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "category",
+        "label": "Category",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "promotion",
+        "label": "Promotion",
+        "type": "text",
+        "required": true
+      }
     ]
   },
   "fsa-sections": {
@@ -717,6 +794,14 @@ export const SPECS: Record<string, ApproxSpec> = {
         "name": "Technology Park South",
         "createdAt": "2025-12-03 07:50:00",
         "updatedAt": "2026-02-28 15:33:00"
+      }
+    ],
+    "fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
       }
     ]
   },
@@ -833,6 +918,14 @@ export const SPECS: Record<string, ApproxSpec> = {
         "matchingType": "AUTO",
         "matchingCount": 428
       }
+    ],
+    "fields": [
+      {
+        "key": "promotion",
+        "label": "Promotion",
+        "type": "text",
+        "required": true
+      }
     ]
   },
   "attributes": {
@@ -930,6 +1023,45 @@ export const SPECS: Record<string, ApproxSpec> = {
         "createdAt": "2025-12-01 07:45:00",
         "updatedAt": "2026-05-18 10:05:00"
       }
+    ],
+    "fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "select",
+        "required": true,
+        "options": [
+          "STRING",
+          "NUMERIC",
+          "BOOLEAN",
+          "DATE",
+          "TIMESTAMP"
+        ]
+      },
+      {
+        "key": "dataVariable",
+        "label": "Data variable",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "isMultiple",
+        "label": "Multiple",
+        "type": "checkbox",
+        "required": false
+      },
+      {
+        "key": "inputFilter",
+        "label": "Input Filters",
+        "type": "textarea",
+        "required": false
+      }
     ]
   },
   "data-variables": {
@@ -982,6 +1114,28 @@ export const SPECS: Record<string, ApproxSpec> = {
         "id": "dv-006",
         "name": "transaction_count",
         "type": "integer"
+      }
+    ],
+    "fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "select",
+        "required": true,
+        "options": [
+          "STRING",
+          "NUMERIC",
+          "BOOLEAN",
+          "ENUMERATION",
+          "DECIMAL",
+          "INTEGER"
+        ]
       }
     ]
   },
@@ -1058,6 +1212,23 @@ export const SPECS: Record<string, ApproxSpec> = {
         "createdAt": "2023-09-12 09:20:00",
         "updatedAt": "2024-10-03 11:40:45"
       }
+    ],
+    "fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "client",
+        "label": "Client",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Client options loaded from autocomplete API"
+        ]
+      }
     ]
   },
   "client-categories": {
@@ -1132,6 +1303,20 @@ export const SPECS: Record<string, ApproxSpec> = {
         "client": "Danone",
         "createdAt": "2025-06-18 09:47:33",
         "updatedAt": "2025-12-22 13:58:09"
+      }
+    ],
+    "fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "client",
+        "label": "Client",
+        "type": "text",
+        "required": true
       }
     ]
   },
@@ -1267,6 +1452,36 @@ export const SPECS: Record<string, ApproxSpec> = {
         "createdAt": "2024-06-01 09:30:00",
         "updatedAt": "2024-06-10 11:20:00"
       }
+    ],
+    "fields": [
+      {
+        "key": "store",
+        "label": "Store",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "discoveryKey",
+        "label": "Discovery key",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "sku",
+        "label": "Sku id",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "matchingType",
+        "label": "Matching type",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Manual",
+          "Assisted"
+        ]
+      }
     ]
   },
   "sku-rpcs": {
@@ -1353,6 +1568,26 @@ export const SPECS: Record<string, ApproxSpec> = {
         "skuId": "SKU-890123456",
         "createdAt": "2024-02-28 10:25",
         "updatedAt": "2024-06-08 13:48"
+      }
+    ],
+    "fields": [
+      {
+        "key": "rpc",
+        "label": "Rpc",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "store",
+        "label": "Store",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "sku",
+        "label": "Sku id",
+        "type": "text",
+        "required": true
       }
     ]
   },
@@ -1465,6 +1700,44 @@ export const SPECS: Record<string, ApproxSpec> = {
         "activeTo": "2025-05-31",
         "creationDateTime": "2024-05-28 14:00",
         "lastUpdatedDateTime": "2024-06-10 11:30"
+      }
+    ],
+    "fields": [
+      {
+        "key": "client",
+        "label": "Client",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "store",
+        "label": "Store",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "activeFrom",
+        "label": "Active from",
+        "type": "date",
+        "required": false
+      },
+      {
+        "key": "activeTo",
+        "label": "Active to",
+        "type": "date",
+        "required": false
+      },
+      {
+        "key": "isAutomatic",
+        "label": "Is automatic",
+        "type": "checkbox",
+        "required": false
+      },
+      {
+        "key": "isMultiMatching",
+        "label": "Is multi matching",
+        "type": "checkbox",
+        "required": false
       }
     ]
   },
@@ -1592,6 +1865,48 @@ export const SPECS: Record<string, ApproxSpec> = {
         "createdAt": "2026-01-30T14:22:00Z",
         "updatedAt": "2026-05-20T15:30:00Z",
         "isActive": true
+      }
+    ],
+    "fields": [
+      {
+        "key": "client",
+        "label": "Client",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "codeKey",
+        "label": "Code key",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "countryCodes",
+        "label": "Countries",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "locale",
+        "label": "Locale",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "imageUploadMode",
+        "label": "Image upload mode",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Complete",
+          "Partial"
+        ]
+      },
+      {
+        "key": "skuImageReferencesPackage",
+        "label": "Sku image references",
+        "type": "text",
+        "required": true
       }
     ]
   },
@@ -1729,6 +2044,54 @@ export const SPECS: Record<string, ApproxSpec> = {
         "createdAt": "2024-05-28 15:30:00",
         "updatedAt": "2024-06-09 12:45:00",
         "isActive": false
+      }
+    ],
+    "fields": [
+      {
+        "key": "client",
+        "label": "Client",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "retailers",
+        "label": "Retailers",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "codeKey",
+        "label": "Code key",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "countryCodes",
+        "label": "Countries",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "locale",
+        "label": "Locale",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "imageUploadMode",
+        "label": "Image upload mode",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Complete",
+          "Partial"
+        ]
+      },
+      {
+        "key": "skuRetailerImageReferencesPackage",
+        "label": "SKU retailer image references",
+        "type": "text",
+        "required": true
       }
     ]
   },
@@ -1868,6 +2231,54 @@ export const SPECS: Record<string, ApproxSpec> = {
         "updatedAt": "2026-06-03 13:17:42",
         "isActive": false
       }
+    ],
+    "fields": [
+      {
+        "key": "client",
+        "label": "Client",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "stores",
+        "label": "Stores",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "codeKey",
+        "label": "Code Key",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "countryCodes",
+        "label": "Countries",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "locale",
+        "label": "Locale",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "imageUploadMode",
+        "label": "Image Upload Mode",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Complete",
+          "Partial"
+        ]
+      },
+      {
+        "key": "skuStoreImageReferencesPackage",
+        "label": "SKU Store Image References",
+        "type": "text",
+        "required": true
+      }
     ]
   },
   "sku-text-references": {
@@ -2002,6 +2413,68 @@ export const SPECS: Record<string, ApproxSpec> = {
         "nutrients": "Calories 150, Carbs 41g, Caffeine 40mg",
         "localeCode": "es_MX",
         "date": "2024-06-05"
+      }
+    ],
+    "fields": [
+      {
+        "key": "clientSku",
+        "label": "Client sku",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "date",
+        "label": "Date",
+        "type": "date",
+        "required": true
+      },
+      {
+        "key": "localeCode",
+        "label": "Locale",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "description",
+        "label": "Description",
+        "type": "textarea",
+        "required": false
+      },
+      {
+        "key": "bulletPoints",
+        "label": "Bullet points",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "titleKeywords",
+        "label": "Title keywords",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "descriptionKeywords",
+        "label": "Description keywords",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "ingredients",
+        "label": "Ingredients",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "nutrients",
+        "label": "Nutrients",
+        "type": "text",
+        "required": false
       }
     ]
   },
@@ -2169,6 +2642,74 @@ export const SPECS: Record<string, ApproxSpec> = {
         "creationDateTime": "2024-05-28 13:30:18",
         "lastUpdatedDateTime": "2024-05-30 09:15:42"
       }
+    ],
+    "fields": [
+      {
+        "key": "clientSku",
+        "label": "Client SKU",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "retailer",
+        "label": "Retailer",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "date",
+        "label": "Date",
+        "type": "date",
+        "required": true
+      },
+      {
+        "key": "localeCode",
+        "label": "Locale",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "description",
+        "label": "Description",
+        "type": "textarea",
+        "required": false
+      },
+      {
+        "key": "bulletPoints",
+        "label": "Bullet points",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "titleKeywords",
+        "label": "Title keywords",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "descriptionKeywords",
+        "label": "Description keywords",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "ingredients",
+        "label": "Ingredients",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "nutrients",
+        "label": "Nutrients",
+        "type": "text",
+        "required": false
+      }
     ]
   },
   "sku-store-text-references": {
@@ -2335,6 +2876,74 @@ export const SPECS: Record<string, ApproxSpec> = {
         "createdAt": "2026-03-08",
         "updatedAt": "2026-06-01"
       }
+    ],
+    "fields": [
+      {
+        "key": "clientSku",
+        "label": "Client SKU",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "store",
+        "label": "Store",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "date",
+        "label": "Date",
+        "type": "date",
+        "required": true
+      },
+      {
+        "key": "localeCode",
+        "label": "Locale",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "description",
+        "label": "Description",
+        "type": "textarea",
+        "required": false
+      },
+      {
+        "key": "bulletPoints",
+        "label": "Bullet Points",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "titleKeywords",
+        "label": "Title Keywords",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "descriptionKeywords",
+        "label": "Description Keywords",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "ingredients",
+        "label": "Ingredients",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "nutrients",
+        "label": "Nutrients",
+        "type": "text",
+        "required": false
+      }
     ]
   },
   "settings-cubes": {
@@ -2410,6 +3019,20 @@ export const SPECS: Record<string, ApproxSpec> = {
         "createdAt": "2026-02-27 14:33:55",
         "updatedAt": "2026-06-09 13:14:48"
       }
+    ],
+    "fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "description",
+        "label": "Description",
+        "type": "textarea",
+        "required": true
+      }
     ]
   },
   "settings-scopes": {
@@ -2473,6 +3096,14 @@ export const SPECS: Record<string, ApproxSpec> = {
         "name": "Campaign Performance Dashboard",
         "createdAt": "2026-05-30 10:05:40",
         "updatedAt": "2026-06-10 13:19:56"
+      }
+    ],
+    "fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
       }
     ]
   },
@@ -2594,6 +3225,23 @@ export const SPECS: Record<string, ApproxSpec> = {
         "rowProcessingInfo": "3190 success, 15 errors, 10 warnings",
         "updatedAt": "2024-06-07 14:22:41"
       }
+    ],
+    "fields": [
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Available via ProcessTypeResource autocomplete - types loaded from API"
+        ]
+      },
+      {
+        "key": "inputFile",
+        "label": "File",
+        "type": "text",
+        "required": true
+      }
     ]
   },
   "tasks-projects": {
@@ -2699,6 +3347,30 @@ export const SPECS: Record<string, ApproxSpec> = {
         "lastUpdatedDateTime": "2024-06-10 13:05",
         "createdBy": "karen.davis",
         "lastUpdatedBy": "alice.johnson"
+      }
+    ],
+    "fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "bom",
+        "label": "BoM",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "status",
+        "label": "Status",
+        "type": "select",
+        "required": false,
+        "options": [
+          "Active",
+          "Inactive"
+        ]
       }
     ],
     "notice": "The Tasks section is being replaced by the new Seeds API. The migration is rolling out over the coming weeks — new configuration should be created in Seeds API."
@@ -2901,6 +3573,107 @@ export const SPECS: Record<string, ApproxSpec> = {
         "updatedBy": "laura.martinez@company.com"
       }
     ],
+    "fields": [
+      {
+        "key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "businessUnit",
+        "label": "Business unit",
+        "type": "select",
+        "required": false,
+        "options": [
+          "UNKNOWN",
+          "DIRECT_TO_CONSUMER",
+          "DELIVERY",
+          "MARKETPLACE",
+          "QUICK_COMMERCE"
+        ]
+      },
+      {
+        "key": "status",
+        "label": "Status",
+        "type": "select",
+        "required": false,
+        "options": [
+          "Active",
+          "Inactive"
+        ]
+      },
+      {
+        "key": "parent",
+        "label": "Parent job",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "extractionType",
+        "label": "Extraction type",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "store",
+        "label": "Store",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "definitionMethod",
+        "label": "Definition method",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Seed",
+          "Box"
+        ]
+      },
+      {
+        "key": "geolocMode",
+        "label": "Geolocation mode",
+        "type": "select",
+        "required": true,
+        "options": [
+          "Manual",
+          "Automatic",
+          "No geoloc",
+          "Virtual store"
+        ]
+      },
+      {
+        "key": "hasToExtractReviews",
+        "label": "Extract reviews",
+        "type": "checkbox",
+        "required": false
+      },
+      {
+        "key": "hasToExtractMarketplace",
+        "label": "Extract marketplace",
+        "type": "checkbox",
+        "required": false
+      },
+      {
+        "key": "expirationDate",
+        "label": "Expiration date",
+        "type": "date",
+        "required": false
+      },
+      {
+        "key": "hasMultivariant",
+        "label": "PDP multivariants",
+        "type": "checkbox",
+        "required": false
+      },
+      {
+        "key": "metadata",
+        "label": "Metadata object",
+        "type": "textarea",
+        "required": false
+      }
+    ],
     "notice": "The Tasks section is being replaced by the new Seeds API. The migration is rolling out over the coming weeks — new configuration should be created in Seeds API."
   },
   "tasks-seeds": {
@@ -3065,6 +3838,112 @@ export const SPECS: Record<string, ApproxSpec> = {
         "createdAt": "2025-12-30T11:20:00Z",
         "updatedAt": "2026-04-25T09:55:00Z",
         "status": "ACTIVE"
+      }
+    ],
+    "fields": [
+      {
+        "key": "description",
+        "label": "Description",
+        "type": "textarea",
+        "required": true
+      },
+      {
+        "key": "store",
+        "label": "Store",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "category",
+        "label": "Category",
+        "type": "text",
+        "required": true
+      },
+      {
+        "key": "isQaCandidate",
+        "label": "Is qa candidate",
+        "type": "checkbox",
+        "required": false
+      },
+      {
+        "key": "status",
+        "label": "Status",
+        "type": "select",
+        "required": false,
+        "options": [
+          "Active",
+          "Inactive"
+        ]
+      },
+      {
+        "key": "keyword",
+        "label": "Keyword",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "keywordType",
+        "label": "Keyword type",
+        "type": "select",
+        "required": false,
+        "options": [
+          "Category",
+          "Branded"
+        ]
+      },
+      {
+        "key": "brand",
+        "label": "Brand",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "url",
+        "label": "Url",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "maxPages",
+        "label": "Max pages",
+        "type": "number",
+        "required": false
+      },
+      {
+        "key": "destination",
+        "label": "Destination",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "apiOrigin",
+        "label": "Api origin",
+        "type": "textarea",
+        "required": false
+      },
+      {
+        "key": "discoveryKey",
+        "label": "Discovery key",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "isFromDiscovery",
+        "label": "Is from discovery",
+        "type": "checkbox",
+        "required": false
+      },
+      {
+        "key": "pageType",
+        "label": "Page type",
+        "type": "text",
+        "required": false
+      },
+      {
+        "key": "maxRank",
+        "label": "Max rank",
+        "type": "number",
+        "required": false
       }
     ],
     "notice": "The Tasks section is being replaced by the new Seeds API. The migration is rolling out over the coming weeks — new configuration should be created in Seeds API."

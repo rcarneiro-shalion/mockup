@@ -13,6 +13,9 @@ export type RuleGroup = { category: string; rules: string[] };
 export type RulePage = { key: string; label: string; match: string; groups: RuleGroup[] };
 export type RuleSection = { section: string; intro: string; pages: RulePage[] };
 
+// Auto-generated rule pages for the promoted entities (rules mined from console-frontend).
+import { APPROX_RULE_PAGES as AP } from "./approxRules";
+
 // ---------- Clients --------------------------------------------------------
 
 const clients: RulePage = {
@@ -683,14 +686,38 @@ export const RULE_SECTIONS: RuleSection[] = [
   {
     section: "Codification",
     intro:
-      "Codification is where raw product data is cleaned up and matched to the right brand, category and product. These rules govern the Brands catalogue.",
-    pages: [brands],
+      "Codification is where raw product data is cleaned up and matched to the right brand, category, promotion and product.",
+    pages: [
+      brands,
+      AP["manufacturers"],
+      AP["promotions"],
+      AP["listings"],
+      AP["fsa-listings"],
+      AP["ads"],
+      AP["fsa-sections"],
+      AP["value-propositions"],
+      AP["attributes"],
+      AP["data-variables"],
+    ],
   },
   {
     section: "Product",
     intro:
-      "Product holds the catalogue being measured. These rules govern client SKUs, their codes and the recommended prices that vary by market, region and store.",
-    pages: [clientSkus],
+      "Product holds the catalogue being measured — client SKUs and their codes, store SKUs, assortments, recommended prices, and image/text references.",
+    pages: [
+      clientSkus,
+      AP["business-units"],
+      AP["client-categories"],
+      AP["store-skus"],
+      AP["sku-rpcs"],
+      AP["assortments"],
+      AP["sku-image-references"],
+      AP["sku-retailer-image-references"],
+      AP["sku-store-image-references"],
+      AP["sku-text-references"],
+      AP["sku-retailer-text-references"],
+      AP["sku-store-text-references"],
+    ],
   },
   {
     section: "Bulk",
@@ -707,8 +734,16 @@ export const RULE_SECTIONS: RuleSection[] = [
       settingsTimeframes,
       settingsCategories,
       settingsCountryGroups,
+      AP["settings-cubes"],
+      AP["settings-scopes"],
       settingsRules,
     ],
+  },
+  {
+    section: "Tasks",
+    intro:
+      "Tasks is the legacy operational area (projects, jobs and seeds). It is being replaced by the new Seeds API over the coming weeks.",
+    pages: [AP["tasks-projects"], AP["tasks-jobs"], AP["tasks-seeds"]],
   },
 ];
 

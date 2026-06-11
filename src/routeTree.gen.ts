@@ -11,23 +11,18 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IamRouteImport } from './routes/iam'
 import { Route as DataCollectorRouteImport } from './routes/data-collector'
-import { Route as BulkRouteImport } from './routes/bulk'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoresIndexRouteImport } from './routes/stores/index'
 import { Route as RetailersIndexRouteImport } from './routes/retailers/index'
 import { Route as RegionSystemsIndexRouteImport } from './routes/region-systems/index'
 import { Route as ClientsIndexRouteImport } from './routes/clients/index'
-import { Route as TasksSeedsRouteImport } from './routes/tasks/seeds'
-import { Route as TasksProjectsRouteImport } from './routes/tasks/projects'
-import { Route as TasksJobsRouteImport } from './routes/tasks/jobs'
+import { Route as BulkIndexRouteImport } from './routes/bulk/index'
 import { Route as StoresNewRouteImport } from './routes/stores/new'
 import { Route as StoresStoreIdRouteImport } from './routes/stores/$storeId'
 import { Route as SettingsTimeframesRouteImport } from './routes/settings/timeframes'
 import { Route as SettingsTargetsRouteImport } from './routes/settings/targets'
-import { Route as SettingsScopesRouteImport } from './routes/settings/scopes'
 import { Route as SettingsRulesRouteImport } from './routes/settings/rules'
 import { Route as SettingsDashboardApplicationsRouteImport } from './routes/settings/dashboard-applications'
-import { Route as SettingsCubesRouteImport } from './routes/settings/cubes'
 import { Route as SettingsCountryGroupsRouteImport } from './routes/settings/country-groups'
 import { Route as SettingsCategoriesRouteImport } from './routes/settings/categories'
 import { Route as SeedsApiTimeframesRouteImport } from './routes/seeds-api/timeframes'
@@ -38,41 +33,58 @@ import { Route as RetailersNewRouteImport } from './routes/retailers/new'
 import { Route as RetailersRetailerIdRouteImport } from './routes/retailers/$retailerId'
 import { Route as RegionSystemsNewRouteImport } from './routes/region-systems/new'
 import { Route as RegionSystemsRegionIdRouteImport } from './routes/region-systems/$regionId'
-import { Route as ProductStoreSkusRouteImport } from './routes/product/store-skus'
-import { Route as ProductSkuTextReferencesRouteImport } from './routes/product/sku-text-references'
-import { Route as ProductSkuStoreTextReferencesRouteImport } from './routes/product/sku-store-text-references'
-import { Route as ProductSkuStoreImageReferencesRouteImport } from './routes/product/sku-store-image-references'
-import { Route as ProductSkuRpcsRouteImport } from './routes/product/sku-rpcs'
-import { Route as ProductSkuRetailerTextReferencesRouteImport } from './routes/product/sku-retailer-text-references'
-import { Route as ProductSkuRetailerImageReferencesRouteImport } from './routes/product/sku-retailer-image-references'
-import { Route as ProductSkuImageReferencesRouteImport } from './routes/product/sku-image-references'
 import { Route as ProductClientSkusRouteImport } from './routes/product/client-skus'
-import { Route as ProductClientCategoriesRouteImport } from './routes/product/client-categories'
-import { Route as ProductBusinessUnitsRouteImport } from './routes/product/business-units'
-import { Route as ProductAssortmentsRouteImport } from './routes/product/assortments'
-import { Route as CodificationValuePropositionsRouteImport } from './routes/codification/value-propositions'
-import { Route as CodificationPromotionsRouteImport } from './routes/codification/promotions'
-import { Route as CodificationManufacturersRouteImport } from './routes/codification/manufacturers'
-import { Route as CodificationListingsRouteImport } from './routes/codification/listings'
-import { Route as CodificationFsaSectionsRouteImport } from './routes/codification/fsa-sections'
-import { Route as CodificationFsaListingsRouteImport } from './routes/codification/fsa-listings'
-import { Route as CodificationDataVariablesRouteImport } from './routes/codification/data-variables'
-import { Route as CodificationAttributesRouteImport } from './routes/codification/attributes'
-import { Route as CodificationAdsRouteImport } from './routes/codification/ads'
 import { Route as ClientsNewRouteImport } from './routes/clients/new'
 import { Route as ClientsClientIdRouteImport } from './routes/clients/$clientId'
+import { Route as BulkNewRouteImport } from './routes/bulk/new'
+import { Route as BulkIdRouteImport } from './routes/bulk/$id'
+import { Route as TasksSeedsIndexRouteImport } from './routes/tasks/seeds/index'
+import { Route as TasksProjectsIndexRouteImport } from './routes/tasks/projects/index'
+import { Route as TasksJobsIndexRouteImport } from './routes/tasks/jobs/index'
+import { Route as SettingsScopesIndexRouteImport } from './routes/settings/scopes/index'
 import { Route as SettingsRulesIndexRouteImport } from './routes/settings/rules.index'
 import { Route as SettingsDashboardApplicationsIndexRouteImport } from './routes/settings/dashboard-applications.index'
+import { Route as SettingsCubesIndexRouteImport } from './routes/settings/cubes/index'
 import { Route as SettingsCountryGroupsIndexRouteImport } from './routes/settings/country-groups.index'
 import { Route as SettingsCategoriesIndexRouteImport } from './routes/settings/categories.index'
 import { Route as SeedsApiSeedsIndexRouteImport } from './routes/seeds-api/seeds/index'
 import { Route as SeedsApiProjectsIndexRouteImport } from './routes/seeds-api/projects/index'
+import { Route as ProductStoreSkusIndexRouteImport } from './routes/product/store-skus/index'
+import { Route as ProductSkuTextReferencesIndexRouteImport } from './routes/product/sku-text-references/index'
+import { Route as ProductSkuStoreTextReferencesIndexRouteImport } from './routes/product/sku-store-text-references/index'
+import { Route as ProductSkuStoreImageReferencesIndexRouteImport } from './routes/product/sku-store-image-references/index'
+import { Route as ProductSkuRpcsIndexRouteImport } from './routes/product/sku-rpcs/index'
+import { Route as ProductSkuRetailerTextReferencesIndexRouteImport } from './routes/product/sku-retailer-text-references/index'
+import { Route as ProductSkuRetailerImageReferencesIndexRouteImport } from './routes/product/sku-retailer-image-references/index'
+import { Route as ProductSkuImageReferencesIndexRouteImport } from './routes/product/sku-image-references/index'
 import { Route as ProductClientSkusIndexRouteImport } from './routes/product/client-skus.index'
+import { Route as ProductClientCategoriesIndexRouteImport } from './routes/product/client-categories/index'
+import { Route as ProductBusinessUnitsIndexRouteImport } from './routes/product/business-units/index'
+import { Route as ProductAssortmentsIndexRouteImport } from './routes/product/assortments/index'
+import { Route as CodificationValuePropositionsIndexRouteImport } from './routes/codification/value-propositions/index'
+import { Route as CodificationPromotionsIndexRouteImport } from './routes/codification/promotions/index'
+import { Route as CodificationManufacturersIndexRouteImport } from './routes/codification/manufacturers/index'
+import { Route as CodificationListingsIndexRouteImport } from './routes/codification/listings/index'
+import { Route as CodificationFsaSectionsIndexRouteImport } from './routes/codification/fsa-sections/index'
+import { Route as CodificationFsaListingsIndexRouteImport } from './routes/codification/fsa-listings/index'
+import { Route as CodificationDataVariablesIndexRouteImport } from './routes/codification/data-variables/index'
 import { Route as CodificationBrandsIndexRouteImport } from './routes/codification/brands/index'
+import { Route as CodificationAttributesIndexRouteImport } from './routes/codification/attributes/index'
+import { Route as CodificationAdsIndexRouteImport } from './routes/codification/ads/index'
 import { Route as ClientsClientIdIndexRouteImport } from './routes/clients/$clientId.index'
+import { Route as TasksSeedsNewRouteImport } from './routes/tasks/seeds/new'
+import { Route as TasksSeedsIdRouteImport } from './routes/tasks/seeds/$id'
+import { Route as TasksProjectsNewRouteImport } from './routes/tasks/projects/new'
+import { Route as TasksProjectsIdRouteImport } from './routes/tasks/projects/$id'
+import { Route as TasksJobsNewRouteImport } from './routes/tasks/jobs/new'
+import { Route as TasksJobsIdRouteImport } from './routes/tasks/jobs/$id'
+import { Route as SettingsScopesNewRouteImport } from './routes/settings/scopes/new'
+import { Route as SettingsScopesIdRouteImport } from './routes/settings/scopes/$id'
 import { Route as SettingsRulesNewRouteImport } from './routes/settings/rules.new'
 import { Route as SettingsRulesRuleIdRouteImport } from './routes/settings/rules.$ruleId'
 import { Route as SettingsDashboardApplicationsAppIdRouteImport } from './routes/settings/dashboard-applications.$appId'
+import { Route as SettingsCubesNewRouteImport } from './routes/settings/cubes/new'
+import { Route as SettingsCubesIdRouteImport } from './routes/settings/cubes/$id'
 import { Route as SettingsCountryGroupsGroupIdRouteImport } from './routes/settings/country-groups.$groupId'
 import { Route as SettingsCategoriesNewRouteImport } from './routes/settings/categories.new'
 import { Route as SettingsCategoriesCategoryIdRouteImport } from './routes/settings/categories.$categoryId'
@@ -80,9 +92,49 @@ import { Route as SeedsApiSeedsNewRouteImport } from './routes/seeds-api/seeds/n
 import { Route as SeedsApiSeedsSeedIdRouteImport } from './routes/seeds-api/seeds/$seedId'
 import { Route as SeedsApiProjectsNewRouteImport } from './routes/seeds-api/projects/new'
 import { Route as SeedsApiProjectsProjectIdRouteImport } from './routes/seeds-api/projects/$projectId'
+import { Route as ProductStoreSkusNewRouteImport } from './routes/product/store-skus/new'
+import { Route as ProductStoreSkusIdRouteImport } from './routes/product/store-skus/$id'
+import { Route as ProductSkuTextReferencesNewRouteImport } from './routes/product/sku-text-references/new'
+import { Route as ProductSkuTextReferencesIdRouteImport } from './routes/product/sku-text-references/$id'
+import { Route as ProductSkuStoreTextReferencesNewRouteImport } from './routes/product/sku-store-text-references/new'
+import { Route as ProductSkuStoreTextReferencesIdRouteImport } from './routes/product/sku-store-text-references/$id'
+import { Route as ProductSkuStoreImageReferencesNewRouteImport } from './routes/product/sku-store-image-references/new'
+import { Route as ProductSkuStoreImageReferencesIdRouteImport } from './routes/product/sku-store-image-references/$id'
+import { Route as ProductSkuRpcsNewRouteImport } from './routes/product/sku-rpcs/new'
+import { Route as ProductSkuRpcsIdRouteImport } from './routes/product/sku-rpcs/$id'
+import { Route as ProductSkuRetailerTextReferencesNewRouteImport } from './routes/product/sku-retailer-text-references/new'
+import { Route as ProductSkuRetailerTextReferencesIdRouteImport } from './routes/product/sku-retailer-text-references/$id'
+import { Route as ProductSkuRetailerImageReferencesNewRouteImport } from './routes/product/sku-retailer-image-references/new'
+import { Route as ProductSkuRetailerImageReferencesIdRouteImport } from './routes/product/sku-retailer-image-references/$id'
+import { Route as ProductSkuImageReferencesNewRouteImport } from './routes/product/sku-image-references/new'
+import { Route as ProductSkuImageReferencesIdRouteImport } from './routes/product/sku-image-references/$id'
 import { Route as ProductClientSkusSkuIdRouteImport } from './routes/product/client-skus.$skuId'
+import { Route as ProductClientCategoriesNewRouteImport } from './routes/product/client-categories/new'
+import { Route as ProductClientCategoriesIdRouteImport } from './routes/product/client-categories/$id'
+import { Route as ProductBusinessUnitsNewRouteImport } from './routes/product/business-units/new'
+import { Route as ProductBusinessUnitsIdRouteImport } from './routes/product/business-units/$id'
+import { Route as ProductAssortmentsNewRouteImport } from './routes/product/assortments/new'
+import { Route as ProductAssortmentsIdRouteImport } from './routes/product/assortments/$id'
+import { Route as CodificationValuePropositionsNewRouteImport } from './routes/codification/value-propositions/new'
+import { Route as CodificationValuePropositionsIdRouteImport } from './routes/codification/value-propositions/$id'
+import { Route as CodificationPromotionsNewRouteImport } from './routes/codification/promotions/new'
+import { Route as CodificationPromotionsIdRouteImport } from './routes/codification/promotions/$id'
+import { Route as CodificationManufacturersNewRouteImport } from './routes/codification/manufacturers/new'
+import { Route as CodificationManufacturersIdRouteImport } from './routes/codification/manufacturers/$id'
+import { Route as CodificationListingsNewRouteImport } from './routes/codification/listings/new'
+import { Route as CodificationListingsIdRouteImport } from './routes/codification/listings/$id'
+import { Route as CodificationFsaSectionsNewRouteImport } from './routes/codification/fsa-sections/new'
+import { Route as CodificationFsaSectionsIdRouteImport } from './routes/codification/fsa-sections/$id'
+import { Route as CodificationFsaListingsNewRouteImport } from './routes/codification/fsa-listings/new'
+import { Route as CodificationFsaListingsIdRouteImport } from './routes/codification/fsa-listings/$id'
+import { Route as CodificationDataVariablesNewRouteImport } from './routes/codification/data-variables/new'
+import { Route as CodificationDataVariablesIdRouteImport } from './routes/codification/data-variables/$id'
 import { Route as CodificationBrandsNewRouteImport } from './routes/codification/brands/new'
 import { Route as CodificationBrandsBrandIdRouteImport } from './routes/codification/brands/$brandId'
+import { Route as CodificationAttributesNewRouteImport } from './routes/codification/attributes/new'
+import { Route as CodificationAttributesIdRouteImport } from './routes/codification/attributes/$id'
+import { Route as CodificationAdsNewRouteImport } from './routes/codification/ads/new'
+import { Route as CodificationAdsIdRouteImport } from './routes/codification/ads/$id'
 import { Route as SettingsDashboardApplicationsAppIdIndexRouteImport } from './routes/settings/dashboard-applications.$appId.index'
 import { Route as ClientsClientIdDataGroupsNewRouteImport } from './routes/clients/$clientId.data-groups.new'
 import { Route as ClientsClientIdDataGroupsDataGroupIdRouteImport } from './routes/clients/$clientId.data-groups.$dataGroupId'
@@ -98,11 +150,6 @@ const IamRoute = IamRouteImport.update({
 const DataCollectorRoute = DataCollectorRouteImport.update({
   id: '/data-collector',
   path: '/data-collector',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BulkRoute = BulkRouteImport.update({
-  id: '/bulk',
-  path: '/bulk',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -130,19 +177,9 @@ const ClientsIndexRoute = ClientsIndexRouteImport.update({
   path: '/clients/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TasksSeedsRoute = TasksSeedsRouteImport.update({
-  id: '/tasks/seeds',
-  path: '/tasks/seeds',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TasksProjectsRoute = TasksProjectsRouteImport.update({
-  id: '/tasks/projects',
-  path: '/tasks/projects',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TasksJobsRoute = TasksJobsRouteImport.update({
-  id: '/tasks/jobs',
-  path: '/tasks/jobs',
+const BulkIndexRoute = BulkIndexRouteImport.update({
+  id: '/bulk/',
+  path: '/bulk/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoresNewRoute = StoresNewRouteImport.update({
@@ -165,11 +202,6 @@ const SettingsTargetsRoute = SettingsTargetsRouteImport.update({
   path: '/settings/targets',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsScopesRoute = SettingsScopesRouteImport.update({
-  id: '/settings/scopes',
-  path: '/settings/scopes',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsRulesRoute = SettingsRulesRouteImport.update({
   id: '/settings/rules',
   path: '/settings/rules',
@@ -181,11 +213,6 @@ const SettingsDashboardApplicationsRoute =
     path: '/settings/dashboard-applications',
     getParentRoute: () => rootRouteImport,
   } as any)
-const SettingsCubesRoute = SettingsCubesRouteImport.update({
-  id: '/settings/cubes',
-  path: '/settings/cubes',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsCountryGroupsRoute = SettingsCountryGroupsRouteImport.update({
   id: '/settings/country-groups',
   path: '/settings/country-groups',
@@ -237,118 +264,9 @@ const RegionSystemsRegionIdRoute = RegionSystemsRegionIdRouteImport.update({
   path: '/region-systems/$regionId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProductStoreSkusRoute = ProductStoreSkusRouteImport.update({
-  id: '/product/store-skus',
-  path: '/product/store-skus',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductSkuTextReferencesRoute =
-  ProductSkuTextReferencesRouteImport.update({
-    id: '/product/sku-text-references',
-    path: '/product/sku-text-references',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ProductSkuStoreTextReferencesRoute =
-  ProductSkuStoreTextReferencesRouteImport.update({
-    id: '/product/sku-store-text-references',
-    path: '/product/sku-store-text-references',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ProductSkuStoreImageReferencesRoute =
-  ProductSkuStoreImageReferencesRouteImport.update({
-    id: '/product/sku-store-image-references',
-    path: '/product/sku-store-image-references',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ProductSkuRpcsRoute = ProductSkuRpcsRouteImport.update({
-  id: '/product/sku-rpcs',
-  path: '/product/sku-rpcs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductSkuRetailerTextReferencesRoute =
-  ProductSkuRetailerTextReferencesRouteImport.update({
-    id: '/product/sku-retailer-text-references',
-    path: '/product/sku-retailer-text-references',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ProductSkuRetailerImageReferencesRoute =
-  ProductSkuRetailerImageReferencesRouteImport.update({
-    id: '/product/sku-retailer-image-references',
-    path: '/product/sku-retailer-image-references',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ProductSkuImageReferencesRoute =
-  ProductSkuImageReferencesRouteImport.update({
-    id: '/product/sku-image-references',
-    path: '/product/sku-image-references',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ProductClientSkusRoute = ProductClientSkusRouteImport.update({
   id: '/product/client-skus',
   path: '/product/client-skus',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductClientCategoriesRoute = ProductClientCategoriesRouteImport.update({
-  id: '/product/client-categories',
-  path: '/product/client-categories',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductBusinessUnitsRoute = ProductBusinessUnitsRouteImport.update({
-  id: '/product/business-units',
-  path: '/product/business-units',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductAssortmentsRoute = ProductAssortmentsRouteImport.update({
-  id: '/product/assortments',
-  path: '/product/assortments',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CodificationValuePropositionsRoute =
-  CodificationValuePropositionsRouteImport.update({
-    id: '/codification/value-propositions',
-    path: '/codification/value-propositions',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const CodificationPromotionsRoute = CodificationPromotionsRouteImport.update({
-  id: '/codification/promotions',
-  path: '/codification/promotions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CodificationManufacturersRoute =
-  CodificationManufacturersRouteImport.update({
-    id: '/codification/manufacturers',
-    path: '/codification/manufacturers',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const CodificationListingsRoute = CodificationListingsRouteImport.update({
-  id: '/codification/listings',
-  path: '/codification/listings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CodificationFsaSectionsRoute = CodificationFsaSectionsRouteImport.update({
-  id: '/codification/fsa-sections',
-  path: '/codification/fsa-sections',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CodificationFsaListingsRoute = CodificationFsaListingsRouteImport.update({
-  id: '/codification/fsa-listings',
-  path: '/codification/fsa-listings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CodificationDataVariablesRoute =
-  CodificationDataVariablesRouteImport.update({
-    id: '/codification/data-variables',
-    path: '/codification/data-variables',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const CodificationAttributesRoute = CodificationAttributesRouteImport.update({
-  id: '/codification/attributes',
-  path: '/codification/attributes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CodificationAdsRoute = CodificationAdsRouteImport.update({
-  id: '/codification/ads',
-  path: '/codification/ads',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsNewRoute = ClientsNewRouteImport.update({
@@ -359,6 +277,36 @@ const ClientsNewRoute = ClientsNewRouteImport.update({
 const ClientsClientIdRoute = ClientsClientIdRouteImport.update({
   id: '/clients/$clientId',
   path: '/clients/$clientId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BulkNewRoute = BulkNewRouteImport.update({
+  id: '/bulk/new',
+  path: '/bulk/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BulkIdRoute = BulkIdRouteImport.update({
+  id: '/bulk/$id',
+  path: '/bulk/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksSeedsIndexRoute = TasksSeedsIndexRouteImport.update({
+  id: '/tasks/seeds/',
+  path: '/tasks/seeds/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksProjectsIndexRoute = TasksProjectsIndexRouteImport.update({
+  id: '/tasks/projects/',
+  path: '/tasks/projects/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksJobsIndexRoute = TasksJobsIndexRouteImport.update({
+  id: '/tasks/jobs/',
+  path: '/tasks/jobs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsScopesIndexRoute = SettingsScopesIndexRouteImport.update({
+  id: '/settings/scopes/',
+  path: '/settings/scopes/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRulesIndexRoute = SettingsRulesIndexRouteImport.update({
@@ -372,6 +320,11 @@ const SettingsDashboardApplicationsIndexRoute =
     path: '/',
     getParentRoute: () => SettingsDashboardApplicationsRoute,
   } as any)
+const SettingsCubesIndexRoute = SettingsCubesIndexRouteImport.update({
+  id: '/settings/cubes/',
+  path: '/settings/cubes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsCountryGroupsIndexRoute =
   SettingsCountryGroupsIndexRouteImport.update({
     id: '/',
@@ -393,20 +346,176 @@ const SeedsApiProjectsIndexRoute = SeedsApiProjectsIndexRouteImport.update({
   path: '/seeds-api/projects/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductStoreSkusIndexRoute = ProductStoreSkusIndexRouteImport.update({
+  id: '/product/store-skus/',
+  path: '/product/store-skus/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductSkuTextReferencesIndexRoute =
+  ProductSkuTextReferencesIndexRouteImport.update({
+    id: '/product/sku-text-references/',
+    path: '/product/sku-text-references/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuStoreTextReferencesIndexRoute =
+  ProductSkuStoreTextReferencesIndexRouteImport.update({
+    id: '/product/sku-store-text-references/',
+    path: '/product/sku-store-text-references/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuStoreImageReferencesIndexRoute =
+  ProductSkuStoreImageReferencesIndexRouteImport.update({
+    id: '/product/sku-store-image-references/',
+    path: '/product/sku-store-image-references/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuRpcsIndexRoute = ProductSkuRpcsIndexRouteImport.update({
+  id: '/product/sku-rpcs/',
+  path: '/product/sku-rpcs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductSkuRetailerTextReferencesIndexRoute =
+  ProductSkuRetailerTextReferencesIndexRouteImport.update({
+    id: '/product/sku-retailer-text-references/',
+    path: '/product/sku-retailer-text-references/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuRetailerImageReferencesIndexRoute =
+  ProductSkuRetailerImageReferencesIndexRouteImport.update({
+    id: '/product/sku-retailer-image-references/',
+    path: '/product/sku-retailer-image-references/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuImageReferencesIndexRoute =
+  ProductSkuImageReferencesIndexRouteImport.update({
+    id: '/product/sku-image-references/',
+    path: '/product/sku-image-references/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ProductClientSkusIndexRoute = ProductClientSkusIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ProductClientSkusRoute,
 } as any)
+const ProductClientCategoriesIndexRoute =
+  ProductClientCategoriesIndexRouteImport.update({
+    id: '/product/client-categories/',
+    path: '/product/client-categories/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductBusinessUnitsIndexRoute =
+  ProductBusinessUnitsIndexRouteImport.update({
+    id: '/product/business-units/',
+    path: '/product/business-units/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductAssortmentsIndexRoute = ProductAssortmentsIndexRouteImport.update({
+  id: '/product/assortments/',
+  path: '/product/assortments/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodificationValuePropositionsIndexRoute =
+  CodificationValuePropositionsIndexRouteImport.update({
+    id: '/codification/value-propositions/',
+    path: '/codification/value-propositions/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationPromotionsIndexRoute =
+  CodificationPromotionsIndexRouteImport.update({
+    id: '/codification/promotions/',
+    path: '/codification/promotions/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationManufacturersIndexRoute =
+  CodificationManufacturersIndexRouteImport.update({
+    id: '/codification/manufacturers/',
+    path: '/codification/manufacturers/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationListingsIndexRoute =
+  CodificationListingsIndexRouteImport.update({
+    id: '/codification/listings/',
+    path: '/codification/listings/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationFsaSectionsIndexRoute =
+  CodificationFsaSectionsIndexRouteImport.update({
+    id: '/codification/fsa-sections/',
+    path: '/codification/fsa-sections/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationFsaListingsIndexRoute =
+  CodificationFsaListingsIndexRouteImport.update({
+    id: '/codification/fsa-listings/',
+    path: '/codification/fsa-listings/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationDataVariablesIndexRoute =
+  CodificationDataVariablesIndexRouteImport.update({
+    id: '/codification/data-variables/',
+    path: '/codification/data-variables/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CodificationBrandsIndexRoute = CodificationBrandsIndexRouteImport.update({
   id: '/codification/brands/',
   path: '/codification/brands/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodificationAttributesIndexRoute =
+  CodificationAttributesIndexRouteImport.update({
+    id: '/codification/attributes/',
+    path: '/codification/attributes/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationAdsIndexRoute = CodificationAdsIndexRouteImport.update({
+  id: '/codification/ads/',
+  path: '/codification/ads/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsClientIdIndexRoute = ClientsClientIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ClientsClientIdRoute,
+} as any)
+const TasksSeedsNewRoute = TasksSeedsNewRouteImport.update({
+  id: '/tasks/seeds/new',
+  path: '/tasks/seeds/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksSeedsIdRoute = TasksSeedsIdRouteImport.update({
+  id: '/tasks/seeds/$id',
+  path: '/tasks/seeds/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksProjectsNewRoute = TasksProjectsNewRouteImport.update({
+  id: '/tasks/projects/new',
+  path: '/tasks/projects/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksProjectsIdRoute = TasksProjectsIdRouteImport.update({
+  id: '/tasks/projects/$id',
+  path: '/tasks/projects/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksJobsNewRoute = TasksJobsNewRouteImport.update({
+  id: '/tasks/jobs/new',
+  path: '/tasks/jobs/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksJobsIdRoute = TasksJobsIdRouteImport.update({
+  id: '/tasks/jobs/$id',
+  path: '/tasks/jobs/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsScopesNewRoute = SettingsScopesNewRouteImport.update({
+  id: '/settings/scopes/new',
+  path: '/settings/scopes/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsScopesIdRoute = SettingsScopesIdRouteImport.update({
+  id: '/settings/scopes/$id',
+  path: '/settings/scopes/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRulesNewRoute = SettingsRulesNewRouteImport.update({
   id: '/new',
@@ -424,6 +533,16 @@ const SettingsDashboardApplicationsAppIdRoute =
     path: '/$appId',
     getParentRoute: () => SettingsDashboardApplicationsRoute,
   } as any)
+const SettingsCubesNewRoute = SettingsCubesNewRouteImport.update({
+  id: '/settings/cubes/new',
+  path: '/settings/cubes/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsCubesIdRoute = SettingsCubesIdRouteImport.update({
+  id: '/settings/cubes/$id',
+  path: '/settings/cubes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsCountryGroupsGroupIdRoute =
   SettingsCountryGroupsGroupIdRouteImport.update({
     id: '/$groupId',
@@ -462,11 +581,217 @@ const SeedsApiProjectsProjectIdRoute =
     path: '/seeds-api/projects/$projectId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ProductStoreSkusNewRoute = ProductStoreSkusNewRouteImport.update({
+  id: '/product/store-skus/new',
+  path: '/product/store-skus/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductStoreSkusIdRoute = ProductStoreSkusIdRouteImport.update({
+  id: '/product/store-skus/$id',
+  path: '/product/store-skus/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductSkuTextReferencesNewRoute =
+  ProductSkuTextReferencesNewRouteImport.update({
+    id: '/product/sku-text-references/new',
+    path: '/product/sku-text-references/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuTextReferencesIdRoute =
+  ProductSkuTextReferencesIdRouteImport.update({
+    id: '/product/sku-text-references/$id',
+    path: '/product/sku-text-references/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuStoreTextReferencesNewRoute =
+  ProductSkuStoreTextReferencesNewRouteImport.update({
+    id: '/product/sku-store-text-references/new',
+    path: '/product/sku-store-text-references/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuStoreTextReferencesIdRoute =
+  ProductSkuStoreTextReferencesIdRouteImport.update({
+    id: '/product/sku-store-text-references/$id',
+    path: '/product/sku-store-text-references/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuStoreImageReferencesNewRoute =
+  ProductSkuStoreImageReferencesNewRouteImport.update({
+    id: '/product/sku-store-image-references/new',
+    path: '/product/sku-store-image-references/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuStoreImageReferencesIdRoute =
+  ProductSkuStoreImageReferencesIdRouteImport.update({
+    id: '/product/sku-store-image-references/$id',
+    path: '/product/sku-store-image-references/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuRpcsNewRoute = ProductSkuRpcsNewRouteImport.update({
+  id: '/product/sku-rpcs/new',
+  path: '/product/sku-rpcs/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductSkuRpcsIdRoute = ProductSkuRpcsIdRouteImport.update({
+  id: '/product/sku-rpcs/$id',
+  path: '/product/sku-rpcs/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductSkuRetailerTextReferencesNewRoute =
+  ProductSkuRetailerTextReferencesNewRouteImport.update({
+    id: '/product/sku-retailer-text-references/new',
+    path: '/product/sku-retailer-text-references/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuRetailerTextReferencesIdRoute =
+  ProductSkuRetailerTextReferencesIdRouteImport.update({
+    id: '/product/sku-retailer-text-references/$id',
+    path: '/product/sku-retailer-text-references/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuRetailerImageReferencesNewRoute =
+  ProductSkuRetailerImageReferencesNewRouteImport.update({
+    id: '/product/sku-retailer-image-references/new',
+    path: '/product/sku-retailer-image-references/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuRetailerImageReferencesIdRoute =
+  ProductSkuRetailerImageReferencesIdRouteImport.update({
+    id: '/product/sku-retailer-image-references/$id',
+    path: '/product/sku-retailer-image-references/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuImageReferencesNewRoute =
+  ProductSkuImageReferencesNewRouteImport.update({
+    id: '/product/sku-image-references/new',
+    path: '/product/sku-image-references/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductSkuImageReferencesIdRoute =
+  ProductSkuImageReferencesIdRouteImport.update({
+    id: '/product/sku-image-references/$id',
+    path: '/product/sku-image-references/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ProductClientSkusSkuIdRoute = ProductClientSkusSkuIdRouteImport.update({
   id: '/$skuId',
   path: '/$skuId',
   getParentRoute: () => ProductClientSkusRoute,
 } as any)
+const ProductClientCategoriesNewRoute =
+  ProductClientCategoriesNewRouteImport.update({
+    id: '/product/client-categories/new',
+    path: '/product/client-categories/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductClientCategoriesIdRoute =
+  ProductClientCategoriesIdRouteImport.update({
+    id: '/product/client-categories/$id',
+    path: '/product/client-categories/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ProductBusinessUnitsNewRoute = ProductBusinessUnitsNewRouteImport.update({
+  id: '/product/business-units/new',
+  path: '/product/business-units/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductBusinessUnitsIdRoute = ProductBusinessUnitsIdRouteImport.update({
+  id: '/product/business-units/$id',
+  path: '/product/business-units/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductAssortmentsNewRoute = ProductAssortmentsNewRouteImport.update({
+  id: '/product/assortments/new',
+  path: '/product/assortments/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductAssortmentsIdRoute = ProductAssortmentsIdRouteImport.update({
+  id: '/product/assortments/$id',
+  path: '/product/assortments/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodificationValuePropositionsNewRoute =
+  CodificationValuePropositionsNewRouteImport.update({
+    id: '/codification/value-propositions/new',
+    path: '/codification/value-propositions/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationValuePropositionsIdRoute =
+  CodificationValuePropositionsIdRouteImport.update({
+    id: '/codification/value-propositions/$id',
+    path: '/codification/value-propositions/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationPromotionsNewRoute =
+  CodificationPromotionsNewRouteImport.update({
+    id: '/codification/promotions/new',
+    path: '/codification/promotions/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationPromotionsIdRoute =
+  CodificationPromotionsIdRouteImport.update({
+    id: '/codification/promotions/$id',
+    path: '/codification/promotions/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationManufacturersNewRoute =
+  CodificationManufacturersNewRouteImport.update({
+    id: '/codification/manufacturers/new',
+    path: '/codification/manufacturers/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationManufacturersIdRoute =
+  CodificationManufacturersIdRouteImport.update({
+    id: '/codification/manufacturers/$id',
+    path: '/codification/manufacturers/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationListingsNewRoute = CodificationListingsNewRouteImport.update({
+  id: '/codification/listings/new',
+  path: '/codification/listings/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodificationListingsIdRoute = CodificationListingsIdRouteImport.update({
+  id: '/codification/listings/$id',
+  path: '/codification/listings/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodificationFsaSectionsNewRoute =
+  CodificationFsaSectionsNewRouteImport.update({
+    id: '/codification/fsa-sections/new',
+    path: '/codification/fsa-sections/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationFsaSectionsIdRoute =
+  CodificationFsaSectionsIdRouteImport.update({
+    id: '/codification/fsa-sections/$id',
+    path: '/codification/fsa-sections/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationFsaListingsNewRoute =
+  CodificationFsaListingsNewRouteImport.update({
+    id: '/codification/fsa-listings/new',
+    path: '/codification/fsa-listings/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationFsaListingsIdRoute =
+  CodificationFsaListingsIdRouteImport.update({
+    id: '/codification/fsa-listings/$id',
+    path: '/codification/fsa-listings/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationDataVariablesNewRoute =
+  CodificationDataVariablesNewRouteImport.update({
+    id: '/codification/data-variables/new',
+    path: '/codification/data-variables/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationDataVariablesIdRoute =
+  CodificationDataVariablesIdRouteImport.update({
+    id: '/codification/data-variables/$id',
+    path: '/codification/data-variables/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CodificationBrandsNewRoute = CodificationBrandsNewRouteImport.update({
   id: '/codification/brands/new',
   path: '/codification/brands/new',
@@ -478,6 +803,28 @@ const CodificationBrandsBrandIdRoute =
     path: '/codification/brands/$brandId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const CodificationAttributesNewRoute =
+  CodificationAttributesNewRouteImport.update({
+    id: '/codification/attributes/new',
+    path: '/codification/attributes/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationAttributesIdRoute =
+  CodificationAttributesIdRouteImport.update({
+    id: '/codification/attributes/$id',
+    path: '/codification/attributes/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CodificationAdsNewRoute = CodificationAdsNewRouteImport.update({
+  id: '/codification/ads/new',
+  path: '/codification/ads/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodificationAdsIdRoute = CodificationAdsIdRouteImport.update({
+  id: '/codification/ads/$id',
+  path: '/codification/ads/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsDashboardApplicationsAppIdIndexRoute =
   SettingsDashboardApplicationsAppIdIndexRouteImport.update({
     id: '/',
@@ -520,32 +867,13 @@ const SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/bulk': typeof BulkRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
+  '/bulk/$id': typeof BulkIdRoute
+  '/bulk/new': typeof BulkNewRoute
   '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
   '/clients/new': typeof ClientsNewRoute
-  '/codification/ads': typeof CodificationAdsRoute
-  '/codification/attributes': typeof CodificationAttributesRoute
-  '/codification/data-variables': typeof CodificationDataVariablesRoute
-  '/codification/fsa-listings': typeof CodificationFsaListingsRoute
-  '/codification/fsa-sections': typeof CodificationFsaSectionsRoute
-  '/codification/listings': typeof CodificationListingsRoute
-  '/codification/manufacturers': typeof CodificationManufacturersRoute
-  '/codification/promotions': typeof CodificationPromotionsRoute
-  '/codification/value-propositions': typeof CodificationValuePropositionsRoute
-  '/product/assortments': typeof ProductAssortmentsRoute
-  '/product/business-units': typeof ProductBusinessUnitsRoute
-  '/product/client-categories': typeof ProductClientCategoriesRoute
   '/product/client-skus': typeof ProductClientSkusRouteWithChildren
-  '/product/sku-image-references': typeof ProductSkuImageReferencesRoute
-  '/product/sku-retailer-image-references': typeof ProductSkuRetailerImageReferencesRoute
-  '/product/sku-retailer-text-references': typeof ProductSkuRetailerTextReferencesRoute
-  '/product/sku-rpcs': typeof ProductSkuRpcsRoute
-  '/product/sku-store-image-references': typeof ProductSkuStoreImageReferencesRoute
-  '/product/sku-store-text-references': typeof ProductSkuStoreTextReferencesRoute
-  '/product/sku-text-references': typeof ProductSkuTextReferencesRoute
-  '/product/store-skus': typeof ProductStoreSkusRoute
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
@@ -556,24 +884,60 @@ export interface FileRoutesByFullPath {
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
   '/settings/categories': typeof SettingsCategoriesRouteWithChildren
   '/settings/country-groups': typeof SettingsCountryGroupsRouteWithChildren
-  '/settings/cubes': typeof SettingsCubesRoute
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRouteWithChildren
   '/settings/rules': typeof SettingsRulesRouteWithChildren
-  '/settings/scopes': typeof SettingsScopesRoute
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
   '/stores/new': typeof StoresNewRoute
-  '/tasks/jobs': typeof TasksJobsRoute
-  '/tasks/projects': typeof TasksProjectsRoute
-  '/tasks/seeds': typeof TasksSeedsRoute
+  '/bulk/': typeof BulkIndexRoute
   '/clients/': typeof ClientsIndexRoute
   '/region-systems/': typeof RegionSystemsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
+  '/codification/ads/$id': typeof CodificationAdsIdRoute
+  '/codification/ads/new': typeof CodificationAdsNewRoute
+  '/codification/attributes/$id': typeof CodificationAttributesIdRoute
+  '/codification/attributes/new': typeof CodificationAttributesNewRoute
   '/codification/brands/$brandId': typeof CodificationBrandsBrandIdRoute
   '/codification/brands/new': typeof CodificationBrandsNewRoute
+  '/codification/data-variables/$id': typeof CodificationDataVariablesIdRoute
+  '/codification/data-variables/new': typeof CodificationDataVariablesNewRoute
+  '/codification/fsa-listings/$id': typeof CodificationFsaListingsIdRoute
+  '/codification/fsa-listings/new': typeof CodificationFsaListingsNewRoute
+  '/codification/fsa-sections/$id': typeof CodificationFsaSectionsIdRoute
+  '/codification/fsa-sections/new': typeof CodificationFsaSectionsNewRoute
+  '/codification/listings/$id': typeof CodificationListingsIdRoute
+  '/codification/listings/new': typeof CodificationListingsNewRoute
+  '/codification/manufacturers/$id': typeof CodificationManufacturersIdRoute
+  '/codification/manufacturers/new': typeof CodificationManufacturersNewRoute
+  '/codification/promotions/$id': typeof CodificationPromotionsIdRoute
+  '/codification/promotions/new': typeof CodificationPromotionsNewRoute
+  '/codification/value-propositions/$id': typeof CodificationValuePropositionsIdRoute
+  '/codification/value-propositions/new': typeof CodificationValuePropositionsNewRoute
+  '/product/assortments/$id': typeof ProductAssortmentsIdRoute
+  '/product/assortments/new': typeof ProductAssortmentsNewRoute
+  '/product/business-units/$id': typeof ProductBusinessUnitsIdRoute
+  '/product/business-units/new': typeof ProductBusinessUnitsNewRoute
+  '/product/client-categories/$id': typeof ProductClientCategoriesIdRoute
+  '/product/client-categories/new': typeof ProductClientCategoriesNewRoute
   '/product/client-skus/$skuId': typeof ProductClientSkusSkuIdRoute
+  '/product/sku-image-references/$id': typeof ProductSkuImageReferencesIdRoute
+  '/product/sku-image-references/new': typeof ProductSkuImageReferencesNewRoute
+  '/product/sku-retailer-image-references/$id': typeof ProductSkuRetailerImageReferencesIdRoute
+  '/product/sku-retailer-image-references/new': typeof ProductSkuRetailerImageReferencesNewRoute
+  '/product/sku-retailer-text-references/$id': typeof ProductSkuRetailerTextReferencesIdRoute
+  '/product/sku-retailer-text-references/new': typeof ProductSkuRetailerTextReferencesNewRoute
+  '/product/sku-rpcs/$id': typeof ProductSkuRpcsIdRoute
+  '/product/sku-rpcs/new': typeof ProductSkuRpcsNewRoute
+  '/product/sku-store-image-references/$id': typeof ProductSkuStoreImageReferencesIdRoute
+  '/product/sku-store-image-references/new': typeof ProductSkuStoreImageReferencesNewRoute
+  '/product/sku-store-text-references/$id': typeof ProductSkuStoreTextReferencesIdRoute
+  '/product/sku-store-text-references/new': typeof ProductSkuStoreTextReferencesNewRoute
+  '/product/sku-text-references/$id': typeof ProductSkuTextReferencesIdRoute
+  '/product/sku-text-references/new': typeof ProductSkuTextReferencesNewRoute
+  '/product/store-skus/$id': typeof ProductStoreSkusIdRoute
+  '/product/store-skus/new': typeof ProductStoreSkusNewRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
@@ -581,18 +945,53 @@ export interface FileRoutesByFullPath {
   '/settings/categories/$categoryId': typeof SettingsCategoriesCategoryIdRoute
   '/settings/categories/new': typeof SettingsCategoriesNewRoute
   '/settings/country-groups/$groupId': typeof SettingsCountryGroupsGroupIdRoute
+  '/settings/cubes/$id': typeof SettingsCubesIdRoute
+  '/settings/cubes/new': typeof SettingsCubesNewRoute
   '/settings/dashboard-applications/$appId': typeof SettingsDashboardApplicationsAppIdRouteWithChildren
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
+  '/settings/scopes/$id': typeof SettingsScopesIdRoute
+  '/settings/scopes/new': typeof SettingsScopesNewRoute
+  '/tasks/jobs/$id': typeof TasksJobsIdRoute
+  '/tasks/jobs/new': typeof TasksJobsNewRoute
+  '/tasks/projects/$id': typeof TasksProjectsIdRoute
+  '/tasks/projects/new': typeof TasksProjectsNewRoute
+  '/tasks/seeds/$id': typeof TasksSeedsIdRoute
+  '/tasks/seeds/new': typeof TasksSeedsNewRoute
   '/clients/$clientId/': typeof ClientsClientIdIndexRoute
+  '/codification/ads/': typeof CodificationAdsIndexRoute
+  '/codification/attributes/': typeof CodificationAttributesIndexRoute
   '/codification/brands/': typeof CodificationBrandsIndexRoute
+  '/codification/data-variables/': typeof CodificationDataVariablesIndexRoute
+  '/codification/fsa-listings/': typeof CodificationFsaListingsIndexRoute
+  '/codification/fsa-sections/': typeof CodificationFsaSectionsIndexRoute
+  '/codification/listings/': typeof CodificationListingsIndexRoute
+  '/codification/manufacturers/': typeof CodificationManufacturersIndexRoute
+  '/codification/promotions/': typeof CodificationPromotionsIndexRoute
+  '/codification/value-propositions/': typeof CodificationValuePropositionsIndexRoute
+  '/product/assortments/': typeof ProductAssortmentsIndexRoute
+  '/product/business-units/': typeof ProductBusinessUnitsIndexRoute
+  '/product/client-categories/': typeof ProductClientCategoriesIndexRoute
   '/product/client-skus/': typeof ProductClientSkusIndexRoute
+  '/product/sku-image-references/': typeof ProductSkuImageReferencesIndexRoute
+  '/product/sku-retailer-image-references/': typeof ProductSkuRetailerImageReferencesIndexRoute
+  '/product/sku-retailer-text-references/': typeof ProductSkuRetailerTextReferencesIndexRoute
+  '/product/sku-rpcs/': typeof ProductSkuRpcsIndexRoute
+  '/product/sku-store-image-references/': typeof ProductSkuStoreImageReferencesIndexRoute
+  '/product/sku-store-text-references/': typeof ProductSkuStoreTextReferencesIndexRoute
+  '/product/sku-text-references/': typeof ProductSkuTextReferencesIndexRoute
+  '/product/store-skus/': typeof ProductStoreSkusIndexRoute
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
   '/settings/categories/': typeof SettingsCategoriesIndexRoute
   '/settings/country-groups/': typeof SettingsCountryGroupsIndexRoute
+  '/settings/cubes/': typeof SettingsCubesIndexRoute
   '/settings/dashboard-applications/': typeof SettingsDashboardApplicationsIndexRoute
   '/settings/rules/': typeof SettingsRulesIndexRoute
+  '/settings/scopes/': typeof SettingsScopesIndexRoute
+  '/tasks/jobs/': typeof TasksJobsIndexRoute
+  '/tasks/projects/': typeof TasksProjectsIndexRoute
+  '/tasks/seeds/': typeof TasksSeedsIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
   '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
   '/settings/dashboard-applications/$appId/': typeof SettingsDashboardApplicationsAppIdIndexRoute
@@ -602,30 +1001,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/bulk': typeof BulkRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
+  '/bulk/$id': typeof BulkIdRoute
+  '/bulk/new': typeof BulkNewRoute
   '/clients/new': typeof ClientsNewRoute
-  '/codification/ads': typeof CodificationAdsRoute
-  '/codification/attributes': typeof CodificationAttributesRoute
-  '/codification/data-variables': typeof CodificationDataVariablesRoute
-  '/codification/fsa-listings': typeof CodificationFsaListingsRoute
-  '/codification/fsa-sections': typeof CodificationFsaSectionsRoute
-  '/codification/listings': typeof CodificationListingsRoute
-  '/codification/manufacturers': typeof CodificationManufacturersRoute
-  '/codification/promotions': typeof CodificationPromotionsRoute
-  '/codification/value-propositions': typeof CodificationValuePropositionsRoute
-  '/product/assortments': typeof ProductAssortmentsRoute
-  '/product/business-units': typeof ProductBusinessUnitsRoute
-  '/product/client-categories': typeof ProductClientCategoriesRoute
-  '/product/sku-image-references': typeof ProductSkuImageReferencesRoute
-  '/product/sku-retailer-image-references': typeof ProductSkuRetailerImageReferencesRoute
-  '/product/sku-retailer-text-references': typeof ProductSkuRetailerTextReferencesRoute
-  '/product/sku-rpcs': typeof ProductSkuRpcsRoute
-  '/product/sku-store-image-references': typeof ProductSkuStoreImageReferencesRoute
-  '/product/sku-store-text-references': typeof ProductSkuStoreTextReferencesRoute
-  '/product/sku-text-references': typeof ProductSkuTextReferencesRoute
-  '/product/store-skus': typeof ProductStoreSkusRoute
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
@@ -634,22 +1014,58 @@ export interface FileRoutesByTo {
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
-  '/settings/cubes': typeof SettingsCubesRoute
-  '/settings/scopes': typeof SettingsScopesRoute
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
   '/stores/new': typeof StoresNewRoute
-  '/tasks/jobs': typeof TasksJobsRoute
-  '/tasks/projects': typeof TasksProjectsRoute
-  '/tasks/seeds': typeof TasksSeedsRoute
+  '/bulk': typeof BulkIndexRoute
   '/clients': typeof ClientsIndexRoute
   '/region-systems': typeof RegionSystemsIndexRoute
   '/retailers': typeof RetailersIndexRoute
   '/stores': typeof StoresIndexRoute
+  '/codification/ads/$id': typeof CodificationAdsIdRoute
+  '/codification/ads/new': typeof CodificationAdsNewRoute
+  '/codification/attributes/$id': typeof CodificationAttributesIdRoute
+  '/codification/attributes/new': typeof CodificationAttributesNewRoute
   '/codification/brands/$brandId': typeof CodificationBrandsBrandIdRoute
   '/codification/brands/new': typeof CodificationBrandsNewRoute
+  '/codification/data-variables/$id': typeof CodificationDataVariablesIdRoute
+  '/codification/data-variables/new': typeof CodificationDataVariablesNewRoute
+  '/codification/fsa-listings/$id': typeof CodificationFsaListingsIdRoute
+  '/codification/fsa-listings/new': typeof CodificationFsaListingsNewRoute
+  '/codification/fsa-sections/$id': typeof CodificationFsaSectionsIdRoute
+  '/codification/fsa-sections/new': typeof CodificationFsaSectionsNewRoute
+  '/codification/listings/$id': typeof CodificationListingsIdRoute
+  '/codification/listings/new': typeof CodificationListingsNewRoute
+  '/codification/manufacturers/$id': typeof CodificationManufacturersIdRoute
+  '/codification/manufacturers/new': typeof CodificationManufacturersNewRoute
+  '/codification/promotions/$id': typeof CodificationPromotionsIdRoute
+  '/codification/promotions/new': typeof CodificationPromotionsNewRoute
+  '/codification/value-propositions/$id': typeof CodificationValuePropositionsIdRoute
+  '/codification/value-propositions/new': typeof CodificationValuePropositionsNewRoute
+  '/product/assortments/$id': typeof ProductAssortmentsIdRoute
+  '/product/assortments/new': typeof ProductAssortmentsNewRoute
+  '/product/business-units/$id': typeof ProductBusinessUnitsIdRoute
+  '/product/business-units/new': typeof ProductBusinessUnitsNewRoute
+  '/product/client-categories/$id': typeof ProductClientCategoriesIdRoute
+  '/product/client-categories/new': typeof ProductClientCategoriesNewRoute
   '/product/client-skus/$skuId': typeof ProductClientSkusSkuIdRoute
+  '/product/sku-image-references/$id': typeof ProductSkuImageReferencesIdRoute
+  '/product/sku-image-references/new': typeof ProductSkuImageReferencesNewRoute
+  '/product/sku-retailer-image-references/$id': typeof ProductSkuRetailerImageReferencesIdRoute
+  '/product/sku-retailer-image-references/new': typeof ProductSkuRetailerImageReferencesNewRoute
+  '/product/sku-retailer-text-references/$id': typeof ProductSkuRetailerTextReferencesIdRoute
+  '/product/sku-retailer-text-references/new': typeof ProductSkuRetailerTextReferencesNewRoute
+  '/product/sku-rpcs/$id': typeof ProductSkuRpcsIdRoute
+  '/product/sku-rpcs/new': typeof ProductSkuRpcsNewRoute
+  '/product/sku-store-image-references/$id': typeof ProductSkuStoreImageReferencesIdRoute
+  '/product/sku-store-image-references/new': typeof ProductSkuStoreImageReferencesNewRoute
+  '/product/sku-store-text-references/$id': typeof ProductSkuStoreTextReferencesIdRoute
+  '/product/sku-store-text-references/new': typeof ProductSkuStoreTextReferencesNewRoute
+  '/product/sku-text-references/$id': typeof ProductSkuTextReferencesIdRoute
+  '/product/sku-text-references/new': typeof ProductSkuTextReferencesNewRoute
+  '/product/store-skus/$id': typeof ProductStoreSkusIdRoute
+  '/product/store-skus/new': typeof ProductStoreSkusNewRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
@@ -657,17 +1073,52 @@ export interface FileRoutesByTo {
   '/settings/categories/$categoryId': typeof SettingsCategoriesCategoryIdRoute
   '/settings/categories/new': typeof SettingsCategoriesNewRoute
   '/settings/country-groups/$groupId': typeof SettingsCountryGroupsGroupIdRoute
+  '/settings/cubes/$id': typeof SettingsCubesIdRoute
+  '/settings/cubes/new': typeof SettingsCubesNewRoute
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
+  '/settings/scopes/$id': typeof SettingsScopesIdRoute
+  '/settings/scopes/new': typeof SettingsScopesNewRoute
+  '/tasks/jobs/$id': typeof TasksJobsIdRoute
+  '/tasks/jobs/new': typeof TasksJobsNewRoute
+  '/tasks/projects/$id': typeof TasksProjectsIdRoute
+  '/tasks/projects/new': typeof TasksProjectsNewRoute
+  '/tasks/seeds/$id': typeof TasksSeedsIdRoute
+  '/tasks/seeds/new': typeof TasksSeedsNewRoute
   '/clients/$clientId': typeof ClientsClientIdIndexRoute
+  '/codification/ads': typeof CodificationAdsIndexRoute
+  '/codification/attributes': typeof CodificationAttributesIndexRoute
   '/codification/brands': typeof CodificationBrandsIndexRoute
+  '/codification/data-variables': typeof CodificationDataVariablesIndexRoute
+  '/codification/fsa-listings': typeof CodificationFsaListingsIndexRoute
+  '/codification/fsa-sections': typeof CodificationFsaSectionsIndexRoute
+  '/codification/listings': typeof CodificationListingsIndexRoute
+  '/codification/manufacturers': typeof CodificationManufacturersIndexRoute
+  '/codification/promotions': typeof CodificationPromotionsIndexRoute
+  '/codification/value-propositions': typeof CodificationValuePropositionsIndexRoute
+  '/product/assortments': typeof ProductAssortmentsIndexRoute
+  '/product/business-units': typeof ProductBusinessUnitsIndexRoute
+  '/product/client-categories': typeof ProductClientCategoriesIndexRoute
   '/product/client-skus': typeof ProductClientSkusIndexRoute
+  '/product/sku-image-references': typeof ProductSkuImageReferencesIndexRoute
+  '/product/sku-retailer-image-references': typeof ProductSkuRetailerImageReferencesIndexRoute
+  '/product/sku-retailer-text-references': typeof ProductSkuRetailerTextReferencesIndexRoute
+  '/product/sku-rpcs': typeof ProductSkuRpcsIndexRoute
+  '/product/sku-store-image-references': typeof ProductSkuStoreImageReferencesIndexRoute
+  '/product/sku-store-text-references': typeof ProductSkuStoreTextReferencesIndexRoute
+  '/product/sku-text-references': typeof ProductSkuTextReferencesIndexRoute
+  '/product/store-skus': typeof ProductStoreSkusIndexRoute
   '/seeds-api/projects': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsIndexRoute
   '/settings/categories': typeof SettingsCategoriesIndexRoute
   '/settings/country-groups': typeof SettingsCountryGroupsIndexRoute
+  '/settings/cubes': typeof SettingsCubesIndexRoute
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsIndexRoute
   '/settings/rules': typeof SettingsRulesIndexRoute
+  '/settings/scopes': typeof SettingsScopesIndexRoute
+  '/tasks/jobs': typeof TasksJobsIndexRoute
+  '/tasks/projects': typeof TasksProjectsIndexRoute
+  '/tasks/seeds': typeof TasksSeedsIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
   '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
   '/settings/dashboard-applications/$appId': typeof SettingsDashboardApplicationsAppIdIndexRoute
@@ -677,32 +1128,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/bulk': typeof BulkRoute
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
+  '/bulk/$id': typeof BulkIdRoute
+  '/bulk/new': typeof BulkNewRoute
   '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
   '/clients/new': typeof ClientsNewRoute
-  '/codification/ads': typeof CodificationAdsRoute
-  '/codification/attributes': typeof CodificationAttributesRoute
-  '/codification/data-variables': typeof CodificationDataVariablesRoute
-  '/codification/fsa-listings': typeof CodificationFsaListingsRoute
-  '/codification/fsa-sections': typeof CodificationFsaSectionsRoute
-  '/codification/listings': typeof CodificationListingsRoute
-  '/codification/manufacturers': typeof CodificationManufacturersRoute
-  '/codification/promotions': typeof CodificationPromotionsRoute
-  '/codification/value-propositions': typeof CodificationValuePropositionsRoute
-  '/product/assortments': typeof ProductAssortmentsRoute
-  '/product/business-units': typeof ProductBusinessUnitsRoute
-  '/product/client-categories': typeof ProductClientCategoriesRoute
   '/product/client-skus': typeof ProductClientSkusRouteWithChildren
-  '/product/sku-image-references': typeof ProductSkuImageReferencesRoute
-  '/product/sku-retailer-image-references': typeof ProductSkuRetailerImageReferencesRoute
-  '/product/sku-retailer-text-references': typeof ProductSkuRetailerTextReferencesRoute
-  '/product/sku-rpcs': typeof ProductSkuRpcsRoute
-  '/product/sku-store-image-references': typeof ProductSkuStoreImageReferencesRoute
-  '/product/sku-store-text-references': typeof ProductSkuStoreTextReferencesRoute
-  '/product/sku-text-references': typeof ProductSkuTextReferencesRoute
-  '/product/store-skus': typeof ProductStoreSkusRoute
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
@@ -713,24 +1145,60 @@ export interface FileRoutesById {
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
   '/settings/categories': typeof SettingsCategoriesRouteWithChildren
   '/settings/country-groups': typeof SettingsCountryGroupsRouteWithChildren
-  '/settings/cubes': typeof SettingsCubesRoute
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRouteWithChildren
   '/settings/rules': typeof SettingsRulesRouteWithChildren
-  '/settings/scopes': typeof SettingsScopesRoute
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
   '/stores/new': typeof StoresNewRoute
-  '/tasks/jobs': typeof TasksJobsRoute
-  '/tasks/projects': typeof TasksProjectsRoute
-  '/tasks/seeds': typeof TasksSeedsRoute
+  '/bulk/': typeof BulkIndexRoute
   '/clients/': typeof ClientsIndexRoute
   '/region-systems/': typeof RegionSystemsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
+  '/codification/ads/$id': typeof CodificationAdsIdRoute
+  '/codification/ads/new': typeof CodificationAdsNewRoute
+  '/codification/attributes/$id': typeof CodificationAttributesIdRoute
+  '/codification/attributes/new': typeof CodificationAttributesNewRoute
   '/codification/brands/$brandId': typeof CodificationBrandsBrandIdRoute
   '/codification/brands/new': typeof CodificationBrandsNewRoute
+  '/codification/data-variables/$id': typeof CodificationDataVariablesIdRoute
+  '/codification/data-variables/new': typeof CodificationDataVariablesNewRoute
+  '/codification/fsa-listings/$id': typeof CodificationFsaListingsIdRoute
+  '/codification/fsa-listings/new': typeof CodificationFsaListingsNewRoute
+  '/codification/fsa-sections/$id': typeof CodificationFsaSectionsIdRoute
+  '/codification/fsa-sections/new': typeof CodificationFsaSectionsNewRoute
+  '/codification/listings/$id': typeof CodificationListingsIdRoute
+  '/codification/listings/new': typeof CodificationListingsNewRoute
+  '/codification/manufacturers/$id': typeof CodificationManufacturersIdRoute
+  '/codification/manufacturers/new': typeof CodificationManufacturersNewRoute
+  '/codification/promotions/$id': typeof CodificationPromotionsIdRoute
+  '/codification/promotions/new': typeof CodificationPromotionsNewRoute
+  '/codification/value-propositions/$id': typeof CodificationValuePropositionsIdRoute
+  '/codification/value-propositions/new': typeof CodificationValuePropositionsNewRoute
+  '/product/assortments/$id': typeof ProductAssortmentsIdRoute
+  '/product/assortments/new': typeof ProductAssortmentsNewRoute
+  '/product/business-units/$id': typeof ProductBusinessUnitsIdRoute
+  '/product/business-units/new': typeof ProductBusinessUnitsNewRoute
+  '/product/client-categories/$id': typeof ProductClientCategoriesIdRoute
+  '/product/client-categories/new': typeof ProductClientCategoriesNewRoute
   '/product/client-skus/$skuId': typeof ProductClientSkusSkuIdRoute
+  '/product/sku-image-references/$id': typeof ProductSkuImageReferencesIdRoute
+  '/product/sku-image-references/new': typeof ProductSkuImageReferencesNewRoute
+  '/product/sku-retailer-image-references/$id': typeof ProductSkuRetailerImageReferencesIdRoute
+  '/product/sku-retailer-image-references/new': typeof ProductSkuRetailerImageReferencesNewRoute
+  '/product/sku-retailer-text-references/$id': typeof ProductSkuRetailerTextReferencesIdRoute
+  '/product/sku-retailer-text-references/new': typeof ProductSkuRetailerTextReferencesNewRoute
+  '/product/sku-rpcs/$id': typeof ProductSkuRpcsIdRoute
+  '/product/sku-rpcs/new': typeof ProductSkuRpcsNewRoute
+  '/product/sku-store-image-references/$id': typeof ProductSkuStoreImageReferencesIdRoute
+  '/product/sku-store-image-references/new': typeof ProductSkuStoreImageReferencesNewRoute
+  '/product/sku-store-text-references/$id': typeof ProductSkuStoreTextReferencesIdRoute
+  '/product/sku-store-text-references/new': typeof ProductSkuStoreTextReferencesNewRoute
+  '/product/sku-text-references/$id': typeof ProductSkuTextReferencesIdRoute
+  '/product/sku-text-references/new': typeof ProductSkuTextReferencesNewRoute
+  '/product/store-skus/$id': typeof ProductStoreSkusIdRoute
+  '/product/store-skus/new': typeof ProductStoreSkusNewRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
@@ -738,18 +1206,53 @@ export interface FileRoutesById {
   '/settings/categories/$categoryId': typeof SettingsCategoriesCategoryIdRoute
   '/settings/categories/new': typeof SettingsCategoriesNewRoute
   '/settings/country-groups/$groupId': typeof SettingsCountryGroupsGroupIdRoute
+  '/settings/cubes/$id': typeof SettingsCubesIdRoute
+  '/settings/cubes/new': typeof SettingsCubesNewRoute
   '/settings/dashboard-applications/$appId': typeof SettingsDashboardApplicationsAppIdRouteWithChildren
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
+  '/settings/scopes/$id': typeof SettingsScopesIdRoute
+  '/settings/scopes/new': typeof SettingsScopesNewRoute
+  '/tasks/jobs/$id': typeof TasksJobsIdRoute
+  '/tasks/jobs/new': typeof TasksJobsNewRoute
+  '/tasks/projects/$id': typeof TasksProjectsIdRoute
+  '/tasks/projects/new': typeof TasksProjectsNewRoute
+  '/tasks/seeds/$id': typeof TasksSeedsIdRoute
+  '/tasks/seeds/new': typeof TasksSeedsNewRoute
   '/clients/$clientId/': typeof ClientsClientIdIndexRoute
+  '/codification/ads/': typeof CodificationAdsIndexRoute
+  '/codification/attributes/': typeof CodificationAttributesIndexRoute
   '/codification/brands/': typeof CodificationBrandsIndexRoute
+  '/codification/data-variables/': typeof CodificationDataVariablesIndexRoute
+  '/codification/fsa-listings/': typeof CodificationFsaListingsIndexRoute
+  '/codification/fsa-sections/': typeof CodificationFsaSectionsIndexRoute
+  '/codification/listings/': typeof CodificationListingsIndexRoute
+  '/codification/manufacturers/': typeof CodificationManufacturersIndexRoute
+  '/codification/promotions/': typeof CodificationPromotionsIndexRoute
+  '/codification/value-propositions/': typeof CodificationValuePropositionsIndexRoute
+  '/product/assortments/': typeof ProductAssortmentsIndexRoute
+  '/product/business-units/': typeof ProductBusinessUnitsIndexRoute
+  '/product/client-categories/': typeof ProductClientCategoriesIndexRoute
   '/product/client-skus/': typeof ProductClientSkusIndexRoute
+  '/product/sku-image-references/': typeof ProductSkuImageReferencesIndexRoute
+  '/product/sku-retailer-image-references/': typeof ProductSkuRetailerImageReferencesIndexRoute
+  '/product/sku-retailer-text-references/': typeof ProductSkuRetailerTextReferencesIndexRoute
+  '/product/sku-rpcs/': typeof ProductSkuRpcsIndexRoute
+  '/product/sku-store-image-references/': typeof ProductSkuStoreImageReferencesIndexRoute
+  '/product/sku-store-text-references/': typeof ProductSkuStoreTextReferencesIndexRoute
+  '/product/sku-text-references/': typeof ProductSkuTextReferencesIndexRoute
+  '/product/store-skus/': typeof ProductStoreSkusIndexRoute
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
   '/settings/categories/': typeof SettingsCategoriesIndexRoute
   '/settings/country-groups/': typeof SettingsCountryGroupsIndexRoute
+  '/settings/cubes/': typeof SettingsCubesIndexRoute
   '/settings/dashboard-applications/': typeof SettingsDashboardApplicationsIndexRoute
   '/settings/rules/': typeof SettingsRulesIndexRoute
+  '/settings/scopes/': typeof SettingsScopesIndexRoute
+  '/tasks/jobs/': typeof TasksJobsIndexRoute
+  '/tasks/projects/': typeof TasksProjectsIndexRoute
+  '/tasks/seeds/': typeof TasksSeedsIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
   '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
   '/settings/dashboard-applications/$appId/': typeof SettingsDashboardApplicationsAppIdIndexRoute
@@ -761,32 +1264,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/bulk'
     | '/data-collector'
     | '/iam'
+    | '/bulk/$id'
+    | '/bulk/new'
     | '/clients/$clientId'
     | '/clients/new'
-    | '/codification/ads'
-    | '/codification/attributes'
-    | '/codification/data-variables'
-    | '/codification/fsa-listings'
-    | '/codification/fsa-sections'
-    | '/codification/listings'
-    | '/codification/manufacturers'
-    | '/codification/promotions'
-    | '/codification/value-propositions'
-    | '/product/assortments'
-    | '/product/business-units'
-    | '/product/client-categories'
     | '/product/client-skus'
-    | '/product/sku-image-references'
-    | '/product/sku-retailer-image-references'
-    | '/product/sku-retailer-text-references'
-    | '/product/sku-rpcs'
-    | '/product/sku-store-image-references'
-    | '/product/sku-store-text-references'
-    | '/product/sku-text-references'
-    | '/product/store-skus'
     | '/region-systems/$regionId'
     | '/region-systems/new'
     | '/retailers/$retailerId'
@@ -797,24 +1281,60 @@ export interface FileRouteTypes {
     | '/seeds-api/timeframes'
     | '/settings/categories'
     | '/settings/country-groups'
-    | '/settings/cubes'
     | '/settings/dashboard-applications'
     | '/settings/rules'
-    | '/settings/scopes'
     | '/settings/targets'
     | '/settings/timeframes'
     | '/stores/$storeId'
     | '/stores/new'
-    | '/tasks/jobs'
-    | '/tasks/projects'
-    | '/tasks/seeds'
+    | '/bulk/'
     | '/clients/'
     | '/region-systems/'
     | '/retailers/'
     | '/stores/'
+    | '/codification/ads/$id'
+    | '/codification/ads/new'
+    | '/codification/attributes/$id'
+    | '/codification/attributes/new'
     | '/codification/brands/$brandId'
     | '/codification/brands/new'
+    | '/codification/data-variables/$id'
+    | '/codification/data-variables/new'
+    | '/codification/fsa-listings/$id'
+    | '/codification/fsa-listings/new'
+    | '/codification/fsa-sections/$id'
+    | '/codification/fsa-sections/new'
+    | '/codification/listings/$id'
+    | '/codification/listings/new'
+    | '/codification/manufacturers/$id'
+    | '/codification/manufacturers/new'
+    | '/codification/promotions/$id'
+    | '/codification/promotions/new'
+    | '/codification/value-propositions/$id'
+    | '/codification/value-propositions/new'
+    | '/product/assortments/$id'
+    | '/product/assortments/new'
+    | '/product/business-units/$id'
+    | '/product/business-units/new'
+    | '/product/client-categories/$id'
+    | '/product/client-categories/new'
     | '/product/client-skus/$skuId'
+    | '/product/sku-image-references/$id'
+    | '/product/sku-image-references/new'
+    | '/product/sku-retailer-image-references/$id'
+    | '/product/sku-retailer-image-references/new'
+    | '/product/sku-retailer-text-references/$id'
+    | '/product/sku-retailer-text-references/new'
+    | '/product/sku-rpcs/$id'
+    | '/product/sku-rpcs/new'
+    | '/product/sku-store-image-references/$id'
+    | '/product/sku-store-image-references/new'
+    | '/product/sku-store-text-references/$id'
+    | '/product/sku-store-text-references/new'
+    | '/product/sku-text-references/$id'
+    | '/product/sku-text-references/new'
+    | '/product/store-skus/$id'
+    | '/product/store-skus/new'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
     | '/seeds-api/seeds/$seedId'
@@ -822,18 +1342,53 @@ export interface FileRouteTypes {
     | '/settings/categories/$categoryId'
     | '/settings/categories/new'
     | '/settings/country-groups/$groupId'
+    | '/settings/cubes/$id'
+    | '/settings/cubes/new'
     | '/settings/dashboard-applications/$appId'
     | '/settings/rules/$ruleId'
     | '/settings/rules/new'
+    | '/settings/scopes/$id'
+    | '/settings/scopes/new'
+    | '/tasks/jobs/$id'
+    | '/tasks/jobs/new'
+    | '/tasks/projects/$id'
+    | '/tasks/projects/new'
+    | '/tasks/seeds/$id'
+    | '/tasks/seeds/new'
     | '/clients/$clientId/'
+    | '/codification/ads/'
+    | '/codification/attributes/'
     | '/codification/brands/'
+    | '/codification/data-variables/'
+    | '/codification/fsa-listings/'
+    | '/codification/fsa-sections/'
+    | '/codification/listings/'
+    | '/codification/manufacturers/'
+    | '/codification/promotions/'
+    | '/codification/value-propositions/'
+    | '/product/assortments/'
+    | '/product/business-units/'
+    | '/product/client-categories/'
     | '/product/client-skus/'
+    | '/product/sku-image-references/'
+    | '/product/sku-retailer-image-references/'
+    | '/product/sku-retailer-text-references/'
+    | '/product/sku-rpcs/'
+    | '/product/sku-store-image-references/'
+    | '/product/sku-store-text-references/'
+    | '/product/sku-text-references/'
+    | '/product/store-skus/'
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
     | '/settings/categories/'
     | '/settings/country-groups/'
+    | '/settings/cubes/'
     | '/settings/dashboard-applications/'
     | '/settings/rules/'
+    | '/settings/scopes/'
+    | '/tasks/jobs/'
+    | '/tasks/projects/'
+    | '/tasks/seeds/'
     | '/clients/$clientId/data-groups/$dataGroupId'
     | '/clients/$clientId/data-groups/new'
     | '/settings/dashboard-applications/$appId/'
@@ -843,12 +1398,94 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/bulk'
     | '/data-collector'
     | '/iam'
+    | '/bulk/$id'
+    | '/bulk/new'
     | '/clients/new'
+    | '/region-systems/$regionId'
+    | '/region-systems/new'
+    | '/retailers/$retailerId'
+    | '/retailers/new'
+    | '/seeds-api/scrapping-options'
+    | '/seeds-api/subscriptions'
+    | '/seeds-api/tags'
+    | '/seeds-api/timeframes'
+    | '/settings/targets'
+    | '/settings/timeframes'
+    | '/stores/$storeId'
+    | '/stores/new'
+    | '/bulk'
+    | '/clients'
+    | '/region-systems'
+    | '/retailers'
+    | '/stores'
+    | '/codification/ads/$id'
+    | '/codification/ads/new'
+    | '/codification/attributes/$id'
+    | '/codification/attributes/new'
+    | '/codification/brands/$brandId'
+    | '/codification/brands/new'
+    | '/codification/data-variables/$id'
+    | '/codification/data-variables/new'
+    | '/codification/fsa-listings/$id'
+    | '/codification/fsa-listings/new'
+    | '/codification/fsa-sections/$id'
+    | '/codification/fsa-sections/new'
+    | '/codification/listings/$id'
+    | '/codification/listings/new'
+    | '/codification/manufacturers/$id'
+    | '/codification/manufacturers/new'
+    | '/codification/promotions/$id'
+    | '/codification/promotions/new'
+    | '/codification/value-propositions/$id'
+    | '/codification/value-propositions/new'
+    | '/product/assortments/$id'
+    | '/product/assortments/new'
+    | '/product/business-units/$id'
+    | '/product/business-units/new'
+    | '/product/client-categories/$id'
+    | '/product/client-categories/new'
+    | '/product/client-skus/$skuId'
+    | '/product/sku-image-references/$id'
+    | '/product/sku-image-references/new'
+    | '/product/sku-retailer-image-references/$id'
+    | '/product/sku-retailer-image-references/new'
+    | '/product/sku-retailer-text-references/$id'
+    | '/product/sku-retailer-text-references/new'
+    | '/product/sku-rpcs/$id'
+    | '/product/sku-rpcs/new'
+    | '/product/sku-store-image-references/$id'
+    | '/product/sku-store-image-references/new'
+    | '/product/sku-store-text-references/$id'
+    | '/product/sku-store-text-references/new'
+    | '/product/sku-text-references/$id'
+    | '/product/sku-text-references/new'
+    | '/product/store-skus/$id'
+    | '/product/store-skus/new'
+    | '/seeds-api/projects/$projectId'
+    | '/seeds-api/projects/new'
+    | '/seeds-api/seeds/$seedId'
+    | '/seeds-api/seeds/new'
+    | '/settings/categories/$categoryId'
+    | '/settings/categories/new'
+    | '/settings/country-groups/$groupId'
+    | '/settings/cubes/$id'
+    | '/settings/cubes/new'
+    | '/settings/rules/$ruleId'
+    | '/settings/rules/new'
+    | '/settings/scopes/$id'
+    | '/settings/scopes/new'
+    | '/tasks/jobs/$id'
+    | '/tasks/jobs/new'
+    | '/tasks/projects/$id'
+    | '/tasks/projects/new'
+    | '/tasks/seeds/$id'
+    | '/tasks/seeds/new'
+    | '/clients/$clientId'
     | '/codification/ads'
     | '/codification/attributes'
+    | '/codification/brands'
     | '/codification/data-variables'
     | '/codification/fsa-listings'
     | '/codification/fsa-sections'
@@ -859,6 +1496,7 @@ export interface FileRouteTypes {
     | '/product/assortments'
     | '/product/business-units'
     | '/product/client-categories'
+    | '/product/client-skus'
     | '/product/sku-image-references'
     | '/product/sku-retailer-image-references'
     | '/product/sku-retailer-text-references'
@@ -867,48 +1505,17 @@ export interface FileRouteTypes {
     | '/product/sku-store-text-references'
     | '/product/sku-text-references'
     | '/product/store-skus'
-    | '/region-systems/$regionId'
-    | '/region-systems/new'
-    | '/retailers/$retailerId'
-    | '/retailers/new'
-    | '/seeds-api/scrapping-options'
-    | '/seeds-api/subscriptions'
-    | '/seeds-api/tags'
-    | '/seeds-api/timeframes'
-    | '/settings/cubes'
-    | '/settings/scopes'
-    | '/settings/targets'
-    | '/settings/timeframes'
-    | '/stores/$storeId'
-    | '/stores/new'
-    | '/tasks/jobs'
-    | '/tasks/projects'
-    | '/tasks/seeds'
-    | '/clients'
-    | '/region-systems'
-    | '/retailers'
-    | '/stores'
-    | '/codification/brands/$brandId'
-    | '/codification/brands/new'
-    | '/product/client-skus/$skuId'
-    | '/seeds-api/projects/$projectId'
-    | '/seeds-api/projects/new'
-    | '/seeds-api/seeds/$seedId'
-    | '/seeds-api/seeds/new'
-    | '/settings/categories/$categoryId'
-    | '/settings/categories/new'
-    | '/settings/country-groups/$groupId'
-    | '/settings/rules/$ruleId'
-    | '/settings/rules/new'
-    | '/clients/$clientId'
-    | '/codification/brands'
-    | '/product/client-skus'
     | '/seeds-api/projects'
     | '/seeds-api/seeds'
     | '/settings/categories'
     | '/settings/country-groups'
+    | '/settings/cubes'
     | '/settings/dashboard-applications'
     | '/settings/rules'
+    | '/settings/scopes'
+    | '/tasks/jobs'
+    | '/tasks/projects'
+    | '/tasks/seeds'
     | '/clients/$clientId/data-groups/$dataGroupId'
     | '/clients/$clientId/data-groups/new'
     | '/settings/dashboard-applications/$appId'
@@ -917,32 +1524,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/bulk'
     | '/data-collector'
     | '/iam'
+    | '/bulk/$id'
+    | '/bulk/new'
     | '/clients/$clientId'
     | '/clients/new'
-    | '/codification/ads'
-    | '/codification/attributes'
-    | '/codification/data-variables'
-    | '/codification/fsa-listings'
-    | '/codification/fsa-sections'
-    | '/codification/listings'
-    | '/codification/manufacturers'
-    | '/codification/promotions'
-    | '/codification/value-propositions'
-    | '/product/assortments'
-    | '/product/business-units'
-    | '/product/client-categories'
     | '/product/client-skus'
-    | '/product/sku-image-references'
-    | '/product/sku-retailer-image-references'
-    | '/product/sku-retailer-text-references'
-    | '/product/sku-rpcs'
-    | '/product/sku-store-image-references'
-    | '/product/sku-store-text-references'
-    | '/product/sku-text-references'
-    | '/product/store-skus'
     | '/region-systems/$regionId'
     | '/region-systems/new'
     | '/retailers/$retailerId'
@@ -953,24 +1541,60 @@ export interface FileRouteTypes {
     | '/seeds-api/timeframes'
     | '/settings/categories'
     | '/settings/country-groups'
-    | '/settings/cubes'
     | '/settings/dashboard-applications'
     | '/settings/rules'
-    | '/settings/scopes'
     | '/settings/targets'
     | '/settings/timeframes'
     | '/stores/$storeId'
     | '/stores/new'
-    | '/tasks/jobs'
-    | '/tasks/projects'
-    | '/tasks/seeds'
+    | '/bulk/'
     | '/clients/'
     | '/region-systems/'
     | '/retailers/'
     | '/stores/'
+    | '/codification/ads/$id'
+    | '/codification/ads/new'
+    | '/codification/attributes/$id'
+    | '/codification/attributes/new'
     | '/codification/brands/$brandId'
     | '/codification/brands/new'
+    | '/codification/data-variables/$id'
+    | '/codification/data-variables/new'
+    | '/codification/fsa-listings/$id'
+    | '/codification/fsa-listings/new'
+    | '/codification/fsa-sections/$id'
+    | '/codification/fsa-sections/new'
+    | '/codification/listings/$id'
+    | '/codification/listings/new'
+    | '/codification/manufacturers/$id'
+    | '/codification/manufacturers/new'
+    | '/codification/promotions/$id'
+    | '/codification/promotions/new'
+    | '/codification/value-propositions/$id'
+    | '/codification/value-propositions/new'
+    | '/product/assortments/$id'
+    | '/product/assortments/new'
+    | '/product/business-units/$id'
+    | '/product/business-units/new'
+    | '/product/client-categories/$id'
+    | '/product/client-categories/new'
     | '/product/client-skus/$skuId'
+    | '/product/sku-image-references/$id'
+    | '/product/sku-image-references/new'
+    | '/product/sku-retailer-image-references/$id'
+    | '/product/sku-retailer-image-references/new'
+    | '/product/sku-retailer-text-references/$id'
+    | '/product/sku-retailer-text-references/new'
+    | '/product/sku-rpcs/$id'
+    | '/product/sku-rpcs/new'
+    | '/product/sku-store-image-references/$id'
+    | '/product/sku-store-image-references/new'
+    | '/product/sku-store-text-references/$id'
+    | '/product/sku-store-text-references/new'
+    | '/product/sku-text-references/$id'
+    | '/product/sku-text-references/new'
+    | '/product/store-skus/$id'
+    | '/product/store-skus/new'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
     | '/seeds-api/seeds/$seedId'
@@ -978,18 +1602,53 @@ export interface FileRouteTypes {
     | '/settings/categories/$categoryId'
     | '/settings/categories/new'
     | '/settings/country-groups/$groupId'
+    | '/settings/cubes/$id'
+    | '/settings/cubes/new'
     | '/settings/dashboard-applications/$appId'
     | '/settings/rules/$ruleId'
     | '/settings/rules/new'
+    | '/settings/scopes/$id'
+    | '/settings/scopes/new'
+    | '/tasks/jobs/$id'
+    | '/tasks/jobs/new'
+    | '/tasks/projects/$id'
+    | '/tasks/projects/new'
+    | '/tasks/seeds/$id'
+    | '/tasks/seeds/new'
     | '/clients/$clientId/'
+    | '/codification/ads/'
+    | '/codification/attributes/'
     | '/codification/brands/'
+    | '/codification/data-variables/'
+    | '/codification/fsa-listings/'
+    | '/codification/fsa-sections/'
+    | '/codification/listings/'
+    | '/codification/manufacturers/'
+    | '/codification/promotions/'
+    | '/codification/value-propositions/'
+    | '/product/assortments/'
+    | '/product/business-units/'
+    | '/product/client-categories/'
     | '/product/client-skus/'
+    | '/product/sku-image-references/'
+    | '/product/sku-retailer-image-references/'
+    | '/product/sku-retailer-text-references/'
+    | '/product/sku-rpcs/'
+    | '/product/sku-store-image-references/'
+    | '/product/sku-store-text-references/'
+    | '/product/sku-text-references/'
+    | '/product/store-skus/'
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
     | '/settings/categories/'
     | '/settings/country-groups/'
+    | '/settings/cubes/'
     | '/settings/dashboard-applications/'
     | '/settings/rules/'
+    | '/settings/scopes/'
+    | '/tasks/jobs/'
+    | '/tasks/projects/'
+    | '/tasks/seeds/'
     | '/clients/$clientId/data-groups/$dataGroupId'
     | '/clients/$clientId/data-groups/new'
     | '/settings/dashboard-applications/$appId/'
@@ -1000,32 +1659,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BulkRoute: typeof BulkRoute
   DataCollectorRoute: typeof DataCollectorRoute
   IamRoute: typeof IamRoute
+  BulkIdRoute: typeof BulkIdRoute
+  BulkNewRoute: typeof BulkNewRoute
   ClientsClientIdRoute: typeof ClientsClientIdRouteWithChildren
   ClientsNewRoute: typeof ClientsNewRoute
-  CodificationAdsRoute: typeof CodificationAdsRoute
-  CodificationAttributesRoute: typeof CodificationAttributesRoute
-  CodificationDataVariablesRoute: typeof CodificationDataVariablesRoute
-  CodificationFsaListingsRoute: typeof CodificationFsaListingsRoute
-  CodificationFsaSectionsRoute: typeof CodificationFsaSectionsRoute
-  CodificationListingsRoute: typeof CodificationListingsRoute
-  CodificationManufacturersRoute: typeof CodificationManufacturersRoute
-  CodificationPromotionsRoute: typeof CodificationPromotionsRoute
-  CodificationValuePropositionsRoute: typeof CodificationValuePropositionsRoute
-  ProductAssortmentsRoute: typeof ProductAssortmentsRoute
-  ProductBusinessUnitsRoute: typeof ProductBusinessUnitsRoute
-  ProductClientCategoriesRoute: typeof ProductClientCategoriesRoute
   ProductClientSkusRoute: typeof ProductClientSkusRouteWithChildren
-  ProductSkuImageReferencesRoute: typeof ProductSkuImageReferencesRoute
-  ProductSkuRetailerImageReferencesRoute: typeof ProductSkuRetailerImageReferencesRoute
-  ProductSkuRetailerTextReferencesRoute: typeof ProductSkuRetailerTextReferencesRoute
-  ProductSkuRpcsRoute: typeof ProductSkuRpcsRoute
-  ProductSkuStoreImageReferencesRoute: typeof ProductSkuStoreImageReferencesRoute
-  ProductSkuStoreTextReferencesRoute: typeof ProductSkuStoreTextReferencesRoute
-  ProductSkuTextReferencesRoute: typeof ProductSkuTextReferencesRoute
-  ProductStoreSkusRoute: typeof ProductStoreSkusRoute
   RegionSystemsRegionIdRoute: typeof RegionSystemsRegionIdRoute
   RegionSystemsNewRoute: typeof RegionSystemsNewRoute
   RetailersRetailerIdRoute: typeof RetailersRetailerIdRoute
@@ -1036,30 +1676,101 @@ export interface RootRouteChildren {
   SeedsApiTimeframesRoute: typeof SeedsApiTimeframesRoute
   SettingsCategoriesRoute: typeof SettingsCategoriesRouteWithChildren
   SettingsCountryGroupsRoute: typeof SettingsCountryGroupsRouteWithChildren
-  SettingsCubesRoute: typeof SettingsCubesRoute
   SettingsDashboardApplicationsRoute: typeof SettingsDashboardApplicationsRouteWithChildren
   SettingsRulesRoute: typeof SettingsRulesRouteWithChildren
-  SettingsScopesRoute: typeof SettingsScopesRoute
   SettingsTargetsRoute: typeof SettingsTargetsRoute
   SettingsTimeframesRoute: typeof SettingsTimeframesRoute
   StoresStoreIdRoute: typeof StoresStoreIdRoute
   StoresNewRoute: typeof StoresNewRoute
-  TasksJobsRoute: typeof TasksJobsRoute
-  TasksProjectsRoute: typeof TasksProjectsRoute
-  TasksSeedsRoute: typeof TasksSeedsRoute
+  BulkIndexRoute: typeof BulkIndexRoute
   ClientsIndexRoute: typeof ClientsIndexRoute
   RegionSystemsIndexRoute: typeof RegionSystemsIndexRoute
   RetailersIndexRoute: typeof RetailersIndexRoute
   StoresIndexRoute: typeof StoresIndexRoute
+  CodificationAdsIdRoute: typeof CodificationAdsIdRoute
+  CodificationAdsNewRoute: typeof CodificationAdsNewRoute
+  CodificationAttributesIdRoute: typeof CodificationAttributesIdRoute
+  CodificationAttributesNewRoute: typeof CodificationAttributesNewRoute
   CodificationBrandsBrandIdRoute: typeof CodificationBrandsBrandIdRoute
   CodificationBrandsNewRoute: typeof CodificationBrandsNewRoute
+  CodificationDataVariablesIdRoute: typeof CodificationDataVariablesIdRoute
+  CodificationDataVariablesNewRoute: typeof CodificationDataVariablesNewRoute
+  CodificationFsaListingsIdRoute: typeof CodificationFsaListingsIdRoute
+  CodificationFsaListingsNewRoute: typeof CodificationFsaListingsNewRoute
+  CodificationFsaSectionsIdRoute: typeof CodificationFsaSectionsIdRoute
+  CodificationFsaSectionsNewRoute: typeof CodificationFsaSectionsNewRoute
+  CodificationListingsIdRoute: typeof CodificationListingsIdRoute
+  CodificationListingsNewRoute: typeof CodificationListingsNewRoute
+  CodificationManufacturersIdRoute: typeof CodificationManufacturersIdRoute
+  CodificationManufacturersNewRoute: typeof CodificationManufacturersNewRoute
+  CodificationPromotionsIdRoute: typeof CodificationPromotionsIdRoute
+  CodificationPromotionsNewRoute: typeof CodificationPromotionsNewRoute
+  CodificationValuePropositionsIdRoute: typeof CodificationValuePropositionsIdRoute
+  CodificationValuePropositionsNewRoute: typeof CodificationValuePropositionsNewRoute
+  ProductAssortmentsIdRoute: typeof ProductAssortmentsIdRoute
+  ProductAssortmentsNewRoute: typeof ProductAssortmentsNewRoute
+  ProductBusinessUnitsIdRoute: typeof ProductBusinessUnitsIdRoute
+  ProductBusinessUnitsNewRoute: typeof ProductBusinessUnitsNewRoute
+  ProductClientCategoriesIdRoute: typeof ProductClientCategoriesIdRoute
+  ProductClientCategoriesNewRoute: typeof ProductClientCategoriesNewRoute
+  ProductSkuImageReferencesIdRoute: typeof ProductSkuImageReferencesIdRoute
+  ProductSkuImageReferencesNewRoute: typeof ProductSkuImageReferencesNewRoute
+  ProductSkuRetailerImageReferencesIdRoute: typeof ProductSkuRetailerImageReferencesIdRoute
+  ProductSkuRetailerImageReferencesNewRoute: typeof ProductSkuRetailerImageReferencesNewRoute
+  ProductSkuRetailerTextReferencesIdRoute: typeof ProductSkuRetailerTextReferencesIdRoute
+  ProductSkuRetailerTextReferencesNewRoute: typeof ProductSkuRetailerTextReferencesNewRoute
+  ProductSkuRpcsIdRoute: typeof ProductSkuRpcsIdRoute
+  ProductSkuRpcsNewRoute: typeof ProductSkuRpcsNewRoute
+  ProductSkuStoreImageReferencesIdRoute: typeof ProductSkuStoreImageReferencesIdRoute
+  ProductSkuStoreImageReferencesNewRoute: typeof ProductSkuStoreImageReferencesNewRoute
+  ProductSkuStoreTextReferencesIdRoute: typeof ProductSkuStoreTextReferencesIdRoute
+  ProductSkuStoreTextReferencesNewRoute: typeof ProductSkuStoreTextReferencesNewRoute
+  ProductSkuTextReferencesIdRoute: typeof ProductSkuTextReferencesIdRoute
+  ProductSkuTextReferencesNewRoute: typeof ProductSkuTextReferencesNewRoute
+  ProductStoreSkusIdRoute: typeof ProductStoreSkusIdRoute
+  ProductStoreSkusNewRoute: typeof ProductStoreSkusNewRoute
   SeedsApiProjectsProjectIdRoute: typeof SeedsApiProjectsProjectIdRoute
   SeedsApiProjectsNewRoute: typeof SeedsApiProjectsNewRoute
   SeedsApiSeedsSeedIdRoute: typeof SeedsApiSeedsSeedIdRoute
   SeedsApiSeedsNewRoute: typeof SeedsApiSeedsNewRoute
+  SettingsCubesIdRoute: typeof SettingsCubesIdRoute
+  SettingsCubesNewRoute: typeof SettingsCubesNewRoute
+  SettingsScopesIdRoute: typeof SettingsScopesIdRoute
+  SettingsScopesNewRoute: typeof SettingsScopesNewRoute
+  TasksJobsIdRoute: typeof TasksJobsIdRoute
+  TasksJobsNewRoute: typeof TasksJobsNewRoute
+  TasksProjectsIdRoute: typeof TasksProjectsIdRoute
+  TasksProjectsNewRoute: typeof TasksProjectsNewRoute
+  TasksSeedsIdRoute: typeof TasksSeedsIdRoute
+  TasksSeedsNewRoute: typeof TasksSeedsNewRoute
+  CodificationAdsIndexRoute: typeof CodificationAdsIndexRoute
+  CodificationAttributesIndexRoute: typeof CodificationAttributesIndexRoute
   CodificationBrandsIndexRoute: typeof CodificationBrandsIndexRoute
+  CodificationDataVariablesIndexRoute: typeof CodificationDataVariablesIndexRoute
+  CodificationFsaListingsIndexRoute: typeof CodificationFsaListingsIndexRoute
+  CodificationFsaSectionsIndexRoute: typeof CodificationFsaSectionsIndexRoute
+  CodificationListingsIndexRoute: typeof CodificationListingsIndexRoute
+  CodificationManufacturersIndexRoute: typeof CodificationManufacturersIndexRoute
+  CodificationPromotionsIndexRoute: typeof CodificationPromotionsIndexRoute
+  CodificationValuePropositionsIndexRoute: typeof CodificationValuePropositionsIndexRoute
+  ProductAssortmentsIndexRoute: typeof ProductAssortmentsIndexRoute
+  ProductBusinessUnitsIndexRoute: typeof ProductBusinessUnitsIndexRoute
+  ProductClientCategoriesIndexRoute: typeof ProductClientCategoriesIndexRoute
+  ProductSkuImageReferencesIndexRoute: typeof ProductSkuImageReferencesIndexRoute
+  ProductSkuRetailerImageReferencesIndexRoute: typeof ProductSkuRetailerImageReferencesIndexRoute
+  ProductSkuRetailerTextReferencesIndexRoute: typeof ProductSkuRetailerTextReferencesIndexRoute
+  ProductSkuRpcsIndexRoute: typeof ProductSkuRpcsIndexRoute
+  ProductSkuStoreImageReferencesIndexRoute: typeof ProductSkuStoreImageReferencesIndexRoute
+  ProductSkuStoreTextReferencesIndexRoute: typeof ProductSkuStoreTextReferencesIndexRoute
+  ProductSkuTextReferencesIndexRoute: typeof ProductSkuTextReferencesIndexRoute
+  ProductStoreSkusIndexRoute: typeof ProductStoreSkusIndexRoute
   SeedsApiProjectsIndexRoute: typeof SeedsApiProjectsIndexRoute
   SeedsApiSeedsIndexRoute: typeof SeedsApiSeedsIndexRoute
+  SettingsCubesIndexRoute: typeof SettingsCubesIndexRoute
+  SettingsScopesIndexRoute: typeof SettingsScopesIndexRoute
+  TasksJobsIndexRoute: typeof TasksJobsIndexRoute
+  TasksProjectsIndexRoute: typeof TasksProjectsIndexRoute
+  TasksSeedsIndexRoute: typeof TasksSeedsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1076,13 +1787,6 @@ declare module '@tanstack/react-router' {
       path: '/data-collector'
       fullPath: '/data-collector'
       preLoaderRoute: typeof DataCollectorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bulk': {
-      id: '/bulk'
-      path: '/bulk'
-      fullPath: '/bulk'
-      preLoaderRoute: typeof BulkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -1120,25 +1824,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tasks/seeds': {
-      id: '/tasks/seeds'
-      path: '/tasks/seeds'
-      fullPath: '/tasks/seeds'
-      preLoaderRoute: typeof TasksSeedsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tasks/projects': {
-      id: '/tasks/projects'
-      path: '/tasks/projects'
-      fullPath: '/tasks/projects'
-      preLoaderRoute: typeof TasksProjectsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/tasks/jobs': {
-      id: '/tasks/jobs'
-      path: '/tasks/jobs'
-      fullPath: '/tasks/jobs'
-      preLoaderRoute: typeof TasksJobsRouteImport
+    '/bulk/': {
+      id: '/bulk/'
+      path: '/bulk'
+      fullPath: '/bulk/'
+      preLoaderRoute: typeof BulkIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stores/new': {
@@ -1169,13 +1859,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsTargetsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/scopes': {
-      id: '/settings/scopes'
-      path: '/settings/scopes'
-      fullPath: '/settings/scopes'
-      preLoaderRoute: typeof SettingsScopesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings/rules': {
       id: '/settings/rules'
       path: '/settings/rules'
@@ -1188,13 +1871,6 @@ declare module '@tanstack/react-router' {
       path: '/settings/dashboard-applications'
       fullPath: '/settings/dashboard-applications'
       preLoaderRoute: typeof SettingsDashboardApplicationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings/cubes': {
-      id: '/settings/cubes'
-      path: '/settings/cubes'
-      fullPath: '/settings/cubes'
-      preLoaderRoute: typeof SettingsCubesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/country-groups': {
@@ -1267,151 +1943,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegionSystemsRegionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/product/store-skus': {
-      id: '/product/store-skus'
-      path: '/product/store-skus'
-      fullPath: '/product/store-skus'
-      preLoaderRoute: typeof ProductStoreSkusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/sku-text-references': {
-      id: '/product/sku-text-references'
-      path: '/product/sku-text-references'
-      fullPath: '/product/sku-text-references'
-      preLoaderRoute: typeof ProductSkuTextReferencesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/sku-store-text-references': {
-      id: '/product/sku-store-text-references'
-      path: '/product/sku-store-text-references'
-      fullPath: '/product/sku-store-text-references'
-      preLoaderRoute: typeof ProductSkuStoreTextReferencesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/sku-store-image-references': {
-      id: '/product/sku-store-image-references'
-      path: '/product/sku-store-image-references'
-      fullPath: '/product/sku-store-image-references'
-      preLoaderRoute: typeof ProductSkuStoreImageReferencesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/sku-rpcs': {
-      id: '/product/sku-rpcs'
-      path: '/product/sku-rpcs'
-      fullPath: '/product/sku-rpcs'
-      preLoaderRoute: typeof ProductSkuRpcsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/sku-retailer-text-references': {
-      id: '/product/sku-retailer-text-references'
-      path: '/product/sku-retailer-text-references'
-      fullPath: '/product/sku-retailer-text-references'
-      preLoaderRoute: typeof ProductSkuRetailerTextReferencesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/sku-retailer-image-references': {
-      id: '/product/sku-retailer-image-references'
-      path: '/product/sku-retailer-image-references'
-      fullPath: '/product/sku-retailer-image-references'
-      preLoaderRoute: typeof ProductSkuRetailerImageReferencesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/sku-image-references': {
-      id: '/product/sku-image-references'
-      path: '/product/sku-image-references'
-      fullPath: '/product/sku-image-references'
-      preLoaderRoute: typeof ProductSkuImageReferencesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/product/client-skus': {
       id: '/product/client-skus'
       path: '/product/client-skus'
       fullPath: '/product/client-skus'
       preLoaderRoute: typeof ProductClientSkusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/client-categories': {
-      id: '/product/client-categories'
-      path: '/product/client-categories'
-      fullPath: '/product/client-categories'
-      preLoaderRoute: typeof ProductClientCategoriesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/business-units': {
-      id: '/product/business-units'
-      path: '/product/business-units'
-      fullPath: '/product/business-units'
-      preLoaderRoute: typeof ProductBusinessUnitsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/assortments': {
-      id: '/product/assortments'
-      path: '/product/assortments'
-      fullPath: '/product/assortments'
-      preLoaderRoute: typeof ProductAssortmentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codification/value-propositions': {
-      id: '/codification/value-propositions'
-      path: '/codification/value-propositions'
-      fullPath: '/codification/value-propositions'
-      preLoaderRoute: typeof CodificationValuePropositionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codification/promotions': {
-      id: '/codification/promotions'
-      path: '/codification/promotions'
-      fullPath: '/codification/promotions'
-      preLoaderRoute: typeof CodificationPromotionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codification/manufacturers': {
-      id: '/codification/manufacturers'
-      path: '/codification/manufacturers'
-      fullPath: '/codification/manufacturers'
-      preLoaderRoute: typeof CodificationManufacturersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codification/listings': {
-      id: '/codification/listings'
-      path: '/codification/listings'
-      fullPath: '/codification/listings'
-      preLoaderRoute: typeof CodificationListingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codification/fsa-sections': {
-      id: '/codification/fsa-sections'
-      path: '/codification/fsa-sections'
-      fullPath: '/codification/fsa-sections'
-      preLoaderRoute: typeof CodificationFsaSectionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codification/fsa-listings': {
-      id: '/codification/fsa-listings'
-      path: '/codification/fsa-listings'
-      fullPath: '/codification/fsa-listings'
-      preLoaderRoute: typeof CodificationFsaListingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codification/data-variables': {
-      id: '/codification/data-variables'
-      path: '/codification/data-variables'
-      fullPath: '/codification/data-variables'
-      preLoaderRoute: typeof CodificationDataVariablesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codification/attributes': {
-      id: '/codification/attributes'
-      path: '/codification/attributes'
-      fullPath: '/codification/attributes'
-      preLoaderRoute: typeof CodificationAttributesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codification/ads': {
-      id: '/codification/ads'
-      path: '/codification/ads'
-      fullPath: '/codification/ads'
-      preLoaderRoute: typeof CodificationAdsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients/new': {
@@ -1428,6 +1964,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientsClientIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bulk/new': {
+      id: '/bulk/new'
+      path: '/bulk/new'
+      fullPath: '/bulk/new'
+      preLoaderRoute: typeof BulkNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bulk/$id': {
+      id: '/bulk/$id'
+      path: '/bulk/$id'
+      fullPath: '/bulk/$id'
+      preLoaderRoute: typeof BulkIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/seeds/': {
+      id: '/tasks/seeds/'
+      path: '/tasks/seeds'
+      fullPath: '/tasks/seeds/'
+      preLoaderRoute: typeof TasksSeedsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/projects/': {
+      id: '/tasks/projects/'
+      path: '/tasks/projects'
+      fullPath: '/tasks/projects/'
+      preLoaderRoute: typeof TasksProjectsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/jobs/': {
+      id: '/tasks/jobs/'
+      path: '/tasks/jobs'
+      fullPath: '/tasks/jobs/'
+      preLoaderRoute: typeof TasksJobsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/scopes/': {
+      id: '/settings/scopes/'
+      path: '/settings/scopes'
+      fullPath: '/settings/scopes/'
+      preLoaderRoute: typeof SettingsScopesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/rules/': {
       id: '/settings/rules/'
       path: '/'
@@ -1441,6 +2019,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/dashboard-applications/'
       preLoaderRoute: typeof SettingsDashboardApplicationsIndexRouteImport
       parentRoute: typeof SettingsDashboardApplicationsRoute
+    }
+    '/settings/cubes/': {
+      id: '/settings/cubes/'
+      path: '/settings/cubes'
+      fullPath: '/settings/cubes/'
+      preLoaderRoute: typeof SettingsCubesIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/settings/country-groups/': {
       id: '/settings/country-groups/'
@@ -1470,12 +2055,138 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiProjectsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/product/store-skus/': {
+      id: '/product/store-skus/'
+      path: '/product/store-skus'
+      fullPath: '/product/store-skus/'
+      preLoaderRoute: typeof ProductStoreSkusIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-text-references/': {
+      id: '/product/sku-text-references/'
+      path: '/product/sku-text-references'
+      fullPath: '/product/sku-text-references/'
+      preLoaderRoute: typeof ProductSkuTextReferencesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-store-text-references/': {
+      id: '/product/sku-store-text-references/'
+      path: '/product/sku-store-text-references'
+      fullPath: '/product/sku-store-text-references/'
+      preLoaderRoute: typeof ProductSkuStoreTextReferencesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-store-image-references/': {
+      id: '/product/sku-store-image-references/'
+      path: '/product/sku-store-image-references'
+      fullPath: '/product/sku-store-image-references/'
+      preLoaderRoute: typeof ProductSkuStoreImageReferencesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-rpcs/': {
+      id: '/product/sku-rpcs/'
+      path: '/product/sku-rpcs'
+      fullPath: '/product/sku-rpcs/'
+      preLoaderRoute: typeof ProductSkuRpcsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-retailer-text-references/': {
+      id: '/product/sku-retailer-text-references/'
+      path: '/product/sku-retailer-text-references'
+      fullPath: '/product/sku-retailer-text-references/'
+      preLoaderRoute: typeof ProductSkuRetailerTextReferencesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-retailer-image-references/': {
+      id: '/product/sku-retailer-image-references/'
+      path: '/product/sku-retailer-image-references'
+      fullPath: '/product/sku-retailer-image-references/'
+      preLoaderRoute: typeof ProductSkuRetailerImageReferencesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-image-references/': {
+      id: '/product/sku-image-references/'
+      path: '/product/sku-image-references'
+      fullPath: '/product/sku-image-references/'
+      preLoaderRoute: typeof ProductSkuImageReferencesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/client-skus/': {
       id: '/product/client-skus/'
       path: '/'
       fullPath: '/product/client-skus/'
       preLoaderRoute: typeof ProductClientSkusIndexRouteImport
       parentRoute: typeof ProductClientSkusRoute
+    }
+    '/product/client-categories/': {
+      id: '/product/client-categories/'
+      path: '/product/client-categories'
+      fullPath: '/product/client-categories/'
+      preLoaderRoute: typeof ProductClientCategoriesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/business-units/': {
+      id: '/product/business-units/'
+      path: '/product/business-units'
+      fullPath: '/product/business-units/'
+      preLoaderRoute: typeof ProductBusinessUnitsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/assortments/': {
+      id: '/product/assortments/'
+      path: '/product/assortments'
+      fullPath: '/product/assortments/'
+      preLoaderRoute: typeof ProductAssortmentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/value-propositions/': {
+      id: '/codification/value-propositions/'
+      path: '/codification/value-propositions'
+      fullPath: '/codification/value-propositions/'
+      preLoaderRoute: typeof CodificationValuePropositionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/promotions/': {
+      id: '/codification/promotions/'
+      path: '/codification/promotions'
+      fullPath: '/codification/promotions/'
+      preLoaderRoute: typeof CodificationPromotionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/manufacturers/': {
+      id: '/codification/manufacturers/'
+      path: '/codification/manufacturers'
+      fullPath: '/codification/manufacturers/'
+      preLoaderRoute: typeof CodificationManufacturersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/listings/': {
+      id: '/codification/listings/'
+      path: '/codification/listings'
+      fullPath: '/codification/listings/'
+      preLoaderRoute: typeof CodificationListingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/fsa-sections/': {
+      id: '/codification/fsa-sections/'
+      path: '/codification/fsa-sections'
+      fullPath: '/codification/fsa-sections/'
+      preLoaderRoute: typeof CodificationFsaSectionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/fsa-listings/': {
+      id: '/codification/fsa-listings/'
+      path: '/codification/fsa-listings'
+      fullPath: '/codification/fsa-listings/'
+      preLoaderRoute: typeof CodificationFsaListingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/data-variables/': {
+      id: '/codification/data-variables/'
+      path: '/codification/data-variables'
+      fullPath: '/codification/data-variables/'
+      preLoaderRoute: typeof CodificationDataVariablesIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/codification/brands/': {
       id: '/codification/brands/'
@@ -1484,12 +2195,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CodificationBrandsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/codification/attributes/': {
+      id: '/codification/attributes/'
+      path: '/codification/attributes'
+      fullPath: '/codification/attributes/'
+      preLoaderRoute: typeof CodificationAttributesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/ads/': {
+      id: '/codification/ads/'
+      path: '/codification/ads'
+      fullPath: '/codification/ads/'
+      preLoaderRoute: typeof CodificationAdsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clients/$clientId/': {
       id: '/clients/$clientId/'
       path: '/'
       fullPath: '/clients/$clientId/'
       preLoaderRoute: typeof ClientsClientIdIndexRouteImport
       parentRoute: typeof ClientsClientIdRoute
+    }
+    '/tasks/seeds/new': {
+      id: '/tasks/seeds/new'
+      path: '/tasks/seeds/new'
+      fullPath: '/tasks/seeds/new'
+      preLoaderRoute: typeof TasksSeedsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/seeds/$id': {
+      id: '/tasks/seeds/$id'
+      path: '/tasks/seeds/$id'
+      fullPath: '/tasks/seeds/$id'
+      preLoaderRoute: typeof TasksSeedsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/projects/new': {
+      id: '/tasks/projects/new'
+      path: '/tasks/projects/new'
+      fullPath: '/tasks/projects/new'
+      preLoaderRoute: typeof TasksProjectsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/projects/$id': {
+      id: '/tasks/projects/$id'
+      path: '/tasks/projects/$id'
+      fullPath: '/tasks/projects/$id'
+      preLoaderRoute: typeof TasksProjectsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/jobs/new': {
+      id: '/tasks/jobs/new'
+      path: '/tasks/jobs/new'
+      fullPath: '/tasks/jobs/new'
+      preLoaderRoute: typeof TasksJobsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/jobs/$id': {
+      id: '/tasks/jobs/$id'
+      path: '/tasks/jobs/$id'
+      fullPath: '/tasks/jobs/$id'
+      preLoaderRoute: typeof TasksJobsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/scopes/new': {
+      id: '/settings/scopes/new'
+      path: '/settings/scopes/new'
+      fullPath: '/settings/scopes/new'
+      preLoaderRoute: typeof SettingsScopesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/scopes/$id': {
+      id: '/settings/scopes/$id'
+      path: '/settings/scopes/$id'
+      fullPath: '/settings/scopes/$id'
+      preLoaderRoute: typeof SettingsScopesIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/settings/rules/new': {
       id: '/settings/rules/new'
@@ -1511,6 +2292,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings/dashboard-applications/$appId'
       preLoaderRoute: typeof SettingsDashboardApplicationsAppIdRouteImport
       parentRoute: typeof SettingsDashboardApplicationsRoute
+    }
+    '/settings/cubes/new': {
+      id: '/settings/cubes/new'
+      path: '/settings/cubes/new'
+      fullPath: '/settings/cubes/new'
+      preLoaderRoute: typeof SettingsCubesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/cubes/$id': {
+      id: '/settings/cubes/$id'
+      path: '/settings/cubes/$id'
+      fullPath: '/settings/cubes/$id'
+      preLoaderRoute: typeof SettingsCubesIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/settings/country-groups/$groupId': {
       id: '/settings/country-groups/$groupId'
@@ -1561,12 +2356,264 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiProjectsProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/product/store-skus/new': {
+      id: '/product/store-skus/new'
+      path: '/product/store-skus/new'
+      fullPath: '/product/store-skus/new'
+      preLoaderRoute: typeof ProductStoreSkusNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/store-skus/$id': {
+      id: '/product/store-skus/$id'
+      path: '/product/store-skus/$id'
+      fullPath: '/product/store-skus/$id'
+      preLoaderRoute: typeof ProductStoreSkusIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-text-references/new': {
+      id: '/product/sku-text-references/new'
+      path: '/product/sku-text-references/new'
+      fullPath: '/product/sku-text-references/new'
+      preLoaderRoute: typeof ProductSkuTextReferencesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-text-references/$id': {
+      id: '/product/sku-text-references/$id'
+      path: '/product/sku-text-references/$id'
+      fullPath: '/product/sku-text-references/$id'
+      preLoaderRoute: typeof ProductSkuTextReferencesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-store-text-references/new': {
+      id: '/product/sku-store-text-references/new'
+      path: '/product/sku-store-text-references/new'
+      fullPath: '/product/sku-store-text-references/new'
+      preLoaderRoute: typeof ProductSkuStoreTextReferencesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-store-text-references/$id': {
+      id: '/product/sku-store-text-references/$id'
+      path: '/product/sku-store-text-references/$id'
+      fullPath: '/product/sku-store-text-references/$id'
+      preLoaderRoute: typeof ProductSkuStoreTextReferencesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-store-image-references/new': {
+      id: '/product/sku-store-image-references/new'
+      path: '/product/sku-store-image-references/new'
+      fullPath: '/product/sku-store-image-references/new'
+      preLoaderRoute: typeof ProductSkuStoreImageReferencesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-store-image-references/$id': {
+      id: '/product/sku-store-image-references/$id'
+      path: '/product/sku-store-image-references/$id'
+      fullPath: '/product/sku-store-image-references/$id'
+      preLoaderRoute: typeof ProductSkuStoreImageReferencesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-rpcs/new': {
+      id: '/product/sku-rpcs/new'
+      path: '/product/sku-rpcs/new'
+      fullPath: '/product/sku-rpcs/new'
+      preLoaderRoute: typeof ProductSkuRpcsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-rpcs/$id': {
+      id: '/product/sku-rpcs/$id'
+      path: '/product/sku-rpcs/$id'
+      fullPath: '/product/sku-rpcs/$id'
+      preLoaderRoute: typeof ProductSkuRpcsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-retailer-text-references/new': {
+      id: '/product/sku-retailer-text-references/new'
+      path: '/product/sku-retailer-text-references/new'
+      fullPath: '/product/sku-retailer-text-references/new'
+      preLoaderRoute: typeof ProductSkuRetailerTextReferencesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-retailer-text-references/$id': {
+      id: '/product/sku-retailer-text-references/$id'
+      path: '/product/sku-retailer-text-references/$id'
+      fullPath: '/product/sku-retailer-text-references/$id'
+      preLoaderRoute: typeof ProductSkuRetailerTextReferencesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-retailer-image-references/new': {
+      id: '/product/sku-retailer-image-references/new'
+      path: '/product/sku-retailer-image-references/new'
+      fullPath: '/product/sku-retailer-image-references/new'
+      preLoaderRoute: typeof ProductSkuRetailerImageReferencesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-retailer-image-references/$id': {
+      id: '/product/sku-retailer-image-references/$id'
+      path: '/product/sku-retailer-image-references/$id'
+      fullPath: '/product/sku-retailer-image-references/$id'
+      preLoaderRoute: typeof ProductSkuRetailerImageReferencesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-image-references/new': {
+      id: '/product/sku-image-references/new'
+      path: '/product/sku-image-references/new'
+      fullPath: '/product/sku-image-references/new'
+      preLoaderRoute: typeof ProductSkuImageReferencesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/sku-image-references/$id': {
+      id: '/product/sku-image-references/$id'
+      path: '/product/sku-image-references/$id'
+      fullPath: '/product/sku-image-references/$id'
+      preLoaderRoute: typeof ProductSkuImageReferencesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/client-skus/$skuId': {
       id: '/product/client-skus/$skuId'
       path: '/$skuId'
       fullPath: '/product/client-skus/$skuId'
       preLoaderRoute: typeof ProductClientSkusSkuIdRouteImport
       parentRoute: typeof ProductClientSkusRoute
+    }
+    '/product/client-categories/new': {
+      id: '/product/client-categories/new'
+      path: '/product/client-categories/new'
+      fullPath: '/product/client-categories/new'
+      preLoaderRoute: typeof ProductClientCategoriesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/client-categories/$id': {
+      id: '/product/client-categories/$id'
+      path: '/product/client-categories/$id'
+      fullPath: '/product/client-categories/$id'
+      preLoaderRoute: typeof ProductClientCategoriesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/business-units/new': {
+      id: '/product/business-units/new'
+      path: '/product/business-units/new'
+      fullPath: '/product/business-units/new'
+      preLoaderRoute: typeof ProductBusinessUnitsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/business-units/$id': {
+      id: '/product/business-units/$id'
+      path: '/product/business-units/$id'
+      fullPath: '/product/business-units/$id'
+      preLoaderRoute: typeof ProductBusinessUnitsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/assortments/new': {
+      id: '/product/assortments/new'
+      path: '/product/assortments/new'
+      fullPath: '/product/assortments/new'
+      preLoaderRoute: typeof ProductAssortmentsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/assortments/$id': {
+      id: '/product/assortments/$id'
+      path: '/product/assortments/$id'
+      fullPath: '/product/assortments/$id'
+      preLoaderRoute: typeof ProductAssortmentsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/value-propositions/new': {
+      id: '/codification/value-propositions/new'
+      path: '/codification/value-propositions/new'
+      fullPath: '/codification/value-propositions/new'
+      preLoaderRoute: typeof CodificationValuePropositionsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/value-propositions/$id': {
+      id: '/codification/value-propositions/$id'
+      path: '/codification/value-propositions/$id'
+      fullPath: '/codification/value-propositions/$id'
+      preLoaderRoute: typeof CodificationValuePropositionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/promotions/new': {
+      id: '/codification/promotions/new'
+      path: '/codification/promotions/new'
+      fullPath: '/codification/promotions/new'
+      preLoaderRoute: typeof CodificationPromotionsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/promotions/$id': {
+      id: '/codification/promotions/$id'
+      path: '/codification/promotions/$id'
+      fullPath: '/codification/promotions/$id'
+      preLoaderRoute: typeof CodificationPromotionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/manufacturers/new': {
+      id: '/codification/manufacturers/new'
+      path: '/codification/manufacturers/new'
+      fullPath: '/codification/manufacturers/new'
+      preLoaderRoute: typeof CodificationManufacturersNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/manufacturers/$id': {
+      id: '/codification/manufacturers/$id'
+      path: '/codification/manufacturers/$id'
+      fullPath: '/codification/manufacturers/$id'
+      preLoaderRoute: typeof CodificationManufacturersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/listings/new': {
+      id: '/codification/listings/new'
+      path: '/codification/listings/new'
+      fullPath: '/codification/listings/new'
+      preLoaderRoute: typeof CodificationListingsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/listings/$id': {
+      id: '/codification/listings/$id'
+      path: '/codification/listings/$id'
+      fullPath: '/codification/listings/$id'
+      preLoaderRoute: typeof CodificationListingsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/fsa-sections/new': {
+      id: '/codification/fsa-sections/new'
+      path: '/codification/fsa-sections/new'
+      fullPath: '/codification/fsa-sections/new'
+      preLoaderRoute: typeof CodificationFsaSectionsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/fsa-sections/$id': {
+      id: '/codification/fsa-sections/$id'
+      path: '/codification/fsa-sections/$id'
+      fullPath: '/codification/fsa-sections/$id'
+      preLoaderRoute: typeof CodificationFsaSectionsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/fsa-listings/new': {
+      id: '/codification/fsa-listings/new'
+      path: '/codification/fsa-listings/new'
+      fullPath: '/codification/fsa-listings/new'
+      preLoaderRoute: typeof CodificationFsaListingsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/fsa-listings/$id': {
+      id: '/codification/fsa-listings/$id'
+      path: '/codification/fsa-listings/$id'
+      fullPath: '/codification/fsa-listings/$id'
+      preLoaderRoute: typeof CodificationFsaListingsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/data-variables/new': {
+      id: '/codification/data-variables/new'
+      path: '/codification/data-variables/new'
+      fullPath: '/codification/data-variables/new'
+      preLoaderRoute: typeof CodificationDataVariablesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/data-variables/$id': {
+      id: '/codification/data-variables/$id'
+      path: '/codification/data-variables/$id'
+      fullPath: '/codification/data-variables/$id'
+      preLoaderRoute: typeof CodificationDataVariablesIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/codification/brands/new': {
       id: '/codification/brands/new'
@@ -1580,6 +2627,34 @@ declare module '@tanstack/react-router' {
       path: '/codification/brands/$brandId'
       fullPath: '/codification/brands/$brandId'
       preLoaderRoute: typeof CodificationBrandsBrandIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/attributes/new': {
+      id: '/codification/attributes/new'
+      path: '/codification/attributes/new'
+      fullPath: '/codification/attributes/new'
+      preLoaderRoute: typeof CodificationAttributesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/attributes/$id': {
+      id: '/codification/attributes/$id'
+      path: '/codification/attributes/$id'
+      fullPath: '/codification/attributes/$id'
+      preLoaderRoute: typeof CodificationAttributesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/ads/new': {
+      id: '/codification/ads/new'
+      path: '/codification/ads/new'
+      fullPath: '/codification/ads/new'
+      preLoaderRoute: typeof CodificationAdsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codification/ads/$id': {
+      id: '/codification/ads/$id'
+      path: '/codification/ads/$id'
+      fullPath: '/codification/ads/$id'
+      preLoaderRoute: typeof CodificationAdsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/dashboard-applications/$appId/': {
@@ -1759,33 +2834,13 @@ const SettingsRulesRouteWithChildren = SettingsRulesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BulkRoute: BulkRoute,
   DataCollectorRoute: DataCollectorRoute,
   IamRoute: IamRoute,
+  BulkIdRoute: BulkIdRoute,
+  BulkNewRoute: BulkNewRoute,
   ClientsClientIdRoute: ClientsClientIdRouteWithChildren,
   ClientsNewRoute: ClientsNewRoute,
-  CodificationAdsRoute: CodificationAdsRoute,
-  CodificationAttributesRoute: CodificationAttributesRoute,
-  CodificationDataVariablesRoute: CodificationDataVariablesRoute,
-  CodificationFsaListingsRoute: CodificationFsaListingsRoute,
-  CodificationFsaSectionsRoute: CodificationFsaSectionsRoute,
-  CodificationListingsRoute: CodificationListingsRoute,
-  CodificationManufacturersRoute: CodificationManufacturersRoute,
-  CodificationPromotionsRoute: CodificationPromotionsRoute,
-  CodificationValuePropositionsRoute: CodificationValuePropositionsRoute,
-  ProductAssortmentsRoute: ProductAssortmentsRoute,
-  ProductBusinessUnitsRoute: ProductBusinessUnitsRoute,
-  ProductClientCategoriesRoute: ProductClientCategoriesRoute,
   ProductClientSkusRoute: ProductClientSkusRouteWithChildren,
-  ProductSkuImageReferencesRoute: ProductSkuImageReferencesRoute,
-  ProductSkuRetailerImageReferencesRoute:
-    ProductSkuRetailerImageReferencesRoute,
-  ProductSkuRetailerTextReferencesRoute: ProductSkuRetailerTextReferencesRoute,
-  ProductSkuRpcsRoute: ProductSkuRpcsRoute,
-  ProductSkuStoreImageReferencesRoute: ProductSkuStoreImageReferencesRoute,
-  ProductSkuStoreTextReferencesRoute: ProductSkuStoreTextReferencesRoute,
-  ProductSkuTextReferencesRoute: ProductSkuTextReferencesRoute,
-  ProductStoreSkusRoute: ProductStoreSkusRoute,
   RegionSystemsRegionIdRoute: RegionSystemsRegionIdRoute,
   RegionSystemsNewRoute: RegionSystemsNewRoute,
   RetailersRetailerIdRoute: RetailersRetailerIdRoute,
@@ -1796,31 +2851,112 @@ const rootRouteChildren: RootRouteChildren = {
   SeedsApiTimeframesRoute: SeedsApiTimeframesRoute,
   SettingsCategoriesRoute: SettingsCategoriesRouteWithChildren,
   SettingsCountryGroupsRoute: SettingsCountryGroupsRouteWithChildren,
-  SettingsCubesRoute: SettingsCubesRoute,
   SettingsDashboardApplicationsRoute:
     SettingsDashboardApplicationsRouteWithChildren,
   SettingsRulesRoute: SettingsRulesRouteWithChildren,
-  SettingsScopesRoute: SettingsScopesRoute,
   SettingsTargetsRoute: SettingsTargetsRoute,
   SettingsTimeframesRoute: SettingsTimeframesRoute,
   StoresStoreIdRoute: StoresStoreIdRoute,
   StoresNewRoute: StoresNewRoute,
-  TasksJobsRoute: TasksJobsRoute,
-  TasksProjectsRoute: TasksProjectsRoute,
-  TasksSeedsRoute: TasksSeedsRoute,
+  BulkIndexRoute: BulkIndexRoute,
   ClientsIndexRoute: ClientsIndexRoute,
   RegionSystemsIndexRoute: RegionSystemsIndexRoute,
   RetailersIndexRoute: RetailersIndexRoute,
   StoresIndexRoute: StoresIndexRoute,
+  CodificationAdsIdRoute: CodificationAdsIdRoute,
+  CodificationAdsNewRoute: CodificationAdsNewRoute,
+  CodificationAttributesIdRoute: CodificationAttributesIdRoute,
+  CodificationAttributesNewRoute: CodificationAttributesNewRoute,
   CodificationBrandsBrandIdRoute: CodificationBrandsBrandIdRoute,
   CodificationBrandsNewRoute: CodificationBrandsNewRoute,
+  CodificationDataVariablesIdRoute: CodificationDataVariablesIdRoute,
+  CodificationDataVariablesNewRoute: CodificationDataVariablesNewRoute,
+  CodificationFsaListingsIdRoute: CodificationFsaListingsIdRoute,
+  CodificationFsaListingsNewRoute: CodificationFsaListingsNewRoute,
+  CodificationFsaSectionsIdRoute: CodificationFsaSectionsIdRoute,
+  CodificationFsaSectionsNewRoute: CodificationFsaSectionsNewRoute,
+  CodificationListingsIdRoute: CodificationListingsIdRoute,
+  CodificationListingsNewRoute: CodificationListingsNewRoute,
+  CodificationManufacturersIdRoute: CodificationManufacturersIdRoute,
+  CodificationManufacturersNewRoute: CodificationManufacturersNewRoute,
+  CodificationPromotionsIdRoute: CodificationPromotionsIdRoute,
+  CodificationPromotionsNewRoute: CodificationPromotionsNewRoute,
+  CodificationValuePropositionsIdRoute: CodificationValuePropositionsIdRoute,
+  CodificationValuePropositionsNewRoute: CodificationValuePropositionsNewRoute,
+  ProductAssortmentsIdRoute: ProductAssortmentsIdRoute,
+  ProductAssortmentsNewRoute: ProductAssortmentsNewRoute,
+  ProductBusinessUnitsIdRoute: ProductBusinessUnitsIdRoute,
+  ProductBusinessUnitsNewRoute: ProductBusinessUnitsNewRoute,
+  ProductClientCategoriesIdRoute: ProductClientCategoriesIdRoute,
+  ProductClientCategoriesNewRoute: ProductClientCategoriesNewRoute,
+  ProductSkuImageReferencesIdRoute: ProductSkuImageReferencesIdRoute,
+  ProductSkuImageReferencesNewRoute: ProductSkuImageReferencesNewRoute,
+  ProductSkuRetailerImageReferencesIdRoute:
+    ProductSkuRetailerImageReferencesIdRoute,
+  ProductSkuRetailerImageReferencesNewRoute:
+    ProductSkuRetailerImageReferencesNewRoute,
+  ProductSkuRetailerTextReferencesIdRoute:
+    ProductSkuRetailerTextReferencesIdRoute,
+  ProductSkuRetailerTextReferencesNewRoute:
+    ProductSkuRetailerTextReferencesNewRoute,
+  ProductSkuRpcsIdRoute: ProductSkuRpcsIdRoute,
+  ProductSkuRpcsNewRoute: ProductSkuRpcsNewRoute,
+  ProductSkuStoreImageReferencesIdRoute: ProductSkuStoreImageReferencesIdRoute,
+  ProductSkuStoreImageReferencesNewRoute:
+    ProductSkuStoreImageReferencesNewRoute,
+  ProductSkuStoreTextReferencesIdRoute: ProductSkuStoreTextReferencesIdRoute,
+  ProductSkuStoreTextReferencesNewRoute: ProductSkuStoreTextReferencesNewRoute,
+  ProductSkuTextReferencesIdRoute: ProductSkuTextReferencesIdRoute,
+  ProductSkuTextReferencesNewRoute: ProductSkuTextReferencesNewRoute,
+  ProductStoreSkusIdRoute: ProductStoreSkusIdRoute,
+  ProductStoreSkusNewRoute: ProductStoreSkusNewRoute,
   SeedsApiProjectsProjectIdRoute: SeedsApiProjectsProjectIdRoute,
   SeedsApiProjectsNewRoute: SeedsApiProjectsNewRoute,
   SeedsApiSeedsSeedIdRoute: SeedsApiSeedsSeedIdRoute,
   SeedsApiSeedsNewRoute: SeedsApiSeedsNewRoute,
+  SettingsCubesIdRoute: SettingsCubesIdRoute,
+  SettingsCubesNewRoute: SettingsCubesNewRoute,
+  SettingsScopesIdRoute: SettingsScopesIdRoute,
+  SettingsScopesNewRoute: SettingsScopesNewRoute,
+  TasksJobsIdRoute: TasksJobsIdRoute,
+  TasksJobsNewRoute: TasksJobsNewRoute,
+  TasksProjectsIdRoute: TasksProjectsIdRoute,
+  TasksProjectsNewRoute: TasksProjectsNewRoute,
+  TasksSeedsIdRoute: TasksSeedsIdRoute,
+  TasksSeedsNewRoute: TasksSeedsNewRoute,
+  CodificationAdsIndexRoute: CodificationAdsIndexRoute,
+  CodificationAttributesIndexRoute: CodificationAttributesIndexRoute,
   CodificationBrandsIndexRoute: CodificationBrandsIndexRoute,
+  CodificationDataVariablesIndexRoute: CodificationDataVariablesIndexRoute,
+  CodificationFsaListingsIndexRoute: CodificationFsaListingsIndexRoute,
+  CodificationFsaSectionsIndexRoute: CodificationFsaSectionsIndexRoute,
+  CodificationListingsIndexRoute: CodificationListingsIndexRoute,
+  CodificationManufacturersIndexRoute: CodificationManufacturersIndexRoute,
+  CodificationPromotionsIndexRoute: CodificationPromotionsIndexRoute,
+  CodificationValuePropositionsIndexRoute:
+    CodificationValuePropositionsIndexRoute,
+  ProductAssortmentsIndexRoute: ProductAssortmentsIndexRoute,
+  ProductBusinessUnitsIndexRoute: ProductBusinessUnitsIndexRoute,
+  ProductClientCategoriesIndexRoute: ProductClientCategoriesIndexRoute,
+  ProductSkuImageReferencesIndexRoute: ProductSkuImageReferencesIndexRoute,
+  ProductSkuRetailerImageReferencesIndexRoute:
+    ProductSkuRetailerImageReferencesIndexRoute,
+  ProductSkuRetailerTextReferencesIndexRoute:
+    ProductSkuRetailerTextReferencesIndexRoute,
+  ProductSkuRpcsIndexRoute: ProductSkuRpcsIndexRoute,
+  ProductSkuStoreImageReferencesIndexRoute:
+    ProductSkuStoreImageReferencesIndexRoute,
+  ProductSkuStoreTextReferencesIndexRoute:
+    ProductSkuStoreTextReferencesIndexRoute,
+  ProductSkuTextReferencesIndexRoute: ProductSkuTextReferencesIndexRoute,
+  ProductStoreSkusIndexRoute: ProductStoreSkusIndexRoute,
   SeedsApiProjectsIndexRoute: SeedsApiProjectsIndexRoute,
   SeedsApiSeedsIndexRoute: SeedsApiSeedsIndexRoute,
+  SettingsCubesIndexRoute: SettingsCubesIndexRoute,
+  SettingsScopesIndexRoute: SettingsScopesIndexRoute,
+  TasksJobsIndexRoute: TasksJobsIndexRoute,
+  TasksProjectsIndexRoute: TasksProjectsIndexRoute,
+  TasksSeedsIndexRoute: TasksSeedsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
