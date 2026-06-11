@@ -54,9 +54,9 @@ const SECTIONS: Section[] = [
   {
     label: "Tasks",
     icon: ListTodo,
-    summary: "The work in motion.",
+    summary: "The work in motion (being replaced by Seeds API).",
     detail:
-      "The day-to-day operational jobs that keep data flowing — what is queued, running or finished. It's the heartbeat that turns plans into collected information.",
+      "The day-to-day operational jobs that keep data flowing — what is queued, running or finished. Tasks is being phased out in favour of the new Seeds API over the coming weeks, so new work is gradually moving there.",
   },
   {
     label: "Codification",

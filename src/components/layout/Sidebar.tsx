@@ -23,6 +23,8 @@ type NavItem = {
   to?: string;
   children?: NavChild[];
   defaultOpen?: boolean;
+  /** Small badge next to the group label (e.g. "Deprecating"). */
+  badge?: string;
 };
 
 const nav: NavItem[] = [
@@ -51,13 +53,48 @@ const nav: NavItem[] = [
       { label: "Timeframes", to: "/seeds-api/timeframes" },
     ],
   },
-  { label: "Tasks", icon: ListTodo, children: [] },
-  { label: "Codification", icon: Megaphone, children: [] },
+  {
+    label: "Tasks",
+    icon: ListTodo,
+    badge: "Deprecating",
+    children: [
+      { label: "Projects", to: "/tasks/projects" },
+      { label: "Jobs", to: "/tasks/jobs" },
+      { label: "Seeds", to: "/tasks/seeds" },
+    ],
+  },
+  {
+    label: "Codification",
+    icon: Megaphone,
+    children: [
+      { label: "Brands", to: "/codification/brands" },
+      { label: "Manufacturers", to: "/codification/manufacturers" },
+      { label: "Promotions", to: "/codification/promotions" },
+      { label: "Listings", to: "/codification/listings" },
+      { label: "Fsa listings", to: "/codification/fsa-listings" },
+      { label: "Ads", to: "/codification/ads" },
+      { label: "FSA section", to: "/codification/fsa-sections" },
+      { label: "Value propositions", to: "/codification/value-propositions" },
+      { label: "Attributes", to: "/codification/attributes" },
+      { label: "Data variables", to: "/codification/data-variables" },
+    ],
+  },
   {
     label: "Product",
     icon: Package,
     children: [
+      { label: "Business units", to: "/product/business-units" },
+      { label: "Client categories", to: "/product/client-categories" },
       { label: "Client SKUs", to: "/product/client-skus" },
+      { label: "Store skus", to: "/product/store-skus" },
+      { label: "Sku rpcs", to: "/product/sku-rpcs" },
+      { label: "Assortments", to: "/product/assortments" },
+      { label: "Sku image references", to: "/product/sku-image-references" },
+      { label: "Sku retailer image references", to: "/product/sku-retailer-image-references" },
+      { label: "Sku store image references", to: "/product/sku-store-image-references" },
+      { label: "Sku text references", to: "/product/sku-text-references" },
+      { label: "Sku retailer text references", to: "/product/sku-retailer-text-references" },
+      { label: "Sku store text references", to: "/product/sku-store-text-references" },
     ],
   },
   { label: "Bulk", icon: ShoppingBag, to: "/bulk" },
@@ -70,6 +107,8 @@ const nav: NavItem[] = [
       { label: "Timeframes", to: "/settings/timeframes" },
       { label: "Categories", to: "/settings/categories" },
       { label: "Country groups", to: "/settings/country-groups" },
+      { label: "Cubes", to: "/settings/cubes" },
+      { label: "Scopes", to: "/settings/scopes" },
       { label: "Rules", to: "/settings/rules" },
     ],
   },
@@ -141,9 +180,14 @@ export function Sidebar() {
                       : "text-foreground/80 hover:bg-[var(--sidebar-hover)]",
                   )}
                 >
-                  <span className="flex items-center gap-2.5">
+                  <span className="flex items-center gap-2">
                     <Icon className="h-4 w-4" />
                     {item.label}
+                    {item.badge && (
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">
+                        {item.badge}
+                      </span>
+                    )}
                   </span>
                   <ChevronDown
                     className={cn(
