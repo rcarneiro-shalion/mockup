@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
+  Home,
   Briefcase,
   Store,
   Sprout,
@@ -25,6 +26,7 @@ type NavItem = {
 };
 
 const nav: NavItem[] = [
+  { label: "Home", icon: Home, to: "/" },
   { label: "Clients", icon: Briefcase, to: "/clients" },
   {
     label: "Retailers",

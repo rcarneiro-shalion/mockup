@@ -36,15 +36,31 @@ import { Route as RegionSystemsRegionIdRouteImport } from './routes/region-syste
 import { Route as ProductClientSkusRouteImport } from './routes/product/client-skus'
 import { Route as ClientsNewRouteImport } from './routes/clients/new'
 import { Route as ClientsClientIdRouteImport } from './routes/clients/$clientId'
+import { Route as SettingsRulesIndexRouteImport } from './routes/settings/rules.index'
+import { Route as SettingsDashboardApplicationsIndexRouteImport } from './routes/settings/dashboard-applications.index'
+import { Route as SettingsCountryGroupsIndexRouteImport } from './routes/settings/country-groups.index'
+import { Route as SettingsCategoriesIndexRouteImport } from './routes/settings/categories.index'
 import { Route as SeedsApiSeedsIndexRouteImport } from './routes/seeds-api/seeds/index'
 import { Route as SeedsApiProjectsIndexRouteImport } from './routes/seeds-api/projects/index'
+import { Route as ProductClientSkusIndexRouteImport } from './routes/product/client-skus.index'
 import { Route as ClientsClientIdIndexRouteImport } from './routes/clients/$clientId.index'
+import { Route as SettingsRulesNewRouteImport } from './routes/settings/rules.new'
+import { Route as SettingsRulesRuleIdRouteImport } from './routes/settings/rules.$ruleId'
+import { Route as SettingsDashboardApplicationsAppIdRouteImport } from './routes/settings/dashboard-applications.$appId'
+import { Route as SettingsCountryGroupsGroupIdRouteImport } from './routes/settings/country-groups.$groupId'
+import { Route as SettingsCategoriesNewRouteImport } from './routes/settings/categories.new'
+import { Route as SettingsCategoriesCategoryIdRouteImport } from './routes/settings/categories.$categoryId'
 import { Route as SeedsApiSeedsNewRouteImport } from './routes/seeds-api/seeds/new'
 import { Route as SeedsApiSeedsSeedIdRouteImport } from './routes/seeds-api/seeds/$seedId'
 import { Route as SeedsApiProjectsNewRouteImport } from './routes/seeds-api/projects/new'
 import { Route as SeedsApiProjectsProjectIdRouteImport } from './routes/seeds-api/projects/$projectId'
+import { Route as ProductClientSkusSkuIdRouteImport } from './routes/product/client-skus.$skuId'
+import { Route as SettingsDashboardApplicationsAppIdIndexRouteImport } from './routes/settings/dashboard-applications.$appId.index'
 import { Route as ClientsClientIdDataGroupsNewRouteImport } from './routes/clients/$clientId.data-groups.new'
 import { Route as ClientsClientIdDataGroupsDataGroupIdRouteImport } from './routes/clients/$clientId.data-groups.$dataGroupId'
+import { Route as SettingsDashboardApplicationsAppIdGroupsGroupIdRouteImport } from './routes/settings/dashboard-applications.$appId.groups.$groupId'
+import { Route as SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRouteImport } from './routes/settings/dashboard-applications.$appId.groups.$groupId.index'
+import { Route as SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRouteImport } from './routes/settings/dashboard-applications.$appId.groups.$groupId.sections.$sectionId'
 
 const IamRoute = IamRouteImport.update({
   id: '/iam',
@@ -183,6 +199,28 @@ const ClientsClientIdRoute = ClientsClientIdRouteImport.update({
   path: '/clients/$clientId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRulesIndexRoute = SettingsRulesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsRulesRoute,
+} as any)
+const SettingsDashboardApplicationsIndexRoute =
+  SettingsDashboardApplicationsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => SettingsDashboardApplicationsRoute,
+  } as any)
+const SettingsCountryGroupsIndexRoute =
+  SettingsCountryGroupsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => SettingsCountryGroupsRoute,
+  } as any)
+const SettingsCategoriesIndexRoute = SettingsCategoriesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SettingsCategoriesRoute,
+} as any)
 const SeedsApiSeedsIndexRoute = SeedsApiSeedsIndexRouteImport.update({
   id: '/seeds-api/seeds/',
   path: '/seeds-api/seeds/',
@@ -193,11 +231,49 @@ const SeedsApiProjectsIndexRoute = SeedsApiProjectsIndexRouteImport.update({
   path: '/seeds-api/projects/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductClientSkusIndexRoute = ProductClientSkusIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProductClientSkusRoute,
+} as any)
 const ClientsClientIdIndexRoute = ClientsClientIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ClientsClientIdRoute,
 } as any)
+const SettingsRulesNewRoute = SettingsRulesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => SettingsRulesRoute,
+} as any)
+const SettingsRulesRuleIdRoute = SettingsRulesRuleIdRouteImport.update({
+  id: '/$ruleId',
+  path: '/$ruleId',
+  getParentRoute: () => SettingsRulesRoute,
+} as any)
+const SettingsDashboardApplicationsAppIdRoute =
+  SettingsDashboardApplicationsAppIdRouteImport.update({
+    id: '/$appId',
+    path: '/$appId',
+    getParentRoute: () => SettingsDashboardApplicationsRoute,
+  } as any)
+const SettingsCountryGroupsGroupIdRoute =
+  SettingsCountryGroupsGroupIdRouteImport.update({
+    id: '/$groupId',
+    path: '/$groupId',
+    getParentRoute: () => SettingsCountryGroupsRoute,
+  } as any)
+const SettingsCategoriesNewRoute = SettingsCategoriesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => SettingsCategoriesRoute,
+} as any)
+const SettingsCategoriesCategoryIdRoute =
+  SettingsCategoriesCategoryIdRouteImport.update({
+    id: '/$categoryId',
+    path: '/$categoryId',
+    getParentRoute: () => SettingsCategoriesRoute,
+  } as any)
 const SeedsApiSeedsNewRoute = SeedsApiSeedsNewRouteImport.update({
   id: '/seeds-api/seeds/new',
   path: '/seeds-api/seeds/new',
@@ -219,6 +295,17 @@ const SeedsApiProjectsProjectIdRoute =
     path: '/seeds-api/projects/$projectId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ProductClientSkusSkuIdRoute = ProductClientSkusSkuIdRouteImport.update({
+  id: '/$skuId',
+  path: '/$skuId',
+  getParentRoute: () => ProductClientSkusRoute,
+} as any)
+const SettingsDashboardApplicationsAppIdIndexRoute =
+  SettingsDashboardApplicationsAppIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => SettingsDashboardApplicationsAppIdRoute,
+  } as any)
 const ClientsClientIdDataGroupsNewRoute =
   ClientsClientIdDataGroupsNewRouteImport.update({
     id: '/data-groups/new',
@@ -231,6 +318,27 @@ const ClientsClientIdDataGroupsDataGroupIdRoute =
     path: '/data-groups/$dataGroupId',
     getParentRoute: () => ClientsClientIdRoute,
   } as any)
+const SettingsDashboardApplicationsAppIdGroupsGroupIdRoute =
+  SettingsDashboardApplicationsAppIdGroupsGroupIdRouteImport.update({
+    id: '/groups/$groupId',
+    path: '/groups/$groupId',
+    getParentRoute: () => SettingsDashboardApplicationsAppIdRoute,
+  } as any)
+const SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute =
+  SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => SettingsDashboardApplicationsAppIdGroupsGroupIdRoute,
+  } as any)
+const SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute =
+  SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRouteImport.update(
+    {
+      id: '/sections/$sectionId',
+      path: '/sections/$sectionId',
+      getParentRoute: () =>
+        SettingsDashboardApplicationsAppIdGroupsGroupIdRoute,
+    } as any,
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -239,7 +347,7 @@ export interface FileRoutesByFullPath {
   '/iam': typeof IamRoute
   '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
   '/clients/new': typeof ClientsNewRoute
-  '/product/client-skus': typeof ProductClientSkusRoute
+  '/product/client-skus': typeof ProductClientSkusRouteWithChildren
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
@@ -248,10 +356,10 @@ export interface FileRoutesByFullPath {
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
-  '/settings/categories': typeof SettingsCategoriesRoute
-  '/settings/country-groups': typeof SettingsCountryGroupsRoute
-  '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRoute
-  '/settings/rules': typeof SettingsRulesRoute
+  '/settings/categories': typeof SettingsCategoriesRouteWithChildren
+  '/settings/country-groups': typeof SettingsCountryGroupsRouteWithChildren
+  '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRouteWithChildren
+  '/settings/rules': typeof SettingsRulesRouteWithChildren
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
@@ -260,15 +368,31 @@ export interface FileRoutesByFullPath {
   '/region-systems/': typeof RegionSystemsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
+  '/product/client-skus/$skuId': typeof ProductClientSkusSkuIdRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
+  '/settings/categories/$categoryId': typeof SettingsCategoriesCategoryIdRoute
+  '/settings/categories/new': typeof SettingsCategoriesNewRoute
+  '/settings/country-groups/$groupId': typeof SettingsCountryGroupsGroupIdRoute
+  '/settings/dashboard-applications/$appId': typeof SettingsDashboardApplicationsAppIdRouteWithChildren
+  '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
+  '/settings/rules/new': typeof SettingsRulesNewRoute
   '/clients/$clientId/': typeof ClientsClientIdIndexRoute
+  '/product/client-skus/': typeof ProductClientSkusIndexRoute
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
+  '/settings/categories/': typeof SettingsCategoriesIndexRoute
+  '/settings/country-groups/': typeof SettingsCountryGroupsIndexRoute
+  '/settings/dashboard-applications/': typeof SettingsDashboardApplicationsIndexRoute
+  '/settings/rules/': typeof SettingsRulesIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
   '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
+  '/settings/dashboard-applications/$appId/': typeof SettingsDashboardApplicationsAppIdIndexRoute
+  '/settings/dashboard-applications/$appId/groups/$groupId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdRouteWithChildren
+  '/settings/dashboard-applications/$appId/groups/$groupId/': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute
+  '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -276,7 +400,6 @@ export interface FileRoutesByTo {
   '/data-collector': typeof DataCollectorRoute
   '/iam': typeof IamRoute
   '/clients/new': typeof ClientsNewRoute
-  '/product/client-skus': typeof ProductClientSkusRoute
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
@@ -285,10 +408,6 @@ export interface FileRoutesByTo {
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
-  '/settings/categories': typeof SettingsCategoriesRoute
-  '/settings/country-groups': typeof SettingsCountryGroupsRoute
-  '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRoute
-  '/settings/rules': typeof SettingsRulesRoute
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
@@ -297,15 +416,29 @@ export interface FileRoutesByTo {
   '/region-systems': typeof RegionSystemsIndexRoute
   '/retailers': typeof RetailersIndexRoute
   '/stores': typeof StoresIndexRoute
+  '/product/client-skus/$skuId': typeof ProductClientSkusSkuIdRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
+  '/settings/categories/$categoryId': typeof SettingsCategoriesCategoryIdRoute
+  '/settings/categories/new': typeof SettingsCategoriesNewRoute
+  '/settings/country-groups/$groupId': typeof SettingsCountryGroupsGroupIdRoute
+  '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
+  '/settings/rules/new': typeof SettingsRulesNewRoute
   '/clients/$clientId': typeof ClientsClientIdIndexRoute
+  '/product/client-skus': typeof ProductClientSkusIndexRoute
   '/seeds-api/projects': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsIndexRoute
+  '/settings/categories': typeof SettingsCategoriesIndexRoute
+  '/settings/country-groups': typeof SettingsCountryGroupsIndexRoute
+  '/settings/dashboard-applications': typeof SettingsDashboardApplicationsIndexRoute
+  '/settings/rules': typeof SettingsRulesIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
   '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
+  '/settings/dashboard-applications/$appId': typeof SettingsDashboardApplicationsAppIdIndexRoute
+  '/settings/dashboard-applications/$appId/groups/$groupId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute
+  '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -315,7 +448,7 @@ export interface FileRoutesById {
   '/iam': typeof IamRoute
   '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
   '/clients/new': typeof ClientsNewRoute
-  '/product/client-skus': typeof ProductClientSkusRoute
+  '/product/client-skus': typeof ProductClientSkusRouteWithChildren
   '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
@@ -324,10 +457,10 @@ export interface FileRoutesById {
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
-  '/settings/categories': typeof SettingsCategoriesRoute
-  '/settings/country-groups': typeof SettingsCountryGroupsRoute
-  '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRoute
-  '/settings/rules': typeof SettingsRulesRoute
+  '/settings/categories': typeof SettingsCategoriesRouteWithChildren
+  '/settings/country-groups': typeof SettingsCountryGroupsRouteWithChildren
+  '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRouteWithChildren
+  '/settings/rules': typeof SettingsRulesRouteWithChildren
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
@@ -336,15 +469,31 @@ export interface FileRoutesById {
   '/region-systems/': typeof RegionSystemsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
+  '/product/client-skus/$skuId': typeof ProductClientSkusSkuIdRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
   '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
+  '/settings/categories/$categoryId': typeof SettingsCategoriesCategoryIdRoute
+  '/settings/categories/new': typeof SettingsCategoriesNewRoute
+  '/settings/country-groups/$groupId': typeof SettingsCountryGroupsGroupIdRoute
+  '/settings/dashboard-applications/$appId': typeof SettingsDashboardApplicationsAppIdRouteWithChildren
+  '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
+  '/settings/rules/new': typeof SettingsRulesNewRoute
   '/clients/$clientId/': typeof ClientsClientIdIndexRoute
+  '/product/client-skus/': typeof ProductClientSkusIndexRoute
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
+  '/settings/categories/': typeof SettingsCategoriesIndexRoute
+  '/settings/country-groups/': typeof SettingsCountryGroupsIndexRoute
+  '/settings/dashboard-applications/': typeof SettingsDashboardApplicationsIndexRoute
+  '/settings/rules/': typeof SettingsRulesIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
   '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
+  '/settings/dashboard-applications/$appId/': typeof SettingsDashboardApplicationsAppIdIndexRoute
+  '/settings/dashboard-applications/$appId/groups/$groupId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdRouteWithChildren
+  '/settings/dashboard-applications/$appId/groups/$groupId/': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute
+  '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId': typeof SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -376,15 +525,31 @@ export interface FileRouteTypes {
     | '/region-systems/'
     | '/retailers/'
     | '/stores/'
+    | '/product/client-skus/$skuId'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
     | '/seeds-api/seeds/$seedId'
     | '/seeds-api/seeds/new'
+    | '/settings/categories/$categoryId'
+    | '/settings/categories/new'
+    | '/settings/country-groups/$groupId'
+    | '/settings/dashboard-applications/$appId'
+    | '/settings/rules/$ruleId'
+    | '/settings/rules/new'
     | '/clients/$clientId/'
+    | '/product/client-skus/'
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
+    | '/settings/categories/'
+    | '/settings/country-groups/'
+    | '/settings/dashboard-applications/'
+    | '/settings/rules/'
     | '/clients/$clientId/data-groups/$dataGroupId'
     | '/clients/$clientId/data-groups/new'
+    | '/settings/dashboard-applications/$appId/'
+    | '/settings/dashboard-applications/$appId/groups/$groupId'
+    | '/settings/dashboard-applications/$appId/groups/$groupId/'
+    | '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -392,7 +557,6 @@ export interface FileRouteTypes {
     | '/data-collector'
     | '/iam'
     | '/clients/new'
-    | '/product/client-skus'
     | '/region-systems/$regionId'
     | '/region-systems/new'
     | '/retailers/$retailerId'
@@ -401,10 +565,6 @@ export interface FileRouteTypes {
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
-    | '/settings/categories'
-    | '/settings/country-groups'
-    | '/settings/dashboard-applications'
-    | '/settings/rules'
     | '/settings/targets'
     | '/settings/timeframes'
     | '/stores/$storeId'
@@ -413,15 +573,29 @@ export interface FileRouteTypes {
     | '/region-systems'
     | '/retailers'
     | '/stores'
+    | '/product/client-skus/$skuId'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
     | '/seeds-api/seeds/$seedId'
     | '/seeds-api/seeds/new'
+    | '/settings/categories/$categoryId'
+    | '/settings/categories/new'
+    | '/settings/country-groups/$groupId'
+    | '/settings/rules/$ruleId'
+    | '/settings/rules/new'
     | '/clients/$clientId'
+    | '/product/client-skus'
     | '/seeds-api/projects'
     | '/seeds-api/seeds'
+    | '/settings/categories'
+    | '/settings/country-groups'
+    | '/settings/dashboard-applications'
+    | '/settings/rules'
     | '/clients/$clientId/data-groups/$dataGroupId'
     | '/clients/$clientId/data-groups/new'
+    | '/settings/dashboard-applications/$appId'
+    | '/settings/dashboard-applications/$appId/groups/$groupId'
+    | '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId'
   id:
     | '__root__'
     | '/'
@@ -451,15 +625,31 @@ export interface FileRouteTypes {
     | '/region-systems/'
     | '/retailers/'
     | '/stores/'
+    | '/product/client-skus/$skuId'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
     | '/seeds-api/seeds/$seedId'
     | '/seeds-api/seeds/new'
+    | '/settings/categories/$categoryId'
+    | '/settings/categories/new'
+    | '/settings/country-groups/$groupId'
+    | '/settings/dashboard-applications/$appId'
+    | '/settings/rules/$ruleId'
+    | '/settings/rules/new'
     | '/clients/$clientId/'
+    | '/product/client-skus/'
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
+    | '/settings/categories/'
+    | '/settings/country-groups/'
+    | '/settings/dashboard-applications/'
+    | '/settings/rules/'
     | '/clients/$clientId/data-groups/$dataGroupId'
     | '/clients/$clientId/data-groups/new'
+    | '/settings/dashboard-applications/$appId/'
+    | '/settings/dashboard-applications/$appId/groups/$groupId'
+    | '/settings/dashboard-applications/$appId/groups/$groupId/'
+    | '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -469,7 +659,7 @@ export interface RootRouteChildren {
   IamRoute: typeof IamRoute
   ClientsClientIdRoute: typeof ClientsClientIdRouteWithChildren
   ClientsNewRoute: typeof ClientsNewRoute
-  ProductClientSkusRoute: typeof ProductClientSkusRoute
+  ProductClientSkusRoute: typeof ProductClientSkusRouteWithChildren
   RegionSystemsRegionIdRoute: typeof RegionSystemsRegionIdRoute
   RegionSystemsNewRoute: typeof RegionSystemsNewRoute
   RetailersRetailerIdRoute: typeof RetailersRetailerIdRoute
@@ -478,10 +668,10 @@ export interface RootRouteChildren {
   SeedsApiSubscriptionsRoute: typeof SeedsApiSubscriptionsRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
   SeedsApiTimeframesRoute: typeof SeedsApiTimeframesRoute
-  SettingsCategoriesRoute: typeof SettingsCategoriesRoute
-  SettingsCountryGroupsRoute: typeof SettingsCountryGroupsRoute
-  SettingsDashboardApplicationsRoute: typeof SettingsDashboardApplicationsRoute
-  SettingsRulesRoute: typeof SettingsRulesRoute
+  SettingsCategoriesRoute: typeof SettingsCategoriesRouteWithChildren
+  SettingsCountryGroupsRoute: typeof SettingsCountryGroupsRouteWithChildren
+  SettingsDashboardApplicationsRoute: typeof SettingsDashboardApplicationsRouteWithChildren
+  SettingsRulesRoute: typeof SettingsRulesRouteWithChildren
   SettingsTargetsRoute: typeof SettingsTargetsRoute
   SettingsTimeframesRoute: typeof SettingsTimeframesRoute
   StoresStoreIdRoute: typeof StoresStoreIdRoute
@@ -689,6 +879,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientsClientIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/rules/': {
+      id: '/settings/rules/'
+      path: '/'
+      fullPath: '/settings/rules/'
+      preLoaderRoute: typeof SettingsRulesIndexRouteImport
+      parentRoute: typeof SettingsRulesRoute
+    }
+    '/settings/dashboard-applications/': {
+      id: '/settings/dashboard-applications/'
+      path: '/'
+      fullPath: '/settings/dashboard-applications/'
+      preLoaderRoute: typeof SettingsDashboardApplicationsIndexRouteImport
+      parentRoute: typeof SettingsDashboardApplicationsRoute
+    }
+    '/settings/country-groups/': {
+      id: '/settings/country-groups/'
+      path: '/'
+      fullPath: '/settings/country-groups/'
+      preLoaderRoute: typeof SettingsCountryGroupsIndexRouteImport
+      parentRoute: typeof SettingsCountryGroupsRoute
+    }
+    '/settings/categories/': {
+      id: '/settings/categories/'
+      path: '/'
+      fullPath: '/settings/categories/'
+      preLoaderRoute: typeof SettingsCategoriesIndexRouteImport
+      parentRoute: typeof SettingsCategoriesRoute
+    }
     '/seeds-api/seeds/': {
       id: '/seeds-api/seeds/'
       path: '/seeds-api/seeds'
@@ -703,12 +921,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiProjectsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/product/client-skus/': {
+      id: '/product/client-skus/'
+      path: '/'
+      fullPath: '/product/client-skus/'
+      preLoaderRoute: typeof ProductClientSkusIndexRouteImport
+      parentRoute: typeof ProductClientSkusRoute
+    }
     '/clients/$clientId/': {
       id: '/clients/$clientId/'
       path: '/'
       fullPath: '/clients/$clientId/'
       preLoaderRoute: typeof ClientsClientIdIndexRouteImport
       parentRoute: typeof ClientsClientIdRoute
+    }
+    '/settings/rules/new': {
+      id: '/settings/rules/new'
+      path: '/new'
+      fullPath: '/settings/rules/new'
+      preLoaderRoute: typeof SettingsRulesNewRouteImport
+      parentRoute: typeof SettingsRulesRoute
+    }
+    '/settings/rules/$ruleId': {
+      id: '/settings/rules/$ruleId'
+      path: '/$ruleId'
+      fullPath: '/settings/rules/$ruleId'
+      preLoaderRoute: typeof SettingsRulesRuleIdRouteImport
+      parentRoute: typeof SettingsRulesRoute
+    }
+    '/settings/dashboard-applications/$appId': {
+      id: '/settings/dashboard-applications/$appId'
+      path: '/$appId'
+      fullPath: '/settings/dashboard-applications/$appId'
+      preLoaderRoute: typeof SettingsDashboardApplicationsAppIdRouteImport
+      parentRoute: typeof SettingsDashboardApplicationsRoute
+    }
+    '/settings/country-groups/$groupId': {
+      id: '/settings/country-groups/$groupId'
+      path: '/$groupId'
+      fullPath: '/settings/country-groups/$groupId'
+      preLoaderRoute: typeof SettingsCountryGroupsGroupIdRouteImport
+      parentRoute: typeof SettingsCountryGroupsRoute
+    }
+    '/settings/categories/new': {
+      id: '/settings/categories/new'
+      path: '/new'
+      fullPath: '/settings/categories/new'
+      preLoaderRoute: typeof SettingsCategoriesNewRouteImport
+      parentRoute: typeof SettingsCategoriesRoute
+    }
+    '/settings/categories/$categoryId': {
+      id: '/settings/categories/$categoryId'
+      path: '/$categoryId'
+      fullPath: '/settings/categories/$categoryId'
+      preLoaderRoute: typeof SettingsCategoriesCategoryIdRouteImport
+      parentRoute: typeof SettingsCategoriesRoute
     }
     '/seeds-api/seeds/new': {
       id: '/seeds-api/seeds/new'
@@ -738,6 +1005,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiProjectsProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/product/client-skus/$skuId': {
+      id: '/product/client-skus/$skuId'
+      path: '/$skuId'
+      fullPath: '/product/client-skus/$skuId'
+      preLoaderRoute: typeof ProductClientSkusSkuIdRouteImport
+      parentRoute: typeof ProductClientSkusRoute
+    }
+    '/settings/dashboard-applications/$appId/': {
+      id: '/settings/dashboard-applications/$appId/'
+      path: '/'
+      fullPath: '/settings/dashboard-applications/$appId/'
+      preLoaderRoute: typeof SettingsDashboardApplicationsAppIdIndexRouteImport
+      parentRoute: typeof SettingsDashboardApplicationsAppIdRoute
+    }
     '/clients/$clientId/data-groups/new': {
       id: '/clients/$clientId/data-groups/new'
       path: '/data-groups/new'
@@ -751,6 +1032,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/clients/$clientId/data-groups/$dataGroupId'
       preLoaderRoute: typeof ClientsClientIdDataGroupsDataGroupIdRouteImport
       parentRoute: typeof ClientsClientIdRoute
+    }
+    '/settings/dashboard-applications/$appId/groups/$groupId': {
+      id: '/settings/dashboard-applications/$appId/groups/$groupId'
+      path: '/groups/$groupId'
+      fullPath: '/settings/dashboard-applications/$appId/groups/$groupId'
+      preLoaderRoute: typeof SettingsDashboardApplicationsAppIdGroupsGroupIdRouteImport
+      parentRoute: typeof SettingsDashboardApplicationsAppIdRoute
+    }
+    '/settings/dashboard-applications/$appId/groups/$groupId/': {
+      id: '/settings/dashboard-applications/$appId/groups/$groupId/'
+      path: '/'
+      fullPath: '/settings/dashboard-applications/$appId/groups/$groupId/'
+      preLoaderRoute: typeof SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRouteImport
+      parentRoute: typeof SettingsDashboardApplicationsAppIdGroupsGroupIdRoute
+    }
+    '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId': {
+      id: '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId'
+      path: '/sections/$sectionId'
+      fullPath: '/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId'
+      preLoaderRoute: typeof SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRouteImport
+      parentRoute: typeof SettingsDashboardApplicationsAppIdGroupsGroupIdRoute
     }
   }
 }
@@ -772,6 +1074,119 @@ const ClientsClientIdRouteWithChildren = ClientsClientIdRoute._addFileChildren(
   ClientsClientIdRouteChildren,
 )
 
+interface ProductClientSkusRouteChildren {
+  ProductClientSkusSkuIdRoute: typeof ProductClientSkusSkuIdRoute
+  ProductClientSkusIndexRoute: typeof ProductClientSkusIndexRoute
+}
+
+const ProductClientSkusRouteChildren: ProductClientSkusRouteChildren = {
+  ProductClientSkusSkuIdRoute: ProductClientSkusSkuIdRoute,
+  ProductClientSkusIndexRoute: ProductClientSkusIndexRoute,
+}
+
+const ProductClientSkusRouteWithChildren =
+  ProductClientSkusRoute._addFileChildren(ProductClientSkusRouteChildren)
+
+interface SettingsCategoriesRouteChildren {
+  SettingsCategoriesCategoryIdRoute: typeof SettingsCategoriesCategoryIdRoute
+  SettingsCategoriesNewRoute: typeof SettingsCategoriesNewRoute
+  SettingsCategoriesIndexRoute: typeof SettingsCategoriesIndexRoute
+}
+
+const SettingsCategoriesRouteChildren: SettingsCategoriesRouteChildren = {
+  SettingsCategoriesCategoryIdRoute: SettingsCategoriesCategoryIdRoute,
+  SettingsCategoriesNewRoute: SettingsCategoriesNewRoute,
+  SettingsCategoriesIndexRoute: SettingsCategoriesIndexRoute,
+}
+
+const SettingsCategoriesRouteWithChildren =
+  SettingsCategoriesRoute._addFileChildren(SettingsCategoriesRouteChildren)
+
+interface SettingsCountryGroupsRouteChildren {
+  SettingsCountryGroupsGroupIdRoute: typeof SettingsCountryGroupsGroupIdRoute
+  SettingsCountryGroupsIndexRoute: typeof SettingsCountryGroupsIndexRoute
+}
+
+const SettingsCountryGroupsRouteChildren: SettingsCountryGroupsRouteChildren = {
+  SettingsCountryGroupsGroupIdRoute: SettingsCountryGroupsGroupIdRoute,
+  SettingsCountryGroupsIndexRoute: SettingsCountryGroupsIndexRoute,
+}
+
+const SettingsCountryGroupsRouteWithChildren =
+  SettingsCountryGroupsRoute._addFileChildren(
+    SettingsCountryGroupsRouteChildren,
+  )
+
+interface SettingsDashboardApplicationsAppIdGroupsGroupIdRouteChildren {
+  SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute: typeof SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute
+  SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute: typeof SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute
+}
+
+const SettingsDashboardApplicationsAppIdGroupsGroupIdRouteChildren: SettingsDashboardApplicationsAppIdGroupsGroupIdRouteChildren =
+  {
+    SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute:
+      SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRoute,
+    SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute:
+      SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute,
+  }
+
+const SettingsDashboardApplicationsAppIdGroupsGroupIdRouteWithChildren =
+  SettingsDashboardApplicationsAppIdGroupsGroupIdRoute._addFileChildren(
+    SettingsDashboardApplicationsAppIdGroupsGroupIdRouteChildren,
+  )
+
+interface SettingsDashboardApplicationsAppIdRouteChildren {
+  SettingsDashboardApplicationsAppIdIndexRoute: typeof SettingsDashboardApplicationsAppIdIndexRoute
+  SettingsDashboardApplicationsAppIdGroupsGroupIdRoute: typeof SettingsDashboardApplicationsAppIdGroupsGroupIdRouteWithChildren
+}
+
+const SettingsDashboardApplicationsAppIdRouteChildren: SettingsDashboardApplicationsAppIdRouteChildren =
+  {
+    SettingsDashboardApplicationsAppIdIndexRoute:
+      SettingsDashboardApplicationsAppIdIndexRoute,
+    SettingsDashboardApplicationsAppIdGroupsGroupIdRoute:
+      SettingsDashboardApplicationsAppIdGroupsGroupIdRouteWithChildren,
+  }
+
+const SettingsDashboardApplicationsAppIdRouteWithChildren =
+  SettingsDashboardApplicationsAppIdRoute._addFileChildren(
+    SettingsDashboardApplicationsAppIdRouteChildren,
+  )
+
+interface SettingsDashboardApplicationsRouteChildren {
+  SettingsDashboardApplicationsAppIdRoute: typeof SettingsDashboardApplicationsAppIdRouteWithChildren
+  SettingsDashboardApplicationsIndexRoute: typeof SettingsDashboardApplicationsIndexRoute
+}
+
+const SettingsDashboardApplicationsRouteChildren: SettingsDashboardApplicationsRouteChildren =
+  {
+    SettingsDashboardApplicationsAppIdRoute:
+      SettingsDashboardApplicationsAppIdRouteWithChildren,
+    SettingsDashboardApplicationsIndexRoute:
+      SettingsDashboardApplicationsIndexRoute,
+  }
+
+const SettingsDashboardApplicationsRouteWithChildren =
+  SettingsDashboardApplicationsRoute._addFileChildren(
+    SettingsDashboardApplicationsRouteChildren,
+  )
+
+interface SettingsRulesRouteChildren {
+  SettingsRulesRuleIdRoute: typeof SettingsRulesRuleIdRoute
+  SettingsRulesNewRoute: typeof SettingsRulesNewRoute
+  SettingsRulesIndexRoute: typeof SettingsRulesIndexRoute
+}
+
+const SettingsRulesRouteChildren: SettingsRulesRouteChildren = {
+  SettingsRulesRuleIdRoute: SettingsRulesRuleIdRoute,
+  SettingsRulesNewRoute: SettingsRulesNewRoute,
+  SettingsRulesIndexRoute: SettingsRulesIndexRoute,
+}
+
+const SettingsRulesRouteWithChildren = SettingsRulesRoute._addFileChildren(
+  SettingsRulesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BulkRoute: BulkRoute,
@@ -779,7 +1194,7 @@ const rootRouteChildren: RootRouteChildren = {
   IamRoute: IamRoute,
   ClientsClientIdRoute: ClientsClientIdRouteWithChildren,
   ClientsNewRoute: ClientsNewRoute,
-  ProductClientSkusRoute: ProductClientSkusRoute,
+  ProductClientSkusRoute: ProductClientSkusRouteWithChildren,
   RegionSystemsRegionIdRoute: RegionSystemsRegionIdRoute,
   RegionSystemsNewRoute: RegionSystemsNewRoute,
   RetailersRetailerIdRoute: RetailersRetailerIdRoute,
@@ -788,10 +1203,11 @@ const rootRouteChildren: RootRouteChildren = {
   SeedsApiSubscriptionsRoute: SeedsApiSubscriptionsRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
   SeedsApiTimeframesRoute: SeedsApiTimeframesRoute,
-  SettingsCategoriesRoute: SettingsCategoriesRoute,
-  SettingsCountryGroupsRoute: SettingsCountryGroupsRoute,
-  SettingsDashboardApplicationsRoute: SettingsDashboardApplicationsRoute,
-  SettingsRulesRoute: SettingsRulesRoute,
+  SettingsCategoriesRoute: SettingsCategoriesRouteWithChildren,
+  SettingsCountryGroupsRoute: SettingsCountryGroupsRouteWithChildren,
+  SettingsDashboardApplicationsRoute:
+    SettingsDashboardApplicationsRouteWithChildren,
+  SettingsRulesRoute: SettingsRulesRouteWithChildren,
   SettingsTargetsRoute: SettingsTargetsRoute,
   SettingsTimeframesRoute: SettingsTimeframesRoute,
   StoresStoreIdRoute: StoresStoreIdRoute,
