@@ -9,15 +9,26 @@ export type AssignedProject = {
   activeTo: string;
 };
 
+// A client data group (dashboard grouping).
+export type DataGroup = {
+  id: string;
+  name: string;
+  dashboardType: string; // BRAND, ...
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Client = {
   id: string;
   name: string;
   acronym: string;
   isTest: boolean;
+  account?: string; // the account this client belongs to
   meta: string; // JSON string of meta properties
   createdAt: string;
   updatedAt: string;
   assignedProjects?: AssignedProject[];
+  dataGroups?: DataGroup[];
 };
 
 export const CLIENTS_KEY = "clients";
@@ -25,6 +36,46 @@ export const CLIENTS_KEY = "clients";
 // Seeded from the production mockup.
 const C = (id: string, name: string, acronym: string, isTest: boolean, createdAt: string, updatedAt: string): Client =>
   ({ id, name, acronym, isTest, meta: "{}", createdAt, updatedAt });
+
+// Coca Cola client↔project relationship (mirrors projects.ts CC ids cc1–cc20).
+const AP = (projectId: string, name: string, bom: string, activeFrom: string, activeTo: string): AssignedProject =>
+  ({ projectId, name, bom, activeFrom, activeTo });
+const COCA_PROJECTS: AssignedProject[] = [
+  AP("cc1", "DSM - Coca Cola FR (inactivo)", "demo_coca_fr_dsm", "Mon, Jan 6, 2025", "Sat, Jan 1, 2050"),
+  AP("cc2", "DSO - Coca Cola Latam", "SHL0054_DSM", "Sun, Mar 12, 2023", "Sat, Jan 1, 2050"),
+  AP("cc3", "DSM - Coca Cola CCH", "SHL0113", "Tue, Feb 10, 2026", "Tue, Sep 1, 2026"),
+  AP("cc4", "FSA - Coca Cola UK-MX-IN", "demo_coca_global_fsa", "Sun, Apr 14, 2024", "Tue, Dec 31, 2024"),
+  AP("cc5", "FSA - Coca Cola NA 1st party Uber", "demo_coke_1st_party_uber", "Thu, Jan 1, 2026", "Sun, Mar 1, 2026"),
+  AP("cc6", "BSB Coca Cola US Marketshare Interno", "SHL0110", "Thu, Mar 12, 2026", "Tue, Apr 14, 2026"),
+  AP("cc7", "FSA - Coca Cola INSWA", "SHL0056", "Mon, Jan 1, 2024", "Sun, Jun 21, 2026"),
+  AP("cc8", "QCA - Coca Cola ASP", "SHL0084_QCA", "Mon, Jan 1, 2024", "Sat, Jan 1, 2050"),
+  AP("cc9", "FSA - Coca Cola Africa", "coca_advanced_FSA_Africa", "Mon, Jan 1, 2024", "Thu, Oct 30, 2025"),
+  AP("cc10", "FSA - Coca Cola MENA", "coca_advanced_FSA_MENA", "Mon, Jan 1, 2024", "Thu, Oct 30, 2025"),
+  AP("cc11", "FSA - Coca Cola NA", "coca_advanced_FSA_NAx6", "Mon, Jan 1, 2024", "Thu, Oct 30, 2025"),
+  AP("cc12", "FSA - Coca Cola APAC - 5 star", "SHL0114", "Thu, Jan 1, 2026", "Tue, Feb 23, 2027"),
+  AP("cc13", "FSA - Coca Cola Oceania", "SHL0084_FSA", "Mon, Jan 1, 2024", "Sat, Jan 1, 2050"),
+  AP("cc14", "DSM - Coca Cola RFP", "SHL0110", "Sun, Mar 12, 2023", "Sun, May 31, 2026"),
+  AP("cc15", "FSA - Coca Cola Europe", "coca_advanced_FSA_Europa", "Wed, Jan 1, 2025", "Thu, Oct 30, 2025"),
+  AP("cc16", "FSA - Coca Cola APAC", "SHL0084_FSA", "Mon, Jan 1, 2024", "Sat, Jan 1, 2050"),
+  AP("cc17", "BSL Coca Cola BR Marketshare", "demo_coca_marketsh", "Wed, Jan 1, 2025", "Sat, Jan 1, 2050"),
+  AP("cc18", "FSA - Coca Cola Latam", "SHL0054_FSA", "Wed, Jan 1, 2025", "Sat, Apr 1, 2028"),
+  AP("cc19", "FSA - Coca Cola NA 1st party", "SHL0090", "Wed, Oct 1, 2025", "Tue, Oct 6, 2026"),
+  AP("cc20", "DSO - Coca Cola US", "demo_coca_watik_us", "Sat, Mar 1, 2025", "Tue, Jan 20, 2026"),
+];
+
+const DG = (id: string, name: string, createdAt: string, updatedAt: string): DataGroup =>
+  ({ id, name, dashboardType: "BRAND", createdAt, updatedAt });
+const COCA_DATA_GROUPS: DataGroup[] = [
+  DG("dg1", "Coca Cola ASP (+RFP)", "Fri, Sep 26, 2025 7:41 AM", "Tue, Jun 2, 2026 7:13 AM"),
+  DG("dg2", "Coca Cola CCH", "Thu, Feb 12, 2026 5:21 PM", "Thu, Feb 12, 2026 5:21 PM"),
+  DG("dg3", "Coca Cola Europe (+RFP)", "Mon, Mar 23, 2026 1:09 PM", "Wed, Apr 1, 2026 12:55 PM"),
+  DG("dg4", "Coca Cola Global", "Tue, Oct 15, 2024 8:50 AM", "Tue, Jun 2, 2026 7:14 AM"),
+  DG("dg5", "Coca Cola INSWA", "Mon, May 26, 2025 10:02 AM", "Tue, Jun 2, 2026 7:14 AM"),
+  DG("dg6", "Coca Cola Latam", "Thu, Mar 6, 2025 9:10 AM", "Tue, Jun 2, 2026 7:15 AM"),
+  DG("dg7", "Coca Cola NAOU-US (+RFP)", "Fri, Nov 7, 2025 1:45 PM", "Tue, Jun 2, 2026 7:15 AM"),
+  DG("dg8", "Coca Cola RFP - DSM", "Tue, Feb 17, 2026 11:04 AM", "Wed, Mar 25, 2026 10:30 AM"),
+  DG("dg9", "dummy-con", "Fri, Nov 28, 2025 5:35 PM", "Fri, Nov 28, 2025 5:35 PM"),
+];
 
 // Sourced from the Clients export (Ecometry / Shalion Console, Jun 2026) — 85 clients.
 export const INITIAL_CLIENTS: Client[] = [
@@ -34,7 +85,7 @@ export const INITIAL_CLIENTS: Client[] = [
   C("baye", "Bayer", "BAYE", false, "Thu, Dec 19, 2024 4:37 PM", "Thu, Dec 19, 2024 4:53 PM"),
   C("beam", "Beam Suntory", "BEAM", false, "Mon, Jul 10, 2023 7:58 AM", "Tue, Aug 6, 2024 10:30 AM"),
   C("bimb", "Bimbo", "BIMB", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:28 AM"),
-  C("coca", "Coca Cola", "COCA", false, "Thu, Mar 7, 2024 11:15 AM", "Fri, Jul 19, 2024 12:41 PM"),
+  { ...C("coca", "Coca Cola", "COCA", false, "Thu, Mar 7, 2024 11:15 AM", "Fri, Jul 19, 2024 12:41 PM"), account: "Coca Cola", assignedProjects: COCA_PROJECTS, dataGroups: COCA_DATA_GROUPS },
   C("cosn", "Cosnova", "COSN", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:30 AM"),
   C("dano", "Danone", "DANO", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:28 AM"),
   C("long", "De Longhi", "LONG", false, "Mon, Jul 14, 2025 9:17 AM", "Mon, Jul 14, 2025 2:41 PM"),
@@ -142,10 +193,12 @@ export function emptyClient(): Client {
     name: "",
     acronym: "",
     isTest: false,
+    account: "",
     meta: "{}",
     createdAt: nowStamp(),
     updatedAt: nowStamp(),
     assignedProjects: [],
+    dataGroups: [],
   };
 }
 

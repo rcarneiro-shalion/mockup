@@ -15,11 +15,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AssignProjectDialog } from "@/components/clients/AssignProjectDialog";
-import { LinkText, Pagination, Th, Td } from "@/components/seeds/ListPrimitives";
+import { LinkText, Pagination, Th, Td, Pill } from "@/components/seeds/ListPrimitives";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Client } from "@/lib/clients";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ArrowLeft, ChevronUp, HelpCircle, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, ChevronUp, HelpCircle, Pencil, Plus, Trash2, X, MoreVertical, LayoutGrid, Globe, Factory, Crosshair, Tag } from "lucide-react";
+
+const BOTTOM_TABS = [
+  { key: "data-groups", label: "Data groups", icon: LayoutGrid, addLabel: "Add data group" },
+  { key: "region-systems", label: "Region systems", icon: Globe, addLabel: "Add region system" },
+  { key: "manufacturers", label: "Manufacturers", icon: Factory, addLabel: "Add manufacturer" },
+  { key: "competitors", label: "Competitors", icon: Crosshair, addLabel: "Add competitor" },
+  { key: "seed-tags", label: "Seed tags", icon: Tag, addLabel: "Add seed tag" },
+];
 
 export function ClientForm({
   mode,
@@ -38,6 +47,8 @@ export function ClientForm({
   const [metaOpen, setMetaOpen] = useState(true);
   const [metaEditing, setMetaEditing] = useState(false);
   const [projectsOpen, setProjectsOpen] = useState(true);
+  const [countryGroupsOpen, setCountryGroupsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("data-groups");
   const [assignOpen, setAssignOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -47,6 +58,8 @@ export function ClientForm({
     setClient((prev) => ({ ...prev, [k]: v }));
 
   const assignedProjects = client.assignedProjects ?? [];
+  const dataGroups = client.dataGroups ?? [];
+  const currentTab = BOTTOM_TABS.find((t) => t.key === activeTab)!;
 
   const canSave = client.name.trim() && client.acronym.trim();
 
@@ -102,7 +115,7 @@ export function ClientForm({
           <div className="mx-auto max-w-5xl space-y-5">
             {/* Fields */}
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-4">
                 <div className="flex flex-col gap-1.5 md:col-span-2">
                   <Label className="text-sm font-medium text-foreground/80">
                     Name <span className="text-destructive">*</span>
@@ -120,6 +133,15 @@ export function ClientForm({
                     onChange={(e) => set("acronym", e.target.value.toUpperCase())}
                     maxLength={8}
                   />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-sm font-medium text-foreground/80">Account</Label>
+                  <Select value={client.account || client.name} disabled>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={client.account || client.name || " "}>{client.account || client.name}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -184,6 +206,19 @@ export function ClientForm({
                     metaEditing ? "bg-background" : "bg-secondary/40",
                   )}
                 />
+              )}
+            </div>
+
+            {/* Country groups */}
+            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <button type="button" onClick={() => setCountryGroupsOpen((v) => !v)} className="flex items-center gap-2">
+                <span className="grid h-7 w-7 place-items-center rounded-md bg-secondary text-muted-foreground">
+                  <ChevronUp className={cn("h-4 w-4 transition-transform", !countryGroupsOpen && "rotate-180")} />
+                </span>
+                <span className="text-base font-semibold text-foreground">Country groups</span>
+              </button>
+              {countryGroupsOpen && (
+                <p className="mt-4 text-sm text-muted-foreground">No country groups defined yet.</p>
               )}
             </div>
 
@@ -260,6 +295,103 @@ export function ClientForm({
                   <Pagination total={assignedProjects.length} />
                 </>
               )}
+            </div>
+
+            {/* Bottom tabbed section: Data groups / Region systems / Manufacturers / Competitors / Seed tags */}
+            <div>
+              <div className="flex flex-wrap items-center gap-6 border-b border-border">
+                {BOTTOM_TABS.map((t) => {
+                  const Icon = t.icon;
+                  const on = activeTab === t.key;
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => setActiveTab(t.key)}
+                      className={cn(
+                        "relative flex items-center gap-1.5 py-3 text-sm transition-colors",
+                        on ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" /> {t.label}
+                      {on && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-foreground" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-semibold text-foreground">{currentTab.label}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5"
+                    onClick={() => toast.info(`${currentTab.addLabel} — coming soon`)}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {currentTab.addLabel}
+                  </Button>
+                </div>
+
+                {activeTab === "data-groups" ? (
+                  <>
+                    <div className="mt-4 overflow-hidden rounded-lg border border-border">
+                      <table className="w-full text-sm">
+                        <thead className="bg-secondary/60">
+                          <tr>
+                            <Th>Name</Th>
+                            <Th>Dashboard Type</Th>
+                            <Th>Created at</Th>
+                            <Th>Updated at</Th>
+                            <Th className="w-10" />
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dataGroups.length === 0 ? (
+                            <tr>
+                              <Td className="text-muted-foreground"><span className="block py-2">No data groups yet.</span></Td>
+                              <Td /><Td /><Td /><Td />
+                            </tr>
+                          ) : (
+                            dataGroups.map((g) => (
+                              <tr key={g.id} className="border-t border-border hover:bg-secondary/40">
+                                <Td><LinkText>{g.name}</LinkText></Td>
+                                <Td><Pill tone="slate">{g.dashboardType}</Pill></Td>
+                                <Td className="text-muted-foreground">{g.createdAt}</Td>
+                                <Td className="text-muted-foreground">{g.updatedAt}</Td>
+                                <Td>
+                                  <button className="rounded p-1 text-muted-foreground hover:bg-secondary">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </button>
+                                </Td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                    <Pagination total={dataGroups.length} />
+                  </>
+                ) : (
+                  <>
+                    <div className="mt-4 overflow-hidden rounded-lg border border-border">
+                      <table className="w-full text-sm">
+                        <thead className="bg-secondary/60">
+                          <tr><Th>Name</Th><Th>Created at</Th><Th>Updated at</Th><Th className="w-10" /></tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <Td className="text-muted-foreground"><span className="block py-2">No {currentTab.label.toLowerCase()} yet.</span></Td>
+                            <Td /><Td /><Td />
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <Pagination total={0} />
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
