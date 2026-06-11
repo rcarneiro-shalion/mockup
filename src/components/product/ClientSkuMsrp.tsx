@@ -73,7 +73,7 @@ const tabs: { key: Scope; label: string; assignLabel: string }[] = [
 
 /** Embeddable MSRP module — tabs (Global / Region / Store / Region & Store) + assign dialog. */
 export function ClientSkuMsrp() {
-  const [active, setActive] = useState<Scope>("region");
+  const [active, setActive] = useState<Scope>("global");
   const [collapsed, setCollapsed] = useState(false);
   const [data, setData] = useState(initialData);
   const [open, setOpen] = useState(false);
