@@ -59,9 +59,9 @@ const nav: NavItem[] = [
 export function Sidebar() {
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
-  const [open, setOpen] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(nav.map((n) => [n.label, !!n.defaultOpen])),
-  );
+  // Groups open automatically when one of their items is the active route;
+  // otherwise closed by default. A manual toggle overrides the auto behavior.
+  const [open, setOpen] = useState<Record<string, boolean>>({});
 
   if (collapsed) {
     return (
@@ -104,16 +104,17 @@ export function Sidebar() {
         {nav.map((item) => {
           const Icon = item.icon;
           const hasChildren = !!item.children;
-          const isOpen = open[item.label];
-          const groupActive =
+          const groupActive = !!(
             item.children?.some((c) => pathname.startsWith(c.to)) ||
-            (item.to && pathname === item.to);
+            (item.to && pathname === item.to)
+          );
+          const isOpen = open[item.label] ?? groupActive;
 
           if (hasChildren) {
             return (
               <div key={item.label}>
                 <button
-                  onClick={() => setOpen((o) => ({ ...o, [item.label]: !o[item.label] }))}
+                  onClick={() => setOpen((o) => ({ ...o, [item.label]: !(o[item.label] ?? groupActive) }))}
                   className={cn(
                     "flex w-full items-center justify-between rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
                     groupActive

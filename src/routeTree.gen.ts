@@ -32,6 +32,7 @@ import { Route as ClientsClientIdRouteImport } from './routes/clients/$clientId'
 import { Route as SeedsApiSeedsIndexRouteImport } from './routes/seeds-api/seeds/index'
 import { Route as SeedsApiProjectsIndexRouteImport } from './routes/seeds-api/projects/index'
 import { Route as SeedsApiSeedsNewRouteImport } from './routes/seeds-api/seeds/new'
+import { Route as SeedsApiSeedsSeedIdRouteImport } from './routes/seeds-api/seeds/$seedId'
 import { Route as SeedsApiProjectsNewRouteImport } from './routes/seeds-api/projects/new'
 import { Route as SeedsApiProjectsProjectIdRouteImport } from './routes/seeds-api/projects/$projectId'
 
@@ -151,6 +152,11 @@ const SeedsApiSeedsNewRoute = SeedsApiSeedsNewRouteImport.update({
   path: '/seeds-api/seeds/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SeedsApiSeedsSeedIdRoute = SeedsApiSeedsSeedIdRouteImport.update({
+  id: '/seeds-api/seeds/$seedId',
+  path: '/seeds-api/seeds/$seedId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SeedsApiProjectsNewRoute = SeedsApiProjectsNewRouteImport.update({
   id: '/seeds-api/projects/new',
   path: '/seeds-api/projects/new',
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/stores/': typeof StoresIndexRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
+  '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/stores': typeof StoresIndexRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
+  '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
   '/seeds-api/projects': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsIndexRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/stores/': typeof StoresIndexRoute
   '/seeds-api/projects/$projectId': typeof SeedsApiProjectsProjectIdRoute
   '/seeds-api/projects/new': typeof SeedsApiProjectsNewRoute
+  '/seeds-api/seeds/$seedId': typeof SeedsApiSeedsSeedIdRoute
   '/seeds-api/seeds/new': typeof SeedsApiSeedsNewRoute
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
@@ -270,6 +279,7 @@ export interface FileRouteTypes {
     | '/stores/'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
+    | '/seeds-api/seeds/$seedId'
     | '/seeds-api/seeds/new'
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
@@ -297,6 +307,7 @@ export interface FileRouteTypes {
     | '/stores'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
+    | '/seeds-api/seeds/$seedId'
     | '/seeds-api/seeds/new'
     | '/seeds-api/projects'
     | '/seeds-api/seeds'
@@ -324,6 +335,7 @@ export interface FileRouteTypes {
     | '/stores/'
     | '/seeds-api/projects/$projectId'
     | '/seeds-api/projects/new'
+    | '/seeds-api/seeds/$seedId'
     | '/seeds-api/seeds/new'
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
@@ -352,6 +364,7 @@ export interface RootRouteChildren {
   StoresIndexRoute: typeof StoresIndexRoute
   SeedsApiProjectsProjectIdRoute: typeof SeedsApiProjectsProjectIdRoute
   SeedsApiProjectsNewRoute: typeof SeedsApiProjectsNewRoute
+  SeedsApiSeedsSeedIdRoute: typeof SeedsApiSeedsSeedIdRoute
   SeedsApiSeedsNewRoute: typeof SeedsApiSeedsNewRoute
   SeedsApiProjectsIndexRoute: typeof SeedsApiProjectsIndexRoute
   SeedsApiSeedsIndexRoute: typeof SeedsApiSeedsIndexRoute
@@ -520,6 +533,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiSeedsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/seeds-api/seeds/$seedId': {
+      id: '/seeds-api/seeds/$seedId'
+      path: '/seeds-api/seeds/$seedId'
+      fullPath: '/seeds-api/seeds/$seedId'
+      preLoaderRoute: typeof SeedsApiSeedsSeedIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/seeds-api/projects/new': {
       id: '/seeds-api/projects/new'
       path: '/seeds-api/projects/new'
@@ -560,6 +580,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoresIndexRoute: StoresIndexRoute,
   SeedsApiProjectsProjectIdRoute: SeedsApiProjectsProjectIdRoute,
   SeedsApiProjectsNewRoute: SeedsApiProjectsNewRoute,
+  SeedsApiSeedsSeedIdRoute: SeedsApiSeedsSeedIdRoute,
   SeedsApiSeedsNewRoute: SeedsApiSeedsNewRoute,
   SeedsApiProjectsIndexRoute: SeedsApiProjectsIndexRoute,
   SeedsApiSeedsIndexRoute: SeedsApiSeedsIndexRoute,

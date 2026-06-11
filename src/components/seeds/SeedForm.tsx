@@ -11,33 +11,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import { STORE_OPTIONS, CATEGORY_OPTIONS, PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
-import { emptySeed, seedValueLabel, KEYWORD_TYPE_OPTIONS, type Seed, type SeedType, type KeywordType } from "@/lib/seeds";
+import { emptySeed, seedValueLabel, KEYWORD_TYPE_OPTIONS, SEED_STATUS_OPTIONS, type Seed, type SeedType, type KeywordType, type SeedStatus } from "@/lib/seeds";
+import { nowStamp } from "@/lib/clients";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ArrowLeft, ChevronUp, HelpCircle, Sprout } from "lucide-react";
+import { ArrowLeft, ChevronUp, HelpCircle, MoreHorizontal, Sprout, Trash2 } from "lucide-react";
 
 export function SeedForm({
   type,
+  initial = null,
   onSave,
   onCancel,
+  onDelete,
 }: {
   type: SeedType;
+  initial?: Seed | null;
   onSave: (seed: Seed) => void;
   onCancel: () => void;
+  onDelete?: () => void;
 }) {
-  const [seed, setSeed] = useState<Seed>(() => emptySeed(type));
+  const effectiveType: SeedType = initial?.type ?? type;
+  const isEdit = !!initial;
+  const [seed, setSeed] = useState<Seed>(() =>
+    initial ? { ...emptySeed(effectiveType), ...initial } : emptySeed(type),
+  );
   const [fieldsOpen, setFieldsOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const set = <K extends keyof Seed>(k: K, v: Seed[K]) =>
     setSeed((prev) => ({ ...prev, [k]: v }));
 
-  const valueLabel = seedValueLabel(type);
+  const valueLabel = seedValueLabel(effectiveType);
   const canSave =
     seed.d.trim() && seed.store.trim() && seed.discoveryKey?.trim() && seed.pageType?.trim() && seed.value?.trim() &&
-    (type !== "KEYWORD" || !!seed.keywordType);
+    (effectiveType !== "KEYWORD" || !!seed.keywordType);
 
   const handleSave = async () => {
     if (!canSave) {
@@ -47,8 +62,8 @@ export function SeedForm({
     setIsSaving(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 300));
-      onSave(seed);
-      toast.success("Seed created successfully");
+      onSave({ ...seed, u: nowStamp() });
+      toast.success(isEdit ? "Seed updated successfully" : "Seed created successfully");
     } catch {
       toast.error("Save failed. Please try again.");
     } finally {
@@ -69,10 +84,29 @@ export function SeedForm({
             <ArrowLeft className="h-4 w-4" />
             Seeds
           </button>
-          <div className="mt-1 flex items-center gap-2">
-            <Sprout className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Add seed</h1>
-            <Pill tone="blue">{type}</Pill>
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Sprout className="h-5 w-5 text-muted-foreground" />
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                {isEdit ? seed.d || "Seed" : "Add seed"}
+              </h1>
+              <Pill tone="blue">{effectiveType}</Pill>
+            </div>
+            {isEdit && onDelete && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-secondary" aria-label="More options">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={onDelete}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete seed
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 
@@ -107,6 +141,13 @@ export function SeedForm({
                 </div>
 
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+                  <Field label="Status">
+                    <SelectBox value={seed.status ?? "Active"} onChange={(v) => set("status", v as SeedStatus)} options={SEED_STATUS_OPTIONS} />
+                  </Field>
+                  <div />
+                </div>
+
+                <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
                   <Field label="Discovery key" required help>
                     <Input value={seed.discoveryKey ?? ""} onChange={(e) => set("discoveryKey", e.target.value)} />
                   </Field>
@@ -115,8 +156,21 @@ export function SeedForm({
                   </Field>
                 </div>
 
-                {/* Type-specific value field */}
-                {type === "KEYWORD" ? (
+                <div className="flex items-start gap-3">
+                  <input
+                    id="is-from-discovery"
+                    type="checkbox"
+                    checked={!!seed.isFromDiscovery}
+                    onChange={(e) => set("isFromDiscovery", e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-border"
+                  />
+                  <label htmlFor="is-from-discovery" className="cursor-pointer">
+                    <span className="text-sm font-medium text-foreground">Is from discovery</span>
+                    <p className="mt-1 text-sm text-muted-foreground">Indicates if this seed was automatically generated by a PLP discovery seed.</p>
+                  </label>
+                </div>
+
+                {effectiveType === "KEYWORD" ? (
                   <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
                     <Field label="Keyword type" required>
                       <SelectBox value={seed.keywordType ?? ""} onChange={(v) => set("keywordType", v as KeywordType)} options={KEYWORD_TYPE_OPTIONS} />
@@ -139,7 +193,7 @@ export function SeedForm({
         <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
           <Button variant="outline" onClick={onCancel} disabled={isSaving}>Cancel</Button>
           <Button onClick={handleSave} disabled={isSaving || !canSave}>
-            {isSaving ? "Saving..." : "Add seed"}
+            {isSaving ? "Saving..." : isEdit ? "Save seed" : "Add seed"}
           </Button>
         </div>
       </div>
