@@ -16,8 +16,10 @@ import {
   ClipboardList,
   PlayCircle,
   ListChecks,
-  Network,
-  ShieldCheck,
+  LayoutGrid,
+  Users,
+  Building2,
+  Contact,
   ChevronDown,
   ChevronLeft,
 } from "lucide-react";
@@ -157,10 +159,12 @@ const dataCollectorNav: NavItem[] = [
   },
 ];
 
-// IAM is still a placeholder area in this mockup.
+// IAM (identity & access) — mirrors console-frontend's /iam area.
 const iamNav: NavItem[] = [
-  { label: "Overview", icon: ShieldCheck, to: "/iam" },
-  { label: "Connections", icon: Network, to: "/iam" },
+  { label: "Applications", icon: LayoutGrid, to: "/iam/applications" },
+  { label: "Users", icon: Users, to: "/iam/users" },
+  { label: "Accounts", icon: Building2, to: "/iam/accounts" },
+  { label: "Roles / Persona", icon: Contact, to: "/iam/roles" },
 ];
 
 /** Pick the left-menu for the active top-bar section from the current path. */

@@ -1008,6 +1008,101 @@ const dcErrorIndicators: RulePage = {
   ],
 };
 
+// ---------- IAM ------------------------------------------------------------
+// Identity & access. Rules mirrored from console-frontend's src/features/iam
+// (Applications, Users, Accounts, Roles / Persona) + their resource DTOs.
+
+const iamApplications: RulePage = {
+  key: "iam-applications",
+  label: "Applications",
+  match: "/iam/applications",
+  groups: [
+    {
+      category: "What an application is",
+      rules: [
+        "An application is a product users and accounts can access — the platform-wide ones are Ecometry, Data Collector and IAM.",
+        "Each application owns a set of permissions, each defined as a resource + action pair (e.g. user:manage, role:read).",
+      ],
+    },
+    {
+      category: "Rules",
+      rules: [
+        "Name is required. The slug is a URL-friendly unique identifier and is read-only once set.",
+        "Creating, editing or deleting an application requires the manage permission on the application resource.",
+        "A permission's resource name and action are immutable after it is created.",
+      ],
+    },
+  ],
+};
+
+const iamUsers: RulePage = {
+  key: "iam-users",
+  label: "Users",
+  match: "/iam/users",
+  groups: [
+    {
+      category: "What a user is",
+      rules: [
+        "A user is a person who signs in, identified by email. A user belongs to one or more accounts.",
+        "Within an account a user has a role, and can be granted per-application permissions.",
+      ],
+    },
+    {
+      category: "Rules",
+      rules: [
+        "Users are created through a batch flow (with email validation) — there is no single “Add user” button on the list.",
+        "Email is read-only once the user exists; a user is enabled/disabled with the active/inactive status switch.",
+        "Only users with the manage permission can change another user's role, status or permissions.",
+      ],
+    },
+  ],
+};
+
+const iamAccounts: RulePage = {
+  key: "iam-accounts",
+  label: "Accounts",
+  match: "/iam/accounts",
+  groups: [
+    {
+      category: "What an account is",
+      rules: [
+        "An account is the client / organisation context that users belong to and that authorises access to applications.",
+        "An account can hold several app clients (PUBLIC or CONFIDENTIAL) used to authenticate integrations.",
+      ],
+    },
+    {
+      category: "Rules",
+      rules: [
+        "Name is required and cannot be blank or whitespace-only; the slug is generated from the name.",
+        "Creating or deleting an account requires the ADMIN role or the iam:account:manage permission.",
+        "IAM permissions are scoped to the account context.",
+      ],
+    },
+  ],
+};
+
+const iamRoles: RulePage = {
+  key: "iam-roles",
+  label: "Roles / Persona",
+  match: "/iam/roles",
+  groups: [
+    {
+      category: "What a role / persona is",
+      rules: [
+        "A role (persona) is a named bundle of access that is assigned to a user within an account.",
+        "Roles are the infrastructure permissions are assigned through.",
+      ],
+    },
+    {
+      category: "Rules",
+      rules: [
+        "Name is required; the slug is auto-generated and immutable.",
+        "Adding, editing or deleting a role requires the role:manage permission; deletion is confirmed first.",
+      ],
+    },
+  ],
+};
+
 // ---------- Sections -------------------------------------------------------
 
 export const RULE_SECTIONS: RuleSection[] = [
@@ -1109,6 +1204,12 @@ export const RULE_SECTIONS: RuleSection[] = [
       dcProxyProviders,
       dcErrorIndicators,
     ],
+  },
+  {
+    section: "IAM",
+    intro:
+      "IAM controls who can sign into the platform, which accounts they belong to, which applications they can reach, and what they can do there via roles and per-application permissions.",
+    pages: [iamApplications, iamUsers, iamAccounts, iamRoles],
   },
 ];
 

@@ -9,11 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IamRouteImport } from './routes/iam'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoresIndexRouteImport } from './routes/stores/index'
 import { Route as RetailersIndexRouteImport } from './routes/retailers/index'
 import { Route as RegionSystemsIndexRouteImport } from './routes/region-systems/index'
+import { Route as IamIndexRouteImport } from './routes/iam/index'
 import { Route as DataCollectorIndexRouteImport } from './routes/data-collector/index'
 import { Route as ClientsIndexRouteImport } from './routes/clients/index'
 import { Route as BulkIndexRouteImport } from './routes/bulk/index'
@@ -61,6 +61,10 @@ import { Route as ProductClientSkusIndexRouteImport } from './routes/product/cli
 import { Route as ProductClientCategoriesIndexRouteImport } from './routes/product/client-categories/index'
 import { Route as ProductBusinessUnitsIndexRouteImport } from './routes/product/business-units/index'
 import { Route as ProductAssortmentsIndexRouteImport } from './routes/product/assortments/index'
+import { Route as IamUsersIndexRouteImport } from './routes/iam/users/index'
+import { Route as IamRolesIndexRouteImport } from './routes/iam/roles/index'
+import { Route as IamApplicationsIndexRouteImport } from './routes/iam/applications/index'
+import { Route as IamAccountsIndexRouteImport } from './routes/iam/accounts/index'
 import { Route as DataCollectorTemplatesIndexRouteImport } from './routes/data-collector/templates/index'
 import { Route as DataCollectorTasksIndexRouteImport } from './routes/data-collector/tasks/index'
 import { Route as DataCollectorProjectsIndexRouteImport } from './routes/data-collector/projects/index'
@@ -121,6 +125,13 @@ import { Route as ProductBusinessUnitsNewRouteImport } from './routes/product/bu
 import { Route as ProductBusinessUnitsIdRouteImport } from './routes/product/business-units/$id'
 import { Route as ProductAssortmentsNewRouteImport } from './routes/product/assortments/new'
 import { Route as ProductAssortmentsIdRouteImport } from './routes/product/assortments/$id'
+import { Route as IamUsersIdRouteImport } from './routes/iam/users/$id'
+import { Route as IamRolesNewRouteImport } from './routes/iam/roles/new'
+import { Route as IamRolesIdRouteImport } from './routes/iam/roles/$id'
+import { Route as IamApplicationsNewRouteImport } from './routes/iam/applications/new'
+import { Route as IamApplicationsIdRouteImport } from './routes/iam/applications/$id'
+import { Route as IamAccountsNewRouteImport } from './routes/iam/accounts/new'
+import { Route as IamAccountsIdRouteImport } from './routes/iam/accounts/$id'
 import { Route as DataCollectorTemplatesNewRouteImport } from './routes/data-collector/templates/new'
 import { Route as DataCollectorTemplatesIdRouteImport } from './routes/data-collector/templates/$id'
 import { Route as DataCollectorTasksIdRouteImport } from './routes/data-collector/tasks/$id'
@@ -175,11 +186,6 @@ import { Route as DataCollectorSettingsProxiesAccountsIdRouteImport } from './ro
 import { Route as SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRouteImport } from './routes/settings/dashboard-applications.$appId.groups.$groupId.index'
 import { Route as SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRouteImport } from './routes/settings/dashboard-applications.$appId.groups.$groupId.sections.$sectionId'
 
-const IamRoute = IamRouteImport.update({
-  id: '/iam',
-  path: '/iam',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -198,6 +204,11 @@ const RetailersIndexRoute = RetailersIndexRouteImport.update({
 const RegionSystemsIndexRoute = RegionSystemsIndexRouteImport.update({
   id: '/region-systems/',
   path: '/region-systems/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamIndexRoute = IamIndexRouteImport.update({
+  id: '/iam/',
+  path: '/iam/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DataCollectorIndexRoute = DataCollectorIndexRouteImport.update({
@@ -445,6 +456,26 @@ const ProductBusinessUnitsIndexRoute =
 const ProductAssortmentsIndexRoute = ProductAssortmentsIndexRouteImport.update({
   id: '/product/assortments/',
   path: '/product/assortments/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamUsersIndexRoute = IamUsersIndexRouteImport.update({
+  id: '/iam/users/',
+  path: '/iam/users/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamRolesIndexRoute = IamRolesIndexRouteImport.update({
+  id: '/iam/roles/',
+  path: '/iam/roles/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamApplicationsIndexRoute = IamApplicationsIndexRouteImport.update({
+  id: '/iam/applications/',
+  path: '/iam/applications/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamAccountsIndexRoute = IamAccountsIndexRouteImport.update({
+  id: '/iam/accounts/',
+  path: '/iam/accounts/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DataCollectorTemplatesIndexRoute =
@@ -778,6 +809,41 @@ const ProductAssortmentsIdRoute = ProductAssortmentsIdRouteImport.update({
   path: '/product/assortments/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IamUsersIdRoute = IamUsersIdRouteImport.update({
+  id: '/iam/users/$id',
+  path: '/iam/users/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamRolesNewRoute = IamRolesNewRouteImport.update({
+  id: '/iam/roles/new',
+  path: '/iam/roles/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamRolesIdRoute = IamRolesIdRouteImport.update({
+  id: '/iam/roles/$id',
+  path: '/iam/roles/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamApplicationsNewRoute = IamApplicationsNewRouteImport.update({
+  id: '/iam/applications/new',
+  path: '/iam/applications/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamApplicationsIdRoute = IamApplicationsIdRouteImport.update({
+  id: '/iam/applications/$id',
+  path: '/iam/applications/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamAccountsNewRoute = IamAccountsNewRouteImport.update({
+  id: '/iam/accounts/new',
+  path: '/iam/accounts/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IamAccountsIdRoute = IamAccountsIdRouteImport.update({
+  id: '/iam/accounts/$id',
+  path: '/iam/accounts/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DataCollectorTemplatesNewRoute =
   DataCollectorTemplatesNewRouteImport.update({
     id: '/data-collector/templates/new',
@@ -1093,7 +1159,6 @@ const SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/iam': typeof IamRoute
   '/bulk/$id': typeof BulkIdRoute
   '/bulk/new': typeof BulkNewRoute
   '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
@@ -1118,6 +1183,7 @@ export interface FileRoutesByFullPath {
   '/bulk/': typeof BulkIndexRoute
   '/clients/': typeof ClientsIndexRoute
   '/data-collector/': typeof DataCollectorIndexRoute
+  '/iam/': typeof IamIndexRoute
   '/region-systems/': typeof RegionSystemsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
@@ -1150,6 +1216,13 @@ export interface FileRoutesByFullPath {
   '/data-collector/tasks/$id': typeof DataCollectorTasksIdRoute
   '/data-collector/templates/$id': typeof DataCollectorTemplatesIdRoute
   '/data-collector/templates/new': typeof DataCollectorTemplatesNewRoute
+  '/iam/accounts/$id': typeof IamAccountsIdRoute
+  '/iam/accounts/new': typeof IamAccountsNewRoute
+  '/iam/applications/$id': typeof IamApplicationsIdRoute
+  '/iam/applications/new': typeof IamApplicationsNewRoute
+  '/iam/roles/$id': typeof IamRolesIdRoute
+  '/iam/roles/new': typeof IamRolesNewRoute
+  '/iam/users/$id': typeof IamUsersIdRoute
   '/product/assortments/$id': typeof ProductAssortmentsIdRoute
   '/product/assortments/new': typeof ProductAssortmentsNewRoute
   '/product/business-units/$id': typeof ProductBusinessUnitsIdRoute
@@ -1210,6 +1283,10 @@ export interface FileRoutesByFullPath {
   '/data-collector/projects/': typeof DataCollectorProjectsIndexRoute
   '/data-collector/tasks/': typeof DataCollectorTasksIndexRoute
   '/data-collector/templates/': typeof DataCollectorTemplatesIndexRoute
+  '/iam/accounts/': typeof IamAccountsIndexRoute
+  '/iam/applications/': typeof IamApplicationsIndexRoute
+  '/iam/roles/': typeof IamRolesIndexRoute
+  '/iam/users/': typeof IamUsersIndexRoute
   '/product/assortments/': typeof ProductAssortmentsIndexRoute
   '/product/business-units/': typeof ProductBusinessUnitsIndexRoute
   '/product/client-categories/': typeof ProductClientCategoriesIndexRoute
@@ -1260,7 +1337,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/iam': typeof IamRoute
   '/bulk/$id': typeof BulkIdRoute
   '/bulk/new': typeof BulkNewRoute
   '/clients/new': typeof ClientsNewRoute
@@ -1279,6 +1355,7 @@ export interface FileRoutesByTo {
   '/bulk': typeof BulkIndexRoute
   '/clients': typeof ClientsIndexRoute
   '/data-collector': typeof DataCollectorIndexRoute
+  '/iam': typeof IamIndexRoute
   '/region-systems': typeof RegionSystemsIndexRoute
   '/retailers': typeof RetailersIndexRoute
   '/stores': typeof StoresIndexRoute
@@ -1311,6 +1388,13 @@ export interface FileRoutesByTo {
   '/data-collector/tasks/$id': typeof DataCollectorTasksIdRoute
   '/data-collector/templates/$id': typeof DataCollectorTemplatesIdRoute
   '/data-collector/templates/new': typeof DataCollectorTemplatesNewRoute
+  '/iam/accounts/$id': typeof IamAccountsIdRoute
+  '/iam/accounts/new': typeof IamAccountsNewRoute
+  '/iam/applications/$id': typeof IamApplicationsIdRoute
+  '/iam/applications/new': typeof IamApplicationsNewRoute
+  '/iam/roles/$id': typeof IamRolesIdRoute
+  '/iam/roles/new': typeof IamRolesNewRoute
+  '/iam/users/$id': typeof IamUsersIdRoute
   '/product/assortments/$id': typeof ProductAssortmentsIdRoute
   '/product/assortments/new': typeof ProductAssortmentsNewRoute
   '/product/business-units/$id': typeof ProductBusinessUnitsIdRoute
@@ -1370,6 +1454,10 @@ export interface FileRoutesByTo {
   '/data-collector/projects': typeof DataCollectorProjectsIndexRoute
   '/data-collector/tasks': typeof DataCollectorTasksIndexRoute
   '/data-collector/templates': typeof DataCollectorTemplatesIndexRoute
+  '/iam/accounts': typeof IamAccountsIndexRoute
+  '/iam/applications': typeof IamApplicationsIndexRoute
+  '/iam/roles': typeof IamRolesIndexRoute
+  '/iam/users': typeof IamUsersIndexRoute
   '/product/assortments': typeof ProductAssortmentsIndexRoute
   '/product/business-units': typeof ProductBusinessUnitsIndexRoute
   '/product/client-categories': typeof ProductClientCategoriesIndexRoute
@@ -1420,7 +1508,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/iam': typeof IamRoute
   '/bulk/$id': typeof BulkIdRoute
   '/bulk/new': typeof BulkNewRoute
   '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
@@ -1445,6 +1532,7 @@ export interface FileRoutesById {
   '/bulk/': typeof BulkIndexRoute
   '/clients/': typeof ClientsIndexRoute
   '/data-collector/': typeof DataCollectorIndexRoute
+  '/iam/': typeof IamIndexRoute
   '/region-systems/': typeof RegionSystemsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
@@ -1477,6 +1565,13 @@ export interface FileRoutesById {
   '/data-collector/tasks/$id': typeof DataCollectorTasksIdRoute
   '/data-collector/templates/$id': typeof DataCollectorTemplatesIdRoute
   '/data-collector/templates/new': typeof DataCollectorTemplatesNewRoute
+  '/iam/accounts/$id': typeof IamAccountsIdRoute
+  '/iam/accounts/new': typeof IamAccountsNewRoute
+  '/iam/applications/$id': typeof IamApplicationsIdRoute
+  '/iam/applications/new': typeof IamApplicationsNewRoute
+  '/iam/roles/$id': typeof IamRolesIdRoute
+  '/iam/roles/new': typeof IamRolesNewRoute
+  '/iam/users/$id': typeof IamUsersIdRoute
   '/product/assortments/$id': typeof ProductAssortmentsIdRoute
   '/product/assortments/new': typeof ProductAssortmentsNewRoute
   '/product/business-units/$id': typeof ProductBusinessUnitsIdRoute
@@ -1537,6 +1632,10 @@ export interface FileRoutesById {
   '/data-collector/projects/': typeof DataCollectorProjectsIndexRoute
   '/data-collector/tasks/': typeof DataCollectorTasksIndexRoute
   '/data-collector/templates/': typeof DataCollectorTemplatesIndexRoute
+  '/iam/accounts/': typeof IamAccountsIndexRoute
+  '/iam/applications/': typeof IamApplicationsIndexRoute
+  '/iam/roles/': typeof IamRolesIndexRoute
+  '/iam/users/': typeof IamUsersIndexRoute
   '/product/assortments/': typeof ProductAssortmentsIndexRoute
   '/product/business-units/': typeof ProductBusinessUnitsIndexRoute
   '/product/client-categories/': typeof ProductClientCategoriesIndexRoute
@@ -1589,7 +1688,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/iam'
     | '/bulk/$id'
     | '/bulk/new'
     | '/clients/$clientId'
@@ -1614,6 +1712,7 @@ export interface FileRouteTypes {
     | '/bulk/'
     | '/clients/'
     | '/data-collector/'
+    | '/iam/'
     | '/region-systems/'
     | '/retailers/'
     | '/stores/'
@@ -1646,6 +1745,13 @@ export interface FileRouteTypes {
     | '/data-collector/tasks/$id'
     | '/data-collector/templates/$id'
     | '/data-collector/templates/new'
+    | '/iam/accounts/$id'
+    | '/iam/accounts/new'
+    | '/iam/applications/$id'
+    | '/iam/applications/new'
+    | '/iam/roles/$id'
+    | '/iam/roles/new'
+    | '/iam/users/$id'
     | '/product/assortments/$id'
     | '/product/assortments/new'
     | '/product/business-units/$id'
@@ -1706,6 +1812,10 @@ export interface FileRouteTypes {
     | '/data-collector/projects/'
     | '/data-collector/tasks/'
     | '/data-collector/templates/'
+    | '/iam/accounts/'
+    | '/iam/applications/'
+    | '/iam/roles/'
+    | '/iam/users/'
     | '/product/assortments/'
     | '/product/business-units/'
     | '/product/client-categories/'
@@ -1756,7 +1866,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/iam'
     | '/bulk/$id'
     | '/bulk/new'
     | '/clients/new'
@@ -1775,6 +1884,7 @@ export interface FileRouteTypes {
     | '/bulk'
     | '/clients'
     | '/data-collector'
+    | '/iam'
     | '/region-systems'
     | '/retailers'
     | '/stores'
@@ -1807,6 +1917,13 @@ export interface FileRouteTypes {
     | '/data-collector/tasks/$id'
     | '/data-collector/templates/$id'
     | '/data-collector/templates/new'
+    | '/iam/accounts/$id'
+    | '/iam/accounts/new'
+    | '/iam/applications/$id'
+    | '/iam/applications/new'
+    | '/iam/roles/$id'
+    | '/iam/roles/new'
+    | '/iam/users/$id'
     | '/product/assortments/$id'
     | '/product/assortments/new'
     | '/product/business-units/$id'
@@ -1866,6 +1983,10 @@ export interface FileRouteTypes {
     | '/data-collector/projects'
     | '/data-collector/tasks'
     | '/data-collector/templates'
+    | '/iam/accounts'
+    | '/iam/applications'
+    | '/iam/roles'
+    | '/iam/users'
     | '/product/assortments'
     | '/product/business-units'
     | '/product/client-categories'
@@ -1915,7 +2036,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/iam'
     | '/bulk/$id'
     | '/bulk/new'
     | '/clients/$clientId'
@@ -1940,6 +2060,7 @@ export interface FileRouteTypes {
     | '/bulk/'
     | '/clients/'
     | '/data-collector/'
+    | '/iam/'
     | '/region-systems/'
     | '/retailers/'
     | '/stores/'
@@ -1972,6 +2093,13 @@ export interface FileRouteTypes {
     | '/data-collector/tasks/$id'
     | '/data-collector/templates/$id'
     | '/data-collector/templates/new'
+    | '/iam/accounts/$id'
+    | '/iam/accounts/new'
+    | '/iam/applications/$id'
+    | '/iam/applications/new'
+    | '/iam/roles/$id'
+    | '/iam/roles/new'
+    | '/iam/users/$id'
     | '/product/assortments/$id'
     | '/product/assortments/new'
     | '/product/business-units/$id'
@@ -2032,6 +2160,10 @@ export interface FileRouteTypes {
     | '/data-collector/projects/'
     | '/data-collector/tasks/'
     | '/data-collector/templates/'
+    | '/iam/accounts/'
+    | '/iam/applications/'
+    | '/iam/roles/'
+    | '/iam/users/'
     | '/product/assortments/'
     | '/product/business-units/'
     | '/product/client-categories/'
@@ -2083,7 +2215,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  IamRoute: typeof IamRoute
   BulkIdRoute: typeof BulkIdRoute
   BulkNewRoute: typeof BulkNewRoute
   ClientsClientIdRoute: typeof ClientsClientIdRouteWithChildren
@@ -2108,6 +2239,7 @@ export interface RootRouteChildren {
   BulkIndexRoute: typeof BulkIndexRoute
   ClientsIndexRoute: typeof ClientsIndexRoute
   DataCollectorIndexRoute: typeof DataCollectorIndexRoute
+  IamIndexRoute: typeof IamIndexRoute
   RegionSystemsIndexRoute: typeof RegionSystemsIndexRoute
   RetailersIndexRoute: typeof RetailersIndexRoute
   StoresIndexRoute: typeof StoresIndexRoute
@@ -2140,6 +2272,13 @@ export interface RootRouteChildren {
   DataCollectorTasksIdRoute: typeof DataCollectorTasksIdRoute
   DataCollectorTemplatesIdRoute: typeof DataCollectorTemplatesIdRoute
   DataCollectorTemplatesNewRoute: typeof DataCollectorTemplatesNewRoute
+  IamAccountsIdRoute: typeof IamAccountsIdRoute
+  IamAccountsNewRoute: typeof IamAccountsNewRoute
+  IamApplicationsIdRoute: typeof IamApplicationsIdRoute
+  IamApplicationsNewRoute: typeof IamApplicationsNewRoute
+  IamRolesIdRoute: typeof IamRolesIdRoute
+  IamRolesNewRoute: typeof IamRolesNewRoute
+  IamUsersIdRoute: typeof IamUsersIdRoute
   ProductAssortmentsIdRoute: typeof ProductAssortmentsIdRoute
   ProductAssortmentsNewRoute: typeof ProductAssortmentsNewRoute
   ProductBusinessUnitsIdRoute: typeof ProductBusinessUnitsIdRoute
@@ -2191,6 +2330,10 @@ export interface RootRouteChildren {
   DataCollectorProjectsIndexRoute: typeof DataCollectorProjectsIndexRoute
   DataCollectorTasksIndexRoute: typeof DataCollectorTasksIndexRoute
   DataCollectorTemplatesIndexRoute: typeof DataCollectorTemplatesIndexRoute
+  IamAccountsIndexRoute: typeof IamAccountsIndexRoute
+  IamApplicationsIndexRoute: typeof IamApplicationsIndexRoute
+  IamRolesIndexRoute: typeof IamRolesIndexRoute
+  IamUsersIndexRoute: typeof IamUsersIndexRoute
   ProductAssortmentsIndexRoute: typeof ProductAssortmentsIndexRoute
   ProductBusinessUnitsIndexRoute: typeof ProductBusinessUnitsIndexRoute
   ProductClientCategoriesIndexRoute: typeof ProductClientCategoriesIndexRoute
@@ -2231,13 +2374,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/iam': {
-      id: '/iam'
-      path: '/iam'
-      fullPath: '/iam'
-      preLoaderRoute: typeof IamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -2264,6 +2400,13 @@ declare module '@tanstack/react-router' {
       path: '/region-systems'
       fullPath: '/region-systems/'
       preLoaderRoute: typeof RegionSystemsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/': {
+      id: '/iam/'
+      path: '/iam'
+      fullPath: '/iam/'
+      preLoaderRoute: typeof IamIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/data-collector/': {
@@ -2593,6 +2736,34 @@ declare module '@tanstack/react-router' {
       path: '/product/assortments'
       fullPath: '/product/assortments/'
       preLoaderRoute: typeof ProductAssortmentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/users/': {
+      id: '/iam/users/'
+      path: '/iam/users'
+      fullPath: '/iam/users/'
+      preLoaderRoute: typeof IamUsersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/roles/': {
+      id: '/iam/roles/'
+      path: '/iam/roles'
+      fullPath: '/iam/roles/'
+      preLoaderRoute: typeof IamRolesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/applications/': {
+      id: '/iam/applications/'
+      path: '/iam/applications'
+      fullPath: '/iam/applications/'
+      preLoaderRoute: typeof IamApplicationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/accounts/': {
+      id: '/iam/accounts/'
+      path: '/iam/accounts'
+      fullPath: '/iam/accounts/'
+      preLoaderRoute: typeof IamAccountsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/data-collector/templates/': {
@@ -3013,6 +3184,55 @@ declare module '@tanstack/react-router' {
       path: '/product/assortments/$id'
       fullPath: '/product/assortments/$id'
       preLoaderRoute: typeof ProductAssortmentsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/users/$id': {
+      id: '/iam/users/$id'
+      path: '/iam/users/$id'
+      fullPath: '/iam/users/$id'
+      preLoaderRoute: typeof IamUsersIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/roles/new': {
+      id: '/iam/roles/new'
+      path: '/iam/roles/new'
+      fullPath: '/iam/roles/new'
+      preLoaderRoute: typeof IamRolesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/roles/$id': {
+      id: '/iam/roles/$id'
+      path: '/iam/roles/$id'
+      fullPath: '/iam/roles/$id'
+      preLoaderRoute: typeof IamRolesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/applications/new': {
+      id: '/iam/applications/new'
+      path: '/iam/applications/new'
+      fullPath: '/iam/applications/new'
+      preLoaderRoute: typeof IamApplicationsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/applications/$id': {
+      id: '/iam/applications/$id'
+      path: '/iam/applications/$id'
+      fullPath: '/iam/applications/$id'
+      preLoaderRoute: typeof IamApplicationsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/accounts/new': {
+      id: '/iam/accounts/new'
+      path: '/iam/accounts/new'
+      fullPath: '/iam/accounts/new'
+      preLoaderRoute: typeof IamAccountsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iam/accounts/$id': {
+      id: '/iam/accounts/$id'
+      path: '/iam/accounts/$id'
+      fullPath: '/iam/accounts/$id'
+      preLoaderRoute: typeof IamAccountsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/data-collector/templates/new': {
@@ -3524,7 +3744,6 @@ const SettingsRulesRouteWithChildren = SettingsRulesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  IamRoute: IamRoute,
   BulkIdRoute: BulkIdRoute,
   BulkNewRoute: BulkNewRoute,
   ClientsClientIdRoute: ClientsClientIdRouteWithChildren,
@@ -3550,6 +3769,7 @@ const rootRouteChildren: RootRouteChildren = {
   BulkIndexRoute: BulkIndexRoute,
   ClientsIndexRoute: ClientsIndexRoute,
   DataCollectorIndexRoute: DataCollectorIndexRoute,
+  IamIndexRoute: IamIndexRoute,
   RegionSystemsIndexRoute: RegionSystemsIndexRoute,
   RetailersIndexRoute: RetailersIndexRoute,
   StoresIndexRoute: StoresIndexRoute,
@@ -3582,6 +3802,13 @@ const rootRouteChildren: RootRouteChildren = {
   DataCollectorTasksIdRoute: DataCollectorTasksIdRoute,
   DataCollectorTemplatesIdRoute: DataCollectorTemplatesIdRoute,
   DataCollectorTemplatesNewRoute: DataCollectorTemplatesNewRoute,
+  IamAccountsIdRoute: IamAccountsIdRoute,
+  IamAccountsNewRoute: IamAccountsNewRoute,
+  IamApplicationsIdRoute: IamApplicationsIdRoute,
+  IamApplicationsNewRoute: IamApplicationsNewRoute,
+  IamRolesIdRoute: IamRolesIdRoute,
+  IamRolesNewRoute: IamRolesNewRoute,
+  IamUsersIdRoute: IamUsersIdRoute,
   ProductAssortmentsIdRoute: ProductAssortmentsIdRoute,
   ProductAssortmentsNewRoute: ProductAssortmentsNewRoute,
   ProductBusinessUnitsIdRoute: ProductBusinessUnitsIdRoute,
@@ -3639,6 +3866,10 @@ const rootRouteChildren: RootRouteChildren = {
   DataCollectorProjectsIndexRoute: DataCollectorProjectsIndexRoute,
   DataCollectorTasksIndexRoute: DataCollectorTasksIndexRoute,
   DataCollectorTemplatesIndexRoute: DataCollectorTemplatesIndexRoute,
+  IamAccountsIndexRoute: IamAccountsIndexRoute,
+  IamApplicationsIndexRoute: IamApplicationsIndexRoute,
+  IamRolesIndexRoute: IamRolesIndexRoute,
+  IamUsersIndexRoute: IamUsersIndexRoute,
   ProductAssortmentsIndexRoute: ProductAssortmentsIndexRoute,
   ProductBusinessUnitsIndexRoute: ProductBusinessUnitsIndexRoute,
   ProductClientCategoriesIndexRoute: ProductClientCategoriesIndexRoute,
