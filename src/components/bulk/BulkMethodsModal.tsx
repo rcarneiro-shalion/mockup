@@ -1,10 +1,16 @@
 import { useMemo, useState } from "react";
-import { AppShell } from "@/components/layout/AppShell";
-import { FilterBar } from "@/components/seeds/ListPrimitives";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import { BULK_METHODS, BULK_GROUPS, type BulkMethod } from "@/lib/bulkMethods";
-import { ChevronDown, Download, FileSpreadsheet, Layers, Wand2 } from "lucide-react";
+import { BookOpen, ChevronDown, Download, FileSpreadsheet, Layers, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ACTION_TONE: Record<string, "green" | "blue" | "amber" | "red" | "violet" | "slate"> = {
@@ -13,31 +19,24 @@ const ACTION_TONE: Record<string, "green" | "blue" | "amber" | "red" | "violet" 
   Update: "amber",
   Delete: "red",
 };
-const actionTone = (a: string) =>
-  ACTION_TONE[a] ?? (/rematch/i.test(a) ? "violet" : "slate");
+const actionTone = (a: string) => ACTION_TONE[a] ?? (/rematch/i.test(a) ? "violet" : "slate");
 
 function MethodCard({ m, open, onToggle }: { m: BulkMethod; open: boolean; onToggle: () => void }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center gap-3 px-5 py-3.5 text-left"
-      >
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <button type="button" onClick={onToggle} className="flex w-full items-center gap-3 px-4 py-3 text-left">
         <ChevronDown
           className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}
         />
-        <span className="font-medium text-foreground">{m.entity}</span>
+        <span className="text-sm font-medium text-foreground">{m.entity}</span>
         <Pill tone={actionTone(m.action)}>{m.action}</Pill>
-        <span className="ml-auto hidden max-w-[46%] truncate text-sm text-muted-foreground md:block">
+        <span className="ml-auto hidden max-w-[44%] truncate text-sm text-muted-foreground md:block">
           {m.goal}
         </span>
       </button>
-
       {open && (
-        <div className="space-y-4 border-t border-border px-5 pb-5 pt-4">
+        <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
           <p className="text-sm leading-relaxed text-foreground/90">{m.goal}</p>
-
           {m.mandatoryFields.length > 0 && (
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -55,7 +54,6 @@ function MethodCard({ m, open, onToggle }: { m: BulkMethod; open: boolean; onTog
               </div>
             </div>
           )}
-
           {m.notes.length > 0 && (
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -71,7 +69,6 @@ function MethodCard({ m, open, onToggle }: { m: BulkMethod; open: boolean; onTog
               </ul>
             </div>
           )}
-
           {m.fileUrl && (
             <a
               href={m.fileUrl}
@@ -90,62 +87,70 @@ function MethodCard({ m, open, onToggle }: { m: BulkMethod; open: boolean; onTog
   );
 }
 
-export function BulkManual() {
+/** The bulk-methods manual/helper, shown in a modal triggered from the Bulk page. */
+export function BulkMethodsModal({ trigger }: { trigger?: React.ReactNode }) {
   const [q, setQ] = useState("");
   const [actions, setActions] = useState<string[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
-  const allActions = useMemo(
-    () => [...new Set(BULK_METHODS.map((m) => m.action))].sort(),
-    [],
-  );
-
+  const allActions = useMemo(() => [...new Set(BULK_METHODS.map((m) => m.action))].sort(), []);
   const ql = q.trim().toLowerCase();
   const filtered = BULK_METHODS.filter((m) => {
     if (actions.length && !actions.includes(m.action)) return false;
     if (groups.length && !groups.includes(m.group)) return false;
     if (!ql) return true;
-    const hay = [m.entity, m.action, m.goal, m.fileName, ...m.mandatoryFields, ...m.notes]
+    return [m.entity, m.action, m.goal, m.fileName, ...m.mandatoryFields, ...m.notes]
       .join(" ")
-      .toLowerCase();
-    return hay.includes(ql);
+      .toLowerCase()
+      .includes(ql);
   });
-
   const id = (m: BulkMethod) => `${m.entity}::${m.action}`;
 
   return (
-    <AppShell>
-      <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between px-6 pt-5">
-          <div className="flex items-center gap-2">
-            <h1 className="text-[17px] font-semibold text-foreground">Bulk</h1>
-            <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">
-              {BULK_METHODS.length} methods
+    <Dialog>
+      <DialogTrigger asChild>
+        {trigger ?? (
+          <Button variant="outline" size="sm" className="h-8 gap-1.5">
+            <BookOpen className="h-4 w-4" /> Bulk methods
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="flex max-h-[88vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+        <DialogHeader className="shrink-0 space-y-1.5 border-b border-border px-6 py-5">
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <BookOpen className="h-5 w-5 text-[var(--sidebar-active-fg)]" />
+            Bulk import methods
+            <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-normal text-muted-foreground">
+              {BULK_METHODS.length}
             </span>
-          </div>
-        </div>
-
-        <div className="px-6 pt-1">
-          <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Bulk lets you import or update many records at once by uploading a spreadsheet. This is
-            the catalogue of every supported method — pick the entity and action, download its
-            example file, fill it in following the mandatory fields and particularities, then upload.
+          </DialogTitle>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Every supported bulk operation. Pick the entity and action, download its example file,
+            fill it in following the mandatory fields and particularities, then upload it on this page.
           </p>
-        </div>
+        </DialogHeader>
 
-        <FilterBar search="Search methods by entity, goal or field" searchValue={q} onSearchChange={setQ}>
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-6 py-3">
+          <div className="relative min-w-[220px] flex-1">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search methods by entity, goal or field"
+              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
           <FilterChip label="Group" icon={Layers} options={[...BULK_GROUPS]} value={groups} onChange={setGroups} />
           <FilterChip label="Action" icon={Wand2} options={allActions} value={actions} onChange={setActions} />
-        </FilterBar>
+        </div>
 
-        <div className="flex-1 space-y-6 overflow-auto px-6 pb-8">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
           {BULK_GROUPS.filter((g) => filtered.some((m) => m.group === g)).map((g) => {
             const methods = filtered.filter((m) => m.group === g);
             return (
               <div key={g}>
                 <div className="mb-2 flex items-center gap-2">
-                  <h2 className="text-sm font-semibold text-foreground">{g}</h2>
+                  <h3 className="text-sm font-semibold text-foreground">{g}</h3>
                   <span className="text-xs text-muted-foreground">{methods.length}</span>
                 </div>
                 <div className="space-y-2">
@@ -168,7 +173,7 @@ export function BulkManual() {
             </div>
           )}
         </div>
-      </div>
-    </AppShell>
+      </DialogContent>
+    </Dialog>
   );
 }
