@@ -294,6 +294,7 @@ export function ClientForm({
               onOpenDataGroup={(id) =>
                 navigate({ to: "/clients/$clientId/data-groups/$dataGroupId", params: { clientId: client.id, dataGroupId: id } })
               }
+              onAddDataGroup={() => navigate({ to: "/clients/$clientId/data-groups/new", params: { clientId: client.id } })}
             />
           </div>
         </div>

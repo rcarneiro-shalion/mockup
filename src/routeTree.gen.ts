@@ -37,6 +37,7 @@ import { Route as SeedsApiSeedsNewRouteImport } from './routes/seeds-api/seeds/n
 import { Route as SeedsApiSeedsSeedIdRouteImport } from './routes/seeds-api/seeds/$seedId'
 import { Route as SeedsApiProjectsNewRouteImport } from './routes/seeds-api/projects/new'
 import { Route as SeedsApiProjectsProjectIdRouteImport } from './routes/seeds-api/projects/$projectId'
+import { Route as ClientsClientIdDataGroupsNewRouteImport } from './routes/clients/$clientId.data-groups.new'
 import { Route as ClientsClientIdDataGroupsDataGroupIdRouteImport } from './routes/clients/$clientId.data-groups.$dataGroupId'
 
 const IamRoute = IamRouteImport.update({
@@ -181,6 +182,12 @@ const SeedsApiProjectsProjectIdRoute =
     path: '/seeds-api/projects/$projectId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ClientsClientIdDataGroupsNewRoute =
+  ClientsClientIdDataGroupsNewRouteImport.update({
+    id: '/data-groups/new',
+    path: '/data-groups/new',
+    getParentRoute: () => ClientsClientIdRoute,
+  } as any)
 const ClientsClientIdDataGroupsDataGroupIdRoute =
   ClientsClientIdDataGroupsDataGroupIdRouteImport.update({
     id: '/data-groups/$dataGroupId',
@@ -218,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
+  '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -248,6 +256,7 @@ export interface FileRoutesByTo {
   '/seeds-api/projects': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds': typeof SeedsApiSeedsIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
+  '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -280,6 +289,7 @@ export interface FileRoutesById {
   '/seeds-api/projects/': typeof SeedsApiProjectsIndexRoute
   '/seeds-api/seeds/': typeof SeedsApiSeedsIndexRoute
   '/clients/$clientId/data-groups/$dataGroupId': typeof ClientsClientIdDataGroupsDataGroupIdRoute
+  '/clients/$clientId/data-groups/new': typeof ClientsClientIdDataGroupsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
     | '/clients/$clientId/data-groups/$dataGroupId'
+    | '/clients/$clientId/data-groups/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -343,6 +354,7 @@ export interface FileRouteTypes {
     | '/seeds-api/projects'
     | '/seeds-api/seeds'
     | '/clients/$clientId/data-groups/$dataGroupId'
+    | '/clients/$clientId/data-groups/new'
   id:
     | '__root__'
     | '/'
@@ -374,6 +386,7 @@ export interface FileRouteTypes {
     | '/seeds-api/projects/'
     | '/seeds-api/seeds/'
     | '/clients/$clientId/data-groups/$dataGroupId'
+    | '/clients/$clientId/data-groups/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -604,6 +617,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiProjectsProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clients/$clientId/data-groups/new': {
+      id: '/clients/$clientId/data-groups/new'
+      path: '/data-groups/new'
+      fullPath: '/clients/$clientId/data-groups/new'
+      preLoaderRoute: typeof ClientsClientIdDataGroupsNewRouteImport
+      parentRoute: typeof ClientsClientIdRoute
+    }
     '/clients/$clientId/data-groups/$dataGroupId': {
       id: '/clients/$clientId/data-groups/$dataGroupId'
       path: '/data-groups/$dataGroupId'
@@ -617,12 +637,14 @@ declare module '@tanstack/react-router' {
 interface ClientsClientIdRouteChildren {
   ClientsClientIdIndexRoute: typeof ClientsClientIdIndexRoute
   ClientsClientIdDataGroupsDataGroupIdRoute: typeof ClientsClientIdDataGroupsDataGroupIdRoute
+  ClientsClientIdDataGroupsNewRoute: typeof ClientsClientIdDataGroupsNewRoute
 }
 
 const ClientsClientIdRouteChildren: ClientsClientIdRouteChildren = {
   ClientsClientIdIndexRoute: ClientsClientIdIndexRoute,
   ClientsClientIdDataGroupsDataGroupIdRoute:
     ClientsClientIdDataGroupsDataGroupIdRoute,
+  ClientsClientIdDataGroupsNewRoute: ClientsClientIdDataGroupsNewRoute,
 }
 
 const ClientsClientIdRouteWithChildren = ClientsClientIdRoute._addFileChildren(

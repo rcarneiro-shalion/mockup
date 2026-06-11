@@ -2,13 +2,19 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ChevronDown, MoreHorizontal, Pencil, Plus, X } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { DataGroupTabs } from "@/components/clients/DataGroupTabs";
 
 type ParentRow = { id: string; name: string; createdAt: string };
 
 const WAREHOUSE_OPTIONS = ["WH_CLT_LOOKER_XS_G001", "WH_CLT_LOOKER_XS_G002", "WH_CLT_LOOKER_M_G003"];
+const SIZE_OPTIONS = ["XSMALL", "SMALL", "MEDIUM", "LARGE", "XLARGE", "X2LARGE"];
 const ASSIGNABLE = ["Coca Cola Latam", "Coca Cola CCH", "Coca Cola EMEA", "Coca Cola APAC"];
+// Snowflake hourly cost ≈ credits(size) × 4€ × max clusters.
+const SIZE_CREDITS: Record<string, number> = { XSMALL: 1, SMALL: 2, MEDIUM: 4, LARGE: 8, XLARGE: 16, X2LARGE: 32 };
+const snowflakeCost = (size: string, clusters: number) => (SIZE_CREDITS[size] ?? 0) * 4 * clusters;
 
 function formatNow() {
   const d = new Date();
@@ -20,31 +26,34 @@ export function DataGroupPage({
   clientId,
   clientName,
   initialName,
+  mode = "edit",
 }: {
   clientId: string;
   clientName: string;
   initialName: string;
+  mode?: "add" | "edit";
 }) {
+  const isAdd = mode === "add";
   const navigate = useNavigate();
   const goClient = () => navigate({ to: "/clients/$clientId", params: { clientId } });
 
   const [name, setName] = useState(initialName);
   const [dashboardType, setDashboardType] = useState<"Brand" | "Agency">("Brand");
-  const [fsaSection, setFsaSection] = useState("Drinks");
+  const [fsaSection, setFsaSection] = useState(isAdd ? "" : "Drinks");
   const [isParent, setIsParent] = useState(false);
-  const [parents, setParents] = useState<ParentRow[]>([
-    { id: "pr1", name: "Coca Cola Latam", createdAt: "2026-04-23, 07:41:10" },
-  ]);
+  const [parents, setParents] = useState<ParentRow[]>(
+    isAdd ? [] : [{ id: "pr1", name: "Coca Cola Latam", createdAt: "2026-04-23, 07:41:10" }],
+  );
 
   const [lookerShared, setLookerShared] = useState(false);
   const [lookerWarehouseName, setLookerWarehouseName] = useState(WAREHOUSE_OPTIONS[0]);
-  const [lookerSize, setLookerSize] = useState("X2LARGE");
-  const [lookerClusters, setLookerClusters] = useState(3);
+  const [lookerSize, setLookerSize] = useState(isAdd ? "MEDIUM" : "X2LARGE");
+  const [lookerClusters, setLookerClusters] = useState(isAdd ? 1 : 3);
 
   const [cubeShared, setCubeShared] = useState(false);
   const [cubeWarehouseName, setCubeWarehouseName] = useState(WAREHOUSE_OPTIONS[0]);
-  const [cubeSize, setCubeSize] = useState("LARGE");
-  const [cubeClusters, setCubeClusters] = useState(5);
+  const [cubeSize, setCubeSize] = useState(isAdd ? "MEDIUM" : "X2LARGE");
+  const [cubeClusters, setCubeClusters] = useState(isAdd ? 1 : 5);
 
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignChoice, setAssignChoice] = useState("");
@@ -79,7 +88,7 @@ export function DataGroupPage({
               <span className="text-muted-foreground">›</span>
               <span className="text-muted-foreground">Data groups</span>
               <span className="text-muted-foreground">›</span>
-              <span className="text-muted-foreground">{name || initialName}</span>
+              <span className="text-muted-foreground">{isAdd ? "Add data group" : name || initialName}</span>
             </nav>
             <button type="button" className="rounded-lg border border-border bg-card p-2 text-muted-foreground hover:bg-accent transition-colors" aria-label="More actions">
               <MoreHorizontal className="h-4 w-4" />
@@ -90,7 +99,7 @@ export function DataGroupPage({
             <ArrowLeft className="h-4 w-4" /> {clientName}
           </button>
 
-          <h1 className="text-2xl font-bold tracking-tight text-foreground mb-5">{name || initialName}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mb-5">{isAdd ? "Add data group" : name || initialName}</h1>
 
           <div className="rounded-xl border border-border bg-card shadow-sm p-6 space-y-6">
             {/* Name + dashboard type */}
@@ -111,12 +120,14 @@ export function DataGroupPage({
             {/* FSA + Multicompset */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Field label="FSA section">
-                <Select value={fsaSection} onChange={setFsaSection} options={["Drinks", "Snacks", "Dairy", "Other"]} />
+                <Select value={fsaSection} onChange={setFsaSection} options={["Drinks", "Snacks", "Dairy", "Other"]} placeholder="Select a section" />
               </Field>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">Multicompset datagroups</label>
-                <Checkbox checked={isParent} onChange={handleParentToggle} label="Is a Parent Datagroup" />
-              </div>
+              {!isAdd && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Multicompset datagroups</label>
+                  <Checkbox checked={isParent} onChange={handleParentToggle} label="Is a Parent Datagroup" />
+                </div>
+              )}
             </div>
 
             {/* Parent datagroups */}
@@ -183,9 +194,9 @@ export function DataGroupPage({
                 <div className="mt-4 max-w-xl"><Field label="Warehouse name"><Select value={lookerWarehouseName} onChange={setLookerWarehouseName} options={WAREHOUSE_OPTIONS} /></Field></div>
               ) : (
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
-                  <Field label="Warehouse size"><Select value={lookerSize} onChange={setLookerSize} options={["XSMALL", "SMALL", "MEDIUM", "LARGE", "XLARGE", "X2LARGE"]} /></Field>
+                  <Field label="Warehouse size"><Select value={lookerSize} onChange={setLookerSize} options={SIZE_OPTIONS} /></Field>
                   <Field label="Max clusters"><NumberInput value={lookerClusters} onChange={setLookerClusters} /></Field>
-                  <p className="md:col-span-2 text-sm font-medium text-amber-600">Snowflake cost: 384€/h</p>
+                  <p className="md:col-span-2 text-sm font-medium text-amber-600">Snowflake cost: {snowflakeCost(lookerSize, lookerClusters)}€/h</p>
                 </div>
               )}
             </SectionCard>
@@ -197,16 +208,23 @@ export function DataGroupPage({
                 <div className="mt-4 max-w-xl"><Field label="Warehouse name"><Select value={cubeWarehouseName} onChange={setCubeWarehouseName} options={WAREHOUSE_OPTIONS} /></Field></div>
               ) : (
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
-                  <Field label="Warehouse size"><Select value={cubeSize} onChange={setCubeSize} options={["XSMALL", "SMALL", "MEDIUM", "LARGE", "XLARGE", "X2LARGE"]} /></Field>
+                  <Field label="Warehouse size"><Select value={cubeSize} onChange={setCubeSize} options={SIZE_OPTIONS} /></Field>
                   <Field label="Max clusters"><NumberInput value={cubeClusters} onChange={setCubeClusters} /></Field>
-                  <p className="md:col-span-2 text-sm font-medium text-amber-600">Snowflake cost: 640€/h</p>
+                  <p className="md:col-span-2 text-sm font-medium text-amber-600">Snowflake cost: {snowflakeCost(cubeSize, cubeClusters)}€/h</p>
                 </div>
               )}
             </SectionCard>
           </div>
 
-          {/* Tabs — reduced to Dashboard sections / Users / Cubes when this is a parent datagroup */}
-          <DataGroupTabs isParent={isParent} />
+          {/* Tabs — only on an existing data group; reduced to Dashboard sections / Users / Cubes when parent */}
+          {!isAdd && <DataGroupTabs isParent={isParent} />}
+
+          {isAdd && (
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <Button variant="outline" onClick={goClient}>Cancel</Button>
+              <Button onClick={() => { toast.success("Data group created"); goClient(); }} disabled={!name.trim()}>Add data group</Button>
+            </div>
+          )}
         </div>
       </div>
 

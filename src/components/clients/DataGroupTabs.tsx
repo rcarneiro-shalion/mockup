@@ -26,11 +26,60 @@ const INITIAL_SECTIONS: Section[] = [
   { id: "13", path: "actionplan", type: "CUSTOM", maestro: "Amazon Shelf Maestro" },
   { id: "14", path: "syntheticqueries", type: "CUSTOM", maestro: "Amazon Shelf Maestro" },
 ];
-const INITIAL_USERS: User[] = [
-  { id: "u1", email: "user.name@company.com", status: "Active", createdAt: "2025-05-19, 12:19:04", updatedAt: "2025-05-19, 12:19:04" },
+// Emails are anonymized for the mockup (no real PII).
+const USER_DOMAINS = ["coca-cola.com", "ccep.com", "shalion.com"];
+const INITIAL_USERS: User[] = Array.from({ length: 27 }, (_, i) => ({
+  id: `u${i + 1}`,
+  email: `user${String(i + 1).padStart(2, "0")}@${USER_DOMAINS[i % USER_DOMAINS.length]}`,
+  status: "Active",
+  createdAt: "Mon, Nov 24, 2025 3:00",
+  updatedAt: "Mon, Nov 24, 2025 3:00",
+}));
+
+const CUBE_NAMES = [
+  "mart_asm", "rufus_query_results", "rufus_actions", "mart_range", "mart_range_agg_brand_region",
+  "mart_range_agg_brand_location", "mart_range_agg_dk_region", "mart_content_assortment_ilo", "mart_content_assortment",
+  "mart_content_monthly_ilo", "mart_content_monthly", "mart_visibility_agg_placements", "mart_visibility_agg_brand",
+  "mart_coke_global_scorecard", "mart_coke_scorecard", "mart_content_assortment_ni", "mart_content_assortment_nutrients_ilo",
+  "restaurant_branches_by_period", "restaurant_by_period", "mart_marketplace", "mart_ai_keyword_intel_dsm",
+  "mart_ai_market_share", "mart_discovery",
 ];
-const INITIAL_CUBES: Cube[] = [
-  { id: "c1", name: "mart_content_assortment_ilo", createdAt: "2026-04-27, 14:46:01", updatedAt: "2026-04-27, 14:46:01" },
+const INITIAL_CUBES: Cube[] = CUBE_NAMES.map((name, i) => ({
+  id: `c${i + 1}`, name, createdAt: "Mon, Apr 27, 2026 2:46 PM", updatedAt: "Mon, Apr 27, 2026 2:46 PM",
+}));
+
+type ClientRegion = { id: string; name: string; regionSystem: string; country: string };
+const CLIENT_REGIONS: ClientRegion[] = [
+  { id: "cr1", name: "FEMSA MX", regionSystem: "MX - Coke Bottlers", country: "MX" },
+  { id: "cr2", name: "FEMSA NI", regionSystem: "NI - Coke Bottlers", country: "NI" },
+  { id: "cr3", name: "Arca AR", regionSystem: "AR - Coke Bottlers", country: "AR" },
+  { id: "cr4", name: "FEMSA VE", regionSystem: "VE - Coke Bottlers", country: "VE" },
+  { id: "cr5", name: "FEMSA CR", regionSystem: "CR - Coke Bottlers", country: "CR" },
+  { id: "cr6", name: "Solar BR", regionSystem: "BR - Coke Bottlers", country: "BR" },
+  { id: "cr7", name: "Embol BO", regionSystem: "BO - Coke Bottlers", country: "BO" },
+  { id: "cr8", name: "FEMSA BR", regionSystem: "BR - Coke Bottlers", country: "BR" },
+  { id: "cr9", name: "Colima MX", regionSystem: "MX - Coke Bottlers", country: "MX" },
+  { id: "cr10", name: "FEMSA Monresa UY", regionSystem: "UY - Coke Bottlers", country: "UY" },
+  { id: "cr11", name: "Brasal BR", regionSystem: "BR - Coke Bottlers", country: "BR" },
+  { id: "cr12", name: "Bepensa MX", regionSystem: "MX - Coke Bottlers", country: "MX" },
+  { id: "cr13", name: "Lee AR", regionSystem: "AR - Coke Bottlers", country: "AR" },
+];
+
+const CATEGORIES = [
+  "Beverages > Ready-to-drink > Other", "Beverages > Waters > Other", "Beverages > Soft Drinks > Other",
+  "Beverages > Waters > Sparkling Water", "Beverages > Waters > Flavored Water", "Beverages > Juices > Other",
+  "Beverages > Ready-to-drink > Iced Coffee", "Beverages > Soft Drinks > Soda", "Beverages > Ready-to-drink > Iced Tea",
+  "Beverages > Soft Drinks > Energy Drinks", "Beverages > Ready-to-drink > Hard Seltzers", "Beverages > Waters > Still Water",
+  "Beverages > Soft Drinks > Sport Drinks",
+];
+
+const EXTRACTION_TYPES = ["SEARCH", "SHELF", "AD", "DIGITAL_SHELF_PDP", "DIGITAL_SHELF_PLP", "MEDIA", "FSA"];
+const EXTRACTION_STORES = [
+  "Walmart Mismo Dia MX", "Naguno BR", "GrabFood MM - FSA", "El Corte Ingles Supermercado ES", "GrabFood VN - QCA",
+  "Farmacorp BO", "iFood BR - FSA", "Uber Eats BR - Pao de Acucar", "Extra Bom App BR", "La Torre GT",
+  "Uber Eats CR - Perimercados", "Uber Eats CN - FSA", "Rappi APP AR - Vea", "Walmart NI", "Chedraui MX",
+  "Tata UY", "Glovo RS - FSA", "La Comer MX", "Uber Eats MX - FSA", "Walt IL - FSA",
+  "Super Muffato BR", "Uber Eats MX - Costco", "Dia AR", "PedidosYa NC - FSA", "PedidosYa APP PE - Market",
 ];
 const COUNTRY_CODES = [
   "CR", "CA", "NO", "NZ", "BE", "VN", "PH", "GT", "LU", "ID", "MY", "AU", "VE", "SE", "SA",
@@ -87,10 +136,10 @@ export function DataGroupTabs({ isParent = false }: { isParent?: boolean }) {
 
       <div className="mt-4">
         {activeTab === "countries" && <CountriesPanel countries={countries} setCountries={setCountries} />}
-        {activeTab === "client-regions" && <PlaceholderPanel title="Client regions" addLabel="Assign client region" />}
-        {activeTab === "categories" && <PlaceholderPanel title="Categories" addLabel="Assign category" />}
-        {activeTab === "store-extraction-types" && <PlaceholderPanel title="Store extraction types" addLabel="Assign store extraction type" />}
-        {activeTab === "targets" && <PlaceholderPanel title="Targets" addLabel="Add target" />}
+        {activeTab === "client-regions" && <ClientRegionsPanel />}
+        {activeTab === "categories" && <CategoriesPanel />}
+        {activeTab === "store-extraction-types" && <StoreExtractionPanel />}
+        {activeTab === "targets" && <TargetsPanel />}
         {activeTab === "sections" && (
           <SectionsPanel sections={sections} setSections={setSections} collapsed={sectionsCollapsed} setCollapsed={setSectionsCollapsed} onAdd={() => setAddSectionOpen(true)} />
         )}
@@ -161,16 +210,134 @@ function CountriesPanel({ countries, setCountries }: { countries: CountryRow[]; 
   );
 }
 
-function PlaceholderPanel({ title, addLabel }: { title: string; addLabel: string }) {
+function PanelHeader({ title, addLabel }: { title: string; addLabel: string }) {
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      <button className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors">
+        <Plus className="h-3.5 w-3.5" /> {addLabel}
+      </button>
+    </div>
+  );
+}
+
+function ClientRegionsPanel() {
+  const [rows, setRows] = useState<ClientRegion[]>(CLIENT_REGIONS);
   return (
     <div className="rounded-xl border border-border bg-card shadow-sm p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-foreground">{title}</h3>
-        <button className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors">
-          <Plus className="h-3.5 w-3.5" /> {addLabel}
-        </button>
+      <PanelHeader title="Client regions" addLabel="Assign client region" />
+      <div className="overflow-hidden rounded-md border border-border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-muted/40 text-muted-foreground">
+              <th className="px-4 py-2.5 text-left font-medium">Name</th>
+              <th className="px-4 py-2.5 text-left font-medium">Region system</th>
+              <th className="px-4 py-2.5 text-left font-medium">Country</th>
+              <th className="px-4 py-2.5 text-left font-medium">Created at</th>
+              <th className="px-4 py-2.5 text-left font-medium">Updated at</th>
+              <th className="w-10" />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id} className="border-t border-border">
+                <td className="px-4 py-2.5 text-[var(--sidebar-active-fg)] hover:underline cursor-pointer">{r.name}</td>
+                <td className="px-4 py-2.5 text-[var(--sidebar-active-fg)] hover:underline cursor-pointer">{r.regionSystem}</td>
+                <td className="px-4 py-2.5 text-foreground"><span className="inline-flex items-center gap-2"><span>{flag(r.country)}</span>{r.country}</span></td>
+                <td className="px-4 py-2.5 text-muted-foreground">Thu, Jan 29, 2026 5:00</td>
+                <td className="px-4 py-2.5 text-muted-foreground">Thu, Jan 29, 2026 5:00</td>
+                <td className="px-2 py-2.5 text-right">
+                  <button onClick={() => setRows((p) => p.filter((x) => x.id !== r.id))} className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive transition-colors" aria-label={`Remove ${r.name}`}><X className="h-4 w-4" /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-      <div className="rounded-md border border-border px-4 py-10 text-center text-sm text-muted-foreground">No {title.toLowerCase()} yet.</div>
+      <Pagination total={rows.length} />
+    </div>
+  );
+}
+
+function CategoriesPanel() {
+  const [rows, setRows] = useState<string[]>(CATEGORIES);
+  return (
+    <div className="rounded-xl border border-border bg-card shadow-sm p-5">
+      <PanelHeader title="Categories" addLabel="Assign category" />
+      <div className="overflow-hidden rounded-md border border-border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-muted/40 text-muted-foreground"><th className="px-4 py-2.5 text-left font-medium">Name</th><th className="w-10" /></tr>
+          </thead>
+          <tbody>
+            {rows.map((c) => (
+              <tr key={c} className="border-t border-border">
+                <td className="px-4 py-2.5 text-[var(--sidebar-active-fg)] hover:underline cursor-pointer">{c}</td>
+                <td className="px-2 py-2.5 text-right">
+                  <button onClick={() => setRows((p) => p.filter((x) => x !== c))} className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive transition-colors" aria-label={`Remove ${c}`}><X className="h-4 w-4" /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Pagination total={rows.length} />
+    </div>
+  );
+}
+
+function StoreExtractionPanel() {
+  return (
+    <div className="rounded-xl border border-border bg-card shadow-sm p-5">
+      <h3 className="text-base font-semibold text-foreground mb-4">Store extraction types</h3>
+      <div className="overflow-x-auto rounded-md border border-border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-muted/40 text-muted-foreground">
+              <th className="px-4 py-2.5 text-left font-medium">Store</th>
+              {EXTRACTION_TYPES.map((t) => <th key={t} className="px-3 py-2.5 text-center font-medium text-xs">{t}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {EXTRACTION_STORES.map((s) => (
+              <tr key={s} className="border-t border-border">
+                <td className="px-4 py-2 text-foreground whitespace-nowrap">{s}</td>
+                {EXTRACTION_TYPES.map((t) => (
+                  <td key={t} className="px-3 py-2 text-center">
+                    <input type="checkbox" className="h-4 w-4 rounded border-border" />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Pagination total={EXTRACTION_STORES.length} />
+    </div>
+  );
+}
+
+function TargetsPanel() {
+  return (
+    <div className="rounded-xl border border-border bg-card shadow-sm p-5">
+      <PanelHeader title="Targets" addLabel="Assign target" />
+      <div className="overflow-hidden rounded-md border border-border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-muted/40 text-muted-foreground">
+              <th className="px-4 py-2.5 text-left font-medium">Name</th>
+              <th className="px-4 py-2.5 text-left font-medium">Value</th>
+              <th className="px-4 py-2.5 text-left font-medium">Default value</th>
+              <th className="px-4 py-2.5 text-left font-medium">Created at</th>
+              <th className="px-4 py-2.5 text-left font-medium">Updated at</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">There are no data</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <Pagination total={0} />
     </div>
   );
 }

@@ -29,10 +29,12 @@ export function ClientBottomTabs({
   client,
   set,
   onOpenDataGroup,
+  onAddDataGroup,
 }: {
   client: Client;
   set: <K extends keyof Client>(k: K, v: Client[K]) => void;
   onOpenDataGroup?: (id: string) => void;
+  onAddDataGroup?: () => void;
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("data-groups");
 
@@ -74,6 +76,7 @@ export function ClientBottomTabs({
             <CardTable
               title="Data groups"
               addLabel="Add data group"
+              onAdd={onAddDataGroup}
               headers={["Name", "Dashboard Type", "Created at", "Updated at"]}
               rows={dataGroups}
               empty="No data groups yet."
@@ -158,6 +161,7 @@ export function ClientBottomTabs({
 function CardTable<T extends { id: string }>({
   title,
   addLabel,
+  onAdd,
   headers,
   rows,
   empty,
@@ -165,6 +169,7 @@ function CardTable<T extends { id: string }>({
 }: {
   title: string;
   addLabel: string;
+  onAdd?: () => void;
   headers: string[];
   rows: T[];
   empty: string;
@@ -174,7 +179,7 @@ function CardTable<T extends { id: string }>({
     <>
       <div className="flex items-center justify-between">
         <span className="text-base font-semibold text-foreground">{title}</span>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => toast.info(`${addLabel} — coming soon`)}>
+        <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={onAdd ?? (() => toast.info(`${addLabel} — coming soon`))}>
           <Plus className="h-3.5 w-3.5" />
           {addLabel}
         </Button>
