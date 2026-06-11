@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SettingsList, type SettingsColumn } from "@/components/settings/SettingsList";
 import { LinkText } from "@/components/seeds/ListPrimitives";
+import { usePersistentState } from "@/hooks/usePersistentState";
 import { SETTINGS_TIMEFRAMES_KEY, INITIAL_SETTINGS_TIMEFRAMES, type SettingTimeframe } from "@/lib/settings";
 
 export const Route = createFileRoute("/settings/timeframes")({
@@ -9,6 +10,7 @@ export const Route = createFileRoute("/settings/timeframes")({
 });
 
 function TimeframesPage() {
+  const [rows, setRows] = usePersistentState<SettingTimeframe[]>(SETTINGS_TIMEFRAMES_KEY, INITIAL_SETTINGS_TIMEFRAMES);
   const columns: SettingsColumn<SettingTimeframe>[] = [
     { key: "name", label: "Name", sortValue: (r) => r.name, cell: (r) => <LinkText>{r.name}</LinkText> },
     { key: "product", label: "Product", sortValue: (r) => r.product, cell: (r) => <span className="text-foreground/80">{r.product}</span> },
@@ -21,12 +23,12 @@ function TimeframesPage() {
     <SettingsList
       title="Timeframes"
       newLabel="New timeframe"
-      storageKey={SETTINGS_TIMEFRAMES_KEY}
-      initial={INITIAL_SETTINGS_TIMEFRAMES}
       searchPlaceholder="Search timeframes by name"
       searchText={(r) => r.name}
       entityLabel="timeframe"
       columns={columns}
+      rows={rows}
+      onDelete={(id) => setRows((p) => p.filter((x) => x.id !== id))}
     />
   );
 }

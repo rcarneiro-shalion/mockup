@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
-import { usePersistentState } from "@/hooks/usePersistentState";
 import { FilterBar, TableShell, Th, Td, Pagination, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { toast } from "sonner";
@@ -16,26 +15,30 @@ export type SettingsColumn<T> = {
   cell: (r: T) => ReactNode;
 };
 
+/** Presentational settings datagrid. The parent route owns `rows` so add/edit/delete stay in sync. */
 export function SettingsList<T extends { id: string }>({
   title,
   newLabel,
-  storageKey,
-  initial,
+  onNew,
   searchPlaceholder,
   searchText,
   entityLabel,
   columns,
+  rows,
+  onDelete,
+  extra,
 }: {
   title: string;
   newLabel: string;
-  storageKey: string;
-  initial: T[];
+  onNew?: () => void;
   searchPlaceholder: string;
   searchText: (r: T) => string;
   entityLabel: string;
   columns: SettingsColumn<T>[];
+  rows: T[];
+  onDelete: (id: string) => void;
+  extra?: ReactNode;
 }) {
-  const [rows, setRows] = usePersistentState<T[]>(storageKey, initial);
   const [query, setQuery] = useState("");
   const sort = useSort();
 
@@ -50,7 +53,7 @@ export function SettingsList<T extends { id: string }>({
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between px-6 pt-5">
           <h1 className="text-[17px] font-semibold text-foreground">{title}</h1>
-          <Button size="sm" className="h-8 gap-1.5" onClick={() => toast.info(`${newLabel} — coming soon`)}>
+          <Button size="sm" className="h-8 gap-1.5" onClick={onNew ?? (() => toast.info(`${newLabel} — coming soon`))}>
             <Plus className="h-4 w-4" />
             {newLabel}
           </Button>
@@ -84,11 +87,7 @@ export function SettingsList<T extends { id: string }>({
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 {columns.map((c) => <Td key={c.key}>{c.cell(r)}</Td>)}
                 <Td>
-                  <RowActionsMenu
-                    id={r.id}
-                    entityLabel={entityLabel}
-                    onDelete={() => setRows((prev) => prev.filter((x) => x.id !== r.id))}
-                  />
+                  <RowActionsMenu id={r.id} entityLabel={entityLabel} onDelete={() => onDelete(r.id)} />
                 </Td>
               </tr>
             ))}
@@ -96,6 +95,7 @@ export function SettingsList<T extends { id: string }>({
         </TableShell>
         <Pagination total={visible.length} />
       </div>
+      {extra}
     </AppShell>
   );
 }

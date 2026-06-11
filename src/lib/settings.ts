@@ -45,7 +45,7 @@ export const INITIAL_SETTINGS_TIMEFRAMES: SettingTimeframe[] = [
 ];
 
 // ---------- Categories ----------
-export type SettingCategory = { id: string; sector: string; name: string; description: string; esDescription: string; createdAt: string; updatedAt: string };
+export type SettingCategory = { id: string; sector: string; name: string; description: string; esDescription: string; parent?: string; createdAt: string; updatedAt: string };
 export const CATEGORIES_KEY = "settings:categories";
 const CT = (id: string, name: string, description: string, esDescription: string, createdAt: string, updatedAt: string): SettingCategory =>
   ({ id, sector: "Automotive", name, description, esDescription, createdAt, updatedAt });
@@ -71,12 +71,18 @@ export const INITIAL_CATEGORIES: SettingCategory[] = [
 ];
 
 // ---------- Country groups ----------
-export type CountryGroup = { id: string; name: string; createdAt: string; updatedAt: string };
-export const COUNTRY_GROUPS_KEY = "settings:country-groups";
+export type CountryGroupCountry = { id: string; code: string; createdAt: string; updatedAt: string };
+export type CountryGroup = { id: string; name: string; countries?: CountryGroupCountry[]; createdAt: string; updatedAt: string };
+// v2: rows gained an optional `countries[]` child array (seeded for Eastern
+// Europe). Bumped so the seeded child rows load instead of stale name-only data.
+export const COUNTRY_GROUPS_KEY = "settings:country-groups:v2";
 const CG = (id: string, name: string, createdAt: string, updatedAt: string): CountryGroup => ({ id, name, createdAt, updatedAt });
+const EASTERN_EUROPE_COUNTRIES: CountryGroupCountry[] = [
+  "EE", "LV", "CY", "BG", "LT", "SK", "ME", "HU", "GR", "RO", "HR", "SI", "RS", "MT", "MK", "RU", "CZ", "UA",
+].map((code, i) => ({ id: `eec${i}`, code, createdAt: "Fri, May 2, 2025 1:34 PM", updatedAt: "Fri, May 2, 2025 1:34 PM" }));
 export const INITIAL_COUNTRY_GROUPS: CountryGroup[] = [
   CG("cg1", "KO EME", "Fri, Oct 3, 2025 7:52 AM", "Fri, Oct 3, 2025 7:52 AM"),
-  CG("cg2", "Eastern Europe (oficial)", "Fri, May 2, 2025 1:27 PM", "Fri, May 2, 2025 1:27 PM"),
+  { ...CG("cg2", "Eastern Europe (oficial)", "Fri, May 2, 2025 1:27 PM", "Fri, May 2, 2025 1:27 PM"), countries: EASTERN_EUROPE_COUNTRIES },
   CG("cg3", "MENA (oficial)", "Thu, Apr 17, 2025 10:48 AM", "Fri, May 2, 2025 1:38 PM"),
   CG("cg4", "LATAM (oficial)", "Mon, Feb 24, 2025 2:32 PM", "Fri, May 2, 2025 1:26 PM"),
   CG("cg5", "KO ASEAN", "Fri, Oct 3, 2025 7:36 AM", "Fri, Oct 3, 2025 7:36 AM"),
@@ -97,10 +103,16 @@ export const INITIAL_COUNTRY_GROUPS: CountryGroup[] = [
 ];
 
 // ---------- Rules ----------
-export type SettingRule = { id: string; name: string; prompt: string; client: string; datagroup: string; createdAt: string; updatedAt: string };
-export const RULES_KEY = "settings:rules";
+export type RuleRef = { id: string; name: string; createdAt: string; updatedAt: string };
+export type SettingRule = {
+  id: string; name: string; prompt: string; client: string; datagroup: string;
+  isVerified?: boolean; scope?: RuleRef[]; dashboardApps?: RuleRef[]; createdAt: string; updatedAt: string;
+};
+// v2: rows gained isVerified / scope[] / dashboardApps[]. Bumped so the seeded
+// isVerified flags load instead of stale rows missing the field.
+export const RULES_KEY = "settings:rules:v2";
 const RL = (id: string, name: string, prompt: string, client: string, datagroup: string, createdAt: string, updatedAt: string): SettingRule =>
-  ({ id, name, prompt, client, datagroup, createdAt, updatedAt });
+  ({ id, name, prompt, client, datagroup, isVerified: true, scope: [], dashboardApps: [], createdAt, updatedAt });
 export const INITIAL_RULES: SettingRule[] = [
   RL("r1", "Query Builder RMM", "+ Ignore everything related to brand_status, own_brand, competitors and similar; even if the user asks for it.", "", "", "Tue, May 26, 2026 2:00 PM", "Fri, Jun 5, 2026 9:48 AM"),
   RL("r2", "Query Builder DSM/ASM", "+ Always select variables containing '_own_' in the query when the user asks for own data.", "", "", "Tue, Apr 28, 2026 9:20 AM", "Thu, May 14, 2026 3:00 PM"),
