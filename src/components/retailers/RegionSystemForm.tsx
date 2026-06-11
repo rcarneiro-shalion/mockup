@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Th, Td, Pagination, LinkText } from "@/components/seeds/ListPrimitives";
 import { RegionDetailDialog } from "@/components/retailers/RegionDetailDialog";
-import { COUNTRY_OPTIONS, countryLabel, emptyRegion, type RegionSystem, type Region } from "@/lib/retailers";
+import { COUNTRY_OPTIONS, countryLabel, emptyRegion, emptyLocationSet, type RegionSystem, type Region } from "@/lib/retailers";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, FileSpreadsheet } from "lucide-react";
 
@@ -39,6 +39,19 @@ export function RegionSystemForm({
   const removeRegion = (id: string) => set("regions", regions.filter((x) => x.id !== id));
   const saveRegion = (updated: Region) =>
     set("regions", regions.map((x) => (x.id === updated.id ? updated : x)));
+
+  // Location sets — same behavior as regions, but a separate dataset (the "Location set" option).
+  const locationSets = r.locationSets ?? [];
+  const [selectedLocationSetId, setSelectedLocationSetId] = useState<string | null>(null);
+  const selectedLocationSet = locationSets.find((x) => x.id === selectedLocationSetId) ?? null;
+  const addLocationSet = () => {
+    const ls = emptyLocationSet();
+    set("locationSets", [...locationSets, ls]);
+    setSelectedLocationSetId(ls.id);
+  };
+  const removeLocationSet = (id: string) => set("locationSets", locationSets.filter((x) => x.id !== id));
+  const saveLocationSet = (updated: Region) =>
+    set("locationSets", locationSets.map((x) => (x.id === updated.id ? updated : x)));
 
   const handleSave = async () => {
     if (!canSave) { toast.error("Name and Country are required"); return; }
@@ -93,6 +106,7 @@ export function RegionSystemForm({
                       <FileSpreadsheet className="h-3.5 w-3.5" /> Export to Excel (.xlsx)
                     </Button>
                     <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={addRegion}><Plus className="h-3.5 w-3.5" /> Add region</Button>
+                    <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={addLocationSet}><Plus className="h-3.5 w-3.5" /> Add location set</Button>
                   </div>
                 </div>
                 <div className="mt-4 overflow-hidden rounded-lg border border-border">
@@ -115,6 +129,41 @@ export function RegionSystemForm({
                   </table>
                 </div>
                 <Pagination total={regions.length} />
+              </div>
+            )}
+
+            {/* Location sets — same behavior as regions, but a separate dataset (the "Location set" option) */}
+            {mode === "edit" && (
+              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-semibold text-foreground">Location sets</span>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => toast.info("Export to Excel — coming soon")}>
+                      <FileSpreadsheet className="h-3.5 w-3.5" /> Export to Excel (.xlsx)
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={addLocationSet}><Plus className="h-3.5 w-3.5" /> Add location set</Button>
+                  </div>
+                </div>
+                <div className="mt-4 overflow-hidden rounded-lg border border-border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-secondary/60"><tr><Th>Name</Th><Th className="w-10" /></tr></thead>
+                    <tbody>
+                      {locationSets.length === 0 ? (
+                        <tr><Td className="text-muted-foreground"><span className="block py-2">No location sets yet.</span></Td><Td /></tr>
+                      ) : locationSets.map((ls) => (
+                        <tr key={ls.id} className="border-t border-border hover:bg-secondary/40">
+                          <Td><LinkText onClick={() => setSelectedLocationSetId(ls.id)}>{ls.name}</LinkText></Td>
+                          <Td>
+                            <button onClick={() => removeLocationSet(ls.id)} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive" aria-label={`Remove ${ls.name}`}>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </Td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <Pagination total={locationSets.length} />
               </div>
             )}
           </div>
@@ -145,6 +194,15 @@ export function RegionSystemForm({
         region={selectedRegion}
         onSave={saveRegion}
         onDelete={() => { if (selectedRegionId) removeRegion(selectedRegionId); setSelectedRegionId(null); }}
+      />
+
+      <RegionDetailDialog
+        open={selectedLocationSetId !== null}
+        onOpenChange={(v) => { if (!v) setSelectedLocationSetId(null); }}
+        region={selectedLocationSet}
+        entityLabel="location set"
+        onSave={saveLocationSet}
+        onDelete={() => { if (selectedLocationSetId) removeLocationSet(selectedLocationSetId); setSelectedLocationSetId(null); }}
       />
     </AppShell>
   );

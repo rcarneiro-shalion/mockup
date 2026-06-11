@@ -401,6 +401,8 @@ export type RegionSystem = {
   name: string;
   country: string;
   regions?: Region[];
+  /** Location sets — same shape as a region; the dataset behind the "Location set" option. */
+  locationSets?: Region[];
   createdAt: string;
   updatedAt: string;
 };
@@ -425,6 +427,10 @@ const BR_STATES: Region[] = BR_STATE_NAMES.map((name, i) => ({
 
 export function emptyRegion(): Region {
   return { id: genId(), name: "New region", locations: [] };
+}
+
+export function emptyLocationSet(): Region {
+  return { id: genId(), name: "New location set", locations: [] };
 }
 
 // Pool of locations that can be assigned to a region (mock).
@@ -467,7 +473,7 @@ export function getRegionSystems(): RegionSystem[] {
 }
 
 export function emptyRegionSystem(): RegionSystem {
-  return { id: genId(), name: "", country: "", regions: [], createdAt: nowStamp(), updatedAt: nowStamp() };
+  return { id: genId(), name: "", country: "", regions: [], locationSets: [], createdAt: nowStamp(), updatedAt: nowStamp() };
 }
 
 // ---------- shared persistence read (SSR-safe) ----------

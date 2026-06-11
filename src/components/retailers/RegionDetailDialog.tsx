@@ -17,13 +17,17 @@ export function RegionDetailDialog({
   region,
   onSave,
   onDelete,
+  entityLabel = "region",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   region: Region | null;
   onSave: (r: Region) => void;
   onDelete: () => void;
+  /** Label for the edited entity ("region" or "location set"). */
+  entityLabel?: string;
 }) {
+  const cap = entityLabel.charAt(0).toUpperCase() + entityLabel.slice(1);
   const [r, setR] = useState<Region>(emptyRegion());
   const [assignOpen, setAssignOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -52,12 +56,12 @@ export function RegionDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[90vh] w-[min(820px,94vw)] max-w-none flex-col gap-0 overflow-hidden p-0">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <DialogTitle className="text-base font-semibold tracking-tight">{r.name || "Region"}</DialogTitle>
+          <DialogTitle className="text-base font-semibold tracking-tight">{r.name || cap}</DialogTitle>
           <button
             type="button"
             onClick={onDelete}
             className="mr-6 rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-destructive"
-            aria-label="Delete region"
+            aria-label={`Delete ${entityLabel}`}
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -148,7 +152,7 @@ export function RegionDetailDialog({
 
         <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => { onSave(r); onOpenChange(false); }} disabled={!r.name.trim()}>Save region</Button>
+          <Button onClick={() => { onSave(r); onOpenChange(false); }} disabled={!r.name.trim()}>Save {entityLabel}</Button>
         </div>
 
         {/* Nested: Assign location picker */}
