@@ -409,6 +409,61 @@ const clientSkus: RulePage = {
   ],
 };
 
+// Refined from product-api (domain/Assortment.kt, usecases) + dbt-models
+// (aux_matching_assortment) — replaces the auto-mined Assortments rules.
+const assortments: RulePage = {
+  key: "assortments",
+  label: "Assortments",
+  match: "/product/assortments",
+  groups: [
+    {
+      category: "What an assortment is",
+      rules: [
+        "An assortment is the set of a client's products (client SKUs) expected to be tracked in a given store — and optionally a specific region — over an optional active period.",
+        "It is the baseline of \"what should be on the shelf here\": the reference the platform measures availability, distribution and coverage against.",
+      ],
+    },
+    {
+      category: "Store vs region assortments",
+      rules: [
+        "A store assortment belongs to a client + store and is unique for that pair; a region-store assortment belongs to a client + region + store and is unique for that triple.",
+        "Active dates are optional, but the active-to date can never be before the active-from date (the same rule applies to each SKU link).",
+      ],
+    },
+    {
+      category: "How SKUs get into an assortment",
+      rules: [
+        "Automatic (store): every one of the client's global SKUs whose country matches the store is included automatically — no manual list to maintain.",
+        "Manual (store): SKUs are listed explicitly by linking each client SKU to the assortment, each with its own optional active dates.",
+        "Regional: a region-store assortment in REGIONAL mode auto-matches the client's regional SKUs by country and region.",
+        "Manual region-store: a region-store assortment in MANUAL mode takes an explicit list of client SKUs.",
+      ],
+    },
+    {
+      category: "Fields & options",
+      rules: [
+        "Multi-matching lets one client SKU match more than one product in the store.",
+        "Switching a store assortment from manual to automatic does not delete its explicit SKU links — they are simply no longer used.",
+        "An assortment is active by default and can be deactivated.",
+      ],
+    },
+    {
+      category: "Deleting",
+      rules: [
+        "Assortments are a sensitive relationship: their dependencies are not removed automatically. If active relations (its SKU links) exist, deletion is blocked until you remove them first.",
+        "Deletion is a soft delete, so history is preserved.",
+      ],
+    },
+    {
+      category: "Good to know",
+      rules: [
+        "The resulting active assortment (per client + store + SKU) feeds the matching, availability and Digital-Shelf \"range\" datasets that power the dashboards.",
+        "Every assortment keeps a full audit trail (who created/updated it and when).",
+      ],
+    },
+  ],
+};
+
 // ---------- Bulk -----------------------------------------------------------
 
 const bulk: RulePage = {
@@ -720,7 +775,7 @@ export const RULE_SECTIONS: RuleSection[] = [
       AP["client-categories"],
       AP["store-skus"],
       AP["sku-rpcs"],
-      AP["assortments"],
+      assortments,
       AP["sku-image-references"],
       AP["sku-retailer-image-references"],
       AP["sku-store-image-references"],
