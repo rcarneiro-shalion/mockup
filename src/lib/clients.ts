@@ -18,6 +18,11 @@ export type DataGroup = {
   updatedAt: string;
 };
 
+// Bottom-tab sub-resources of a client.
+export type ClientRegionSystem = { id: string; name: string; country: string };
+export type Manufacturer = { id: string; name: string };
+export type Competitor = { id: string; name: string; isMain?: boolean };
+
 export type Client = {
   id: string;
   name: string;
@@ -29,6 +34,9 @@ export type Client = {
   updatedAt: string;
   assignedProjects?: AssignedProject[];
   dataGroups?: DataGroup[];
+  regionSystems?: ClientRegionSystem[];
+  manufacturers?: Manufacturer[];
+  competitors?: Competitor[];
 };
 
 export const CLIENTS_KEY = "clients";
@@ -77,6 +85,54 @@ const COCA_DATA_GROUPS: DataGroup[] = [
   DG("dg9", "dummy-con", "Fri, Nov 28, 2025 5:35 PM", "Fri, Nov 28, 2025 5:35 PM"),
 ];
 
+const RS = (id: string, name: string, country: string): ClientRegionSystem => ({ id, name, country });
+const COCA_REGION_SYSTEMS: ClientRegionSystem[] = [
+  RS("crs1", "FR - Région Administrative", "FR"),
+  RS("crs2", "CO - Coke Bottlers", "CO"),
+  RS("crs3", "US - Coke Bottlers", "US"),
+  RS("crs4", "UY - Coke Bottlers", "UY"),
+  RS("crs5", "BO - Coke Bottlers", "BO"),
+  RS("crs6", "AR - Coke Bottlers", "AR"),
+  RS("crs7", "PE - Coke Bottlers", "PE"),
+  RS("crs8", "VE - Coke Bottlers", "VE"),
+  RS("crs9", "EC - Coke Bottlers", "EC"),
+  RS("crs10", "MX - Coke Bottlers", "MX"),
+  RS("crs11", "CL - Coke Bottlers", "CL"),
+  RS("crs12", "CR - Coke Bottlers", "CR"),
+  RS("crs13", "GT - Coke Bottlers", "GT"),
+  RS("crs14", "NI - Coke Bottlers", "NI"),
+  RS("crs15", "PA - Coke Bottlers", "PA"),
+  RS("crs16", "BR - Coke Bottlers", "BR"),
+];
+
+const COCA_MANUFACTURERS: Manufacturer[] = [{ id: "cmf1", name: "Coca Cola Company" }];
+
+const CMP = (id: string, name: string, isMain = false): Competitor => ({ id, name, isMain });
+const COCA_COMPETITORS: Competitor[] = [
+  CMP("cmp1", "Pascual"),
+  CMP("cmp2", "Red Bull"),
+  CMP("cmp3", "Keurig Dr Pepper"),
+  CMP("cmp4", "Carlsberg Group"),
+  CMP("cmp5", "Pepsico", true),
+  CMP("cmp6", "Rubicon Food Products Limited"),
+  CMP("cmp7", "Nichols"),
+  CMP("cmp8", "Novamex"),
+  CMP("cmp9", "Britvic Soft Drinks"),
+  CMP("cmp10", "Fentimans"),
+  CMP("cmp11", "AG Barr"),
+  CMP("cmp12", "Schweppes International Limited"),
+  CMP("cmp13", "Pulco"),
+  CMP("cmp14", "Asahi Group"),
+  CMP("cmp15", "Capri Sun Group Holding"),
+  CMP("cmp16", "Group Ambev/Abinbev"),
+  CMP("cmp17", "Highland Spring"),
+  CMP("cmp18", "Nestlé"),
+  CMP("cmp19", "Monster Brewing"),
+  CMP("cmp20", "Suntory"),
+  CMP("cmp21", "Ribena"),
+  CMP("cmp22", "Britvic"),
+];
+
 // Sourced from the Clients export (Ecometry / Shalion Console, Jun 2026) — 85 clients.
 export const INITIAL_CLIENTS: Client[] = [
   { ...C("abin", "Ab Inbev", "ABIN", false, "Thu, Jun 26, 2025 10:10 AM", "Thu, Jun 26, 2025 10:19 AM"), assignedProjects: [{ projectId: "abinmx", name: "Ab Inbev MX", bom: "SHL0131", activeFrom: "Wed, Jun 25, 2025", activeTo: "Mon, May 31, 2027" }] },
@@ -85,7 +141,7 @@ export const INITIAL_CLIENTS: Client[] = [
   C("baye", "Bayer", "BAYE", false, "Thu, Dec 19, 2024 4:37 PM", "Thu, Dec 19, 2024 4:53 PM"),
   C("beam", "Beam Suntory", "BEAM", false, "Mon, Jul 10, 2023 7:58 AM", "Tue, Aug 6, 2024 10:30 AM"),
   C("bimb", "Bimbo", "BIMB", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:28 AM"),
-  { ...C("coca", "Coca Cola", "COCA", false, "Thu, Mar 7, 2024 11:15 AM", "Fri, Jul 19, 2024 12:41 PM"), account: "Coca Cola", assignedProjects: COCA_PROJECTS, dataGroups: COCA_DATA_GROUPS },
+  { ...C("coca", "Coca Cola", "COCA", false, "Thu, Mar 7, 2024 11:15 AM", "Fri, Jul 19, 2024 12:41 PM"), account: "Coca Cola", assignedProjects: COCA_PROJECTS, dataGroups: COCA_DATA_GROUPS, regionSystems: COCA_REGION_SYSTEMS, manufacturers: COCA_MANUFACTURERS, competitors: COCA_COMPETITORS },
   C("cosn", "Cosnova", "COSN", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:30 AM"),
   C("dano", "Danone", "DANO", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:28 AM"),
   C("long", "De Longhi", "LONG", false, "Mon, Jul 14, 2025 9:17 AM", "Mon, Jul 14, 2025 2:41 PM"),
@@ -199,6 +255,9 @@ export function emptyClient(): Client {
     updatedAt: nowStamp(),
     assignedProjects: [],
     dataGroups: [],
+    regionSystems: [],
+    manufacturers: [],
+    competitors: [],
   };
 }
 
