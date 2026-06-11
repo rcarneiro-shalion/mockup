@@ -656,6 +656,16 @@ const brands: RulePage = {
       ],
     },
     {
+      category: "How automatic codification works",
+      rules: [
+        "Each brand carries one or more aliases. Scraped text is cleaned first (accents removed, lowercased, punctuation turned into separators) so variants like \"L'Oréal\" and \"loreal\" match the same brand.",
+        "The longest matching alias wins. A match made by the rules is marked AUTO; one set by a person is MANUAL — and a manual correction always takes priority over the automatic result.",
+        "Categories use Shalion's full category-tree path; if nothing matches, the brand's default category is used (marked DEFAULT).",
+        "Promotions are matched with case-insensitive patterns, and several patterns can map to the same promotion type (e.g. \"3x2\" and \"buy 3 pay 2\").",
+        "An ad can show several brands — each brand found counts as a fraction so the ad's total weight stays at 1.",
+      ],
+    },
+    {
       category: "Good to know",
       rules: ["Every brand keeps an audit trail — who created and updated it, and when."],
     },

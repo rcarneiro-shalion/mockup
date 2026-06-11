@@ -63,7 +63,7 @@ const SECTIONS: Section[] = [
     icon: Megaphone,
     summary: "Turning messy data into clean facts.",
     detail:
-      "Raw product information arrives inconsistent and incomplete. Here it is cleaned up and matched to the right brand, category and product, so every report and dashboard can be trusted.",
+      "Raw scraped data arrives inconsistent and incomplete. Here it is matched to the right brand, category and promotion — mostly automatically using rules, with the operations team correcting by hand where needed. Manual corrections always win, so every report and dashboard can be trusted.",
   },
   {
     label: "Product",
