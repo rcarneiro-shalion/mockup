@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import { STORE_OPTIONS, CATEGORY_OPTIONS, PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
-import { emptySeed, seedValueLabel, type Seed, type SeedType } from "@/lib/seeds";
+import { emptySeed, seedValueLabel, KEYWORD_TYPE_OPTIONS, type Seed, type SeedType, type KeywordType } from "@/lib/seeds";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ArrowLeft, ChevronUp, HelpCircle, Sprout } from "lucide-react";
@@ -36,7 +36,8 @@ export function SeedForm({
 
   const valueLabel = seedValueLabel(type);
   const canSave =
-    seed.d.trim() && seed.store.trim() && seed.discoveryKey?.trim() && seed.pageType?.trim() && seed.value?.trim();
+    seed.d.trim() && seed.store.trim() && seed.discoveryKey?.trim() && seed.pageType?.trim() && seed.value?.trim() &&
+    (type !== "KEYWORD" || !!seed.keywordType);
 
   const handleSave = async () => {
     if (!canSave) {
@@ -115,9 +116,20 @@ export function SeedForm({
                 </div>
 
                 {/* Type-specific value field */}
-                <Field label={valueLabel} required>
-                  <Input value={seed.value ?? ""} onChange={(e) => set("value", e.target.value)} />
-                </Field>
+                {type === "KEYWORD" ? (
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+                    <Field label="Keyword type" required>
+                      <SelectBox value={seed.keywordType ?? ""} onChange={(v) => set("keywordType", v as KeywordType)} options={KEYWORD_TYPE_OPTIONS} />
+                    </Field>
+                    <Field label={valueLabel} required>
+                      <Input value={seed.value ?? ""} onChange={(e) => set("value", e.target.value)} />
+                    </Field>
+                  </div>
+                ) : (
+                  <Field label={valueLabel} required>
+                    <Input value={seed.value ?? ""} onChange={(e) => set("value", e.target.value)} />
+                  </Field>
+                )}
               </div>
             )}
           </div>
