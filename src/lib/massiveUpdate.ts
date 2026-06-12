@@ -10,7 +10,9 @@
 // Assignment changes are SIMULATED (no real prod writes).
 
 export type MuApp = { id: string; label: string; slug: string };
-export type MuGroup = { id: string; label: string; appId: string };
+// Groups are keyed by the app SLUG (not id) so seeded groups still match when the
+// apps come from the live endpoint (which has different ids but the same slugs).
+export type MuGroup = { id: string; label: string; appSlug: string };
 export type MuSection = { id: string; label: string; path: string; groupId: string };
 export type MuClient = { id: string; name: string };
 export type MuDataGroup = {
@@ -32,31 +34,34 @@ export type MuCatalog = {
 
 export const pairKey = (sectionId: string, dataGroupId: string) => `${sectionId}::${dataGroupId}`;
 
+// The current dashboard applications (from the live /v1.0/admin/dashboardapplications
+// endpoint, ordered by position). Maestro is disabled on RMM Stretch.
 const apps: MuApp[] = [
-  { id: "app-msm", label: "Market Share Maestro", slug: "msm" },
   { id: "app-dsm", label: "Digital Shelf Maestro", slug: "dsm" },
+  { id: "app-asm", label: "Amazon Shelf Maestro", slug: "asm" },
+  { id: "app-odm", label: "Outlet Distribution Maestro", slug: "odm" },
+  { id: "app-cmi", label: "CMI", slug: "cmi" },
   { id: "app-rmm", label: "Retail Media Maestro", slug: "rmm" },
-  { id: "app-cmi", label: "Content Maestro", slug: "cmi" },
-  { id: "app-asm", label: "Assortment Maestro", slug: "asm" },
-  { id: "app-odm", label: "Offers & Deals Maestro", slug: "odm" },
+  { id: "app-rmms", label: "Retail Media Maestro Stretch", slug: "rmms" },
+  { id: "app-msm", label: "Market Share Maestro", slug: "msm" },
 ];
 
 const groups: MuGroup[] = [
-  { id: "g-dsm-scorecard", label: "Scorecard", appId: "app-dsm" },
-  { id: "g-dsm-marketplaces", label: "Marketplaces", appId: "app-dsm" },
-  { id: "g-dsm-price", label: "Price & promotions", appId: "app-dsm" },
-  { id: "g-dsm-brand", label: "Brand Dashboard", appId: "app-dsm" },
-  { id: "g-dsm-content", label: "Content performance", appId: "app-dsm" },
-  { id: "g-dsm-audit", label: "Audit setup", appId: "app-dsm" },
-  { id: "g-dsm-planning", label: "Planning workspace", appId: "app-dsm" },
-  { id: "g-dsm-sov", label: "Share of voice", appId: "app-dsm" },
-  { id: "g-msm-overview", label: "Overview", appId: "app-msm" },
-  { id: "g-msm-share", label: "Share evolution", appId: "app-msm" },
-  { id: "g-rmm-campaigns", label: "Campaigns", appId: "app-rmm" },
-  { id: "g-rmm-sov", label: "Share of voice", appId: "app-rmm" },
-  { id: "g-cmi-health", label: "Content health", appId: "app-cmi" },
-  { id: "g-asm-distribution", label: "Distribution", appId: "app-asm" },
-  { id: "g-odm-promos", label: "Promotions", appId: "app-odm" },
+  { id: "g-dsm-scorecard", label: "Scorecard", appSlug: "dsm" },
+  { id: "g-dsm-marketplaces", label: "Marketplaces", appSlug: "dsm" },
+  { id: "g-dsm-price", label: "Price & promotions", appSlug: "dsm" },
+  { id: "g-dsm-brand", label: "Brand Dashboard", appSlug: "dsm" },
+  { id: "g-dsm-content", label: "Content performance", appSlug: "dsm" },
+  { id: "g-dsm-audit", label: "Audit setup", appSlug: "dsm" },
+  { id: "g-dsm-planning", label: "Planning workspace", appSlug: "dsm" },
+  { id: "g-dsm-sov", label: "Share of voice", appSlug: "dsm" },
+  { id: "g-msm-overview", label: "Overview", appSlug: "msm" },
+  { id: "g-msm-share", label: "Share evolution", appSlug: "msm" },
+  { id: "g-rmm-campaigns", label: "Campaigns", appSlug: "rmm" },
+  { id: "g-rmm-sov", label: "Share of voice", appSlug: "rmm" },
+  { id: "g-cmi-health", label: "Content health", appSlug: "cmi" },
+  { id: "g-asm-distribution", label: "Distribution", appSlug: "asm" },
+  { id: "g-odm-promos", label: "Promotions", appSlug: "odm" },
 ];
 
 const S = (id: string, label: string, path: string, groupId: string): MuSection => ({ id, label, path, groupId });

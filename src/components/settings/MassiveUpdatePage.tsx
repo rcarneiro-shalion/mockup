@@ -14,6 +14,7 @@ import { fetchLive } from "@/lib/api/live.functions";
 import {
   MU_SEED,
   mapLiveDataGroups,
+  mapLiveApps,
   pairKey,
   type MuCatalog,
   type MuSection,
@@ -62,7 +63,14 @@ export function MassiveUpdatePage() {
   const [liveMsg, setLiveMsg] = useState("");
 
   // --- derived ------------------------------------------------------------
-  const appGroups = useMemo(() => catalog.groups.filter((g) => g.appId === appId), [catalog, appId]);
+  const selectedApp = useMemo(
+    () => catalog.apps.find((a) => a.id === appId) ?? catalog.apps[0],
+    [catalog, appId],
+  );
+  const appGroups = useMemo(
+    () => catalog.groups.filter((g) => g.appSlug === selectedApp?.slug),
+    [catalog, selectedApp],
+  );
   const appSections = useMemo(
     () => catalog.sections.filter((s) => appGroups.some((g) => g.id === s.groupId)),
     [catalog, appGroups],
@@ -176,28 +184,38 @@ export function MassiveUpdatePage() {
     setLiveStatus("loading");
     setLiveMsg("");
     try {
-      const res = await fetchLive({
-        data: { service: "visualization", env: "prod", path: "/v1.0/admin/datagroups?size=200", token: a, idToken: i },
-      });
-      if (!res.ok) {
+      const opts = (path: string) => ({ data: { service: "visualization", env: "prod" as const, path, token: a, idToken: i } });
+      const [dgRes, appRes] = await Promise.all([
+        fetchLive(opts("/v1.0/admin/datagroups?size=200")),
+        fetchLive(opts("/v1.0/admin/dashboardapplications")),
+      ]);
+      if (!dgRes.ok) {
         setLiveStatus("error");
-        setLiveMsg(res.error ?? `Request failed (${res.status}).`);
+        setLiveMsg(dgRes.error ?? `Request failed (${dgRes.status}).`);
         return;
       }
-      const { clients, dataGroups } = mapLiveDataGroups(res.data);
+      const { clients, dataGroups } = mapLiveDataGroups(dgRes.data);
       if (!dataGroups.length) {
         setLiveStatus("error");
         setLiveMsg("No datagroups returned.");
         return;
       }
-      setCatalog({ ...MU_SEED, clients, dataGroups });
+      const liveApps = appRes.ok ? mapLiveApps(appRes.data) : [];
+      const apps = liveApps.length ? liveApps : MU_SEED.apps;
+      setCatalog({ ...MU_SEED, apps, clients, dataGroups });
+      // re-point the app selector at a live app (prefer Digital Shelf Maestro).
+      const dsm = apps.find((a2) => a2.slug === "dsm") ?? apps[0];
+      setAppId(dsm?.id ?? "");
       setAssigned(new Set()); // assignment state for live datagroups is unknown → simulate fresh
       setSelDgs(new Set());
+      setSelSections(new Set());
       setStaged(new Map());
       setLiveOn(true);
       setLiveStatus("idle");
       setShowConnect(false);
-      toast.success(`Live: ${dataGroups.length} datagroups across ${clients.length} clients (prod).`);
+      toast.success(
+        `Live (prod): ${apps.length} dashboard apps · ${dataGroups.length} datagroups across ${clients.length} clients.`,
+      );
     } catch (e) {
       setLiveStatus("error");
       setLiveMsg((e as Error).message);
@@ -206,13 +224,13 @@ export function MassiveUpdatePage() {
 
   const disconnect = () => {
     setCatalog(MU_SEED);
+    setAppId("app-dsm");
     setAssigned(new Set(MU_SEED.assignments));
     setSelDgs(new Set());
+    setSelSections(new Set());
     setStaged(new Map());
     setLiveOn(false);
   };
-
-  const app = catalog.apps.find((a) => a.id === appId) ?? catalog.apps[0];
 
   return (
     <AppShell>
@@ -281,7 +299,7 @@ export function MassiveUpdatePage() {
           <span className="text-muted-foreground">Dashboard application</span>
           <Select value={appId} onValueChange={setAppId}>
             <SelectTrigger className="h-8 w-[260px]">
-              <SelectValue placeholder="Select application">{app?.label}</SelectValue>
+              <SelectValue placeholder="Select application">{selectedApp?.label}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {catalog.apps.map((a) => (
