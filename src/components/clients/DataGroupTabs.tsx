@@ -1,15 +1,13 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, Copy, GripVertical, LayoutList, Mail, Plus, Trash2, Users, Box, X, Globe, MapPin, LayoutGrid, Store, Target } from "lucide-react";
+import { ChevronDown, Copy, GripVertical, LayoutList, Mail, Plus, Trash2, Users, Box, X, Globe, MapPin, LayoutGrid, Store, Target, ArrowUp, ArrowDown, Filter, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { flag, countryLabel, COUNTRY_OPTIONS } from "@/lib/retailers";
+import { usePersistentState } from "@/hooks/usePersistentState";
+import { MU_SEED } from "@/lib/massiveUpdate";
 
 type SectionType = "CUSTOM" | "BUILT_IN";
 type Maestro = string;
-const DASHBOARD_APPS = [
-  "Market Share Maestro", "CMI", "Retail Media Maestro", "Retail Media Maestro Stretch",
-  "Digital Shelf Maestro", "Amazon Shelf Maestro", "Outlet Distribution Maestro",
-];
-type Section = { id: string; path: string; type: SectionType; maestro: Maestro };
+type Section = { id: string; path: string; type: SectionType; maestro: Maestro; group?: string; label?: string };
 type User = { id: string; email: string; status: "Active" | "Inactive"; createdAt: string; updatedAt: string };
 type Cube = { id: string; name: string; createdAt: string; updatedAt: string };
 type CountryRow = { id: string; code: string; createdAt: string; updatedAt: string };
@@ -215,12 +213,16 @@ const ALL_TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
 ];
 const PARENT_TAB_KEYS: TabKey[] = ["sections", "users", "cubes"];
 
-export function DataGroupTabs({ isParent = false }: { isParent?: boolean }) {
+export function DataGroupTabs({ isParent = false, dataGroupId }: { isParent?: boolean; dataGroupId?: string }) {
   const visibleTabs = isParent ? ALL_TABS.filter((t) => PARENT_TAB_KEYS.includes(t.key)) : ALL_TABS;
   const [tab, setTab] = useState<TabKey>(isParent ? "sections" : "countries");
   const activeTab = visibleTabs.some((t) => t.key === tab) ? tab : visibleTabs[0].key;
 
-  const [sections, setSections] = useState<Section[]>(INITIAL_SECTIONS);
+  // Sections are per data group + persisted (this is the thing being managed).
+  const [sections, setSections] = usePersistentState<Section[]>(
+    `dg-sections:${dataGroupId ?? "default"}:v1`,
+    INITIAL_SECTIONS,
+  );
   const [sectionsCollapsed, setSectionsCollapsed] = useState(false);
   const [users, setUsers] = useState<User[]>(INITIAL_USERS);
   const [cubes, setCubes] = useState<Cube[]>(INITIAL_CUBES);
@@ -255,7 +257,14 @@ export function DataGroupTabs({ isParent = false }: { isParent?: boolean }) {
       </div>
 
       {addSectionOpen && (
-        <AddSectionModal onClose={() => setAddSectionOpen(false)} onAdd={(s) => { setSections((p) => [...p, { ...s, id: crypto.randomUUID() }]); setAddSectionOpen(false); }} />
+        <AddSectionModal
+          existingPaths={new Set(sections.map((s) => s.path))}
+          onClose={() => setAddSectionOpen(false)}
+          onAdd={(items) => {
+            setSections((p) => [...p, ...items.map((s) => ({ ...s, id: crypto.randomUUID() }))]);
+            setAddSectionOpen(false);
+          }}
+        />
       )}
       {createUserOpen && (
         <CreateUserModal onClose={() => setCreateUserOpen(false)} onCreate={(emails) => { const now = formatNow(); setUsers((p) => [...p, ...emails.map((email) => ({ id: crypto.randomUUID(), email, status: "Active" as const, createdAt: now, updatedAt: now }))]); setCreateUserOpen(false); }} />
@@ -525,35 +534,82 @@ function TargetsPanel() {
 }
 
 function SectionsPanel({ sections, setSections, collapsed, setCollapsed, onAdd }: { sections: Section[]; setSections: React.Dispatch<React.SetStateAction<Section[]>>; collapsed: boolean; setCollapsed: (v: boolean) => void; onAdd: () => void }) {
+  const [appFilter, setAppFilter] = useState("All");
+  const apps = ["All", ...Array.from(new Set(sections.map((s) => s.maestro)))];
+  const filtering = appFilter !== "All";
+  const visible = filtering ? sections.filter((s) => s.maestro === appFilter) : sections;
+
+  const move = (id: string, dir: -1 | 1) =>
+    setSections((prev) => {
+      const i = prev.findIndex((s) => s.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+
   return (
     <div className="rounded-xl border border-border bg-card shadow-sm">
-      <div className="flex items-center justify-between p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4">
         <button onClick={() => setCollapsed(!collapsed)} className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
           <span className="grid place-items-center h-6 w-6 rounded bg-muted">
             <ChevronDown className={cn("h-4 w-4 transition-transform", collapsed && "-rotate-90")} />
           </span>
-          Dashboard sections
+          Dashboard sections <span className="text-xs font-normal text-muted-foreground">({sections.length})</span>
         </button>
-        <button className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors">
-          <Copy className="h-3.5 w-3.5" /> Clone sections
-        </button>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs">
+            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            <select value={appFilter} onChange={(e) => setAppFilter(e.target.value)} className="bg-transparent text-foreground focus:outline-none" aria-label="Filter by application">
+              {apps.map((a) => <option key={a} value={a}>{a === "All" ? "All applications" : a}</option>)}
+            </select>
+          </span>
+          <button className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors">
+            <Copy className="h-3.5 w-3.5" /> Clone sections
+          </button>
+          <button onClick={onAdd} className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+            <Plus className="h-3.5 w-3.5" /> Add sections
+          </button>
+        </div>
       </div>
       {!collapsed && (
         <div className="px-4 pb-4 space-y-2">
-          {sections.map((s) => (
-            <div key={s.id} className="group flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2.5 hover:border-primary/40 transition-colors">
-              <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-              <code className="text-sm text-foreground flex-shrink-0">{s.path}</code>
-              <Badge variant="neutral">{s.type}</Badge>
-              <Badge variant="warning">{s.maestro}</Badge>
-              <button onClick={() => setSections((rows) => rows.filter((r) => r.id !== s.id))} className="ml-auto rounded p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-destructive transition-all" aria-label="Remove section">
-                <X className="h-4 w-4" />
-              </button>
+          {filtering && (
+            <p className="text-xs text-muted-foreground">
+              Showing {visible.length} of {sections.length} — clear the filter to reorder.
+            </p>
+          )}
+          {visible.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border px-3 py-10 text-center text-sm text-muted-foreground">
+              No sections{filtering ? ` for ${appFilter}` : ""} yet. Use “Add sections”.
             </div>
-          ))}
-          <button onClick={onAdd} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline pt-2">
-            <Plus className="h-4 w-4" /> Add section
-          </button>
+          ) : (
+            visible.map((s) => {
+              const idx = sections.findIndex((x) => x.id === s.id);
+              return (
+                <div key={s.id} className="group flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2.5 hover:border-primary/40 transition-colors">
+                  <span className="w-5 shrink-0 text-center text-xs tabular-nums text-muted-foreground">{idx + 1}</span>
+                  <div className="flex shrink-0 flex-col">
+                    <button disabled={filtering || idx === 0} onClick={() => move(s.id, -1)} className="text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-25" aria-label="Move up"><ArrowUp className="h-3.5 w-3.5" /></button>
+                    <button disabled={filtering || idx === sections.length - 1} onClick={() => move(s.id, 1)} className="text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-25" aria-label="Move down"><ArrowDown className="h-3.5 w-3.5" /></button>
+                  </div>
+                  <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+                  <div className="min-w-0 flex-1">
+                    <code className="block truncate text-sm text-foreground">{s.path}</code>
+                    {s.label && <span className="block truncate text-xs text-muted-foreground">{s.label}</span>}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {s.group && <Badge variant="neutral">{s.group}</Badge>}
+                    <Badge variant="warning">{s.maestro}</Badge>
+                  </div>
+                  <button onClick={() => setSections((rows) => rows.filter((r) => r.id !== s.id))} className="rounded p-1 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-destructive transition-all" aria-label="Remove section">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              );
+            })
+          )}
         </div>
       )}
     </div>
@@ -722,17 +778,121 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
   );
 }
 
-function AddSectionModal({ onClose, onAdd }: { onClose: () => void; onAdd: (s: Omit<Section, "id">) => void }) {
+/** Add sections to the data group: pick a dashboard application (and optionally a
+ *  group), then multi-select from that application's real sections. */
+function AddSectionModal({
+  existingPaths,
+  onClose,
+  onAdd,
+}: {
+  existingPaths: Set<string>;
+  onClose: () => void;
+  onAdd: (items: Omit<Section, "id">[]) => void;
+}) {
+  const apps = MU_SEED.apps;
+  const [appSlug, setAppSlug] = useState(apps[0]?.slug ?? "");
+  const app = apps.find((a) => a.slug === appSlug);
+  const groups = MU_SEED.groups.filter((g) => g.appSlug === appSlug);
+  const [groupId, setGroupId] = useState("all");
+  const [q, setQ] = useState("");
+  const [sel, setSel] = useState<Set<string>>(new Set());
+
+  const catalogue = MU_SEED.sections
+    .map((s) => {
+      const g = groups.find((gg) => gg.id === s.groupId);
+      return g ? { ...s, groupLabel: g.label } : null;
+    })
+    .filter((s): s is (typeof MU_SEED.sections)[number] & { groupLabel: string } => s !== null);
+
+  const ql = q.trim().toLowerCase();
+  const list = catalogue.filter(
+    (s) =>
+      (groupId === "all" || s.groupId === groupId) &&
+      !existingPaths.has(s.path) &&
+      (!ql || `${s.label} ${s.path}`.toLowerCase().includes(ql)),
+  );
+
+  const toggle = (path: string) =>
+    setSel((p) => {
+      const n = new Set(p);
+      n.has(path) ? n.delete(path) : n.add(path);
+      return n;
+    });
+
+  const onAppChange = (slug: string) => {
+    setAppSlug(slug);
+    setGroupId("all");
+  };
+
+  const add = () => {
+    const items = catalogue
+      .filter((s) => sel.has(s.path))
+      .map((s) => ({ path: s.path, label: s.label, type: "CUSTOM" as const, maestro: app?.label ?? "", group: s.groupLabel }));
+    if (items.length) onAdd(items);
+  };
+
+  const Sel = ({ value, onChange, children, label }: { value: string; onChange: (v: string) => void; children: React.ReactNode; label: string }) => (
+    <div>
+      <label className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-md border border-border bg-background px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+        {children}
+      </select>
+    </div>
+  );
+
   return (
-    <AssignPicker
-      title="Add dashboard section"
-      label="Dashboard applications"
-      placeholder="Search"
-      options={DASHBOARD_APPS}
-      confirmLabel="Add section"
-      onClose={onClose}
-      onAssign={(app) => onAdd({ path: `/section/${app.replace(/\s+/g, "-").toLowerCase()}`, type: "CUSTOM", maestro: app })}
-    />
+    <Modal title="Add dashboard sections" onClose={onClose}>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+          <Sel label="Dashboard application" value={appSlug} onChange={onAppChange}>
+            {apps.map((a) => <option key={a.slug} value={a.slug}>{a.label}</option>)}
+          </Sel>
+          <Sel label="Dashboard group" value={groupId} onChange={setGroupId}>
+            <option value="all">All groups</option>
+            {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+          </Sel>
+        </div>
+
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search sections by name or path" className="w-full rounded-md border border-border bg-background pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+        </div>
+
+        <div className="max-h-64 overflow-auto rounded-md border border-border">
+          {list.length === 0 ? (
+            <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+              No available sections{ql ? " match" : ""} for this application/group.
+            </div>
+          ) : (
+            list.map((s) => {
+              const checked = sel.has(s.path);
+              return (
+                <button key={s.id} type="button" onClick={() => toggle(s.path)} className={cn("flex w-full items-center gap-2.5 border-b border-border px-3 py-2 text-left last:border-0 hover:bg-accent", checked && "bg-accent")}>
+                  <span className={cn("grid h-4 w-4 shrink-0 place-items-center rounded border", checked ? "border-primary bg-primary text-primary-foreground" : "border-border")}>
+                    {checked && <Check className="h-3 w-3" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm text-foreground">{s.label}</span>
+                    <code className="block truncate text-xs text-muted-foreground">{s.path}</code>
+                  </span>
+                  <Badge variant="neutral">{s.groupLabel}</Badge>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-xs text-muted-foreground">{sel.size} selected</span>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">Cancel</button>
+            <button onClick={add} disabled={!sel.size} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+              Add {sel.size || ""} section{sel.size === 1 ? "" : "s"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

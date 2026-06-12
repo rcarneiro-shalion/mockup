@@ -26,11 +26,13 @@ export function DataGroupPage({
   clientId,
   clientName,
   initialName,
+  dataGroupId,
   mode = "edit",
 }: {
   clientId: string;
   clientName: string;
   initialName: string;
+  dataGroupId?: string;
   mode?: "add" | "edit";
 }) {
   const isAdd = mode === "add";
@@ -217,7 +219,7 @@ export function DataGroupPage({
           </div>
 
           {/* Tabs — only on an existing data group; reduced to Dashboard sections / Users / Cubes when parent */}
-          {!isAdd && <DataGroupTabs isParent={isParent} />}
+          {!isAdd && <DataGroupTabs isParent={isParent} dataGroupId={dataGroupId} />}
 
           {isAdd && (
             <div className="mt-6 flex items-center justify-end gap-2">

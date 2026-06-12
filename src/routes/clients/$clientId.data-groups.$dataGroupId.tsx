@@ -16,6 +16,7 @@ function DataGroupDetail() {
       clientId={clientId}
       clientName={client?.name ?? "Client"}
       initialName={dg?.name ?? "Data group"}
+      dataGroupId={dataGroupId}
     />
   );
 }
