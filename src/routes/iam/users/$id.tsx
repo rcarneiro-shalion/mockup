@@ -1,13 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EntityEditPage } from "@/components/common/EntityEditPage";
-import { IAM_SPECS } from "@/lib/iamEntities";
+import { UserDetailPage } from "@/components/iam/UserDetailPage";
 
 export const Route = createFileRoute("/iam/users/$id")({
-  head: () => ({ meta: [{ title: "Edit Users — Shalion" }] }),
-  component: EditComp,
+  head: () => ({ meta: [{ title: "User — Shalion" }] }),
+  component: DetailComp,
 });
 
-function EditComp() {
+function DetailComp() {
   const { id } = Route.useParams();
-  return <EntityEditPage spec={IAM_SPECS["iam-users"]} editBase={"/iam/users"} rowId={id} />;
+  return <UserDetailPage userId={id} />;
 }

@@ -44,7 +44,7 @@ export function EntityEditPage({
   isNew?: boolean;
 }) {
   const fields = spec.fields ?? [];
-  const [rows, setRows] = usePersistentState<ApproxRow[]>(`approx:${spec.key}:v2`, spec.rows);
+  const [rows, setRows] = usePersistentState<ApproxRow[]>(`approx:${spec.key}:v3`, spec.rows);
   const navigate = useNavigate();
   const back = () => navigate({ to: editBase } as never);
 

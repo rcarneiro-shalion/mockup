@@ -1043,8 +1043,17 @@ const iamUsers: RulePage = {
     {
       category: "What a user is",
       rules: [
-        "A user is a person who signs in, identified by email. A user belongs to one or more accounts.",
-        "Within an account a user has a role, and can be granted per-application permissions.",
+        "A user is a person who signs in, identified by their Cognito user id (email + account) — not by email alone.",
+        "A user belongs to one or more accounts; within an account they have a role and per-application permissions.",
+      ],
+    },
+    {
+      category: "Data groups (many per user)",
+      rules: [
+        "A user can belong to MANY data groups — even across different accounts. (The old “a user can only have one data group” message was an application lock; the model is N:M.)",
+        "Exactly one data group is the default per account — the context shown first when the user signs in. Switching context during a session persists the choice.",
+        "Internal Shalion staff (CS / Sales) can span data groups across many client accounts; external client users typically stay within their own account.",
+        "Open a user (IAM → Users → a row) to see their data groups grouped by account and set the default per account.",
       ],
     },
     {
@@ -1052,7 +1061,7 @@ const iamUsers: RulePage = {
       rules: [
         "Users are created through a batch flow (with email validation) — there is no single “Add user” button on the list.",
         "Email is read-only once the user exists; a user is enabled/disabled with the active/inactive status switch.",
-        "Only users with the manage permission can change another user's role, status or permissions.",
+        "Only users with the manage permission can change another user's role, status, data groups or permissions.",
       ],
     },
   ],

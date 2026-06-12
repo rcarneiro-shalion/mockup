@@ -69,7 +69,7 @@ export function EntityListPage({
   /** When set, the page can fetch real records read-only from a develop API. */
   live?: LiveSpec;
 }) {
-  const [rows, setRows] = usePersistentState<ApproxRow[]>(`approx:${spec.key}:v2`, spec.rows);
+  const [rows, setRows] = usePersistentState<ApproxRow[]>(`approx:${spec.key}:v3`, spec.rows);
   const [liveRows, setLiveRows] = useState<ApproxRow[] | null>(null);
   const [q, setQ] = useState("");
   const sort = useSort();
