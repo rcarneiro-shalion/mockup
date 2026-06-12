@@ -64,3 +64,11 @@ connect/disconnect. Header shows "N clients · M shown" / "All clients (N)".
   dgr mode → one column per (datagroup × retailer), labelled "Datagroup · Retailer". Staged
   keys are `${sectionId}::${dgId}` or `${sectionId}::${dgId}#${retailerId}`. Switching target
   clears staged. `MU_SEED.retailers` (8) seeds the retailer options.
+
+## Update (consolidated filter cascade)
+The application selector moved from the page top into the LEFT panel as the first
+step of an explicit cascade: **Application → Dashboard groups → Sections** (all in
+the sections panel). Changing the application resets the group + section selection
+(onAppChange). A flow hint above reads "Filter application → group, pick sections,
+then send to a datagroup or datagroup + retailer." Right panel keeps the
+Datagroup / Datagroup + retailer target.

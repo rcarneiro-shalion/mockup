@@ -147,6 +147,13 @@ export function MassiveUpdatePage() {
     setStaged(new Map()); // keys differ between targets
   };
 
+  // Switching application changes its groups + sections → reset those selections.
+  const onAppChange = (id: string) => {
+    setAppId(id);
+    setGroupSel([]);
+    setSelSections(new Set());
+  };
+
   const stageInsert = () => {
     if (!selSections.size || !colKeys.length) return;
     const next = new Map(staged);
@@ -330,24 +337,15 @@ export function MassiveUpdatePage() {
           </div>
         )}
 
-        {/* App selector + status line */}
+        {/* Status line + flow hint */}
         <div className="mx-6 mt-4 flex flex-wrap items-center gap-3 text-sm">
-          <span className="text-muted-foreground">Dashboard application</span>
-          <Select value={appId} onValueChange={setAppId}>
-            <SelectTrigger className="h-8 w-[260px]">
-              <SelectValue placeholder="Select application">{selectedApp?.label}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {catalog.apps.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <span className="text-xs text-muted-foreground">
+            Filter <strong className="text-foreground">application → group</strong>, pick sections, then send to a{" "}
+            <strong className="text-foreground">datagroup</strong> or <strong className="text-foreground">datagroup + retailer</strong>.
+          </span>
           <span
             className={cn(
-              "rounded-full px-2 py-0.5 text-[11px] font-medium",
+              "ml-auto rounded-full px-2 py-0.5 text-[11px] font-medium",
               liveOn ? "bg-emerald-100 text-emerald-800" : "bg-secondary text-muted-foreground",
             )}
           >
@@ -357,9 +355,24 @@ export function MassiveUpdatePage() {
 
         {/* Transfer */}
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-auto px-6 py-4 lg:grid-cols-[1fr_auto_1fr]">
-          {/* LEFT: dashboard sections */}
+          {/* LEFT: dashboard sections — filter cascade application → group → section */}
           <Panel title="Dashboard sections" count={selSections.size}>
             <div className="flex shrink-0 flex-col gap-2 border-b border-border p-3">
+              <div className="flex items-center gap-2">
+                <span className="w-16 shrink-0 text-xs font-medium text-muted-foreground">Application</span>
+                <Select value={appId} onValueChange={onAppChange}>
+                  <SelectTrigger className="h-8 flex-1">
+                    <SelectValue placeholder="Select application">{selectedApp?.label}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {catalog.apps.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <SearchInput value={sectionQ} onChange={setSectionQ} placeholder="Search sections by name or path" />
