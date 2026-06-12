@@ -3,7 +3,7 @@ import { SettingsList, type SettingsColumn } from "@/components/settings/Setting
 import { DashboardGuideModal } from "@/components/settings/DashboardGuideModal";
 import { LinkText } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Layers } from "lucide-react";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { toast } from "sonner";
 import { DASHBOARD_APPS_KEY, INITIAL_DASHBOARD_APPS, type DashboardApp } from "@/lib/dashboardApps";
@@ -68,6 +68,11 @@ function DashboardApplicationsPage() {
       onDelete={(id) => setRows((prev) => prev.filter((r) => r.id !== id))}
       headerActions={
         <>
+          <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
+            <Link to="/settings/dashboard-applications/massive-update">
+              <Layers className="h-4 w-4" /> Massive update
+            </Link>
+          </Button>
           <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
             <Link to="/settings/dashboard-applications/manual">
               <BookOpen className="h-4 w-4" /> Manual

@@ -91,6 +91,7 @@ import { Route as SettingsScopesNewRouteImport } from './routes/settings/scopes/
 import { Route as SettingsScopesIdRouteImport } from './routes/settings/scopes/$id'
 import { Route as SettingsRulesNewRouteImport } from './routes/settings/rules.new'
 import { Route as SettingsRulesRuleIdRouteImport } from './routes/settings/rules.$ruleId'
+import { Route as SettingsDashboardApplicationsMassiveUpdateRouteImport } from './routes/settings/dashboard-applications.massive-update'
 import { Route as SettingsDashboardApplicationsManualRouteImport } from './routes/settings/dashboard-applications.manual'
 import { Route as SettingsDashboardApplicationsAppIdRouteImport } from './routes/settings/dashboard-applications.$appId'
 import { Route as SettingsCubesNewRouteImport } from './routes/settings/cubes/new'
@@ -620,6 +621,12 @@ const SettingsRulesRuleIdRoute = SettingsRulesRuleIdRouteImport.update({
   path: '/$ruleId',
   getParentRoute: () => SettingsRulesRoute,
 } as any)
+const SettingsDashboardApplicationsMassiveUpdateRoute =
+  SettingsDashboardApplicationsMassiveUpdateRouteImport.update({
+    id: '/massive-update',
+    path: '/massive-update',
+    getParentRoute: () => SettingsDashboardApplicationsRoute,
+  } as any)
 const SettingsDashboardApplicationsManualRoute =
   SettingsDashboardApplicationsManualRouteImport.update({
     id: '/manual',
@@ -1257,6 +1264,7 @@ export interface FileRoutesByFullPath {
   '/settings/cubes/new': typeof SettingsCubesNewRoute
   '/settings/dashboard-applications/$appId': typeof SettingsDashboardApplicationsAppIdRouteWithChildren
   '/settings/dashboard-applications/manual': typeof SettingsDashboardApplicationsManualRoute
+  '/settings/dashboard-applications/massive-update': typeof SettingsDashboardApplicationsMassiveUpdateRoute
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
   '/settings/scopes/$id': typeof SettingsScopesIdRoute
@@ -1428,6 +1436,7 @@ export interface FileRoutesByTo {
   '/settings/cubes/$id': typeof SettingsCubesIdRoute
   '/settings/cubes/new': typeof SettingsCubesNewRoute
   '/settings/dashboard-applications/manual': typeof SettingsDashboardApplicationsManualRoute
+  '/settings/dashboard-applications/massive-update': typeof SettingsDashboardApplicationsMassiveUpdateRoute
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
   '/settings/scopes/$id': typeof SettingsScopesIdRoute
@@ -1606,6 +1615,7 @@ export interface FileRoutesById {
   '/settings/cubes/new': typeof SettingsCubesNewRoute
   '/settings/dashboard-applications/$appId': typeof SettingsDashboardApplicationsAppIdRouteWithChildren
   '/settings/dashboard-applications/manual': typeof SettingsDashboardApplicationsManualRoute
+  '/settings/dashboard-applications/massive-update': typeof SettingsDashboardApplicationsMassiveUpdateRoute
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
   '/settings/scopes/$id': typeof SettingsScopesIdRoute
@@ -1786,6 +1796,7 @@ export interface FileRouteTypes {
     | '/settings/cubes/new'
     | '/settings/dashboard-applications/$appId'
     | '/settings/dashboard-applications/manual'
+    | '/settings/dashboard-applications/massive-update'
     | '/settings/rules/$ruleId'
     | '/settings/rules/new'
     | '/settings/scopes/$id'
@@ -1957,6 +1968,7 @@ export interface FileRouteTypes {
     | '/settings/cubes/$id'
     | '/settings/cubes/new'
     | '/settings/dashboard-applications/manual'
+    | '/settings/dashboard-applications/massive-update'
     | '/settings/rules/$ruleId'
     | '/settings/rules/new'
     | '/settings/scopes/$id'
@@ -2134,6 +2146,7 @@ export interface FileRouteTypes {
     | '/settings/cubes/new'
     | '/settings/dashboard-applications/$appId'
     | '/settings/dashboard-applications/manual'
+    | '/settings/dashboard-applications/massive-update'
     | '/settings/rules/$ruleId'
     | '/settings/rules/new'
     | '/settings/scopes/$id'
@@ -2948,6 +2961,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRulesRuleIdRouteImport
       parentRoute: typeof SettingsRulesRoute
     }
+    '/settings/dashboard-applications/massive-update': {
+      id: '/settings/dashboard-applications/massive-update'
+      path: '/massive-update'
+      fullPath: '/settings/dashboard-applications/massive-update'
+      preLoaderRoute: typeof SettingsDashboardApplicationsMassiveUpdateRouteImport
+      parentRoute: typeof SettingsDashboardApplicationsRoute
+    }
     '/settings/dashboard-applications/manual': {
       id: '/settings/dashboard-applications/manual'
       path: '/manual'
@@ -3708,6 +3728,7 @@ const SettingsDashboardApplicationsAppIdRouteWithChildren =
 interface SettingsDashboardApplicationsRouteChildren {
   SettingsDashboardApplicationsAppIdRoute: typeof SettingsDashboardApplicationsAppIdRouteWithChildren
   SettingsDashboardApplicationsManualRoute: typeof SettingsDashboardApplicationsManualRoute
+  SettingsDashboardApplicationsMassiveUpdateRoute: typeof SettingsDashboardApplicationsMassiveUpdateRoute
   SettingsDashboardApplicationsIndexRoute: typeof SettingsDashboardApplicationsIndexRoute
 }
 
@@ -3717,6 +3738,8 @@ const SettingsDashboardApplicationsRouteChildren: SettingsDashboardApplicationsR
       SettingsDashboardApplicationsAppIdRouteWithChildren,
     SettingsDashboardApplicationsManualRoute:
       SettingsDashboardApplicationsManualRoute,
+    SettingsDashboardApplicationsMassiveUpdateRoute:
+      SettingsDashboardApplicationsMassiveUpdateRoute,
     SettingsDashboardApplicationsIndexRoute:
       SettingsDashboardApplicationsIndexRoute,
   }

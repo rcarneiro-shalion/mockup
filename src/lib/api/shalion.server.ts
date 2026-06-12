@@ -19,6 +19,9 @@ const DEVELOP_BASES: Record<string, string> = {
   "data-collector-proxies": "https://data-collector-proxies-api-develop.develop.shalion.com",
   snowflake: "https://snowflake-api-develop.develop.shalion.com",
   visualization: "https://visualization-api-develop.develop.shalion.com",
+  // Production visualization API (Clients × Dashboards × Datagroups). Requires the
+  // dual-token auth: Authorization: Bearer <access> + x-id-token: <id>.
+  "visualization-prod": "https://visualization-api-prod.v2.shalion.com",
   product: "https://product-api-develop.develop.shalion.com",
   bulk: "https://bulk-api-develop.develop.shalion.com",
   "seeds-api": "https://seeds-api-develop.develop.shalion.com",
@@ -51,6 +54,14 @@ function resolveToken(clientToken?: string): string | undefined {
   return env || undefined;
 }
 
+/** Resolve the Cognito id token (sent as x-id-token; required by the viz API). */
+function resolveIdToken(clientIdToken?: string): string | undefined {
+  const t = clientIdToken?.trim();
+  if (t) return t;
+  const env = process.env.SHALION_API_ID_TOKEN?.trim();
+  return env || undefined;
+}
+
 /**
  * Read-only GET proxy to a Shalion develop API. Validates the service against the
  * allow-list, requires a relative path, attaches the bearer token server-side,
@@ -60,6 +71,7 @@ export async function fetchShalion(args: {
   service: string;
   path: string;
   token?: string;
+  idToken?: string;
 }): Promise<LiveResult> {
   const base = DEVELOP_BASES[args.service];
   const hadToken = !!resolveToken(args.token);
@@ -81,12 +93,17 @@ export async function fetchShalion(args: {
     };
   }
 
+  const idToken = resolveIdToken(args.idToken);
   const url = `${base}${args.path}`;
   try {
     const res = await fetch(url, {
       method: "GET",
-      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      signal: AbortSignal.timeout(15000),
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        ...(idToken ? { "x-id-token": idToken } : {}),
+      },
+      signal: AbortSignal.timeout(20000),
     });
     const text = await res.text();
     let data: JsonValue = null;

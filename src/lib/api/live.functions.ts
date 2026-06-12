@@ -13,6 +13,7 @@ export const fetchLive = createServerFn({ method: "POST" })
       service: z.string().min(1),
       path: z.string().startsWith("/"),
       token: z.string().optional(),
+      idToken: z.string().optional(),
     }),
   )
   .handler(async ({ data }) => {
