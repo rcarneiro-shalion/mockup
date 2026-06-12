@@ -32,9 +32,11 @@ import {
   PlugZap,
   X,
   TriangleAlert,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { FilterChip } from "@/components/seeds/FilterChip";
 
 type CellState = "assigned" | "add" | "remove" | "none";
 
@@ -46,6 +48,7 @@ export function MassiveUpdatePage() {
   const [groupId, setGroupId] = useState<string>(""); // "" = all groups
   const [sectionQ, setSectionQ] = useState("");
   const [clientQ, setClientQ] = useState("");
+  const [selClients, setSelClients] = useState<string[]>([]); // client ids; empty = all
 
   const [selSections, setSelSections] = useState<Set<string>>(new Set());
   const [selDgs, setSelDgs] = useState<Set<string>>(new Set());
@@ -85,7 +88,11 @@ export function MassiveUpdatePage() {
     [catalog],
   );
   const cq = clientQ.trim().toLowerCase();
-  const filteredClients = clientsWithDg.filter((c) => !cq || c.name.toLowerCase().includes(cq));
+  const filteredClients = clientsWithDg.filter(
+    (c) =>
+      (selClients.length === 0 || selClients.includes(c.id)) &&
+      (!cq || c.name.toLowerCase().includes(cq)),
+  );
   const visibleDgs = useMemo(
     () => catalog.dataGroups.filter((d) => filteredClients.some((c) => c.id === d.clientId)),
     [catalog, filteredClients],
@@ -209,6 +216,7 @@ export function MassiveUpdatePage() {
       setAssigned(new Set()); // assignment state for live datagroups is unknown → simulate fresh
       setSelDgs(new Set());
       setSelSections(new Set());
+      setSelClients([]);
       setStaged(new Map());
       setLiveOn(true);
       setLiveStatus("idle");
@@ -228,6 +236,7 @@ export function MassiveUpdatePage() {
     setAssigned(new Set(MU_SEED.assignments));
     setSelDgs(new Set());
     setSelSections(new Set());
+    setSelClients([]);
     setStaged(new Map());
     setLiveOn(false);
   };
@@ -383,12 +392,32 @@ export function MassiveUpdatePage() {
           {/* RIGHT: clients → datagroups */}
           <Panel title="Datagroups" count={selDgs.size}>
             <div className="flex shrink-0 flex-col gap-2 border-b border-border p-3">
-              <SearchInput value={clientQ} onChange={setClientQ} placeholder="Filter clients by name" />
-              <SelectAllRow
-                label={`Select all filtered (${visibleDgs.length})`}
-                onAll={() => setSelDgs(new Set([...selDgs, ...visibleDgs.map((d) => d.id)]))}
-                onClear={() => setSelDgs(new Set())}
-              />
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <SearchInput value={clientQ} onChange={setClientQ} placeholder="Filter clients by name" />
+                </div>
+                <FilterChip
+                  label="Clients"
+                  icon={Building2}
+                  options={clientsWithDg.map((c) => c.id)}
+                  value={selClients}
+                  onChange={setSelClients}
+                  getLabel={clientName}
+                  searchable
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <SelectAllRow
+                  label={`Select all filtered (${visibleDgs.length})`}
+                  onAll={() => setSelDgs(new Set([...selDgs, ...visibleDgs.map((d) => d.id)]))}
+                  onClear={() => setSelDgs(new Set())}
+                />
+                <span className="text-xs text-muted-foreground">
+                  {selClients.length
+                    ? `${selClients.length} client${selClients.length === 1 ? "" : "s"} · ${filteredClients.length} shown`
+                    : `All clients (${clientsWithDg.length})`}
+                </span>
+              </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
               {filteredClients.map((c) => {

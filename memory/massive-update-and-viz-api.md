@@ -45,3 +45,10 @@ Real shapes captured:
 
 Tokens are short-lived Cognito JWTs — never committed (.env / .env.* gitignored). The
 provided demo tokens were used only for live verification, not stored in the repo.
+
+## Update (client filter)
+The Massive-update right panel now has a **Clients** multi-select (FilterChip, searchable,
+keyed by client id with name labels) alongside the name search. Picking one/many clients
+scopes the datagroup list (and "Select all filtered") to only those clients — i.e. defines
+which clients receive the section. Empty = all clients. `selClients` state; reset on live
+connect/disconnect. Header shows "N clients · M shown" / "All clients (N)".
