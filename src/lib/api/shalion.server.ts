@@ -5,30 +5,47 @@ import process from "node:process";
 // the browser. The mockup stays backendless; this is a thin read-only passthrough
 // to Shalion's real develop APIs so we can validate flows against live data.
 
-// Allow-list of services → develop base URLs (recovered from console-frontend's
-// VITE_API_ENDPOINT_* config). Only these hosts can be proxied (anti-SSRF), and
-// only GET is allowed.
-const DEVELOP_BASES: Record<string, string> = {
-  iam: "https://iam-api-develop.develop.shalion.com",
-  backoffice: "https://backoffice-api-develop.develop.shalion.com",
-  codification: "https://codification-api-develop.develop.shalion.com",
-  "ecometry-tasks": "https://ecometry-tasks-api-develop.develop.shalion.com",
-  "orders-management": "https://orders-management-api-develop.develop.shalion.com",
-  "data-collector-instructions": "https://data-collector-instructions-api-develop.develop.shalion.com",
-  "data-collector-extractions": "https://data-extraction-api-develop.develop.shalion.com",
-  "data-collector-proxies": "https://data-collector-proxies-api-develop.develop.shalion.com",
-  snowflake: "https://snowflake-api-develop.develop.shalion.com",
-  visualization: "https://visualization-api-develop.develop.shalion.com",
-  // Production visualization API (Clients × Dashboards × Datagroups). Requires the
-  // dual-token auth: Authorization: Bearer <access> + x-id-token: <id>.
-  "visualization-prod": "https://visualization-api-prod.v2.shalion.com",
-  product: "https://product-api-develop.develop.shalion.com",
-  bulk: "https://bulk-api-develop.develop.shalion.com",
-  "seeds-api": "https://seeds-api-develop.develop.shalion.com",
+// Environments + base-URL pattern, from the canonical "Shalion APIs" URL map
+// (Notion → URL map → Shalion APIs). Every service resolves to
+//   https://<slug><ENV_SUFFIX[env]>
+// Only allow-listed slugs can be proxied (anti-SSRF) and only GET is allowed.
+export type LiveEnv = "develop" | "staging" | "prod";
+const ENV_SUFFIX: Record<LiveEnv, string> = {
+  develop: "-develop.develop.shalion.com",
+  staging: "-staging.ondemand.shalion.com",
+  prod: "-prod.v2.shalion.com",
 };
 
-export type LiveService = keyof typeof DEVELOP_BASES;
-export const LIVE_SERVICES = Object.keys(DEVELOP_BASES);
+// Caller service key → real API slug (from the URL map).
+const SERVICE_SLUGS: Record<string, string> = {
+  iam: "iam-api",
+  backoffice: "backoffice-api",
+  codification: "codification-api",
+  "ecometry-tasks": "ecometry-tasks-api",
+  product: "product-api",
+  bulk: "bulk-api",
+  "seeds-api": "seeds-api",
+  visualization: "visualization-api",
+  snowflake: "snowflake-api",
+  "orders-management": "orders-management-api",
+  "data-collector-instructions": "data-collector-instructions-api",
+  "data-collector-extractions": "data-extraction-api",
+  "data-collector-proxies": "data-collector-proxies-api",
+  maestro: "maestro-api",
+  "maestro-alerts": "maestro-alerts-api",
+  "maestro-audit": "maestro-audit-api",
+  "maestro-cube-cache": "maestro-cube-cache-api",
+  slides: "slides-api",
+};
+
+export type LiveService = keyof typeof SERVICE_SLUGS;
+export const LIVE_SERVICES = Object.keys(SERVICE_SLUGS);
+
+/** Resolve a service + environment to its base host (or undefined if unknown). */
+function baseUrlFor(service: string, env: LiveEnv): string | undefined {
+  const slug = SERVICE_SLUGS[service];
+  return slug ? `https://${slug}${ENV_SUFFIX[env]}` : undefined;
+}
 
 // Concrete JSON type so the server-fn return stays serializable for TanStack.
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
@@ -72,8 +89,10 @@ export async function fetchShalion(args: {
   path: string;
   token?: string;
   idToken?: string;
+  env?: LiveEnv;
 }): Promise<LiveResult> {
-  const base = DEVELOP_BASES[args.service];
+  const env: LiveEnv = args.env ?? "develop";
+  const base = baseUrlFor(args.service, env);
   const hadToken = !!resolveToken(args.token);
 
   if (!base) {

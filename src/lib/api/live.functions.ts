@@ -14,6 +14,7 @@ export const fetchLive = createServerFn({ method: "POST" })
       path: z.string().startsWith("/"),
       token: z.string().optional(),
       idToken: z.string().optional(),
+      env: z.enum(["develop", "staging", "prod"]).optional(),
     }),
   )
   .handler(async ({ data }) => {

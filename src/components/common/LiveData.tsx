@@ -6,10 +6,12 @@ import { fetchLive } from "@/lib/api/live.functions";
 import type { ApproxRow } from "./EntityListPage";
 import { cn } from "@/lib/utils";
 
-/** Describes how a list page reads real data from a Shalion develop API. */
+/** Describes how a list page reads real data from a Shalion API. */
 export type LiveSpec = {
   /** Allow-listed service key (see shalion.server.ts), e.g. "iam". */
   service: string;
+  /** Environment from the Shalion APIs URL map (default develop). */
+  env?: "develop" | "staging" | "prod";
   /** Relative API path, e.g. "/v1.0/admin/applications". */
   path: string;
   /** Maps the parsed JSON response to display rows. */
@@ -44,7 +46,7 @@ export function LiveDataControls({
     setStatus("loading");
     setMsg("");
     try {
-      const res = await fetchLive({ data: { service: live.service, path: live.path, token: tok || undefined } });
+      const res = await fetchLive({ data: { service: live.service, env: live.env, path: live.path, token: tok || undefined } });
       if (!res.ok) {
         setStatus("error");
         setMsg(res.error ?? `Request failed (${res.status}).`);

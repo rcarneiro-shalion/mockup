@@ -177,7 +177,7 @@ export function MassiveUpdatePage() {
     setLiveMsg("");
     try {
       const res = await fetchLive({
-        data: { service: "visualization-prod", path: "/v1.0/admin/datagroups?size=200", token: a, idToken: i },
+        data: { service: "visualization", env: "prod", path: "/v1.0/admin/datagroups?size=200", token: a, idToken: i },
       });
       if (!res.ok) {
         setLiveStatus("error");
