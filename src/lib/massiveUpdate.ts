@@ -22,12 +22,15 @@ export type MuDataGroup = {
   dashboardType: "BRAND" | "AGENCY";
   country: string;
 };
+/** Retailers — used when sending a section to a datagroup + retailer (Agency). */
+export type MuRetailer = { id: string; name: string };
 export type MuCatalog = {
   apps: MuApp[];
   groups: MuGroup[];
   sections: MuSection[];
   clients: MuClient[];
   dataGroups: MuDataGroup[];
+  retailers: MuRetailer[];
   /** Existing assignments as `${sectionId}::${dataGroupId}`. */
   assignments: string[];
 };
@@ -143,7 +146,18 @@ const assignments: string[] = [
   pairKey("s-ct-health", "dg-uni-uk"),
 ];
 
-export const MU_SEED: MuCatalog = { apps, groups, sections, clients, dataGroups, assignments };
+const retailers: MuRetailer[] = [
+  { id: "ret-amazon", name: "Amazon" },
+  { id: "ret-walmart", name: "Walmart" },
+  { id: "ret-carrefour", name: "Carrefour" },
+  { id: "ret-tesco", name: "Tesco" },
+  { id: "ret-kroger", name: "Kroger" },
+  { id: "ret-mercadolibre", name: "Mercado Libre" },
+  { id: "ret-jumbo", name: "Jumbo" },
+  { id: "ret-coto", name: "Coto" },
+];
+
+export const MU_SEED: MuCatalog = { apps, groups, sections, clients, dataGroups, retailers, assignments };
 
 // ---- live mappers (prod Visualization API → catalog) ---------------------
 function pickArray(json: unknown): Record<string, unknown>[] {

@@ -18,7 +18,6 @@ import {
   pairKey,
   type MuCatalog,
   type MuSection,
-  type MuDataGroup,
 } from "@/lib/massiveUpdate";
 import {
   ArrowLeft,
@@ -33,6 +32,8 @@ import {
   X,
   TriangleAlert,
   Building2,
+  Layers,
+  Store,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -45,10 +46,13 @@ export function MassiveUpdatePage() {
   const [liveOn, setLiveOn] = useState(false);
 
   const [appId, setAppId] = useState<string>("app-dsm");
-  const [groupId, setGroupId] = useState<string>(""); // "" = all groups
+  const [groupSel, setGroupSel] = useState<string[]>([]); // group ids of the app; empty = all groups
   const [sectionQ, setSectionQ] = useState("");
   const [clientQ, setClientQ] = useState("");
   const [selClients, setSelClients] = useState<string[]>([]); // client ids; empty = all
+  // Target: send the section to a datagroup (Brand) or a datagroup + retailer (Agency).
+  const [target, setTarget] = useState<"dg" | "dgr">("dg");
+  const [selRetailers, setSelRetailers] = useState<string[]>([]); // retailer ids (dgr mode)
 
   const [selSections, setSelSections] = useState<Set<string>>(new Set());
   const [selDgs, setSelDgs] = useState<Set<string>>(new Set());
@@ -80,7 +84,9 @@ export function MassiveUpdatePage() {
   );
   const sq = sectionQ.trim().toLowerCase();
   const visibleSections = appSections.filter(
-    (s) => (!groupId || s.groupId === groupId) && (!sq || `${s.label} ${s.path}`.toLowerCase().includes(sq)),
+    (s) =>
+      (groupSel.length === 0 || groupSel.includes(s.groupId)) &&
+      (!sq || `${s.label} ${s.path}`.toLowerCase().includes(sq)),
   );
 
   const clientsWithDg = useMemo(
@@ -101,9 +107,24 @@ export function MassiveUpdatePage() {
 
   const selSectionList = catalog.sections.filter((s) => selSections.has(s.id));
   const selDgList = catalog.dataGroups.filter((d) => selDgs.has(d.id));
+  const retailers = catalog.retailers ?? [];
+  const retailerName = (id: string) => retailers.find((r) => r.id === id)?.name ?? id;
+  const selRetailerList = retailers.filter((r) => selRetailers.includes(r.id));
 
-  const cellState = (sectionId: string, dgId: string): CellState => {
-    const k = pairKey(sectionId, dgId);
+  // The "target" columns of the matrix: datagroups (Brand →
+  // datagroup-dashboardsections), or datagroup × retailer (Agency →
+  // datagroup-retailer-dashboardsections).
+  type TargetCol = { key: string; label: string };
+  const targetColumns: TargetCol[] =
+    target === "dg"
+      ? selDgList.map((d) => ({ key: d.id, label: `${clientName(d.clientId)} · ${d.name}` }))
+      : selDgList.flatMap((d) =>
+          selRetailerList.map((r) => ({ key: `${d.id}#${r.id}`, label: `${d.name} · ${r.name}` })),
+        );
+  const colKeys = targetColumns.map((c) => c.key);
+
+  const cellState = (sectionId: string, colKey: string): CellState => {
+    const k = pairKey(sectionId, colKey);
     const st = staged.get(k);
     if (st === "insert") return "add";
     if (st === "remove") return "remove";
@@ -120,13 +141,19 @@ export function MassiveUpdatePage() {
     setter(next);
   };
 
+  const chooseTarget = (t: "dg" | "dgr") => {
+    if (t === target) return;
+    setTarget(t);
+    setStaged(new Map()); // keys differ between targets
+  };
+
   const stageInsert = () => {
-    if (!selSections.size || !selDgs.size) return;
+    if (!selSections.size || !colKeys.length) return;
     const next = new Map(staged);
     let n = 0;
     for (const s of selSections)
-      for (const d of selDgs) {
-        const k = pairKey(s, d);
+      for (const c of colKeys) {
+        const k = pairKey(s, c);
         if (next.get(k) === "remove") next.delete(k); // cancel a pending remove
         if (!assigned.has(k) && next.get(k) !== "insert") {
           next.set(k, "insert");
@@ -138,12 +165,12 @@ export function MassiveUpdatePage() {
   };
 
   const stageRemove = () => {
-    if (!selSections.size || !selDgs.size) return;
+    if (!selSections.size || !colKeys.length) return;
     const next = new Map(staged);
     let n = 0;
     for (const s of selSections)
-      for (const d of selDgs) {
-        const k = pairKey(s, d);
+      for (const c of colKeys) {
+        const k = pairKey(s, c);
         if (next.get(k) === "insert") {
           next.delete(k); // cancel a pending insert
           continue;
@@ -333,25 +360,32 @@ export function MassiveUpdatePage() {
           {/* LEFT: dashboard sections */}
           <Panel title="Dashboard sections" count={selSections.size}>
             <div className="flex shrink-0 flex-col gap-2 border-b border-border p-3">
-              <Select value={groupId || "__all__"} onValueChange={(v) => setGroupId(v === "__all__" ? "" : v)}>
-                <SelectTrigger className="h-8">
-                  <SelectValue placeholder="All dashboard groups" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All dashboard groups</SelectItem>
-                  {appGroups.map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <SearchInput value={sectionQ} onChange={setSectionQ} placeholder="Search sections by name or path" />
-              <SelectAllRow
-                label={`Select all filtered (${visibleSections.length})`}
-                onAll={() => setSelSections(new Set([...selSections, ...visibleSections.map((s) => s.id)]))}
-                onClear={() => setSelSections(new Set())}
-              />
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <SearchInput value={sectionQ} onChange={setSectionQ} placeholder="Search sections by name or path" />
+                </div>
+                <FilterChip
+                  label="Groups"
+                  icon={Layers}
+                  options={appGroups.map((g) => g.id)}
+                  value={groupSel}
+                  onChange={setGroupSel}
+                  getLabel={(id) => appGroups.find((g) => g.id === id)?.label ?? id}
+                  searchable
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <SelectAllRow
+                  label={`Select all filtered (${visibleSections.length})`}
+                  onAll={() => setSelSections(new Set([...selSections, ...visibleSections.map((s) => s.id)]))}
+                  onClear={() => setSelSections(new Set())}
+                />
+                <span className="text-xs text-muted-foreground">
+                  {groupSel.length
+                    ? `${groupSel.length} group${groupSel.length === 1 ? "" : "s"}`
+                    : `All groups (${appGroups.length})`}
+                </span>
+              </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
               {visibleSections.map((s) => (
@@ -373,7 +407,7 @@ export function MassiveUpdatePage() {
             <Button
               size="sm"
               className="h-9 gap-1.5"
-              disabled={!selSections.size || !selDgs.size}
+              disabled={!selSections.size || !targetColumns.length}
               onClick={stageInsert}
             >
               <ArrowRight className="h-4 w-4" /> Insert
@@ -382,16 +416,33 @@ export function MassiveUpdatePage() {
               size="sm"
               variant="outline"
               className="h-9 gap-1.5"
-              disabled={!selSections.size || !selDgs.size}
+              disabled={!selSections.size || !targetColumns.length}
               onClick={stageRemove}
             >
               <ArrowLeft className="h-4 w-4" /> Remove
             </Button>
           </div>
 
-          {/* RIGHT: clients → datagroups */}
-          <Panel title="Datagroups" count={selDgs.size}>
+          {/* RIGHT: clients → datagroups (+ optional retailer) */}
+          <Panel title={target === "dg" ? "Datagroups" : "Datagroups + retailer"} count={targetColumns.length}>
             <div className="flex shrink-0 flex-col gap-2 border-b border-border p-3">
+              {/* Send-to target: datagroup (Brand) vs datagroup + retailer (Agency) */}
+              <div className="flex items-center gap-1 rounded-md border border-border bg-secondary/40 p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => chooseTarget("dg")}
+                  className={cn("flex-1 rounded px-2 py-1 transition-colors", target === "dg" ? "bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                >
+                  Datagroup
+                </button>
+                <button
+                  type="button"
+                  onClick={() => chooseTarget("dgr")}
+                  className={cn("flex-1 rounded px-2 py-1 transition-colors", target === "dgr" ? "bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                >
+                  Datagroup + retailer
+                </button>
+              </div>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <SearchInput value={clientQ} onChange={setClientQ} placeholder="Filter clients by name" />
@@ -405,6 +456,17 @@ export function MassiveUpdatePage() {
                   getLabel={clientName}
                   searchable
                 />
+                {target === "dgr" && (
+                  <FilterChip
+                    label="Retailers"
+                    icon={Store}
+                    options={retailers.map((r) => r.id)}
+                    value={selRetailers}
+                    onChange={setSelRetailers}
+                    getLabel={retailerName}
+                    searchable
+                  />
+                )}
               </div>
               <div className="flex items-center justify-between">
                 <SelectAllRow
@@ -413,11 +475,16 @@ export function MassiveUpdatePage() {
                   onClear={() => setSelDgs(new Set())}
                 />
                 <span className="text-xs text-muted-foreground">
-                  {selClients.length
-                    ? `${selClients.length} client${selClients.length === 1 ? "" : "s"} · ${filteredClients.length} shown`
-                    : `All clients (${clientsWithDg.length})`}
+                  {target === "dgr"
+                    ? `${selDgs.size} dg × ${selRetailers.length} retailer = ${targetColumns.length} target${targetColumns.length === 1 ? "" : "s"}`
+                    : selClients.length
+                      ? `${selClients.length} client${selClients.length === 1 ? "" : "s"} · ${filteredClients.length} shown`
+                      : `All clients (${clientsWithDg.length})`}
                 </span>
               </div>
+              {target === "dgr" && !selRetailers.length && (
+                <p className="text-xs text-amber-700">Pick one or more retailers to define the datagroup × retailer targets.</p>
+              )}
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
               {filteredClients.map((c) => {
@@ -472,8 +539,8 @@ export function MassiveUpdatePage() {
         </div>
 
         {/* Matrix */}
-        {selSectionList.length > 0 && selDgList.length > 0 && (
-          <Matrix sections={selSectionList} dgs={selDgList} clientName={clientName} cellState={cellState} />
+        {selSectionList.length > 0 && targetColumns.length > 0 && (
+          <Matrix sections={selSectionList} columns={targetColumns} cellState={cellState} targetKind={target} />
         )}
       </div>
     </AppShell>
@@ -578,32 +645,33 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 function Matrix({
   sections,
-  dgs,
-  clientName,
+  columns,
   cellState,
+  targetKind,
 }: {
   sections: MuSection[];
-  dgs: MuDataGroup[];
-  clientName: (id: string) => string;
-  cellState: (sectionId: string, dgId: string) => CellState;
+  columns: { key: string; label: string }[];
+  cellState: (sectionId: string, colKey: string) => CellState;
+  targetKind: "dg" | "dgr";
 }) {
+  const colNoun = targetKind === "dgr" ? "datagroup × retailer" : "datagroup";
   return (
     <div className="border-t border-border">
       <div className="px-6 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Matrix · {sections.length} section{sections.length === 1 ? "" : "s"} × {dgs.length} datagroup
-        {dgs.length === 1 ? "" : "s"}
+        Matrix · {sections.length} section{sections.length === 1 ? "" : "s"} × {columns.length} {colNoun}
+        {columns.length === 1 ? "" : "s"}
       </div>
       <div className="max-h-[40vh] overflow-auto px-6 pb-5">
         <table className="border-separate border-spacing-0 text-sm">
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-background px-2 py-1.5 text-left text-xs font-medium text-muted-foreground">
-                Section \ Datagroup
+                Section \ {targetKind === "dgr" ? "Datagroup · Retailer" : "Datagroup"}
               </th>
-              {dgs.map((d) => (
-                <th key={d.id} className="px-1.5 py-1.5 align-bottom">
+              {columns.map((c) => (
+                <th key={c.key} className="px-1.5 py-1.5 align-bottom">
                   <div className="mx-auto w-6 whitespace-nowrap text-[11px] text-foreground/80 [writing-mode:vertical-rl] rotate-180">
-                    {clientName(d.clientId)} · {d.name}
+                    {c.label}
                   </div>
                 </th>
               ))}
@@ -615,14 +683,11 @@ function Matrix({
                 <td className="sticky left-0 z-10 max-w-[220px] truncate bg-background px-2 py-1 font-mono text-[11px] text-foreground/80" title={s.path}>
                   {s.path}
                 </td>
-                {dgs.map((d) => {
-                  const st = cellState(s.id, d.id);
-                  return (
-                    <td key={d.id} className="px-1.5 py-1 text-center">
-                      <Cell state={st} />
-                    </td>
-                  );
-                })}
+                {columns.map((c) => (
+                  <td key={c.key} className="px-1.5 py-1 text-center">
+                    <Cell state={cellState(s.id, c.key)} />
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>

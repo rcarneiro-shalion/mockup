@@ -52,3 +52,15 @@ keyed by client id with name labels) alongside the name search. Picking one/many
 scopes the datagroup list (and "Select all filtered") to only those clients — i.e. defines
 which clients receive the section. Empty = all clients. `selClients` state; reset on live
 connect/disconnect. Header shows "N clients · M shown" / "All clients (N)".
+
+## Update (dashboard groups multi-select + datagroup×retailer target)
+- LEFT: the single "group" dropdown is now a **Dashboard groups multi-select** (FilterChip
+  "Groups", searchable, keyed by group id) — empty = all groups of the app; picking groups
+  scopes the sections list. Header shows "N groups" / "All groups (N)".
+- RIGHT: a **Target toggle** — "Datagroup" (Brand → datagroup-dashboardsections) vs
+  "Datagroup + retailer" (Agency → datagroup-retailer-dashboardsections). In +retailer mode a
+  **Retailers** FilterChip appears; targets become the cross product datagroup × retailer.
+- The matrix is now generic `columns: {key,label}[]`: dg mode → one column per datagroup;
+  dgr mode → one column per (datagroup × retailer), labelled "Datagroup · Retailer". Staged
+  keys are `${sectionId}::${dgId}` or `${sectionId}::${dgId}#${retailerId}`. Switching target
+  clears staged. `MU_SEED.retailers` (8) seeds the retailer options.
