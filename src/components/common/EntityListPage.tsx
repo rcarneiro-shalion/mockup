@@ -18,6 +18,7 @@ import { usePersistentState } from "@/hooks/usePersistentState";
 import { Plus, ChevronLeft, ChevronRight, TriangleAlert, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { LiveDataControls, type LiveSpec } from "./LiveData";
 
 export type ApproxColumn = { label: string; key: string };
 export type ApproxRow = { id: string } & Record<string, string | number | boolean>;
@@ -58,27 +59,41 @@ function fmtCell(v: unknown): string {
  * per-row actions and a console-style paginator. These are approximations —
  * Add and row clicks are stubs ("coming soon").
  */
-export function EntityListPage({ spec, editBase }: { spec: ApproxSpec; editBase?: string }) {
+export function EntityListPage({
+  spec,
+  editBase,
+  live,
+}: {
+  spec: ApproxSpec;
+  editBase?: string;
+  /** When set, the page can fetch real records read-only from a develop API. */
+  live?: LiveSpec;
+}) {
   const [rows, setRows] = usePersistentState<ApproxRow[]>(`approx:${spec.key}:v2`, spec.rows);
+  const [liveRows, setLiveRows] = useState<ApproxRow[] | null>(null);
   const [q, setQ] = useState("");
   const sort = useSort();
   const navigate = useNavigate();
   // Dynamic, registry-driven paths: the typed router can't know them statically.
   const go = (to: string) => navigate({ to } as never);
 
+  // In live mode the rows are real + read-only (the edit pages are localStorage-backed).
+  const isLive = liveRows !== null;
+  const sourceRows = liveRows ?? rows;
   const ql = q.trim().toLowerCase();
   const filtered = ql
-    ? rows.filter((r) => spec.columns.some((c) => fmtCell(r[c.key]).toLowerCase().includes(ql)))
-    : rows;
+    ? sourceRows.filter((r) => spec.columns.some((c) => fmtCell(r[c.key]).toLowerCase().includes(ql)))
+    : sourceRows;
   const sorted = sortRows(filtered, sort);
-  const pages = Math.max(1, Math.ceil(spec.total / 100));
+  const displayTotal = isLive ? sorted.length : spec.total;
+  const pages = Math.max(1, Math.ceil(displayTotal / 100));
 
   return (
     <AppShell>
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between px-6 pt-5">
           <h1 className="text-[17px] font-semibold text-foreground">{spec.title}</h1>
-          {spec.addLabel ? (
+          {spec.addLabel && !isLive ? (
             <Button
               size="sm"
               className="h-8 gap-1.5"
@@ -90,6 +105,8 @@ export function EntityListPage({ spec, editBase }: { spec: ApproxSpec; editBase?
             </Button>
           ) : null}
         </div>
+
+        {live ? <LiveDataControls live={live} onData={setLiveRows} /> : null}
 
         {spec.notice ? (
           <div className="mx-6 mt-4 flex items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -132,7 +149,7 @@ export function EntityListPage({ spec, editBase }: { spec: ApproxSpec; editBase?
                       key={c.key}
                       className={i === 0 ? "font-medium text-foreground" : "text-foreground/80"}
                     >
-                      {i === 0 && editBase ? (
+                      {i === 0 && editBase && !isLive ? (
                         <LinkText onClick={() => go(`${editBase}/${r.id}`)}>{content}</LinkText>
                       ) : (
                         content
@@ -141,11 +158,13 @@ export function EntityListPage({ spec, editBase }: { spec: ApproxSpec; editBase?
                   );
                 })}
                 <Td>
-                  <RowActionsMenu
-                    id={r.id}
-                    entityLabel={spec.entityLabel ?? spec.title.toLowerCase()}
-                    onDelete={() => setRows((prev) => prev.filter((x) => x.id !== r.id))}
-                  />
+                  {!isLive && (
+                    <RowActionsMenu
+                      id={r.id}
+                      entityLabel={spec.entityLabel ?? spec.title.toLowerCase()}
+                      onDelete={() => setRows((prev) => prev.filter((x) => x.id !== r.id))}
+                    />
+                  )}
                 </Td>
               </tr>
             ))}
@@ -158,7 +177,7 @@ export function EntityListPage({ spec, editBase }: { spec: ApproxSpec; editBase?
             <span className="rounded border border-border px-2 py-0.5 text-foreground">100</span>
           </span>
           <span>
-            1–{Math.min(sorted.length, 100)} of {spec.total.toLocaleString("en-US")}
+            1–{Math.min(sorted.length, 100)} of {displayTotal.toLocaleString("en-US")}
           </span>
           <div className="flex items-center gap-1">
             <button className="rounded p-1 hover:bg-secondary" aria-label="Previous">
