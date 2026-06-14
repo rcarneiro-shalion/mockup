@@ -28,7 +28,7 @@ export const Route = createFileRoute("/iam/applications/")({
     <EntityListPage
       spec={IAM_SPECS["iam-applications"]}
       editBase={"/iam/applications"}
-      live={{ service: "iam", path: "/v1.0/admin/applications", map: mapApplications }}
+      live={{ service: "iam", env: "prod", path: "/v1.0/admin/applications", map: mapApplications }}
     />
   ),
 });

@@ -30,3 +30,12 @@ features read on mount, so they're reused by IAM "Connect live data" and Massive
 "Connect live clients" without re-pasting. Shows the decoded token user + expiry (and
 flags expired), Clear button, emerald dot when set. Tokens stay client-side / sent only
 to our server proxy / never committed.
+
+## Fix ("Unable to connect")
+"Could not reach the API: Unable to connect" = the server-fn fetch couldn't reach the
+host — almost always because a feature targeted a **develop** host
+(`*.develop.shalion.com`, internal/VPN-only) rather than **prod** (`*.v2.shalion.com`,
+public). Fixes: `fetchShalion` env now defaults to **prod** (was develop); the IAM
+Applications pilot passes `env:"prod"`; `LiveDataControls` now also sends the saved
+`shalion:devIdToken` (prod APIs need Bearer + x-id-token); the unreachable error now
+names the host + hints VPN/develop. Verified: IAM Applications live → 5 real prod apps.

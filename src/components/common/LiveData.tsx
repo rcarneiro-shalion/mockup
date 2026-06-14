@@ -34,6 +34,8 @@ export function LiveDataControls({
   onData: (rows: ApproxRow[] | null) => void;
 }) {
   const [token, setToken] = usePersistentState<string>("shalion:devToken", "");
+  // The id token is set globally (top-bar Dev tokens) — reused here for prod APIs.
+  const [idToken] = usePersistentState<string>("shalion:devIdToken", "");
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
@@ -46,7 +48,7 @@ export function LiveDataControls({
     setStatus("loading");
     setMsg("");
     try {
-      const res = await fetchLive({ data: { service: live.service, env: live.env, path: live.path, token: tok || undefined } });
+      const res = await fetchLive({ data: { service: live.service, env: live.env, path: live.path, token: tok || undefined, idToken: idToken || undefined } });
       if (!res.ok) {
         setStatus("error");
         setMsg(res.error ?? `Request failed (${res.status}).`);
@@ -138,7 +140,7 @@ export function LiveDataControls({
         <div className="mt-2 flex flex-col gap-2 rounded-lg border border-border bg-card p-3 shadow-sm">
           <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <KeyRound className="h-3.5 w-3.5" />
-            Develop bearer token (kept in this browser only; sent to our server proxy, never committed)
+            Bearer token (kept in this browser only; sent to our server proxy, never committed)
           </label>
           <div className="flex items-center gap-2">
             <input
@@ -158,7 +160,7 @@ export function LiveDataControls({
           </div>
           <p className="text-[11px] leading-relaxed text-muted-foreground">
             Read-only GET against <span className="font-mono">{live.service}</span>
-            <span className="font-mono">{live.path}</span> on the develop environment. A dev token is
+            <span className="font-mono">{live.path}</span> on the {live.env ?? "prod"} environment. A token is
             short-lived; if it 401s, grab a fresh one.
           </p>
         </div>

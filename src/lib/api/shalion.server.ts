@@ -91,7 +91,10 @@ export async function fetchShalion(args: {
   idToken?: string;
   env?: LiveEnv;
 }): Promise<LiveResult> {
-  const env: LiveEnv = args.env ?? "develop";
+  // Default to prod: it's public, and the tokens people paste are prod tokens.
+  // Develop hosts (*.develop.shalion.com) are internal/VPN-only and fail to connect
+  // from a browser-hosted server fn / Vercel.
+  const env: LiveEnv = args.env ?? "prod";
   const base = baseUrlFor(args.service, env);
   const hadToken = !!resolveToken(args.token);
 
@@ -108,7 +111,7 @@ export async function fetchShalion(args: {
       status: 401,
       data: null,
       hadToken: false,
-      error: "No token. Paste a develop bearer token to connect, or set SHALION_API_TOKEN on the server.",
+      error: "No token. Paste a bearer token to connect, or set SHALION_API_TOKEN on the server.",
     };
   }
 
@@ -144,13 +147,18 @@ export async function fetchShalion(args: {
           : `Upstream responded ${res.status}.`,
     };
   } catch (e) {
+    const internal = /\.develop\.shalion\.com|\.ondemand\.shalion\.com/.test(base);
     return {
       ok: false,
       status: 0,
       data: null,
       hadToken: true,
       url,
-      error: `Could not reach the API: ${(e as Error).message}`,
+      error:
+        `Could not reach ${base} — ${(e as Error).message}.` +
+        (internal
+          ? " This is an internal (develop/staging) host — it needs the corporate VPN. Use the prod environment instead."
+          : " Check the network / VPN can reach this host."),
     };
   }
 }
