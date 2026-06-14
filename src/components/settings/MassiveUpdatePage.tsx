@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { fetchLive } from "@/lib/api/live.functions";
+import { getDevTokens } from "@/lib/devTokens";
 import {
   MU_SEED,
   mapLiveDataGroups,
@@ -213,8 +214,9 @@ export function MassiveUpdatePage() {
 
   // --- live connect -------------------------------------------------------
   const connect = async () => {
-    const a = (draftA || token).trim();
-    const i = (draftI || idToken).trim();
+    const saved = getDevTokens(); // read latest saved tokens at click time
+    const a = (draftA || token || saved.token).trim();
+    const i = (draftI || idToken || saved.idToken).trim();
     if (a && a !== token) setToken(a);
     if (i && i !== idToken) setIdToken(i);
     if (!a || !i) {

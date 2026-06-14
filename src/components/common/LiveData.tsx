@@ -3,6 +3,7 @@ import { Plug, PlugZap, RefreshCw, Loader2, X, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { fetchLive } from "@/lib/api/live.functions";
+import { getDevTokens } from "@/lib/devTokens";
 import type { ApproxRow } from "./EntityListPage";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +49,10 @@ export function LiveDataControls({
     setStatus("loading");
     setMsg("");
     try {
-      const res = await fetchLive({ data: { service: live.service, env: live.env, path: live.path, token: tok || undefined, idToken: idToken || undefined } });
+      const saved = getDevTokens(); // latest saved pair (handles save-after-mount)
+      const access = tok || token || saved.token;
+      const idTok = idToken || saved.idToken;
+      const res = await fetchLive({ data: { service: live.service, env: live.env, path: live.path, token: access || undefined, idToken: idTok || undefined } });
       if (!res.ok) {
         setStatus("error");
         setMsg(res.error ?? `Request failed (${res.status}).`);
@@ -126,10 +130,14 @@ export function LiveDataControls({
                 variant="outline"
                 size="sm"
                 className="h-7 gap-1.5"
-                onClick={() => (token ? run(token) : setOpen((o) => !o))}
+                onClick={() => {
+                  const t = token || getDevTokens().token;
+                  if (t) run(t);
+                  else setOpen((o) => !o);
+                }}
               >
                 <PlugZap className="h-3.5 w-3.5" />
-                {token ? "Connect live data" : "Connect live data…"}
+                Connect live data
               </Button>
             </span>
           </>
