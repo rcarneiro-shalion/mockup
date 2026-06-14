@@ -99,9 +99,17 @@ export function MassiveUpdatePage() {
       (!sq || `${s.label} ${s.path}`.toLowerCase().includes(sq)),
   );
 
+  // A datagroup belongs to a target by its dashboard type: BRAND → "Datagroup"
+  // (datagroup-dashboardsections); AGENCY → "Datagroup + retailer"
+  // (datagroup-retailer-dashboardsections). Only show the type matching the target.
+  const targetType: "BRAND" | "AGENCY" = target === "dgr" ? "AGENCY" : "BRAND";
+  const dgsOfType = useMemo(
+    () => catalog.dataGroups.filter((d) => d.dashboardType === targetType),
+    [catalog, targetType],
+  );
   const clientsWithDg = useMemo(
-    () => catalog.clients.filter((c) => catalog.dataGroups.some((d) => d.clientId === c.id)),
-    [catalog],
+    () => catalog.clients.filter((c) => dgsOfType.some((d) => d.clientId === c.id)),
+    [catalog, dgsOfType],
   );
   const cq = clientQ.trim().toLowerCase();
   const filteredClients = clientsWithDg.filter(
@@ -110,8 +118,8 @@ export function MassiveUpdatePage() {
       (!cq || c.name.toLowerCase().includes(cq)),
   );
   const visibleDgs = useMemo(
-    () => catalog.dataGroups.filter((d) => filteredClients.some((c) => c.id === d.clientId)),
-    [catalog, filteredClients],
+    () => dgsOfType.filter((d) => filteredClients.some((c) => c.id === d.clientId)),
+    [dgsOfType, filteredClients],
   );
   const clientName = (id: string) => catalog.clients.find((c) => c.id === id)?.name ?? "—";
 
@@ -154,7 +162,11 @@ export function MassiveUpdatePage() {
   const chooseTarget = (t: "dg" | "dgr") => {
     if (t === target) return;
     setTarget(t);
-    setStaged(new Map()); // keys differ between targets
+    // Datagroups are type-specific to the target (BRAND vs AGENCY) → reset the
+    // datagroup/client picks and the staged matrix (keys differ between targets).
+    setSelDgs(new Set());
+    setSelClients([]);
+    setStaged(new Map());
   };
 
   // Switching application auto-fills ALL of its dashboard groups, and resets the
@@ -240,42 +252,53 @@ export function MassiveUpdatePage() {
       const opts = (path: string) => ({ data: { service: "visualization", env: "prod" as const, path, token: a, idToken: i } });
       // These admin lists are paged at 100/row and ignore size/filter params, so
       // pull every page (X-Total-Count tells us how many) and filter client-side.
-      const fetchAllPages = async (pathBase: string): Promise<unknown[]> => {
-        const first = await fetchLive(opts(`${pathBase}?page=0&size=100`));
-        if (!first.ok) return [];
-        const rows0 = Array.isArray(first.data) ? (first.data as unknown[]) : [];
-        const pages = Math.min(Math.ceil((first.total ?? rows0.length) / 100), 50);
-        if (pages <= 1) return rows0;
-        const rest = await Promise.all(
-          Array.from({ length: pages - 1 }, (_, p) => fetchLive(opts(`${pathBase}?page=${p + 1}&size=100`))),
-        );
-        return rest.reduce<unknown[]>(
-          (acc, r) => (r.ok && Array.isArray(r.data) ? acc.concat(r.data as unknown[]) : acc),
-          rows0,
-        );
+      // Pages are fetched SEQUENTIALLY (the 4 endpoints run in parallel, so peak
+      // concurrency stays ~4, not ~14) — firing every page at once overwhelmed the
+      // proxy and dropped pages, yielding a partial catalog. One retry per page.
+      const fetchPage = async (pathBase: string, page: number) => {
+        const o = opts(`${pathBase}?page=${page}&size=100`);
+        let r = await fetchLive(o);
+        if (!r.ok) r = await fetchLive(o); // retry once on transient failure
+        return r;
       };
-      const [dgRes, appRes, groupRows, sectionRows] = await Promise.all([
-        fetchLive(opts("/v1.0/admin/datagroups?size=200")),
+      const fetchAllPages = async (
+        pathBase: string,
+      ): Promise<{ ok: boolean; complete: boolean; error?: string; rows: unknown[] }> => {
+        const first = await fetchPage(pathBase, 0);
+        if (!first.ok)
+          return { ok: false, complete: false, error: first.error ?? `Request failed (${first.status}).`, rows: [] };
+        let rows = Array.isArray(first.data) ? (first.data as unknown[]) : [];
+        const pages = Math.min(Math.ceil((first.total ?? rows.length) / 100), 50);
+        let complete = true;
+        for (let p = 1; p < pages; p++) {
+          const r = await fetchPage(pathBase, p);
+          if (r.ok && Array.isArray(r.data)) rows = rows.concat(r.data as unknown[]);
+          else complete = false; // keep what we have, but flag the gap
+        }
+        return { ok: true, complete, rows };
+      };
+      const [dgAll, appRes, groupAll, sectionAll] = await Promise.all([
+        fetchAllPages("/v1.0/admin/datagroups"),
         fetchLive(opts("/v1.0/admin/dashboardapplications")),
         fetchAllPages("/v1.0/admin/dashboardgroups"),
         fetchAllPages("/v1.0/admin/dashboardsections"),
       ]);
-      if (!dgRes.ok) {
+      if (!dgAll.ok) {
         setLiveStatus("error");
-        setLiveMsg(dgRes.error ?? `Request failed (${dgRes.status}).`);
+        setLiveMsg(dgAll.error ?? "Request failed.");
         return;
       }
-      const { clients, dataGroups } = mapLiveDataGroups(dgRes.data);
+      const { clients, dataGroups } = mapLiveDataGroups(dgAll.rows);
       if (!dataGroups.length) {
         setLiveStatus("error");
-        setLiveMsg("No datagroups returned.");
+        setLiveMsg("No datagroups returned (check the token).");
         return;
       }
       const liveApps = appRes.ok ? mapLiveApps(appRes.data) : [];
       const apps = liveApps.length ? liveApps : MU_SEED.apps;
       // Real dashboard groups + sections per app (fall back to seed if a list is empty).
-      const liveGroups = mapLiveGroups(groupRows);
-      const liveSections = mapLiveSections(sectionRows);
+      const liveGroups = mapLiveGroups(groupAll.rows);
+      const liveSections = mapLiveSections(sectionAll.rows);
       const groups = liveGroups.length ? liveGroups : MU_SEED.groups;
       const sections = liveSections.length ? liveSections : MU_SEED.sections;
       const nextCatalog = { ...MU_SEED, apps, groups, sections, clients, dataGroups };
@@ -293,9 +316,15 @@ export function MassiveUpdatePage() {
       setLiveOn(true);
       setLiveStatus("idle");
       setShowConnect(false);
-      toast.success(
-        `Live (prod): ${apps.length} apps · ${groups.length} groups · ${sections.length} sections · ${dataGroups.length} datagroups (${clients.length} clients).`,
-      );
+      const incomplete = [
+        !dgAll.complete && "datagroups",
+        !groupAll.complete && "groups",
+        !sectionAll.complete && "sections",
+      ].filter(Boolean);
+      const summary = `Live (prod): ${apps.length} apps · ${groups.length} groups · ${sections.length} sections · ${dataGroups.length} datagroups (${clients.length} clients).`;
+      if (incomplete.length)
+        toast.warning(`${summary} Some pages didn't load (${incomplete.join(", ")}) — reconnect to retry.`);
+      else toast.success(summary);
     } catch (e) {
       setLiveStatus("error");
       setLiveMsg((e as Error).message);
