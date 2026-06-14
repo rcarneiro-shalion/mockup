@@ -360,8 +360,6 @@ export function MassiveUpdatePage() {
       const [sectionId, colKey] = k.split("::");
       try {
         if (op === "insert") {
-          const pos = posByCol.get(colKey) ?? 100;
-          posByCol.set(colKey, pos + 1);
           let body: Record<string, unknown>;
           if (target === "dgr") {
             const dataGroupRetailerId = dgrId.get(colKey);
@@ -370,8 +368,13 @@ export function MassiveUpdatePage() {
               errs.push(`insert ${colKey}: no datagroup-retailer link`);
               continue;
             }
-            body = { dataGroupRetailerId, dashboardSectionId: sectionId, position: pos };
+            // Agency body per visualization-api swagger (NewDataGroupRetailerDashboard
+            // SectionRequestBody): dataGroupRetailerId + dashboardSectionId only — NO position.
+            body = { dataGroupRetailerId, dashboardSectionId: sectionId };
           } else {
+            // Brand body (NewDataGroupDashboardSectionRequestBody): all three required.
+            const pos = posByCol.get(colKey) ?? 100;
+            posByCol.set(colKey, pos + 1);
             body = { dataGroupId: colKey, dashboardSectionId: sectionId, position: pos };
           }
           const res = await mutateLive({
