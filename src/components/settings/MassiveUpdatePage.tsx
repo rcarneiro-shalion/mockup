@@ -42,12 +42,19 @@ import { FilterChip } from "@/components/seeds/FilterChip";
 
 type CellState = "assigned" | "add" | "remove" | "none";
 
+/** All dashboard-group ids that belong to an application (matched by its slug). */
+function groupIdsForApp(catalog: MuCatalog, appId: string): string[] {
+  const slug = catalog.apps.find((a) => a.id === appId)?.slug;
+  return catalog.groups.filter((g) => g.appSlug === slug).map((g) => g.id);
+}
+
 export function MassiveUpdatePage() {
   const [catalog, setCatalog] = useState<MuCatalog>(MU_SEED);
   const [liveOn, setLiveOn] = useState(false);
 
   const [appId, setAppId] = useState<string>("app-dsm");
-  const [groupSel, setGroupSel] = useState<string[]>([]); // group ids of the app; empty = all groups
+  // Group ids of the selected app — auto-filled to ALL of the app's groups on select.
+  const [groupSel, setGroupSel] = useState<string[]>(() => groupIdsForApp(MU_SEED, "app-dsm"));
   const [sectionQ, setSectionQ] = useState("");
   const [clientQ, setClientQ] = useState("");
   const [selClients, setSelClients] = useState<string[]>([]); // client ids; empty = all
@@ -148,10 +155,11 @@ export function MassiveUpdatePage() {
     setStaged(new Map()); // keys differ between targets
   };
 
-  // Switching application changes its groups + sections → reset those selections.
+  // Switching application auto-fills ALL of its dashboard groups, and resets the
+  // section picks (sections belong to the previous app's groups).
   const onAppChange = (id: string) => {
     setAppId(id);
-    setGroupSel([]);
+    setGroupSel(groupIdsForApp(catalog, id));
     setSelSections(new Set());
   };
 
@@ -245,10 +253,13 @@ export function MassiveUpdatePage() {
       }
       const liveApps = appRes.ok ? mapLiveApps(appRes.data) : [];
       const apps = liveApps.length ? liveApps : MU_SEED.apps;
-      setCatalog({ ...MU_SEED, apps, clients, dataGroups });
-      // re-point the app selector at a live app (prefer Digital Shelf Maestro).
+      const nextCatalog = { ...MU_SEED, apps, clients, dataGroups };
+      setCatalog(nextCatalog);
+      // re-point the app selector at a live app (prefer Digital Shelf Maestro)
+      // and auto-fill all of its dashboard groups.
       const dsm = apps.find((a2) => a2.slug === "dsm") ?? apps[0];
       setAppId(dsm?.id ?? "");
+      setGroupSel(dsm ? groupIdsForApp(nextCatalog, dsm.id) : []);
       setAssigned(new Set()); // assignment state for live datagroups is unknown → simulate fresh
       setSelDgs(new Set());
       setSelSections(new Set());
@@ -269,6 +280,7 @@ export function MassiveUpdatePage() {
   const disconnect = () => {
     setCatalog(MU_SEED);
     setAppId("app-dsm");
+    setGroupSel(groupIdsForApp(MU_SEED, "app-dsm"));
     setAssigned(new Set(MU_SEED.assignments));
     setSelDgs(new Set());
     setSelSections(new Set());
