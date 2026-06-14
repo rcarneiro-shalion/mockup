@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -314,6 +314,18 @@ export function MassiveUpdatePage() {
     setLiveOn(false);
   };
 
+  // The catalog is live data — auto-load it on open when tokens are already
+  // saved (top-bar 🔑), so you see the real apps/groups/sections without a manual
+  // connect. Seed stays as the fallback when there are no tokens / the fetch fails.
+  const autoTried = useRef(false);
+  useEffect(() => {
+    if (autoTried.current) return;
+    autoTried.current = true;
+    const { token: t, idToken: i } = getDevTokens();
+    if (t && i) void connect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <AppShell>
       <div className="flex h-full flex-col">
@@ -337,6 +349,10 @@ export function MassiveUpdatePage() {
             {liveOn ? (
               <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={disconnect}>
                 <PlugZap className="h-4 w-4 text-emerald-600" /> Live (prod) · disconnect
+              </Button>
+            ) : liveStatus === "loading" ? (
+              <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled>
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading live data…
               </Button>
             ) : (
               <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setShowConnect((s) => !s)}>
