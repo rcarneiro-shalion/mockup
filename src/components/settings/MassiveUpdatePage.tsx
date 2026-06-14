@@ -43,10 +43,12 @@ import {
   FlaskConical,
   Rocket,
   RefreshCw,
+  Network,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { FilterChip } from "@/components/seeds/FilterChip";
+import { RelationshipMap, type MapEdit } from "./RelationshipMap";
 
 type CellState = "assigned" | "add" | "remove" | "none";
 
@@ -135,6 +137,7 @@ export function MassiveUpdatePage() {
   const [syncing, setSyncing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [applyLog, setApplyLog] = useState<string>("");
+  const [mapOpen, setMapOpen] = useState(false);
 
   // --- live connect (clients & datagroups from prod) ----------------------
   const [token, setToken] = usePersistentState<string>("shalion:devToken", "");
@@ -534,6 +537,36 @@ export function MassiveUpdatePage() {
     setLiveOn(false);
   };
 
+  // Open the relationship map. It reads `assigned`, so make sure BOTH brand and
+  // agency assignments are loaded (they're big + on-demand).
+  const openMap = async () => {
+    setMapOpen(true);
+    if (liveOn) {
+      if (!synced.has("dg")) await syncAssignments("dg");
+      if (!synced.has("dgr")) await syncAssignments("dgr");
+    }
+  };
+
+  // Click an assignment in the map → load that exact section + target into the
+  // tool so it can be edited (insert/remove).
+  const editFromMap = (e: MapEdit) => {
+    setMapOpen(false);
+    const sec = catalog.sections.find((s) => s.id === e.sectionId);
+    const grp = catalog.groups.find((g) => g.id === sec?.groupId);
+    const app = catalog.apps.find((a) => a.slug === grp?.appSlug);
+    if (app) onAppChange(app.id); // sets appId + groupSel + clears selSections
+    setTarget(e.kind);
+    setStaged(new Map());
+    setSelSections(new Set([e.sectionId]));
+    if (e.kind === "dg") {
+      setSelDgs(new Set([e.targetId]));
+      setSelRetailers([]);
+    } else {
+      setSelRetailers([e.targetId]);
+      setSelDgs(new Set());
+    }
+  };
+
   // The catalog is live data — auto-load it on open when tokens are already
   // saved (top-bar 🔑), so you see the real apps/groups/sections without a manual
   // connect. Seed stays as the fallback when there are no tokens / the fetch fails.
@@ -566,6 +599,10 @@ export function MassiveUpdatePage() {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            {/* Relationship map: where every section is currently applied. */}
+            <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => void openMap()}>
+              <Network className="h-4 w-4" /> Relationship map
+            </Button>
             {/* Environment for ALL live reads + writes. Prod = real changes. */}
             <div
               className="flex items-center gap-0.5 rounded-md border border-border bg-secondary/40 p-0.5 text-xs"
@@ -976,6 +1013,17 @@ export function MassiveUpdatePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {mapOpen && (
+        <RelationshipMap
+          catalog={catalog}
+          assigned={assigned}
+          live={liveOn}
+          loading={syncing}
+          onClose={() => setMapOpen(false)}
+          onEdit={editFromMap}
+        />
       )}
     </AppShell>
   );
