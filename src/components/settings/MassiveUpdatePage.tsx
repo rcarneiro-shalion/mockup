@@ -547,8 +547,9 @@ export function MassiveUpdatePage() {
     }
   };
 
-  // Click an assignment in the map → load that exact section + target into the
-  // tool so it can be edited (insert/remove).
+  // Click an assignment in the map → load that exact section + target(s) into the
+  // tool so it can be edited (insert/remove). A brand client cell carries all of
+  // that client's datagroups that use the section.
   const editFromMap = (e: MapEdit) => {
     setMapOpen(false);
     const sec = catalog.sections.find((s) => s.id === e.sectionId);
@@ -559,10 +560,10 @@ export function MassiveUpdatePage() {
     setStaged(new Map());
     setSelSections(new Set([e.sectionId]));
     if (e.kind === "dg") {
-      setSelDgs(new Set([e.targetId]));
+      setSelDgs(new Set(e.targetIds));
       setSelRetailers([]);
     } else {
-      setSelRetailers([e.targetId]);
+      setSelRetailers([...e.targetIds]);
       setSelDgs(new Set());
     }
   };
