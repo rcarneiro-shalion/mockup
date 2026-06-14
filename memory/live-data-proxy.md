@@ -21,3 +21,12 @@ server-side; server-to-server call, so browser CORS is irrelevant).
 ## Pilot
 - IAM → **Applications** (`/iam/applications`) wired: `service:"iam", path:"/v1.0/admin/applications"`, mapper tolerant of array or `{data|content|items|results|applications}`.
 - Verified end-to-end: dummy token → real 401 surfaced in the UI. A valid token returns real records. To extend: pass a `live` spec to any other list route (e.g. DC Orders → `orders-management` `/v1.0/admin/orders`).
+
+## Update (global Dev tokens saver)
+A 🔑 **Dev API tokens** button in the TopBar (`DevTokensDialog.tsx`, rendered in
+`TopBar.tsx`) lets you paste the bearer access token + x-id-token ONCE and Save them
+to `localStorage` (`shalion:devToken` / `shalion:devIdToken`) — the same keys the live
+features read on mount, so they're reused by IAM "Connect live data" and Massive-update
+"Connect live clients" without re-pasting. Shows the decoded token user + expiry (and
+flags expired), Clear button, emerald dot when set. Tokens stay client-side / sent only
+to our server proxy / never committed.

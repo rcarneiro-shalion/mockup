@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { BusinessRulesTrigger } from "@/components/common/BusinessRulesModal";
+import { DevTokensTrigger } from "@/components/common/DevTokensDialog";
 
 const sections = [
   { label: "Ecometry", to: "/" },
@@ -57,6 +58,7 @@ export function TopBar() {
         </nav>
       </div>
       <div className="flex items-center gap-3">
+        <DevTokensTrigger />
         <BusinessRulesTrigger />
         <div className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-slate-300 to-slate-500 text-sm font-medium text-white">
           R
