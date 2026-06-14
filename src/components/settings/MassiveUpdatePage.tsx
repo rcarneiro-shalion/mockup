@@ -40,7 +40,6 @@ import {
   TriangleAlert,
   Building2,
   Layers,
-  Store,
   FlaskConical,
   Rocket,
   RefreshCw,
@@ -108,6 +107,7 @@ export function MassiveUpdatePage() {
   const [groupSel, setGroupSel] = useState<string[]>(() => groupIdsForApp(MU_SEED, "app-dsm"));
   const [sectionQ, setSectionQ] = useState("");
   const [clientQ, setClientQ] = useState("");
+  const [retailerQ, setRetailerQ] = useState(""); // retailer search (agency mode list)
   const [selClients, setSelClients] = useState<string[]>([]); // client ids; empty = all
   // Target: send the section to a datagroup (Brand) or a datagroup + retailer (Agency).
   const [target, setTarget] = useState<"dg" | "dgr">("dg");
@@ -191,37 +191,22 @@ export function MassiveUpdatePage() {
 
   const selSectionList = catalog.sections.filter((s) => selSections.has(s.id));
   const selDgList = catalog.dataGroups.filter((d) => selDgs.has(d.id));
+  // Agency sections attach to a RETAILER (retailer-dashboardsections), so in
+  // "Datagroup + retailer" mode the right-side list IS retailers (not datagroups).
   const allRetailers = catalog.retailers ?? [];
-  // Agency: the section attaches to a RETAILER (retailer-dashboardsections), and
-  // an agency datagroup's retailers come from the datagroup↔retailer join. So the
-  // retailer options are the retailers linked to the SELECTED agency datagroups
-  // (empty until a datagroup is picked, when live).
-  const retailers = useMemo(() => {
-    if (!liveOn) return allRetailers;
-    const ids = new Set<string>();
-    for (const key of dgrId.keys()) {
-      const [dg, ret] = key.split("#");
-      if (selDgs.has(dg)) ids.add(ret);
-    }
-    return allRetailers.filter((r) => ids.has(r.id));
-  }, [liveOn, allRetailers, dgrId, selDgs]);
   const retailerName = (id: string) => allRetailers.find((r) => r.id === id)?.name ?? id;
-  // Agency targets: if the user picked retailers, use those; otherwise default to
-  // ALL of the selected datagroups' retailers — so selecting an agency datagroup
-  // alone is enough to insert (the Retailers chip only NARROWS).
-  const selRetailerList = retailers.filter((r) => selRetailers.includes(r.id));
-  const effectiveRetailerList = selRetailers.length ? selRetailerList : retailers;
+  const rq = retailerQ.trim().toLowerCase();
+  const visibleRetailers = allRetailers.filter((r) => !rq || r.name.toLowerCase().includes(rq));
+  const selRetailerList = allRetailers.filter((r) => selRetailers.includes(r.id));
 
   // The "target" columns of the matrix:
-  //  - Brand → one column per datagroup (key = dataGroupId; datagroup-dashboardsections).
-  //  - Agency → one column per retailer (key = retailerId; retailer-dashboardsections).
-  // Agency assignments are retailer-global, so duplicate retailers across the
-  // selected datagroups collapse into a single column.
+  //  - Brand → one column per selected datagroup (key = dataGroupId; datagroup-dashboardsections).
+  //  - Agency → one column per selected retailer (key = retailerId; retailer-dashboardsections).
   type TargetCol = { key: string; label: string };
   const targetColumns: TargetCol[] =
     target === "dg"
       ? selDgList.map((d) => ({ key: d.id, label: `${clientName(d.clientId)} · ${d.name}` }))
-      : effectiveRetailerList.map((r) => ({ key: r.id, label: r.name }));
+      : selRetailerList.map((r) => ({ key: r.id, label: r.name }));
   const colKeys = targetColumns.map((c) => c.key);
 
   const cellState = (sectionId: string, colKey: string): CellState => {
@@ -245,10 +230,11 @@ export function MassiveUpdatePage() {
   const chooseTarget = (t: "dg" | "dgr") => {
     if (t === target) return;
     setTarget(t);
-    // Datagroups are type-specific to the target (BRAND vs AGENCY) → reset the
-    // datagroup/client picks and the staged matrix (keys differ between targets).
+    // Targets differ entirely between modes (Brand → datagroups, Agency → retailers)
+    // → reset the picks + staged matrix (keys differ between targets).
     setSelDgs(new Set());
     setSelClients([]);
+    setSelRetailers([]);
     setStaged(new Map());
   };
 
@@ -755,8 +741,8 @@ export function MassiveUpdatePage() {
             </Button>
           </div>
 
-          {/* RIGHT: clients → datagroups (+ optional retailer) */}
-          <Panel title={target === "dg" ? "Datagroups" : "Datagroups + retailer"} count={targetColumns.length}>
+          {/* RIGHT: Brand → clients→datagroups; Agency → retailers */}
+          <Panel title={target === "dg" ? "Datagroups" : "Retailers"} count={targetColumns.length}>
             <div className="flex shrink-0 flex-col gap-2 border-b border-border p-3">
               {/* Send-to target: datagroup (Brand) vs datagroup + retailer (Agency) */}
               <div className="flex items-center gap-1 rounded-md border border-border bg-secondary/40 p-0.5 text-xs">
@@ -775,80 +761,104 @@ export function MassiveUpdatePage() {
                   Datagroup + retailer
                 </button>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <SearchInput value={clientQ} onChange={setClientQ} placeholder="Filter clients by name" />
-                </div>
-                <FilterChip
-                  label="Clients"
-                  icon={Building2}
-                  options={clientsWithDg.map((c) => c.id)}
-                  value={selClients}
-                  onChange={setSelClients}
-                  getLabel={clientName}
-                  searchable
-                />
-                {target === "dgr" && (
-                  <FilterChip
-                    label="Retailers"
-                    icon={Store}
-                    options={retailers.map((r) => r.id)}
-                    value={selRetailers}
-                    onChange={setSelRetailers}
-                    getLabel={retailerName}
-                    searchable
-                  />
-                )}
-              </div>
-              <div className="flex items-center justify-between">
-                <SelectAllRow
-                  label={`Select all filtered (${visibleDgs.length})`}
-                  onAll={() => setSelDgs(new Set([...selDgs, ...visibleDgs.map((d) => d.id)]))}
-                  onClear={() => setSelDgs(new Set())}
-                />
-                <span className="text-xs text-muted-foreground">
-                  {target === "dgr"
-                    ? `${selDgs.size} dg × ${effectiveRetailerList.length} retailer${selRetailers.length ? "" : " (all)"} = ${targetColumns.length} target${targetColumns.length === 1 ? "" : "s"}`
-                    : selClients.length
-                      ? `${selClients.length} client${selClients.length === 1 ? "" : "s"} · ${filteredClients.length} shown`
-                      : `All clients (${clientsWithDg.length})`}
-                </span>
-              </div>
-              {target === "dgr" && selDgs.size > 0 && !effectiveRetailerList.length && (
-                <p className="text-xs text-amber-700">
-                  The selected datagroup(s) have no linked retailers — nothing to target.
-                </p>
-              )}
-              {target === "dgr" && selDgs.size > 0 && effectiveRetailerList.length > 0 && !selRetailers.length && (
-                <p className="text-xs text-muted-foreground">
-                  Targeting all {effectiveRetailerList.length} retailer(s) of the selected datagroup(s). Use the Retailers filter to narrow.
-                </p>
+
+              {target === "dg" ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <SearchInput value={clientQ} onChange={setClientQ} placeholder="Filter clients by name" />
+                    </div>
+                    <FilterChip
+                      label="Clients"
+                      icon={Building2}
+                      options={clientsWithDg.map((c) => c.id)}
+                      value={selClients}
+                      onChange={setSelClients}
+                      getLabel={clientName}
+                      searchable
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <SelectAllRow
+                      label={`Select all filtered (${visibleDgs.length})`}
+                      onAll={() => setSelDgs(new Set([...selDgs, ...visibleDgs.map((d) => d.id)]))}
+                      onClear={() => setSelDgs(new Set())}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {selClients.length
+                        ? `${selClients.length} client${selClients.length === 1 ? "" : "s"} · ${filteredClients.length} shown`
+                        : `All clients (${clientsWithDg.length})`}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <SearchInput value={retailerQ} onChange={setRetailerQ} placeholder="Filter retailers by name" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <SelectAllRow
+                      label={`Select all filtered (${visibleRetailers.length})`}
+                      onAll={() => setSelRetailers([...new Set([...selRetailers, ...visibleRetailers.map((r) => r.id)])])}
+                      onClear={() => setSelRetailers([])}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {selRetailers.length
+                        ? `${selRetailers.length} retailer${selRetailers.length === 1 ? "" : "s"} selected`
+                        : `${allRetailers.length} retailer${allRetailers.length === 1 ? "" : "s"}`}
+                    </span>
+                  </div>
+                </>
               )}
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
-              {filteredClients.map((c) => {
-                const dgs = visibleDgs.filter((d) => d.clientId === c.id);
-                if (!dgs.length) return null;
-                return (
-                  <div key={c.id} className="mb-1">
-                    <div className="px-2 pb-0.5 pt-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      {c.name}
-                    </div>
-                    {dgs.map((d) => (
-                      <Row
-                        key={d.id}
-                        checked={selDgs.has(d.id)}
-                        onToggle={() => toggle(selDgs, d.id, setSelDgs)}
-                        title={d.name}
-                        subtitle={d.country}
-                        badge={d.dashboardType}
-                        badgeTone={d.dashboardType === "AGENCY" ? "violet" : "slate"}
-                      />
-                    ))}
-                  </div>
-                );
-              })}
-              {!visibleDgs.length && <Empty>No datagroups match.</Empty>}
+              {target === "dg" ? (
+                <>
+                  {filteredClients.map((c) => {
+                    const dgs = visibleDgs.filter((d) => d.clientId === c.id);
+                    if (!dgs.length) return null;
+                    return (
+                      <div key={c.id} className="mb-1">
+                        <div className="px-2 pb-0.5 pt-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          {c.name}
+                        </div>
+                        {dgs.map((d) => (
+                          <Row
+                            key={d.id}
+                            checked={selDgs.has(d.id)}
+                            onToggle={() => toggle(selDgs, d.id, setSelDgs)}
+                            title={d.name}
+                            subtitle={d.country}
+                            badge={d.dashboardType}
+                            badgeTone={d.dashboardType === "AGENCY" ? "violet" : "slate"}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })}
+                  {!visibleDgs.length && <Empty>No datagroups match.</Empty>}
+                </>
+              ) : (
+                <>
+                  {visibleRetailers.map((r) => (
+                    <Row
+                      key={r.id}
+                      checked={selRetailers.includes(r.id)}
+                      onToggle={() =>
+                        setSelRetailers(
+                          selRetailers.includes(r.id) ? selRetailers.filter((x) => x !== r.id) : [...selRetailers, r.id],
+                        )
+                      }
+                      title={r.name}
+                      badge="Retailer"
+                      badgeTone="violet"
+                    />
+                  ))}
+                  {!visibleRetailers.length && <Empty>No retailers match.</Empty>}
+                </>
+              )}
             </div>
           </Panel>
         </div>
