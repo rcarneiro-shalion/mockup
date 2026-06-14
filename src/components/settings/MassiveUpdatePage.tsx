@@ -201,7 +201,11 @@ export function MassiveUpdatePage() {
     return allRetailers.filter((r) => ids.has(r.id));
   }, [liveOn, allRetailers, dgrId, selDgs]);
   const retailerName = (id: string) => allRetailers.find((r) => r.id === id)?.name ?? id;
+  // Agency targets: if the user picked retailers, use those; otherwise default to
+  // ALL of the selected datagroups' retailers — so selecting an agency datagroup
+  // alone is enough to insert (the Retailers chip only NARROWS).
   const selRetailerList = retailers.filter((r) => selRetailers.includes(r.id));
+  const effectiveRetailerList = selRetailers.length ? selRetailerList : retailers;
 
   // The "target" columns of the matrix: datagroups (Brand →
   // datagroup-dashboardsections), or datagroup × retailer (Agency →
@@ -212,7 +216,7 @@ export function MassiveUpdatePage() {
     target === "dg"
       ? selDgList.map((d) => ({ key: d.id, label: `${clientName(d.clientId)} · ${d.name}` }))
       : selDgList.flatMap((d) =>
-          selRetailerList
+          effectiveRetailerList
             .filter((r) => !liveOn || dgrId.has(`${d.id}#${r.id}`))
             .map((r) => ({ key: `${d.id}#${r.id}`, label: `${d.name} · ${r.name}` })),
         );
@@ -819,14 +823,21 @@ export function MassiveUpdatePage() {
                 />
                 <span className="text-xs text-muted-foreground">
                   {target === "dgr"
-                    ? `${selDgs.size} dg × ${selRetailers.length} retailer = ${targetColumns.length} target${targetColumns.length === 1 ? "" : "s"}`
+                    ? `${selDgs.size} dg × ${effectiveRetailerList.length} retailer${selRetailers.length ? "" : " (all)"} = ${targetColumns.length} target${targetColumns.length === 1 ? "" : "s"}`
                     : selClients.length
                       ? `${selClients.length} client${selClients.length === 1 ? "" : "s"} · ${filteredClients.length} shown`
                       : `All clients (${clientsWithDg.length})`}
                 </span>
               </div>
-              {target === "dgr" && !selRetailers.length && (
-                <p className="text-xs text-amber-700">Pick one or more retailers to define the datagroup × retailer targets.</p>
+              {target === "dgr" && selDgs.size > 0 && !effectiveRetailerList.length && (
+                <p className="text-xs text-amber-700">
+                  The selected datagroup(s) have no linked retailers — nothing to target.
+                </p>
+              )}
+              {target === "dgr" && selDgs.size > 0 && effectiveRetailerList.length > 0 && !selRetailers.length && (
+                <p className="text-xs text-muted-foreground">
+                  Targeting all {effectiveRetailerList.length} retailer(s) of the selected datagroup(s). Use the Retailers filter to narrow.
+                </p>
               )}
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
