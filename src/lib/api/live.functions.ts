@@ -1,7 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { fetchShalion } from "./shalion.server";
+import { fetchShalion, mutateShalion } from "./shalion.server";
+
+// Recursive JSON schema for a mutation body (matches JsonValue on the server).
+const jsonValue: z.ZodType = z.lazy(() =>
+  z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(jsonValue), z.record(z.string(), jsonValue)]),
+);
 
 // Server fn invoked from the client to consult a real Shalion develop API.
 // The handler runs server-only, so the bearer token and the upstream request
@@ -19,4 +24,22 @@ export const fetchLive = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     return fetchShalion(data);
+  });
+
+// Allow-listed write (POST/DELETE) to a Shalion assignment endpoint. The proxy
+// (mutateShalion) enforces the method + path allow-list server-side.
+export const mutateLive = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      service: z.string().min(1),
+      path: z.string().startsWith("/"),
+      method: z.enum(["POST", "DELETE"]),
+      body: jsonValue.optional(),
+      token: z.string().optional(),
+      idToken: z.string().optional(),
+      env: z.enum(["develop", "staging", "prod"]).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    return mutateShalion(data);
   });

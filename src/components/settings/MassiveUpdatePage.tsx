@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePersistentState } from "@/hooks/usePersistentState";
-import { fetchLive } from "@/lib/api/live.functions";
+import { fetchLive, mutateLive } from "@/lib/api/live.functions";
 import { getDevTokens } from "@/lib/devTokens";
 import {
   MU_SEED,
@@ -18,8 +18,12 @@ import {
   mapLiveApps,
   mapLiveGroups,
   mapLiveSections,
+  mapBrandAssignments,
+  mapDatagroupRetailers,
+  mapAgencyAssignments,
   pairKey,
   type MuCatalog,
+  type MuRetailer,
   type MuSection,
 } from "@/lib/massiveUpdate";
 import {
@@ -37,6 +41,9 @@ import {
   Building2,
   Layers,
   Store,
+  FlaskConical,
+  Rocket,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -49,6 +56,46 @@ function groupIdsForApp(catalog: MuCatalog, appId: string): string[] {
   const slug = catalog.apps.find((a) => a.id === appId)?.slug;
   return catalog.groups.filter((g) => g.appSlug === slug).map((g) => g.id);
 }
+
+type LiveEnvName = "prod" | "develop" | "staging";
+type PagedResult = { ok: boolean; complete: boolean; error?: string; rows: unknown[] };
+
+/**
+ * Build the read/paginate helpers bound to a given environment + token pair.
+ * Shared by connect (catalog), the brand-assignment sync, and apply, so they all
+ * target the SAME env. Admin lists are paged at 100/row and ignore size/filter,
+ * so pages are pulled sequentially (one retry each) and concatenated.
+ */
+function makeLiveCtx(env: LiveEnvName, token: string, idToken: string) {
+  const opts = (path: string) => ({
+    data: { service: "visualization", env, path, token: token || undefined, idToken: idToken || undefined },
+  });
+  const fetchPage = async (pathBase: string, page: number) => {
+    const o = opts(`${pathBase}?page=${page}&size=100`);
+    let r = await fetchLive(o);
+    if (!r.ok) r = await fetchLive(o);
+    return r;
+  };
+  const fetchAllPages = async (pathBase: string): Promise<PagedResult> => {
+    const first = await fetchPage(pathBase, 0);
+    if (!first.ok)
+      return { ok: false, complete: false, error: first.error ?? `Request failed (${first.status}).`, rows: [] };
+    let rows = Array.isArray(first.data) ? (first.data as unknown[]) : [];
+    const pages = Math.min(Math.ceil((first.total ?? rows.length) / 100), 60);
+    let complete = true;
+    for (let p = 1; p < pages; p++) {
+      const r = await fetchPage(pathBase, p);
+      if (r.ok && Array.isArray(r.data)) rows = rows.concat(r.data as unknown[]);
+      else complete = false;
+    }
+    return { ok: true, complete, rows };
+  };
+  return { opts, fetchAllPages };
+}
+
+const BRAND_EP = "/v1.0/admin/datagroup-dashboardsections";
+const AGENCY_EP = "/v1.0/admin/datagroup-retailer-dashboardsections";
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function MassiveUpdatePage() {
   const [catalog, setCatalog] = useState<MuCatalog>(MU_SEED);
@@ -69,6 +116,21 @@ export function MassiveUpdatePage() {
   const [assigned, setAssigned] = useState<Set<string>>(new Set(MU_SEED.assignments));
   const [staged, setStaged] = useState<Map<string, "insert" | "remove">>(new Map());
   const [applying, setApplying] = useState(false);
+
+  // Selected environment (toggle) vs the env the currently-loaded data actually
+  // came from. Writes + the "Live (…)" label use loadedEnv, so they can never
+  // target a different env than the data on screen (even if a switch failed).
+  const [liveEnv, setLiveEnv] = usePersistentState<"prod" | "develop">("mu:env", "prod");
+  const [loadedEnv, setLoadedEnv] = useState<"prod" | "develop">("prod");
+  // pairKey(section, colKey) -> existing assignment record id (needed to DELETE).
+  const [recordIds, setRecordIds] = useState<Map<string, string>>(new Map());
+  // `${dataGroupId}#${retailerId}` -> dataGroupRetailer id (needed to insert agency).
+  const [dgrId, setDgrId] = useState<Map<string, string>>(new Map());
+  // Brand assignments (datagroup-dashboardsections) are huge (~3k) so they load
+  // on demand: "idle" until synced, then "done".
+  const [brandSync, setBrandSync] = useState<"idle" | "loading" | "done">("idle");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [applyLog, setApplyLog] = useState<string>("");
 
   // --- live connect (clients & datagroups from prod) ----------------------
   const [token, setToken] = usePersistentState<string>("shalion:devToken", "");
@@ -125,19 +187,34 @@ export function MassiveUpdatePage() {
 
   const selSectionList = catalog.sections.filter((s) => selSections.has(s.id));
   const selDgList = catalog.dataGroups.filter((d) => selDgs.has(d.id));
-  const retailers = catalog.retailers ?? [];
-  const retailerName = (id: string) => retailers.find((r) => r.id === id)?.name ?? id;
+  const allRetailers = catalog.retailers ?? [];
+  // Live: a (datagroup, retailer) pair only exists if there's a dataGroupRetailer
+  // link, so the Retailers chip offers only retailers actually linked to the
+  // selected agency datagroups (all real retailers if none selected yet).
+  const retailers = useMemo(() => {
+    if (!liveOn) return allRetailers;
+    const ids = new Set<string>();
+    for (const key of dgrId.keys()) {
+      const [dg, ret] = key.split("#");
+      if (!selDgs.size || selDgs.has(dg)) ids.add(ret);
+    }
+    return allRetailers.filter((r) => ids.has(r.id));
+  }, [liveOn, allRetailers, dgrId, selDgs]);
+  const retailerName = (id: string) => allRetailers.find((r) => r.id === id)?.name ?? id;
   const selRetailerList = retailers.filter((r) => selRetailers.includes(r.id));
 
   // The "target" columns of the matrix: datagroups (Brand →
   // datagroup-dashboardsections), or datagroup × retailer (Agency →
-  // datagroup-retailer-dashboardsections).
+  // datagroup-retailer-dashboardsections). Live agency pairs are limited to
+  // existing dataGroupRetailer links (you can't assign to a non-existent pair).
   type TargetCol = { key: string; label: string };
   const targetColumns: TargetCol[] =
     target === "dg"
       ? selDgList.map((d) => ({ key: d.id, label: `${clientName(d.clientId)} · ${d.name}` }))
       : selDgList.flatMap((d) =>
-          selRetailerList.map((r) => ({ key: `${d.id}#${r.id}`, label: `${d.name} · ${r.name}` })),
+          selRetailerList
+            .filter((r) => !liveOn || dgrId.has(`${d.id}#${r.id}`))
+            .map((r) => ({ key: `${d.id}#${r.id}`, label: `${d.name} · ${r.name}` })),
         );
   const colKeys = targetColumns.map((c) => c.key);
 
@@ -214,28 +291,139 @@ export function MassiveUpdatePage() {
     toast.info(n ? `${n} removal(s) staged` : "Nothing to remove (none assigned)");
   };
 
-  const apply = async () => {
+  // Pull ALL brand assignments (datagroup-dashboardsections, ~3k rows) on demand
+  // so removes can resolve their record id and the matrix shows current state.
+  const syncBrandAssignments = async (): Promise<Map<string, string>> => {
+    const saved = getDevTokens();
+    const ctx = makeLiveCtx(loadedEnv, token || saved.token, idToken || saved.idToken);
+    setBrandSync("loading");
+    const res = await ctx.fetchAllPages(BRAND_EP);
+    const rows = mapBrandAssignments(res.rows);
+    const merged = new Map(recordIds);
+    const nextAssigned = new Set(assigned);
+    for (const a of rows) {
+      const k = pairKey(a.sectionId, a.dataGroupId);
+      merged.set(k, a.id);
+      nextAssigned.add(k);
+    }
+    setRecordIds(merged);
+    setAssigned(nextAssigned);
+    setBrandSync(res.complete ? "done" : "idle");
+    toast[res.complete ? "success" : "warning"](
+      `Loaded ${rows.length} brand assignment(s)${res.complete ? "" : " (partial — retry)"}.`,
+    );
+    return merged;
+  };
+
+  // Real apply: sequential POST (insert) / DELETE (remove) through the write
+  // proxy, against the selected environment. Brand → datagroup-dashboardsections;
+  // Agency → datagroup-retailer-dashboardsections (via the dataGroupRetailer id).
+  const doApply = async () => {
+    setConfirmOpen(false);
     if (!staged.size) return;
     setApplying(true);
-    const entries = [...staged.entries()];
-    const next = new Set(assigned);
-    // Simulate the sequential POST/DELETE to /v1.0/admin/datagroup-dashboardsections.
-    for (let i = 0; i < entries.length; i++) {
-      const [k, op] = entries[i];
-      await new Promise((r) => setTimeout(r, 90));
-      if (op === "insert") next.add(k);
-      else next.delete(k);
+    setApplyLog("");
+
+    // Offline (no live connection) → keep the old simulation.
+    if (!liveOn) {
+      const next = new Set(assigned);
+      for (const [k, op] of staged) {
+        await sleep(50);
+        if (op === "insert") next.add(k);
+        else next.delete(k);
+      }
+      setAssigned(next);
+      setStaged(new Map());
+      setApplying(false);
+      toast.success(`Simulated ${staged.size} change(s) (no live connection).`);
+      return;
     }
-    setAssigned(next);
+
+    const saved = getDevTokens();
+    const tok = token || saved.token;
+    const idt = idToken || saved.idToken;
+    const ep = target === "dgr" ? AGENCY_EP : BRAND_EP;
+
+    // Removes need a record id. For brand, that means syncing the (big) list first.
+    let ids = recordIds;
+    const hasUnresolvedRemove = [...staged.entries()].some(([k, op]) => op === "remove" && !ids.has(k));
+    if (target === "dg" && hasUnresolvedRemove && brandSync !== "done") ids = await syncBrandAssignments();
+
+    const nextAssigned = new Set(assigned);
+    const nextIds = new Map(ids);
+    const posByCol = new Map<string, number>();
+    let okN = 0;
+    let failN = 0;
+    const errs: string[] = [];
+
+    for (const [k, op] of staged) {
+      const [sectionId, colKey] = k.split("::");
+      try {
+        if (op === "insert") {
+          const pos = posByCol.get(colKey) ?? 100;
+          posByCol.set(colKey, pos + 1);
+          let body: Record<string, unknown>;
+          if (target === "dgr") {
+            const dataGroupRetailerId = dgrId.get(colKey);
+            if (!dataGroupRetailerId) {
+              failN++;
+              errs.push(`insert ${colKey}: no datagroup-retailer link`);
+              continue;
+            }
+            body = { dataGroupRetailerId, dashboardSectionId: sectionId, position: pos };
+          } else {
+            body = { dataGroupId: colKey, dashboardSectionId: sectionId, position: pos };
+          }
+          const res = await mutateLive({
+            data: { service: "visualization", env: loadedEnv, method: "POST", path: ep, body, token: tok || undefined, idToken: idt || undefined },
+          });
+          if (res.ok || res.status === 409) {
+            nextAssigned.add(k);
+            const rid = (res.data as { id?: string } | null)?.id;
+            if (rid) nextIds.set(k, rid);
+            okN++;
+          } else {
+            failN++;
+            errs.push(`insert ${k.slice(0, 28)}: ${res.error ?? res.status}`);
+          }
+        } else {
+          const rid = nextIds.get(k);
+          if (!rid) {
+            failN++;
+            errs.push(`remove ${k.slice(0, 28)}: record id unknown`);
+            continue;
+          }
+          const res = await mutateLive({
+            data: { service: "visualization", env: loadedEnv, method: "DELETE", path: `${ep}/${rid}`, token: tok || undefined, idToken: idt || undefined },
+          });
+          if (res.ok) {
+            nextAssigned.delete(k);
+            nextIds.delete(k);
+            okN++;
+          } else {
+            failN++;
+            errs.push(`remove ${k.slice(0, 28)}: ${res.error ?? res.status}`);
+          }
+        }
+      } catch (e) {
+        failN++;
+        errs.push(`${k.slice(0, 28)}: ${(e as Error).message}`);
+      }
+      await sleep(150);
+    }
+
+    setAssigned(nextAssigned);
+    setRecordIds(nextIds);
     setStaged(new Map());
     setApplying(false);
-    toast.success(
-      `Simulated ${entries.length} change(s): ${entries.filter((e) => e[1] === "insert").length} inserted, ${entries.filter((e) => e[1] === "remove").length} removed.`,
-    );
+    setApplyLog(errs.slice(0, 10).join("\n"));
+    if (failN === 0) toast.success(`Applied to ${loadedEnv.toUpperCase()}: ${okN} change(s) OK.`);
+    else toast.warning(`Applied to ${loadedEnv.toUpperCase()}: ${okN} OK · ${failN} failed (see details).`);
   };
 
   // --- live connect -------------------------------------------------------
-  const connect = async () => {
+  const connect = async (envArg?: "prod" | "develop"): Promise<boolean> => {
+    const env = envArg ?? liveEnv;
     const saved = getDevTokens(); // read latest saved tokens at click time
     const a = (draftA || token || saved.token).trim();
     const i = (draftI || idToken || saved.idToken).trim();
@@ -244,91 +432,113 @@ export function MassiveUpdatePage() {
     if (!a || !i) {
       setLiveStatus("error");
       setLiveMsg("Both the access token and the id token are required for the Visualization API.");
-      return;
+      return false;
     }
     setLiveStatus("loading");
     setLiveMsg("");
     try {
-      const opts = (path: string) => ({ data: { service: "visualization", env: "prod" as const, path, token: a, idToken: i } });
-      // These admin lists are paged at 100/row and ignore size/filter params, so
-      // pull every page (X-Total-Count tells us how many) and filter client-side.
-      // Pages are fetched SEQUENTIALLY (the 4 endpoints run in parallel, so peak
-      // concurrency stays ~4, not ~14) — firing every page at once overwhelmed the
-      // proxy and dropped pages, yielding a partial catalog. One retry per page.
-      const fetchPage = async (pathBase: string, page: number) => {
-        const o = opts(`${pathBase}?page=${page}&size=100`);
-        let r = await fetchLive(o);
-        if (!r.ok) r = await fetchLive(o); // retry once on transient failure
-        return r;
-      };
-      const fetchAllPages = async (
-        pathBase: string,
-      ): Promise<{ ok: boolean; complete: boolean; error?: string; rows: unknown[] }> => {
-        const first = await fetchPage(pathBase, 0);
-        if (!first.ok)
-          return { ok: false, complete: false, error: first.error ?? `Request failed (${first.status}).`, rows: [] };
-        let rows = Array.isArray(first.data) ? (first.data as unknown[]) : [];
-        const pages = Math.min(Math.ceil((first.total ?? rows.length) / 100), 50);
-        let complete = true;
-        for (let p = 1; p < pages; p++) {
-          const r = await fetchPage(pathBase, p);
-          if (r.ok && Array.isArray(r.data)) rows = rows.concat(r.data as unknown[]);
-          else complete = false; // keep what we have, but flag the gap
-        }
-        return { ok: true, complete, rows };
-      };
-      const [dgAll, appRes, groupAll, sectionAll] = await Promise.all([
+      const { opts, fetchAllPages } = makeLiveCtx(env, a, i);
+      // Catalog + the agency join (datagroup-retailers) + agency assignments. Brand
+      // assignments (~3k) load on demand. Endpoints run in parallel; pages within
+      // each are sequential (see makeLiveCtx).
+      const [dgAll, appRes, groupAll, sectionAll, dgrAll, agencyAll] = await Promise.all([
         fetchAllPages("/v1.0/admin/datagroups"),
         fetchLive(opts("/v1.0/admin/dashboardapplications")),
         fetchAllPages("/v1.0/admin/dashboardgroups"),
         fetchAllPages("/v1.0/admin/dashboardsections"),
+        fetchAllPages("/v1.0/admin/datagroup-retailers"),
+        fetchAllPages(AGENCY_EP),
       ]);
       if (!dgAll.ok) {
         setLiveStatus("error");
         setLiveMsg(dgAll.error ?? "Request failed.");
-        return;
+        return false;
       }
       const { clients, dataGroups } = mapLiveDataGroups(dgAll.rows);
       if (!dataGroups.length) {
         setLiveStatus("error");
         setLiveMsg("No datagroups returned (check the token).");
-        return;
+        return false;
       }
       const liveApps = appRes.ok ? mapLiveApps(appRes.data) : [];
       const apps = liveApps.length ? liveApps : MU_SEED.apps;
-      // Real dashboard groups + sections per app (fall back to seed if a list is empty).
       const liveGroups = mapLiveGroups(groupAll.rows);
       const liveSections = mapLiveSections(sectionAll.rows);
       const groups = liveGroups.length ? liveGroups : MU_SEED.groups;
       const sections = liveSections.length ? liveSections : MU_SEED.sections;
-      const nextCatalog = { ...MU_SEED, apps, groups, sections, clients, dataGroups };
+
+      // datagroup↔retailer join → real retailers + (dg#ret)→dataGroupRetailerId + reverse.
+      const dgRetailers = mapDatagroupRetailers(dgrAll.rows);
+      const retailerMap = new Map<string, MuRetailer>();
+      const nextDgrId = new Map<string, string>();
+      const dgrById = new Map<string, { dgId: string; retId: string }>();
+      for (const r of dgRetailers) {
+        if (!retailerMap.has(r.retailerId)) retailerMap.set(r.retailerId, { id: r.retailerId, name: r.retailerName || r.retailerId });
+        nextDgrId.set(`${r.dataGroupId}#${r.retailerId}`, r.id);
+        dgrById.set(r.id, { dgId: r.dataGroupId, retId: r.retailerId });
+      }
+      const retailers = retailerMap.size
+        ? [...retailerMap.values()].sort((x, y) => x.name.localeCompare(y.name))
+        : MU_SEED.retailers;
+
+      // Agency assignments → assigned + record ids (resolve dgr → dg#ret).
+      const nextAssigned = new Set<string>();
+      const nextIds = new Map<string, string>();
+      for (const a2 of mapAgencyAssignments(agencyAll.rows)) {
+        const pair = dgrById.get(a2.dataGroupRetailerId);
+        if (!pair) continue;
+        const k = pairKey(a2.sectionId, `${pair.dgId}#${pair.retId}`);
+        nextAssigned.add(k);
+        nextIds.set(k, a2.id);
+      }
+
+      const nextCatalog = { ...MU_SEED, apps, groups, sections, clients, dataGroups, retailers };
       setCatalog(nextCatalog);
-      // re-point the app selector at a live app (prefer Digital Shelf Maestro)
-      // and auto-fill all of its dashboard groups.
       const dsm = apps.find((a2) => a2.slug === "dsm") ?? apps[0];
       setAppId(dsm?.id ?? "");
       setGroupSel(dsm ? groupIdsForApp(nextCatalog, dsm.id) : []);
-      setAssigned(new Set()); // assignment state for live datagroups is unknown → simulate fresh
+      setDgrId(nextDgrId);
+      setAssigned(nextAssigned); // agency now; brand fills in via "Sync current state"
+      setRecordIds(nextIds);
+      setBrandSync("idle");
       setSelDgs(new Set());
       setSelSections(new Set());
       setSelClients([]);
       setStaged(new Map());
       setLiveOn(true);
+      setLoadedEnv(env);
       setLiveStatus("idle");
       setShowConnect(false);
       const incomplete = [
         !dgAll.complete && "datagroups",
         !groupAll.complete && "groups",
         !sectionAll.complete && "sections",
+        !dgrAll.complete && "dg-retailers",
+        !agencyAll.complete && "agency assignments",
       ].filter(Boolean);
-      const summary = `Live (prod): ${apps.length} apps · ${groups.length} groups · ${sections.length} sections · ${dataGroups.length} datagroups (${clients.length} clients).`;
+      const summary = `Live (${env}): ${apps.length} apps · ${groups.length} groups · ${sections.length} sections · ${dataGroups.length} datagroups · ${dgRetailers.length} dg-retailers.`;
       if (incomplete.length)
-        toast.warning(`${summary} Some pages didn't load (${incomplete.join(", ")}) — reconnect to retry.`);
+        toast.warning(`${summary} Partial: ${incomplete.join(", ")} — reconnect to retry.`);
       else toast.success(summary);
+      return true;
     } catch (e) {
       setLiveStatus("error");
       setLiveMsg((e as Error).message);
+      return false;
     }
+  };
+
+  // Flip environment (prod ↔ develop). Reconnect with the new env; if that
+  // connect fails, revert the toggle so selected env never lies about what's loaded.
+  const onEnvChange = (next: "prod" | "develop") => {
+    if (next === liveEnv) return;
+    const prev = liveEnv;
+    setLiveEnv(next);
+    const saved = getDevTokens();
+    if (liveOn || token || idToken || saved.token)
+      void connect(next).then((ok) => {
+        if (!ok) setLiveEnv(prev);
+      });
   };
 
   const disconnect = () => {
@@ -336,6 +546,9 @@ export function MassiveUpdatePage() {
     setAppId("app-dsm");
     setGroupSel(groupIdsForApp(MU_SEED, "app-dsm"));
     setAssigned(new Set(MU_SEED.assignments));
+    setRecordIds(new Map());
+    setDgrId(new Map());
+    setBrandSync("idle");
     setSelDgs(new Set());
     setSelSections(new Set());
     setSelClients([]);
@@ -374,10 +587,36 @@ export function MassiveUpdatePage() {
               right, then insert/remove and review the matrix.
             </p>
           </div>
-          <div className="shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Environment for ALL live reads + writes. Prod = real changes. */}
+            <div
+              className="flex items-center gap-0.5 rounded-md border border-border bg-secondary/40 p-0.5 text-xs"
+              title="Environment for live reads + writes"
+            >
+              <button
+                type="button"
+                onClick={() => onEnvChange("develop")}
+                className={cn(
+                  "flex items-center gap-1 rounded px-2 py-1 transition-colors",
+                  liveEnv === "develop" ? "bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <FlaskConical className="h-3.5 w-3.5" /> Dev
+              </button>
+              <button
+                type="button"
+                onClick={() => onEnvChange("prod")}
+                className={cn(
+                  "flex items-center gap-1 rounded px-2 py-1 transition-colors",
+                  liveEnv === "prod" ? "bg-rose-600 font-medium text-white shadow-sm" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Rocket className="h-3.5 w-3.5" /> Prod
+              </button>
+            </div>
             {liveOn ? (
               <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={disconnect}>
-                <PlugZap className="h-4 w-4 text-emerald-600" /> Live (prod) · disconnect
+                <PlugZap className="h-4 w-4 text-emerald-600" /> Live ({loadedEnv}) · disconnect
               </Button>
             ) : liveStatus === "loading" ? (
               <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled>
@@ -413,7 +652,7 @@ export function MassiveUpdatePage() {
                 placeholder="x-id-token"
                 className="h-8 min-w-[220px] flex-1 rounded-md border border-border bg-background px-2.5 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-ring"
               />
-              <Button size="sm" className="h-8" onClick={connect} disabled={liveStatus === "loading"}>
+              <Button size="sm" className="h-8" onClick={() => void connect()} disabled={liveStatus === "loading"}>
                 {liveStatus === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Connect"}
               </Button>
             </div>
@@ -430,12 +669,14 @@ export function MassiveUpdatePage() {
           <span
             className={cn(
               "ml-auto rounded-full px-2 py-0.5 text-[11px] font-medium",
-              liveOn ? "bg-emerald-100 text-emerald-800" : "bg-secondary text-muted-foreground",
+              !liveOn
+                ? "bg-secondary text-muted-foreground"
+                : loadedEnv === "prod"
+                  ? "bg-rose-100 text-rose-800"
+                  : "bg-emerald-100 text-emerald-800",
             )}
           >
-            {liveOn
-              ? "Apps · groups · sections · datagroups: LIVE (prod) · assignments: simulated"
-              : "Catalog: sample · assignments: simulated"}
+            {liveOn ? `LIVE (${loadedEnv}) — reads + writes are real` : "Catalog: sample · writes simulated"}
           </span>
         </div>
 
@@ -626,22 +867,106 @@ export function MassiveUpdatePage() {
               Clear staged
             </button>
           )}
+          {/* Brand current-state sync (datagroup-dashboardsections is ~3k rows, loads on demand) */}
+          {liveOn && target === "dg" && (
+            <button
+              onClick={() => void syncBrandAssignments()}
+              disabled={brandSync === "loading"}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+              title="Load all current section↔datagroup assignments so the matrix shows current state and removes can resolve their record id"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", brandSync === "loading" && "animate-spin")} />
+              {brandSync === "done" ? "Current state synced" : brandSync === "loading" ? "Syncing…" : "Sync current state"}
+            </button>
+          )}
           <span className="ml-auto flex items-center gap-2">
-            <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">
-              <TriangleAlert className="h-3.5 w-3.5 text-amber-500" /> Simulation — no real prod writes
+            <span
+              className={cn(
+                "hidden items-center gap-1 text-xs sm:flex",
+                liveOn && loadedEnv === "prod" ? "text-rose-600" : "text-muted-foreground",
+              )}
+            >
+              <TriangleAlert className={cn("h-3.5 w-3.5", liveOn && loadedEnv === "prod" ? "text-rose-500" : "text-amber-500")} />
+              {!liveOn
+                ? "Simulation (no live connection)"
+                : loadedEnv === "prod"
+                  ? "Writes to PRODUCTION"
+                  : "Writes to develop"}
             </span>
-            <Button size="sm" className="h-8 gap-1.5" disabled={!staged.size || applying} onClick={apply}>
+            <Button
+              size="sm"
+              className={cn("h-8 gap-1.5", liveOn && loadedEnv === "prod" && "bg-rose-600 hover:bg-rose-700")}
+              disabled={!staged.size || applying}
+              onClick={() => (liveOn ? setConfirmOpen(true) : void doApply())}
+            >
               {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               Apply {staged.size} change{staged.size === 1 ? "" : "s"}
             </Button>
           </span>
         </div>
 
+        {applyLog && (
+          <div className="border-t border-border bg-rose-50 px-6 py-2 text-xs text-rose-700">
+            <pre className="whitespace-pre-wrap font-mono">{applyLog}</pre>
+          </div>
+        )}
+
         {/* Matrix */}
         {selSectionList.length > 0 && targetColumns.length > 0 && (
           <Matrix sections={selSectionList} columns={targetColumns} cellState={cellState} targetKind={target} />
         )}
       </div>
+
+      {/* Apply confirmation — names the environment, with a PROD warning */}
+      {confirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setConfirmOpen(false)}>
+          <div
+            className="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              {loadedEnv === "prod" ? (
+                <Rocket className="h-5 w-5 text-rose-600" />
+              ) : (
+                <FlaskConical className="h-5 w-5 text-foreground" />
+              )}
+              <h2 className="text-base font-semibold">
+                Apply to {loadedEnv === "prod" ? "PRODUCTION" : "develop"}?
+              </h2>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This writes <strong>real changes</strong> to the {loadedEnv === "prod" ? "production" : "develop"} Visualization
+              API via {target === "dgr" ? "datagroup-retailer-dashboardsections" : "datagroup-dashboardsections"}:
+            </p>
+            <ul className="mt-3 space-y-1 text-sm">
+              <li className="flex items-center gap-1.5 text-emerald-700">
+                <Plus className="h-4 w-4" /> {stagedInserts} insert{stagedInserts === 1 ? "" : "s"} (POST)
+              </li>
+              <li className="flex items-center gap-1.5 text-red-600">
+                <Minus className="h-4 w-4" /> {stagedRemoves} remove{stagedRemoves === 1 ? "" : "s"} (DELETE)
+              </li>
+            </ul>
+            {loadedEnv === "prod" && (
+              <p className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                <TriangleAlert className="mr-1 inline h-3.5 w-3.5" />
+                Production is live and client-facing. These changes take effect immediately.
+              </p>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setConfirmOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className={cn("gap-1.5", loadedEnv === "prod" && "bg-rose-600 hover:bg-rose-700")}
+                onClick={() => void doApply()}
+              >
+                <Play className="h-4 w-4" /> Apply to {loadedEnv === "prod" ? "production" : "develop"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

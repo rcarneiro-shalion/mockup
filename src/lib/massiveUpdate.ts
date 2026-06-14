@@ -196,6 +196,46 @@ export function mapLiveSections(json: unknown): MuSection[] {
     .filter((s) => s.id && s.groupId);
 }
 
+// ---- existing assignments (so the matrix shows real state + deletes can
+//      resolve the record id) and the datagroup↔retailer join (agency) -------
+
+/** A live section↔datagroup assignment (Brand: datagroup-dashboardsections). */
+export type MuBrandAssignment = { id: string; dataGroupId: string; sectionId: string; position: number };
+/** The datagroup×retailer join (Agency): its id is the dataGroupRetailerId. */
+export type MuDgRetailer = { id: string; dataGroupId: string; retailerId: string; retailerName: string };
+/** A live section↔(datagroup×retailer) assignment (Agency). */
+export type MuAgencyAssignment = { id: string; dataGroupRetailerId: string; sectionId: string };
+
+export function mapBrandAssignments(json: unknown): MuBrandAssignment[] {
+  return pickArray(json)
+    .map((r) => {
+      const dg = (r.dataGroup ?? {}) as Record<string, unknown>;
+      const sec = (r.dashboardSection ?? {}) as Record<string, unknown>;
+      return { id: str(r.id), dataGroupId: str(dg.id), sectionId: str(sec.id), position: Number(r.position) || 0 };
+    })
+    .filter((a) => a.id && a.dataGroupId && a.sectionId);
+}
+
+export function mapDatagroupRetailers(json: unknown): MuDgRetailer[] {
+  return pickArray(json)
+    .map((r) => {
+      const dg = (r.dataGroup ?? {}) as Record<string, unknown>;
+      const ret = (r.retailer ?? {}) as Record<string, unknown>;
+      return { id: str(r.id), dataGroupId: str(dg.id), retailerId: str(ret.id), retailerName: str(ret.name) };
+    })
+    .filter((x) => x.id && x.dataGroupId && x.retailerId);
+}
+
+export function mapAgencyAssignments(json: unknown): MuAgencyAssignment[] {
+  return pickArray(json)
+    .map((r) => {
+      const dgr = (r.dataGroupRetailer ?? {}) as Record<string, unknown>;
+      const sec = (r.dashboardSection ?? {}) as Record<string, unknown>;
+      return { id: str(r.id), dataGroupRetailerId: str(dgr.id), sectionId: str(sec.id) };
+    })
+    .filter((a) => a.id && a.dataGroupRetailerId && a.sectionId);
+}
+
 /** Map the datagroups array into clients + dataGroups (deriving the client list). */
 export function mapLiveDataGroups(json: unknown): { clients: MuClient[]; dataGroups: MuDataGroup[] } {
   const rows = pickArray(json);

@@ -81,6 +81,95 @@ function resolveIdToken(clientIdToken?: string): string | undefined {
   return env || undefined;
 }
 
+// ---- write proxy (mutations) ---------------------------------------------
+// Mutations are far more dangerous than reads, so they are double-gated: only
+// these exact path prefixes may be written, and only with POST/DELETE. This is
+// what the "Massive update" tool uses to insert/remove dashboard-section
+// assignments (mirrors the bulks_scripts: datagroup-dashboardsections,
+// datagroup-retailer-dashboardsections, retailer-dashboardsections,
+// datagroup-retailers). Everything else is rejected before any network call.
+const WRITE_PATH_PREFIXES = [
+  "/v1.0/admin/datagroup-dashboardsections",
+  "/v1.0/admin/datagroup-retailer-dashboardsections",
+  "/v1.0/admin/retailer-dashboardsections",
+  "/v1.0/admin/datagroup-retailers",
+];
+
+export type LiveMethod = "POST" | "DELETE";
+
+/**
+ * Allow-listed write proxy to a Shalion API. Only POST/DELETE to the dashboard
+ * assignment endpoints are permitted (anti-SSRF + blast-radius control). The
+ * token, id token and x-caller-id are attached server-side.
+ */
+export async function mutateShalion(args: {
+  service: string;
+  path: string;
+  method: LiveMethod;
+  body?: JsonValue;
+  token?: string;
+  idToken?: string;
+  env?: LiveEnv;
+}): Promise<LiveResult> {
+  const env: LiveEnv = args.env ?? "prod";
+  const base = baseUrlFor(args.service, env);
+  const hadToken = !!resolveToken(args.token);
+
+  if (!base) return { ok: false, status: 0, data: null, hadToken, error: `Unknown service "${args.service}".` };
+  if (args.method !== "POST" && args.method !== "DELETE")
+    return { ok: false, status: 0, data: null, hadToken, error: `Method ${args.method} not allowed.` };
+  if (!args.path.startsWith("/"))
+    return { ok: false, status: 0, data: null, hadToken, error: "Path must start with '/'." };
+  // Strip any query string before checking the allow-list.
+  const pathOnly = args.path.split("?")[0];
+  if (!WRITE_PATH_PREFIXES.some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`)))
+    return { ok: false, status: 0, data: null, hadToken, error: `Path "${pathOnly}" is not a writable endpoint.` };
+
+  const token = resolveToken(args.token);
+  if (!token)
+    return { ok: false, status: 401, data: null, hadToken: false, error: "No token. Paste a bearer token to write." };
+  const idToken = resolveIdToken(args.idToken);
+  const url = `${base}${args.path}`;
+
+  try {
+    const res = await fetch(url, {
+      method: args.method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "x-caller-id": "console",
+        ...(idToken ? { "x-id-token": idToken } : {}),
+        ...(args.method === "POST" ? { "Content-Type": "application/json" } : {}),
+      },
+      body: args.method === "POST" ? JSON.stringify(args.body ?? {}) : undefined,
+      signal: AbortSignal.timeout(20000),
+    });
+    const text = await res.text();
+    let data: JsonValue = null;
+    try {
+      data = text ? (JSON.parse(text) as JsonValue) : null;
+    } catch {
+      data = null;
+    }
+    return {
+      ok: res.ok,
+      status: res.status,
+      data,
+      hadToken: true,
+      url,
+      error: res.ok
+        ? undefined
+        : res.status === 401 || res.status === 403
+          ? "Unauthorized — token missing/expired or lacks permission."
+          : res.status === 409
+            ? "Already exists (409)."
+            : `Upstream responded ${res.status}${text ? ` — ${text.slice(0, 200)}` : ""}.`,
+    };
+  } catch (e) {
+    return { ok: false, status: 0, data: null, hadToken: true, url, error: `Could not reach ${base} — ${(e as Error).message}.` };
+  }
+}
+
 /**
  * Read-only GET proxy to a Shalion develop API. Validates the service against the
  * allow-list, requires a relative path, attaches the bearer token server-side,
