@@ -236,6 +236,22 @@ export function mapAgencyAssignments(json: unknown): MuAgencyAssignment[] {
     .filter((a) => a.id && a.dataGroupRetailerId && a.sectionId);
 }
 
+/**
+ * Agency section assignment (retailer-dashboardsections): keyed by RETAILER, not
+ * datagroup. An agency datagroup's sections come from the retailers it has, so the
+ * Massive update tool writes here per retailerId (matches the bulk scripts).
+ */
+export type MuRetailerAssignment = { id: string; retailerId: string; sectionId: string };
+export function mapRetailerAssignments(json: unknown): MuRetailerAssignment[] {
+  return pickArray(json)
+    .map((r) => {
+      const ret = (r.retailer ?? {}) as Record<string, unknown>;
+      const sec = (r.dashboardSection ?? {}) as Record<string, unknown>;
+      return { id: str(r.id), retailerId: str(ret.id), sectionId: str(sec.id) };
+    })
+    .filter((a) => a.id && a.retailerId && a.sectionId);
+}
+
 /** Map the datagroups array into clients + dataGroups (deriving the client list). */
 export function mapLiveDataGroups(json: unknown): { clients: MuClient[]; dataGroups: MuDataGroup[] } {
   const rows = pickArray(json);

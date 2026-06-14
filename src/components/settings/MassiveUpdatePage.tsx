@@ -20,7 +20,7 @@ import {
   mapLiveSections,
   mapBrandAssignments,
   mapDatagroupRetailers,
-  mapAgencyAssignments,
+  mapRetailerAssignments,
   pairKey,
   type MuCatalog,
   type MuRetailer,
@@ -94,7 +94,9 @@ function makeLiveCtx(env: LiveEnvName, token: string, idToken: string) {
 }
 
 const BRAND_EP = "/v1.0/admin/datagroup-dashboardsections";
-const AGENCY_EP = "/v1.0/admin/datagroup-retailer-dashboardsections";
+// Agency section assignments are keyed by RETAILER (retailer-dashboardsections),
+// not datagroup. The agency datagroup only scopes which retailers are available.
+const AGENCY_EP = "/v1.0/admin/retailer-dashboardsections";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function MassiveUpdatePage() {
@@ -124,11 +126,13 @@ export function MassiveUpdatePage() {
   const [loadedEnv, setLoadedEnv] = useState<"prod" | "develop">("prod");
   // pairKey(section, colKey) -> existing assignment record id (needed to DELETE).
   const [recordIds, setRecordIds] = useState<Map<string, string>>(new Map());
-  // `${dataGroupId}#${retailerId}` -> dataGroupRetailer id (needed to insert agency).
+  // `${dataGroupId}#${retailerId}` keys of existing datagroup↔retailer links —
+  // used to scope which retailers an agency datagroup has.
   const [dgrId, setDgrId] = useState<Map<string, string>>(new Map());
-  // Brand assignments (datagroup-dashboardsections) are huge (~3k) so they load
-  // on demand: "idle" until synced, then "done".
-  const [brandSync, setBrandSync] = useState<"idle" | "loading" | "done">("idle");
+  // Current assignments are large (~3k brand, ~1.5k agency) so they load on demand
+  // per target: a target is in `synced` once its assignments have been pulled.
+  const [synced, setSynced] = useState<Set<"dg" | "dgr">>(new Set());
+  const [syncing, setSyncing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [applyLog, setApplyLog] = useState<string>("");
 
@@ -188,15 +192,16 @@ export function MassiveUpdatePage() {
   const selSectionList = catalog.sections.filter((s) => selSections.has(s.id));
   const selDgList = catalog.dataGroups.filter((d) => selDgs.has(d.id));
   const allRetailers = catalog.retailers ?? [];
-  // Live: a (datagroup, retailer) pair only exists if there's a dataGroupRetailer
-  // link, so the Retailers chip offers only retailers actually linked to the
-  // selected agency datagroups (all real retailers if none selected yet).
+  // Agency: the section attaches to a RETAILER (retailer-dashboardsections), and
+  // an agency datagroup's retailers come from the datagroup↔retailer join. So the
+  // retailer options are the retailers linked to the SELECTED agency datagroups
+  // (empty until a datagroup is picked, when live).
   const retailers = useMemo(() => {
     if (!liveOn) return allRetailers;
     const ids = new Set<string>();
     for (const key of dgrId.keys()) {
       const [dg, ret] = key.split("#");
-      if (!selDgs.size || selDgs.has(dg)) ids.add(ret);
+      if (selDgs.has(dg)) ids.add(ret);
     }
     return allRetailers.filter((r) => ids.has(r.id));
   }, [liveOn, allRetailers, dgrId, selDgs]);
@@ -207,19 +212,16 @@ export function MassiveUpdatePage() {
   const selRetailerList = retailers.filter((r) => selRetailers.includes(r.id));
   const effectiveRetailerList = selRetailers.length ? selRetailerList : retailers;
 
-  // The "target" columns of the matrix: datagroups (Brand →
-  // datagroup-dashboardsections), or datagroup × retailer (Agency →
-  // datagroup-retailer-dashboardsections). Live agency pairs are limited to
-  // existing dataGroupRetailer links (you can't assign to a non-existent pair).
+  // The "target" columns of the matrix:
+  //  - Brand → one column per datagroup (key = dataGroupId; datagroup-dashboardsections).
+  //  - Agency → one column per retailer (key = retailerId; retailer-dashboardsections).
+  // Agency assignments are retailer-global, so duplicate retailers across the
+  // selected datagroups collapse into a single column.
   type TargetCol = { key: string; label: string };
   const targetColumns: TargetCol[] =
     target === "dg"
       ? selDgList.map((d) => ({ key: d.id, label: `${clientName(d.clientId)} · ${d.name}` }))
-      : selDgList.flatMap((d) =>
-          effectiveRetailerList
-            .filter((r) => !liveOn || dgrId.has(`${d.id}#${r.id}`))
-            .map((r) => ({ key: `${d.id}#${r.id}`, label: `${d.name} · ${r.name}` })),
-        );
+      : effectiveRetailerList.map((r) => ({ key: r.id, label: r.name }));
   const colKeys = targetColumns.map((c) => c.key);
 
   const cellState = (sectionId: string, colKey: string): CellState => {
@@ -295,33 +297,38 @@ export function MassiveUpdatePage() {
     toast.info(n ? `${n} removal(s) staged` : "Nothing to remove (none assigned)");
   };
 
-  // Pull ALL brand assignments (datagroup-dashboardsections, ~3k rows) on demand
-  // so removes can resolve their record id and the matrix shows current state.
-  const syncBrandAssignments = async (): Promise<Map<string, string>> => {
+  // Pull ALL current assignments for a target on demand (Brand ~3k from
+  // datagroup-dashboardsections keyed by dataGroupId; Agency ~1.5k from
+  // retailer-dashboardsections keyed by retailerId) so removes can resolve their
+  // record id and the matrix shows current state.
+  const syncAssignments = async (kind: "dg" | "dgr"): Promise<Map<string, string>> => {
     const saved = getDevTokens();
     const ctx = makeLiveCtx(loadedEnv, token || saved.token, idToken || saved.idToken);
-    setBrandSync("loading");
-    const res = await ctx.fetchAllPages(BRAND_EP);
-    const rows = mapBrandAssignments(res.rows);
+    setSyncing(true);
+    const res = await ctx.fetchAllPages(kind === "dgr" ? AGENCY_EP : BRAND_EP);
+    const pairs: Array<{ id: string; key: string }> =
+      kind === "dgr"
+        ? mapRetailerAssignments(res.rows).map((a) => ({ id: a.id, key: pairKey(a.sectionId, a.retailerId) }))
+        : mapBrandAssignments(res.rows).map((a) => ({ id: a.id, key: pairKey(a.sectionId, a.dataGroupId) }));
     const merged = new Map(recordIds);
     const nextAssigned = new Set(assigned);
-    for (const a of rows) {
-      const k = pairKey(a.sectionId, a.dataGroupId);
-      merged.set(k, a.id);
-      nextAssigned.add(k);
+    for (const p of pairs) {
+      merged.set(p.key, p.id);
+      nextAssigned.add(p.key);
     }
     setRecordIds(merged);
     setAssigned(nextAssigned);
-    setBrandSync(res.complete ? "done" : "idle");
+    setSyncing(false);
+    if (res.complete) setSynced((s) => new Set(s).add(kind));
     toast[res.complete ? "success" : "warning"](
-      `Loaded ${rows.length} brand assignment(s)${res.complete ? "" : " (partial — retry)"}.`,
+      `Loaded ${pairs.length} ${kind === "dgr" ? "retailer" : "brand"} assignment(s)${res.complete ? "" : " (partial — retry)"}.`,
     );
     return merged;
   };
 
   // Real apply: sequential POST (insert) / DELETE (remove) through the write
-  // proxy, against the selected environment. Brand → datagroup-dashboardsections;
-  // Agency → datagroup-retailer-dashboardsections (via the dataGroupRetailer id).
+  // proxy, against the loaded environment. Brand → datagroup-dashboardsections
+  // (keyed by dataGroupId); Agency → retailer-dashboardsections (keyed by retailerId).
   const doApply = async () => {
     setConfirmOpen(false);
     if (!staged.size) return;
@@ -348,10 +355,11 @@ export function MassiveUpdatePage() {
     const idt = idToken || saved.idToken;
     const ep = target === "dgr" ? AGENCY_EP : BRAND_EP;
 
-    // Removes need a record id. For brand, that means syncing the (big) list first.
+    // Removes need a record id; if the current target's assignments aren't loaded
+    // yet, sync them first so we can resolve the record id to DELETE.
     let ids = recordIds;
     const hasUnresolvedRemove = [...staged.entries()].some(([k, op]) => op === "remove" && !ids.has(k));
-    if (target === "dg" && hasUnresolvedRemove && brandSync !== "done") ids = await syncBrandAssignments();
+    if (hasUnresolvedRemove && !synced.has(target)) ids = await syncAssignments(target);
 
     const nextAssigned = new Set(assigned);
     const nextIds = new Map(ids);
@@ -364,23 +372,14 @@ export function MassiveUpdatePage() {
       const [sectionId, colKey] = k.split("::");
       try {
         if (op === "insert") {
-          let body: Record<string, unknown>;
-          if (target === "dgr") {
-            const dataGroupRetailerId = dgrId.get(colKey);
-            if (!dataGroupRetailerId) {
-              failN++;
-              errs.push(`insert ${colKey}: no datagroup-retailer link`);
-              continue;
-            }
-            // Agency body per visualization-api swagger (NewDataGroupRetailerDashboard
-            // SectionRequestBody): dataGroupRetailerId + dashboardSectionId only — NO position.
-            body = { dataGroupRetailerId, dashboardSectionId: sectionId };
-          } else {
-            // Brand body (NewDataGroupDashboardSectionRequestBody): all three required.
-            const pos = posByCol.get(colKey) ?? 100;
-            posByCol.set(colKey, pos + 1);
-            body = { dataGroupId: colKey, dashboardSectionId: sectionId, position: pos };
-          }
+          // colKey is the dataGroupId (brand) or retailerId (agency). Both bodies
+          // require position (per visualization-api swagger).
+          const pos = posByCol.get(colKey) ?? 100;
+          posByCol.set(colKey, pos + 1);
+          const body: Record<string, unknown> =
+            target === "dgr"
+              ? { retailerId: colKey, dashboardSectionId: sectionId, position: pos } // NewRetailerDashboardSectionRequestBody
+              : { dataGroupId: colKey, dashboardSectionId: sectionId, position: pos }; // NewDataGroupDashboardSectionRequestBody
           const res = await mutateLive({
             data: { service: "visualization", env: loadedEnv, method: "POST", path: ep, body, token: tok || undefined, idToken: idt || undefined },
           });
@@ -445,16 +444,15 @@ export function MassiveUpdatePage() {
     setLiveMsg("");
     try {
       const { opts, fetchAllPages } = makeLiveCtx(env, a, i);
-      // Catalog + the agency join (datagroup-retailers) + agency assignments. Brand
-      // assignments (~3k) load on demand. Endpoints run in parallel; pages within
-      // each are sequential (see makeLiveCtx).
-      const [dgAll, appRes, groupAll, sectionAll, dgrAll, agencyAll] = await Promise.all([
+      // Catalog + the datagroup↔retailer join (scopes which retailers an agency
+      // datagroup has). Assignments (~3k brand, ~1.5k agency) load on demand via
+      // "Sync current state". Endpoints run in parallel; pages within each are sequential.
+      const [dgAll, appRes, groupAll, sectionAll, dgrAll] = await Promise.all([
         fetchAllPages("/v1.0/admin/datagroups"),
         fetchLive(opts("/v1.0/admin/dashboardapplications")),
         fetchAllPages("/v1.0/admin/dashboardgroups"),
         fetchAllPages("/v1.0/admin/dashboardsections"),
         fetchAllPages("/v1.0/admin/datagroup-retailers"),
-        fetchAllPages(AGENCY_EP),
       ]);
       if (!dgAll.ok) {
         setLiveStatus("error");
@@ -474,30 +472,18 @@ export function MassiveUpdatePage() {
       const groups = liveGroups.length ? liveGroups : MU_SEED.groups;
       const sections = liveSections.length ? liveSections : MU_SEED.sections;
 
-      // datagroup↔retailer join → real retailers + (dg#ret)→dataGroupRetailerId + reverse.
+      // datagroup↔retailer join → real retailers + which retailers each agency
+      // datagroup has (keys `${dgId}#${retId}`).
       const dgRetailers = mapDatagroupRetailers(dgrAll.rows);
       const retailerMap = new Map<string, MuRetailer>();
       const nextDgrId = new Map<string, string>();
-      const dgrById = new Map<string, { dgId: string; retId: string }>();
       for (const r of dgRetailers) {
         if (!retailerMap.has(r.retailerId)) retailerMap.set(r.retailerId, { id: r.retailerId, name: r.retailerName || r.retailerId });
         nextDgrId.set(`${r.dataGroupId}#${r.retailerId}`, r.id);
-        dgrById.set(r.id, { dgId: r.dataGroupId, retId: r.retailerId });
       }
       const retailers = retailerMap.size
         ? [...retailerMap.values()].sort((x, y) => x.name.localeCompare(y.name))
         : MU_SEED.retailers;
-
-      // Agency assignments → assigned + record ids (resolve dgr → dg#ret).
-      const nextAssigned = new Set<string>();
-      const nextIds = new Map<string, string>();
-      for (const a2 of mapAgencyAssignments(agencyAll.rows)) {
-        const pair = dgrById.get(a2.dataGroupRetailerId);
-        if (!pair) continue;
-        const k = pairKey(a2.sectionId, `${pair.dgId}#${pair.retId}`);
-        nextAssigned.add(k);
-        nextIds.set(k, a2.id);
-      }
 
       const nextCatalog = { ...MU_SEED, apps, groups, sections, clients, dataGroups, retailers };
       setCatalog(nextCatalog);
@@ -505,9 +491,9 @@ export function MassiveUpdatePage() {
       setAppId(dsm?.id ?? "");
       setGroupSel(dsm ? groupIdsForApp(nextCatalog, dsm.id) : []);
       setDgrId(nextDgrId);
-      setAssigned(nextAssigned); // agency now; brand fills in via "Sync current state"
-      setRecordIds(nextIds);
-      setBrandSync("idle");
+      setAssigned(new Set()); // assignments load on demand via "Sync current state"
+      setRecordIds(new Map());
+      setSynced(new Set());
       setSelDgs(new Set());
       setSelSections(new Set());
       setSelClients([]);
@@ -521,7 +507,6 @@ export function MassiveUpdatePage() {
         !groupAll.complete && "groups",
         !sectionAll.complete && "sections",
         !dgrAll.complete && "dg-retailers",
-        !agencyAll.complete && "agency assignments",
       ].filter(Boolean);
       const summary = `Live (${env}): ${apps.length} apps · ${groups.length} groups · ${sections.length} sections · ${dataGroups.length} datagroups · ${dgRetailers.length} dg-retailers.`;
       if (incomplete.length)
@@ -555,7 +540,7 @@ export function MassiveUpdatePage() {
     setAssigned(new Set(MU_SEED.assignments));
     setRecordIds(new Map());
     setDgrId(new Map());
-    setBrandSync("idle");
+    setSynced(new Set());
     setSelDgs(new Set());
     setSelSections(new Set());
     setSelClients([]);
@@ -881,16 +866,17 @@ export function MassiveUpdatePage() {
               Clear staged
             </button>
           )}
-          {/* Brand current-state sync (datagroup-dashboardsections is ~3k rows, loads on demand) */}
-          {liveOn && target === "dg" && (
+          {/* Current-state sync for the active target (assignment lists are big,
+              ~3k brand / ~1.5k agency, so they load on demand). */}
+          {liveOn && (
             <button
-              onClick={() => void syncBrandAssignments()}
-              disabled={brandSync === "loading"}
+              onClick={() => void syncAssignments(target)}
+              disabled={syncing}
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
-              title="Load all current section↔datagroup assignments so the matrix shows current state and removes can resolve their record id"
+              title="Load current assignments so the matrix shows current state and removes can resolve their record id"
             >
-              <RefreshCw className={cn("h-3.5 w-3.5", brandSync === "loading" && "animate-spin")} />
-              {brandSync === "done" ? "Current state synced" : brandSync === "loading" ? "Syncing…" : "Sync current state"}
+              <RefreshCw className={cn("h-3.5 w-3.5", syncing && "animate-spin")} />
+              {synced.has(target) ? "Current state synced" : syncing ? "Syncing…" : "Sync current state"}
             </button>
           )}
           <span className="ml-auto flex items-center gap-2">
@@ -950,7 +936,7 @@ export function MassiveUpdatePage() {
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
               This writes <strong>real changes</strong> to the {loadedEnv === "prod" ? "production" : "develop"} Visualization
-              API via {target === "dgr" ? "datagroup-retailer-dashboardsections" : "datagroup-dashboardsections"}:
+              API via {target === "dgr" ? "retailer-dashboardsections" : "datagroup-dashboardsections"}:
             </p>
             <ul className="mt-3 space-y-1 text-sm">
               <li className="flex items-center gap-1.5 text-emerald-700">
@@ -1092,7 +1078,7 @@ function Matrix({
   cellState: (sectionId: string, colKey: string) => CellState;
   targetKind: "dg" | "dgr";
 }) {
-  const colNoun = targetKind === "dgr" ? "datagroup × retailer" : "datagroup";
+  const colNoun = targetKind === "dgr" ? "retailer" : "datagroup";
   return (
     <div className="border-t border-border">
       <div className="px-6 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1104,7 +1090,7 @@ function Matrix({
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-background px-2 py-1.5 text-left text-xs font-medium text-muted-foreground">
-                Section \ {targetKind === "dgr" ? "Datagroup · Retailer" : "Datagroup"}
+                Section \ {targetKind === "dgr" ? "Retailer" : "Datagroup"}
               </th>
               {columns.map((c) => (
                 <th key={c.key} className="px-1.5 py-1.5 align-bottom">
