@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X, Network, Loader2, Building2, Store, ArrowRight, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { pairKey, type MuCatalog } from "@/lib/massiveUpdate";
+import { FilterChip } from "@/components/seeds/FilterChip";
 import {
   Select,
   SelectContent,
@@ -47,11 +48,19 @@ export function RelationshipMap({
   const [q, setQ] = useState("");
   const [mode, setMode] = useState<"dg" | "dgr">("dg");
   const [view, setView] = useState<"matrix" | "list">("matrix");
+  // Column filter: client ids (Brand) or retailer ids (Agency) to narrow columns.
+  const [colFilter, setColFilter] = useState<string[]>([]);
 
   const app = catalog.apps.find((a) => a.id === appId) ?? catalog.apps[0];
   const clientName = (id: string) => catalog.clients.find((c) => c.id === id)?.name ?? "—";
   const ql = q.trim().toLowerCase();
   const retailers = catalog.retailers ?? [];
+
+  // The option set changes with the application + axis → reload (reset) the filter
+  // whenever either changes, so stale picks from another app can't linger.
+  useEffect(() => {
+    setColFilter([]);
+  }, [appId, mode]);
 
   // Group → rows; a row is shown only if it has assignments in the active mode.
   const groups = useMemo(() => {
@@ -73,14 +82,12 @@ export function RelationshipMap({
 
   const allRows = groups.flatMap((g) => g.rows);
 
-  // Matrix columns: the clients (Brand) or retailers (Agency) actually in use.
-  const columns = useMemo(() => {
+  // The full column set for this app + axis (drives the filter chip options).
+  const allColumns = useMemo(() => {
     if (mode === "dg") {
       const ids = new Set<string>();
       for (const r of allRows) for (const d of r.dgs) ids.add(d.clientId);
-      return [...ids]
-        .map((id) => ({ key: id, label: clientName(id) }))
-        .sort((a, b) => a.label.localeCompare(b.label));
+      return [...ids].map((id) => ({ key: id, label: clientName(id) })).sort((a, b) => a.label.localeCompare(b.label));
     }
     const ids = new Set<string>();
     for (const r of allRows) for (const ret of r.rets) ids.add(ret.id);
@@ -90,6 +97,18 @@ export function RelationshipMap({
       .sort((a, b) => a.label.localeCompare(b.label));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allRows, mode, retailers]);
+
+  // Apply the column filter → visible columns + visible rows (a row is kept only
+  // if it still has a target in the filtered columns).
+  const filterSet = useMemo(() => new Set(colFilter), [colFilter]);
+  const columns = colFilter.length ? allColumns.filter((c) => filterSet.has(c.key)) : allColumns;
+  const rowInFilter = (r: Row) =>
+    !colFilter.length ||
+    (mode === "dg" ? r.dgs.some((d) => filterSet.has(d.clientId)) : r.rets.some((x) => filterSet.has(x.id)));
+  const displayGroups = groups
+    .map((g) => ({ group: g.group, rows: g.rows.filter(rowInFilter) }))
+    .filter((g) => g.rows.length > 0);
+  const displayRows = displayGroups.flatMap((g) => g.rows);
 
   // cell value: Brand = # of the client's datagroups using the section (with their
   // ids, to drive the edit); Agency = assigned (0/1).
@@ -101,7 +120,14 @@ export function RelationshipMap({
     return row.rets.some((r) => r.id === colKey) ? { n: 1, ids: [colKey] } : { n: 0, ids: [] };
   };
 
-  const totalLinks = allRows.reduce((n, r) => n + (mode === "dg" ? r.dgs.length : r.rets.length), 0);
+  const totalLinks = displayRows.reduce(
+    (n, r) =>
+      n +
+      (mode === "dg"
+        ? r.dgs.filter((d) => columns.some((c) => c.key === d.clientId)).length
+        : r.rets.filter((x) => columns.some((c) => c.key === x.id)).length),
+    0,
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
@@ -154,15 +180,29 @@ export function RelationshipMap({
             </Toggle>
           </div>
 
+          {/* Filter columns by client (Brand) or retailer (Agency) */}
+          <FilterChip
+            label={mode === "dg" ? "Clients" : "Retailers"}
+            icon={mode === "dg" ? Building2 : Store}
+            options={allColumns.map((c) => c.key)}
+            value={colFilter}
+            onChange={setColFilter}
+            getLabel={(id) => allColumns.find((c) => c.key === id)?.label ?? id}
+            searchable
+          />
+
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search sections"
-            className="h-8 w-56 rounded-md border border-border bg-background px-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            className="h-8 w-48 rounded-md border border-border bg-background px-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           />
           <span className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{allRows.length} sections</span>
-            <span>{columns.length} {mode === "dg" ? "clients" : "retailers"}</span>
+            <span>{displayRows.length} sections</span>
+            <span>
+              {columns.length}
+              {colFilter.length ? `/${allColumns.length}` : ""} {mode === "dg" ? "clients" : "retailers"}
+            </span>
             <span className={mode === "dg" ? "text-emerald-700" : "text-violet-700"}>{totalLinks} links</span>
           </span>
         </div>
@@ -179,9 +219,11 @@ export function RelationshipMap({
           <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin" /> Loading current assignments…
           </div>
-        ) : allRows.length === 0 ? (
+        ) : displayRows.length === 0 ? (
           <p className="py-16 text-center text-sm text-muted-foreground">
-            No applied sections for {app?.label} ({mode === "dg" ? "Brand / datagroups" : "Agency / retailers"}).
+            {allRows.length === 0
+              ? `No applied sections for ${app?.label} (${mode === "dg" ? "Brand / datagroups" : "Agency / retailers"}).`
+              : `No sections match the ${mode === "dg" ? "client" : "retailer"} filter.`}
           </p>
         ) : view === "matrix" ? (
           <table className="border-separate border-spacing-0 text-sm">
@@ -200,7 +242,7 @@ export function RelationshipMap({
               </tr>
             </thead>
             <tbody>
-              {groups.map(({ group, rows }) => (
+              {displayGroups.map(({ group, rows }) => (
                 <FragmentRows
                   key={group.id}
                   group={group.label}
@@ -216,7 +258,7 @@ export function RelationshipMap({
         ) : (
           // List view (detailed chips)
           <div className="space-y-5">
-            {groups.map(({ group, rows }) => (
+            {displayGroups.map(({ group, rows }) => (
               <div key={group.id}>
                 <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</div>
                 <div className="space-y-2">
@@ -227,7 +269,10 @@ export function RelationshipMap({
                         <span className="font-mono text-[11px] text-muted-foreground">{r.section.path}</span>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {(mode === "dg" ? r.dgs : r.rets).map((t) => (
+                        {(mode === "dg"
+                          ? r.dgs.filter((d) => !colFilter.length || filterSet.has(d.clientId))
+                          : r.rets.filter((x) => !colFilter.length || filterSet.has(x.id))
+                        ).map((t) => (
                           <Chip
                             key={t.id}
                             tone={mode === "dg" ? "emerald" : "violet"}
