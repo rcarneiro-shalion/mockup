@@ -65,6 +65,8 @@ const groups: MuGroup[] = [
   { id: "g-cmi-health", label: "Content health", appSlug: "cmi" },
   { id: "g-asm-distribution", label: "Distribution", appSlug: "asm" },
   { id: "g-odm-promos", label: "Promotions", appSlug: "odm" },
+  { id: "g-rmms-overview", label: "Overview", appSlug: "rmms" },
+  { id: "g-rmms-keywords", label: "Keyword intelligence", appSlug: "rmms" },
 ];
 
 const S = (id: string, label: string, path: string, groupId: string): MuSection => ({ id, label, path, groupId });
@@ -93,6 +95,8 @@ const sections: MuSection[] = [
   S("s-cmi-health", "Content index", "/cmi/health", "g-cmi-health"),
   S("s-asm-dist", "Distribution", "/asm/distribution", "g-asm-distribution"),
   S("s-odm-promo", "Promotions", "/odm/promotions", "g-odm-promos"),
+  S("s-rmms-ov", "Overview", "/rmms/overview", "g-rmms-overview"),
+  S("s-rmms-kw", "Keyword intelligence", "/rmms/keywords", "g-rmms-keywords"),
 ];
 
 const clients: MuClient[] = [
@@ -170,6 +174,26 @@ const str = (v: unknown): string => (v == null ? "" : String(v));
 
 export function mapLiveApps(json: unknown): MuApp[] {
   return pickArray(json).map((a) => ({ id: str(a.id), label: str(a.label), slug: str(a.slug) }));
+}
+
+/** Map dashboardgroups → groups (each row nests its dashboardApplication.slug). */
+export function mapLiveGroups(json: unknown): MuGroup[] {
+  return pickArray(json)
+    .map((g) => {
+      const app = (g.dashboardApplication ?? {}) as Record<string, unknown>;
+      return { id: str(g.id), label: str(g.label), appSlug: str(app.slug) };
+    })
+    .filter((g) => g.id && g.appSlug);
+}
+
+/** Map dashboardsections → sections (each row nests its dashboardGroup.id). */
+export function mapLiveSections(json: unknown): MuSection[] {
+  return pickArray(json)
+    .map((s) => {
+      const grp = (s.dashboardGroup ?? {}) as Record<string, unknown>;
+      return { id: str(s.id), label: str(s.label), path: str(s.path), groupId: str(grp.id) };
+    })
+    .filter((s) => s.id && s.groupId);
 }
 
 /** Map the datagroups array into clients + dataGroups (deriving the client list). */

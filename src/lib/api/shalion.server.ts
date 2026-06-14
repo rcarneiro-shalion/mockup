@@ -61,6 +61,8 @@ export type LiveResult = {
   hadToken: boolean;
   /** The resolved upstream URL (for display/debugging). */
   url?: string;
+  /** Upstream X-Total-Count (total rows across pages), when present. */
+  total?: number;
 };
 
 /** Resolve the token: prefer a client-supplied one, fall back to a server env. */
@@ -134,12 +136,15 @@ export async function fetchShalion(args: {
     } catch {
       data = null;
     }
+    const totalHeader = res.headers.get("x-total-count");
+    const total = totalHeader != null && totalHeader !== "" ? Number(totalHeader) : undefined;
     return {
       ok: res.ok,
       status: res.status,
       data,
       hadToken: true,
       url,
+      total: Number.isFinite(total) ? total : undefined,
       error: res.ok
         ? undefined
         : res.status === 401 || res.status === 403

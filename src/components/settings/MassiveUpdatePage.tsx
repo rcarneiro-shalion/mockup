@@ -16,6 +16,8 @@ import {
   MU_SEED,
   mapLiveDataGroups,
   mapLiveApps,
+  mapLiveGroups,
+  mapLiveSections,
   pairKey,
   type MuCatalog,
   type MuSection,
@@ -236,9 +238,27 @@ export function MassiveUpdatePage() {
     setLiveMsg("");
     try {
       const opts = (path: string) => ({ data: { service: "visualization", env: "prod" as const, path, token: a, idToken: i } });
-      const [dgRes, appRes] = await Promise.all([
+      // These admin lists are paged at 100/row and ignore size/filter params, so
+      // pull every page (X-Total-Count tells us how many) and filter client-side.
+      const fetchAllPages = async (pathBase: string): Promise<unknown[]> => {
+        const first = await fetchLive(opts(`${pathBase}?page=0&size=100`));
+        if (!first.ok) return [];
+        const rows0 = Array.isArray(first.data) ? (first.data as unknown[]) : [];
+        const pages = Math.min(Math.ceil((first.total ?? rows0.length) / 100), 50);
+        if (pages <= 1) return rows0;
+        const rest = await Promise.all(
+          Array.from({ length: pages - 1 }, (_, p) => fetchLive(opts(`${pathBase}?page=${p + 1}&size=100`))),
+        );
+        return rest.reduce<unknown[]>(
+          (acc, r) => (r.ok && Array.isArray(r.data) ? acc.concat(r.data as unknown[]) : acc),
+          rows0,
+        );
+      };
+      const [dgRes, appRes, groupRows, sectionRows] = await Promise.all([
         fetchLive(opts("/v1.0/admin/datagroups?size=200")),
         fetchLive(opts("/v1.0/admin/dashboardapplications")),
+        fetchAllPages("/v1.0/admin/dashboardgroups"),
+        fetchAllPages("/v1.0/admin/dashboardsections"),
       ]);
       if (!dgRes.ok) {
         setLiveStatus("error");
@@ -253,7 +273,12 @@ export function MassiveUpdatePage() {
       }
       const liveApps = appRes.ok ? mapLiveApps(appRes.data) : [];
       const apps = liveApps.length ? liveApps : MU_SEED.apps;
-      const nextCatalog = { ...MU_SEED, apps, clients, dataGroups };
+      // Real dashboard groups + sections per app (fall back to seed if a list is empty).
+      const liveGroups = mapLiveGroups(groupRows);
+      const liveSections = mapLiveSections(sectionRows);
+      const groups = liveGroups.length ? liveGroups : MU_SEED.groups;
+      const sections = liveSections.length ? liveSections : MU_SEED.sections;
+      const nextCatalog = { ...MU_SEED, apps, groups, sections, clients, dataGroups };
       setCatalog(nextCatalog);
       // re-point the app selector at a live app (prefer Digital Shelf Maestro)
       // and auto-fill all of its dashboard groups.
@@ -269,7 +294,7 @@ export function MassiveUpdatePage() {
       setLiveStatus("idle");
       setShowConnect(false);
       toast.success(
-        `Live (prod): ${apps.length} dashboard apps · ${dataGroups.length} datagroups across ${clients.length} clients.`,
+        `Live (prod): ${apps.length} apps · ${groups.length} groups · ${sections.length} sections · ${dataGroups.length} datagroups (${clients.length} clients).`,
       );
     } catch (e) {
       setLiveStatus("error");
@@ -363,7 +388,9 @@ export function MassiveUpdatePage() {
               liveOn ? "bg-emerald-100 text-emerald-800" : "bg-secondary text-muted-foreground",
             )}
           >
-            Clients/datagroups: {liveOn ? "LIVE (prod)" : "sample"} · sections & assignments: simulated
+            {liveOn
+              ? "Apps · groups · sections · datagroups: LIVE (prod) · assignments: simulated"
+              : "Catalog: sample · assignments: simulated"}
           </span>
         </div>
 
