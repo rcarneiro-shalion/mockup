@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePersistentState } from "@/hooks/usePersistentState";
-import { fetchLive, mutateLive } from "@/lib/api/live.functions";
+import { fetchLive, mutateLive, fetchAssignments } from "@/lib/api/live.functions";
 import { getDevTokens } from "@/lib/devTokens";
 import {
   MU_SEED,
@@ -18,9 +18,7 @@ import {
   mapLiveApps,
   mapLiveGroups,
   mapLiveSections,
-  mapBrandAssignments,
   mapDatagroupRetailers,
-  mapRetailerAssignments,
   pairKey,
   type MuCatalog,
   type MuRetailer,
@@ -77,17 +75,24 @@ function makeLiveCtx(env: LiveEnvName, token: string, idToken: string) {
     if (!r.ok) r = await fetchLive(o);
     return r;
   };
-  const fetchAllPages = async (pathBase: string): Promise<PagedResult> => {
+  // concurrency: how many pages to fetch at once. 1 = sequential (gentle, used for
+  // the catalog). The big assignment lists (~33 + ~16 pages) pass a higher value so
+  // the relationship map doesn't take a minute of one-page-at-a-time requests.
+  const fetchAllPages = async (pathBase: string, concurrency = 1): Promise<PagedResult> => {
     const first = await fetchPage(pathBase, 0);
     if (!first.ok)
       return { ok: false, complete: false, error: first.error ?? `Request failed (${first.status}).`, rows: [] };
     let rows = Array.isArray(first.data) ? (first.data as unknown[]) : [];
     const pages = Math.min(Math.ceil((first.total ?? rows.length) / 100), 60);
     let complete = true;
-    for (let p = 1; p < pages; p++) {
-      const r = await fetchPage(pathBase, p);
-      if (r.ok && Array.isArray(r.data)) rows = rows.concat(r.data as unknown[]);
-      else complete = false;
+    const rest = Array.from({ length: Math.max(0, pages - 1) }, (_, i) => i + 1);
+    for (let i = 0; i < rest.length; i += concurrency) {
+      const batch = rest.slice(i, i + concurrency);
+      const results = await Promise.all(batch.map((p) => fetchPage(pathBase, p)));
+      for (const r of results) {
+        if (r.ok && Array.isArray(r.data)) rows = rows.concat(r.data as unknown[]);
+        else complete = false;
+      }
     }
     return { ok: true, complete, rows };
   };
@@ -292,26 +297,33 @@ export function MassiveUpdatePage() {
   // record id and the matrix shows current state.
   const syncAssignments = async (kind: "dg" | "dgr"): Promise<Map<string, string>> => {
     const saved = getDevTokens();
-    const ctx = makeLiveCtx(loadedEnv, token || saved.token, idToken || saved.idToken);
+    const tok = token || saved.token;
+    const idt = idToken || saved.idToken;
     setSyncing(true);
-    const res = await ctx.fetchAllPages(kind === "dgr" ? AGENCY_EP : BRAND_EP);
-    const pairs: Array<{ id: string; key: string }> =
-      kind === "dgr"
-        ? mapRetailerAssignments(res.rows).map((a) => ({ id: a.id, key: pairKey(a.sectionId, a.retailerId) }))
-        : mapBrandAssignments(res.rows).map((a) => ({ id: a.id, key: pairKey(a.sectionId, a.dataGroupId) }));
-    const merged = new Map(recordIds);
-    const nextAssigned = new Set(assigned);
-    for (const p of pairs) {
-      merged.set(p.key, p.id);
-      nextAssigned.add(p.key);
+    let merged = new Map(recordIds);
+    try {
+      const res = await fetchAssignments({
+        data: { kind: kind === "dgr" ? "agency" : "brand", token: tok || undefined, idToken: idt || undefined, env: loadedEnv },
+      });
+      const pairs = (res.pairs ?? []).map((p) => ({ id: p.id, key: pairKey(p.sectionId, p.targetId) }));
+      const nextAssigned = new Set(assigned);
+      for (const p of pairs) {
+        merged.set(p.key, p.id);
+        nextAssigned.add(p.key);
+      }
+      setRecordIds(merged);
+      setAssigned(nextAssigned);
+      if (res.ok && res.complete) setSynced((s) => new Set(s).add(kind));
+      if (!res.ok) toast.error(res.error || "Couldn't load assignments.");
+      else
+        toast[res.complete ? "success" : "warning"](
+          `Loaded ${pairs.length} ${kind === "dgr" ? "retailer" : "brand"} assignment(s)${res.complete ? "" : " (partial — retry)"}.`,
+        );
+    } catch (e) {
+      toast.error(`Couldn't load assignments: ${(e as Error).message}`);
+    } finally {
+      setSyncing(false);
     }
-    setRecordIds(merged);
-    setAssigned(nextAssigned);
-    setSyncing(false);
-    if (res.complete) setSynced((s) => new Set(s).add(kind));
-    toast[res.complete ? "success" : "warning"](
-      `Loaded ${pairs.length} ${kind === "dgr" ? "retailer" : "brand"} assignment(s)${res.complete ? "" : " (partial — retry)"}.`,
-    );
     return merged;
   };
 
@@ -509,17 +521,27 @@ export function MassiveUpdatePage() {
     }
   };
 
-  // Flip environment (prod ↔ develop). Reconnect with the new env; if that
-  // connect fails, revert the toggle so selected env never lies about what's loaded.
+  // Flip environment (prod ↔ develop) and reconnect with the new env. The toggle
+  // moves immediately; on a failed connect we DON'T silently snap back (that felt
+  // like a dead toggle) — instead we disconnect, open the connect panel, and say
+  // why (develop is a separate env needing a develop token + VPN — a prod token
+  // won't authenticate there; it is NOT a token-format issue).
   const onEnvChange = (next: "prod" | "develop") => {
     if (next === liveEnv) return;
-    const prev = liveEnv;
     setLiveEnv(next);
     const saved = getDevTokens();
-    if (liveOn || token || idToken || saved.token)
-      void connect(next).then((ok) => {
-        if (!ok) setLiveEnv(prev);
-      });
+    const haveToken = !!(token || idToken || saved.token);
+    if (!liveOn && !haveToken) return; // nothing to connect with yet
+    void connect(next).then((ok) => {
+      if (ok) return;
+      setLiveOn(false); // don't keep showing the other env's data as "live"
+      setShowConnect(true);
+      toast.error(
+        next === "develop"
+          ? "Couldn't connect to develop — it's a separate environment. Paste a develop access + id token (and make sure VPN is on). A prod token won't work there."
+          : "Couldn't connect to production with the saved token — paste a fresh one.",
+      );
+    });
   };
 
   const disconnect = () => {
@@ -537,15 +559,10 @@ export function MassiveUpdatePage() {
     setLiveOn(false);
   };
 
-  // Open the relationship map. It reads `assigned`, so make sure BOTH brand and
-  // agency assignments are loaded (they're big + on-demand).
-  const openMap = async () => {
-    setMapOpen(true);
-    if (liveOn) {
-      if (!synced.has("dg")) await syncAssignments("dg");
-      if (!synced.has("dgr")) await syncAssignments("dgr");
-    }
-  };
+  // Open the relationship map. The map loads only the ACTIVE axis's assignments
+  // (brand or agency) lazily via onLoad → syncAssignments, so the heavy brand list
+  // (~9MB) isn't pulled unless you're looking at it.
+  const openMap = () => setMapOpen(true);
 
   // Click an assignment in the map → load that exact section + target(s) into the
   // tool so it can be edited (insert/remove). A brand client cell carries all of
@@ -1022,6 +1039,8 @@ export function MassiveUpdatePage() {
           assigned={assigned}
           live={liveOn}
           loading={syncing}
+          synced={synced}
+          onLoad={(kind) => void syncAssignments(kind)}
           onClose={() => setMapOpen(false)}
           onEdit={editFromMap}
         />

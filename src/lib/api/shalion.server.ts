@@ -81,6 +81,89 @@ function resolveIdToken(clientIdToken?: string): string | undefined {
   return env || undefined;
 }
 
+// ---- assignment aggregator (server-side pagination) ----------------------
+// The section-assignment lists are large (datagroup-dashboardsections ~3k rows,
+// retailer-dashboardsections ~1.5k) and each row is a deeply-nested ~2KB object.
+// Paginating them through the browser proxy (33 round-trips of ~250KB each) is
+// slow and drops pages. Instead we paginate SERVER-SIDE (fast server-to-server,
+// no per-page client serialization) and return only the compact
+// {id, sectionId, targetId} triples the relationship map needs.
+export type AssignmentPair = { id: string; sectionId: string; targetId: string };
+
+export async function aggregateAssignments(args: {
+  kind: "brand" | "agency";
+  token?: string;
+  idToken?: string;
+  env?: LiveEnv;
+}): Promise<{ ok: boolean; complete: boolean; error?: string; pairs: AssignmentPair[] }> {
+  const env: LiveEnv = args.env ?? "prod";
+  const base = baseUrlFor("visualization", env);
+  const token = resolveToken(args.token);
+  const idToken = resolveIdToken(args.idToken);
+  if (!base) return { ok: false, complete: false, error: "Unknown service.", pairs: [] };
+  if (!token) return { ok: false, complete: false, error: "No token.", pairs: [] };
+
+  const path = args.kind === "agency"
+    ? "/v1.0/admin/retailer-dashboardsections"
+    : "/v1.0/admin/datagroup-dashboardsections";
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/json",
+    "x-caller-id": "console",
+    ...(idToken ? { "x-id-token": idToken } : {}),
+  };
+  const rec = (r: Record<string, unknown>): AssignmentPair => {
+    const sec = (r.dashboardSection ?? {}) as Record<string, unknown>;
+    const tgt = (args.kind === "agency" ? r.retailer : r.dataGroup) as Record<string, unknown> | undefined;
+    return { id: String(r.id ?? ""), sectionId: String(sec.id ?? ""), targetId: String(tgt?.id ?? "") };
+  };
+  const getPage = async (page: number): Promise<{ ok: boolean; rows: Record<string, unknown>[]; total?: number }> => {
+    try {
+      const res = await fetch(`${base}${path}?page=${page}&size=100`, { headers, signal: AbortSignal.timeout(25000) });
+      if (!res.ok) return { ok: false, rows: [] };
+      const totalH = res.headers.get("x-total-count");
+      const total = totalH ? Number(totalH) : undefined;
+      const data = (await res.json().catch(() => [])) as unknown;
+      return { ok: true, rows: Array.isArray(data) ? (data as Record<string, unknown>[]) : [], total: Number.isFinite(total) ? total : undefined };
+    } catch {
+      return { ok: false, rows: [] };
+    }
+  };
+
+  const first = await getPage(0);
+  if (!first.ok) return { ok: false, complete: false, error: "Request failed (check token / network).", pairs: [] };
+  const pairs: AssignmentPair[] = [];
+  const push = (rows: Record<string, unknown>[]) => {
+    for (const r of rows) {
+      const p = rec(r);
+      if (p.id && p.sectionId && p.targetId) pairs.push(p);
+    }
+  };
+  push(first.rows);
+  const pages = Math.min(Math.ceil((first.total ?? first.rows.length) / 100), 80);
+  let complete = true;
+  // Fetch the remaining pages concurrently. This is server→prod directly (not via
+  // our dev proxy), so high concurrency is safe and keeps the whole load to a few
+  // seconds instead of ~25s sequential.
+  const rest = Array.from({ length: Math.max(0, pages - 1) }, (_, i) => i + 1);
+  const CONC = 10;
+  for (let i = 0; i < rest.length; i += CONC) {
+    const batch = rest.slice(i, i + CONC);
+    const results = await Promise.all(
+      batch.map(async (p) => {
+        let r = await getPage(p);
+        if (!r.ok) r = await getPage(p); // one retry
+        return r;
+      }),
+    );
+    for (const r of results) {
+      if (r.ok) push(r.rows);
+      else complete = false;
+    }
+  }
+  return { ok: true, complete, pairs };
+}
+
 // ---- write proxy (mutations) ---------------------------------------------
 // Mutations are far more dangerous than reads, so they are double-gated: only
 // these exact path prefixes may be written, and only with POST/DELETE. This is

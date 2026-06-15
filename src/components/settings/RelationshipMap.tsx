@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Network, Loader2, Building2, Store, ArrowRight, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { pairKey, type MuCatalog } from "@/lib/massiveUpdate";
@@ -34,6 +34,8 @@ export function RelationshipMap({
   assigned,
   live,
   loading,
+  synced,
+  onLoad,
   onClose,
   onEdit,
 }: {
@@ -41,6 +43,10 @@ export function RelationshipMap({
   assigned: Set<string>;
   live: boolean;
   loading: boolean;
+  /** Which axes' assignments are fully loaded ("dg" = brand, "dgr" = agency). */
+  synced: Set<"dg" | "dgr">;
+  /** Request loading an axis's assignments (heavy → lazy, only the active one). */
+  onLoad: (kind: "dg" | "dgr") => void;
   onClose: () => void;
   onEdit: (e: MapEdit) => void;
 }) {
@@ -50,6 +56,20 @@ export function RelationshipMap({
   const [view, setView] = useState<"matrix" | "list">("matrix");
   // Column filter: client ids (Brand) or retailer ids (Agency) to narrow columns.
   const [colFilter, setColFilter] = useState<string[]>([]);
+
+  // Lazily load the ACTIVE axis's assignments once (the brand list is ~9MB, so we
+  // never pull both). requested guards against re-firing on partial loads.
+  const requested = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!live || loading) return;
+    if (synced.has(mode) || requested.current.has(mode)) return;
+    requested.current.add(mode);
+    onLoad(mode);
+  }, [live, loading, synced, mode, onLoad]);
+  const reload = () => {
+    requested.current.delete(mode);
+    onLoad(mode);
+  };
 
   const app = catalog.apps.find((a) => a.id === appId) ?? catalog.apps[0];
   const clientName = (id: string) => catalog.clients.find((c) => c.id === id)?.name ?? "—";
@@ -105,10 +125,26 @@ export function RelationshipMap({
   const rowInFilter = (r: Row) =>
     !colFilter.length ||
     (mode === "dg" ? r.dgs.some((d) => filterSet.has(d.clientId)) : r.rets.some((x) => filterSet.has(x.id)));
-  const displayGroups = groups
+  const allDisplayGroups = groups
     .map((g) => ({ group: g.group, rows: g.rows.filter(rowInFilter) }))
     .filter((g) => g.rows.length > 0);
-  const displayRows = displayGroups.flatMap((g) => g.rows);
+  const displayRows = allDisplayGroups.flatMap((g) => g.rows);
+
+  // Cap rendered rows so a big app (hundreds of applied sections × dozens of
+  // columns) can't choke the renderer — narrow with search / the column filter.
+  const ROW_CAP = 120;
+  const truncated = displayRows.length > ROW_CAP;
+  const displayGroups = (() => {
+    let budget = ROW_CAP;
+    const out: typeof allDisplayGroups = [];
+    for (const g of allDisplayGroups) {
+      if (budget <= 0) break;
+      const rows = g.rows.slice(0, budget);
+      budget -= rows.length;
+      out.push({ group: g.group, rows });
+    }
+    return out;
+  })();
 
   // cell value: Brand = # of the client's datagroups using the section (with their
   // ids, to drive the edit); Agency = assigned (0/1).
@@ -215,16 +251,40 @@ export function RelationshipMap({
             Seeded sample — connect live data for the real assignment map.
           </p>
         )}
+        {truncated && !loading && (
+          <p className="mb-3 rounded-md bg-amber-50 px-3 py-1.5 text-xs text-amber-700">
+            Showing the first {ROW_CAP} of {displayRows.length} sections — narrow with search or the{" "}
+            {mode === "dg" ? "Clients" : "Retailers"} filter.
+          </p>
+        )}
+        {live && !loading && !synced.has(mode) && displayRows.length > 0 && (
+          <p className="mb-3 flex items-center gap-2 rounded-md bg-amber-50 px-3 py-1.5 text-xs text-amber-700">
+            {mode === "dg" ? "Client" : "Retailer"} assignments may be incomplete.
+            <button onClick={reload} className="font-medium underline hover:no-underline">
+              Reload
+            </button>
+          </p>
+        )}
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" /> Loading current assignments…
+          <div className="flex flex-col items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" /> Loading {mode === "dg" ? "client" : "retailer"} assignments…
+            <span className="text-xs">Large catalogs can take a moment.</span>
           </div>
         ) : displayRows.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted-foreground">
-            {allRows.length === 0
-              ? `No applied sections for ${app?.label} (${mode === "dg" ? "Brand / datagroups" : "Agency / retailers"}).`
-              : `No sections match the ${mode === "dg" ? "client" : "retailer"} filter.`}
-          </p>
+          live && !synced.has(mode) ? (
+            <div className="flex flex-col items-center gap-3 py-16 text-sm text-muted-foreground">
+              Couldn't load {mode === "dg" ? "client" : "retailer"} assignments.
+              <button onClick={reload} className="rounded-md border border-border px-3 py-1.5 hover:bg-secondary">
+                Reload
+              </button>
+            </div>
+          ) : (
+            <p className="py-16 text-center text-sm text-muted-foreground">
+              {allRows.length === 0
+                ? `No applied sections for ${app?.label} (${mode === "dg" ? "Brand / datagroups" : "Agency / retailers"}).`
+                : `No sections match the ${mode === "dg" ? "client" : "retailer"} filter.`}
+            </p>
+          )
         ) : view === "matrix" ? (
           <table className="border-separate border-spacing-0 text-sm">
             <thead>

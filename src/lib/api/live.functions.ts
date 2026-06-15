@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { fetchShalion, mutateShalion } from "./shalion.server";
+import { fetchShalion, mutateShalion, aggregateAssignments } from "./shalion.server";
 
 // Recursive JSON schema for a mutation body (matches JsonValue on the server).
 const jsonValue: z.ZodType = z.lazy(() =>
@@ -42,4 +42,19 @@ export const mutateLive = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     return mutateShalion(data);
+  });
+
+// Paginate a large section-assignment list server-side and return only compact
+// {id, sectionId, targetId} triples (for the relationship map). One round-trip.
+export const fetchAssignments = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      kind: z.enum(["brand", "agency"]),
+      token: z.string().optional(),
+      idToken: z.string().optional(),
+      env: z.enum(["develop", "staging", "prod"]).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    return aggregateAssignments(data);
   });
