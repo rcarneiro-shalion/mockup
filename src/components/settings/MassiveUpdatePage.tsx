@@ -43,18 +43,20 @@ import {
   RefreshCw,
   Network,
   Tags,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { FilterChip } from "@/components/seeds/FilterChip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RelationshipMap, type MapEdit } from "./RelationshipMap";
-import { RetailerGroupsModal } from "./RetailerGroupsModal";
+import { RetailerLabelsModal } from "./RetailerLabelsModal";
 import {
-  GROUP_COLOR_CLASSES,
-  SEED_RETAILER_GROUPS,
-  groupForRetailer,
-  type RetailerGroup,
-} from "@/lib/retailerGroups";
+  LABEL_COLOR_CLASSES,
+  SEED_RETAILER_LABELS,
+  labelForRetailer,
+  type RetailerLabel,
+} from "@/lib/retailerLabels";
 
 type CellState = "assigned" | "add" | "remove" | "none";
 
@@ -123,12 +125,12 @@ export function MassiveUpdatePage() {
   const [sectionQ, setSectionQ] = useState("");
   const [clientQ, setClientQ] = useState("");
   const [retailerQ, setRetailerQ] = useState(""); // retailer search (agency mode list)
-  const [selGroups, setSelGroups] = useState<string[]>([]); // retailer-group ids to filter the agency list
-  const [groupsModalOpen, setGroupsModalOpen] = useState(false);
-  // User-defined retailer groups (classification by section kind) — persisted.
-  const [retailerGroups, setRetailerGroups] = usePersistentState<RetailerGroup[]>(
-    "mu:retailer-groups:v1",
-    SEED_RETAILER_GROUPS,
+  const [selLabels, setSelLabels] = useState<string[]>([]); // retailer-label ids to filter the agency list
+  const [labelsModalOpen, setLabelsModalOpen] = useState(false);
+  // User-defined retailer labels (classification by section kind) — persisted.
+  const [retailerLabels, setRetailerLabels] = usePersistentState<RetailerLabel[]>(
+    "mu:retailer-labels:v1",
+    SEED_RETAILER_LABELS,
   );
   const [selClients, setSelClients] = useState<string[]>([]); // client ids; empty = all
   // Target: send the section to a datagroup (Brand) or a datagroup + retailer (Agency).
@@ -218,13 +220,13 @@ export function MassiveUpdatePage() {
   // "Datagroup + retailer" mode the right-side list IS retailers (not datagroups).
   const allRetailers = catalog.retailers ?? [];
   const retailerName = (id: string) => allRetailers.find((r) => r.id === id)?.name ?? id;
-  // Retailer → its group (for the colored tag + the Group filter facilitator).
-  const groupForRet = (name: string) => groupForRetailer(retailerGroups, name);
+  // Retailer → its label (for the colored tag + the Label filter facilitator).
+  const labelForRet = (name: string) => labelForRetailer(retailerLabels, name);
   const rq = retailerQ.trim().toLowerCase();
   const visibleRetailers = allRetailers.filter(
     (r) =>
       (!rq || r.name.toLowerCase().includes(rq)) &&
-      (selGroups.length === 0 || selGroups.includes(groupForRet(r.name).id)),
+      (selLabels.length === 0 || selLabels.includes(labelForRet(r.name).id)),
   );
   const selRetailerList = allRetailers.filter((r) => selRetailers.includes(r.id));
 
@@ -630,12 +632,23 @@ export function MassiveUpdatePage() {
             >
               <ArrowLeft className="h-4 w-4" /> Dashboard applications
             </Link>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight text-foreground">Massive update</h1>
-            <p className="mt-0.5 max-w-3xl text-sm text-muted-foreground">
-              Push a dashboard <strong>section</strong> into many clients' <strong>datagroups</strong> at once
-              (or remove) — instead of one client at a time. Select sections on the left, datagroups on the
-              right, then insert/remove and review the matrix.
-            </p>
+            <div className="mt-1 flex items-center gap-1.5">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">Massive update</h1>
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" aria-label="About massive update" className="text-muted-foreground hover:text-foreground">
+                      <Info className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="start" className="max-w-xs text-xs leading-relaxed">
+                    Push a dashboard <strong>section</strong> into many clients' <strong>datagroups</strong> at once (or
+                    remove) — instead of one client at a time. Select sections on the left, datagroups on the right,
+                    then insert/remove and review the matrix.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {/* Relationship map: where every section is currently applied. */}
@@ -874,12 +887,12 @@ export function MassiveUpdatePage() {
                       <SearchInput value={retailerQ} onChange={setRetailerQ} placeholder="Filter retailers by name" />
                     </div>
                     <FilterChip
-                      label="Group"
+                      label="Label"
                       icon={Tags}
-                      options={retailerGroups.map((g) => g.id)}
-                      value={selGroups}
-                      onChange={setSelGroups}
-                      getLabel={(id) => retailerGroups.find((g) => g.id === id)?.name ?? id}
+                      options={retailerLabels.map((l) => l.id)}
+                      value={selLabels}
+                      onChange={setSelLabels}
+                      getLabel={(id) => retailerLabels.find((l) => l.id === id)?.name ?? id}
                       searchable
                     />
                   </div>
@@ -890,19 +903,19 @@ export function MassiveUpdatePage() {
                       onClear={() => setSelRetailers([])}
                     />
                     <button
-                      onClick={() => setGroupsModalOpen(true)}
+                      onClick={() => setLabelsModalOpen(true)}
                       className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
                     >
-                      <Tags className="h-3.5 w-3.5" /> Manage groups
+                      <Tags className="h-3.5 w-3.5" /> Manage labels
                     </button>
                   </div>
                   <span className="text-[11px] text-muted-foreground">
                     {selRetailers.length
                       ? `${selRetailers.length} selected`
-                      : selGroups.length
-                        ? `${visibleRetailers.length} in ${selGroups.length} group${selGroups.length === 1 ? "" : "s"}`
+                      : selLabels.length
+                        ? `${visibleRetailers.length} in ${selLabels.length} label${selLabels.length === 1 ? "" : "s"}`
                         : `${allRetailers.length} retailers`}{" "}
-                    · pick a Group to bulk-select for insert/remove
+                    · pick a Label to bulk-select for insert/remove
                   </span>
                 </>
               )}
@@ -937,7 +950,7 @@ export function MassiveUpdatePage() {
               ) : (
                 <>
                   {visibleRetailers.map((r) => {
-                    const g = groupForRet(r.name);
+                    const l = labelForRet(r.name);
                     return (
                     <Row
                       key={r.id}
@@ -948,8 +961,8 @@ export function MassiveUpdatePage() {
                         )
                       }
                       title={r.name}
-                      badge={g.name}
-                      badgeClass={GROUP_COLOR_CLASSES[g.color]}
+                      badge={l.name}
+                      badgeClass={LABEL_COLOR_CLASSES[l.color]}
                     />
                     );
                   })}
@@ -1088,12 +1101,12 @@ export function MassiveUpdatePage() {
         />
       )}
 
-      {groupsModalOpen && (
-        <RetailerGroupsModal
-          groups={retailerGroups}
-          setGroups={setRetailerGroups}
+      {labelsModalOpen && (
+        <RetailerLabelsModal
+          labels={retailerLabels}
+          setLabels={setRetailerLabels}
           retailers={allRetailers}
-          onClose={() => setGroupsModalOpen(false)}
+          onClose={() => setLabelsModalOpen(false)}
         />
       )}
     </AppShell>
