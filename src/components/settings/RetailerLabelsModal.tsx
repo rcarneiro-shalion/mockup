@@ -6,7 +6,9 @@ import {
   LABEL_COLOR_CLASSES,
   LABEL_COLOR_KEYS,
   STANDARD_LABEL_ID,
+  assignManyToLabel,
   assignRetailerToLabel,
+  clearManyFromLabel,
   labelForRetailer,
   makeLabelId,
   type LabelColor,
@@ -157,11 +159,32 @@ export function RetailerLabelsModal({
                     className="h-8 w-full rounded-md border border-border bg-background pl-7 pr-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {selected.id === STANDARD_LABEL_ID
-                    ? "STANDARD is the default — retailers not in another label are STANDARD. Pick a retailer to move it here (clears its label)."
-                    : "Check a retailer to put it in this label (it's removed from any other label)."}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    {selected.id === STANDARD_LABEL_ID
+                      ? "STANDARD is the default — retailers not in another label are STANDARD."
+                      : "Check a retailer to add it to this label (removed from any other)."}
+                  </p>
+                  <div className="flex shrink-0 items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      className="font-medium text-primary hover:underline"
+                      onClick={() => setLabels(assignManyToLabel(labels, visibleRetailers.map((r) => r.name), selId))}
+                    >
+                      {selected.id === STANDARD_LABEL_ID ? "Reset all" : "Select all"}
+                      {q.trim() ? " (filtered)" : ""} ({visibleRetailers.length})
+                    </button>
+                    {selected.id !== STANDARD_LABEL_ID && (
+                      <button
+                        type="button"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => setLabels(clearManyFromLabel(labels, visibleRetailers.map((r) => r.name), selId))}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto p-2">
                 {visibleRetailers.map((r) => {

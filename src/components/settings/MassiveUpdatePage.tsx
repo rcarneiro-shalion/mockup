@@ -201,15 +201,18 @@ export function MassiveUpdatePage() {
     [catalog, dgsOfType],
   );
   const cq = clientQ.trim().toLowerCase();
-  const filteredClients = clientsWithDg.filter(
-    (c) =>
-      (selClients.length === 0 || selClients.includes(c.id)) &&
-      (!cq || c.name.toLowerCase().includes(cq)),
-  );
+  // The text box filters by DATAGROUP name (the Clients chip still narrows by
+  // client). Datagroups stay grouped under their client.
   const visibleDgs = useMemo(
-    () => dgsOfType.filter((d) => filteredClients.some((c) => c.id === d.clientId)),
-    [dgsOfType, filteredClients],
+    () =>
+      dgsOfType.filter(
+        (d) =>
+          (selClients.length === 0 || selClients.includes(d.clientId)) &&
+          (!cq || d.name.toLowerCase().includes(cq)),
+      ),
+    [dgsOfType, selClients, cq],
   );
+  const filteredClients = clientsWithDg.filter((c) => visibleDgs.some((d) => d.clientId === c.id));
   const clientName = (id: string) => catalog.clients.find((c) => c.id === id)?.name ?? "—";
 
   const selSectionList = catalog.sections.filter((s) => selSections.has(s.id));
@@ -859,7 +862,7 @@ export function MassiveUpdatePage() {
                 <>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1">
-                      <SearchInput value={clientQ} onChange={setClientQ} placeholder="Filter clients by name" />
+                      <SearchInput value={clientQ} onChange={setClientQ} placeholder="Filter datagroups by name" />
                     </div>
                     <FilterChip
                       label="Clients"

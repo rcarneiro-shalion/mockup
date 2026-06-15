@@ -74,6 +74,23 @@ export function assignRetailerToLabel(labels: RetailerLabel[], retailerName: str
   });
 }
 
+/** Assign MANY retailers (by name) to a label at once (single membership).
+ * labelId === STANDARD just clears them from every non-standard label. */
+export function assignManyToLabel(labels: RetailerLabel[], retailerNames: string[], labelId: string): RetailerLabel[] {
+  const set = new Set(retailerNames);
+  return labels.map((l) => {
+    const without = l.retailers.filter((r) => !set.has(r));
+    if (l.id === labelId && l.id !== STANDARD_LABEL_ID) return { ...l, retailers: [...without, ...retailerNames] };
+    return { ...l, retailers: without };
+  });
+}
+
+/** Remove MANY retailers (by name) from a specific label (→ STANDARD). */
+export function clearManyFromLabel(labels: RetailerLabel[], retailerNames: string[], labelId: string): RetailerLabel[] {
+  const set = new Set(retailerNames);
+  return labels.map((l) => (l.id === labelId ? { ...l, retailers: l.retailers.filter((r) => !set.has(r)) } : l));
+}
+
 export function makeLabelId(name: string): string {
   const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return `lbl-${slug || "label"}`;
