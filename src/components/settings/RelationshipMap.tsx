@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Network, Loader2, Building2, Store, ArrowRight, LayoutGrid, List, Tags } from "lucide-react";
+import { X, Network, Loader2, Building2, Store, ArrowRight, LayoutGrid, List, Tags, Pencil, Check, Plus, TriangleAlert } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { pairKey, type MuCatalog } from "@/lib/massiveUpdate";
 import { FilterChip } from "@/components/seeds/FilterChip";
@@ -12,8 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-/** A click on a cell/chip in the map → load it into the Massive update tool. */
+/** A click on a cell/chip in the map (read mode) → load it into the Massive update tool. */
 export type MapEdit = { sectionId: string; kind: "dg" | "dgr"; targetIds: string[] };
+/** A live insert/remove of ONE section↔target assignment (Edit mode). */
+export type MapWrite = { op: "insert" | "remove"; sectionId: string; targetId: string; kind: "dg" | "dgr" };
 
 type Row = {
   section: { id: string; label: string; path: string };
@@ -22,13 +25,17 @@ type Row = {
 };
 
 /**
- * Read-only "relationship map" of where each dashboard section is currently
- * APPLIED. Two axes via the Brand/Agency toggle:
+ * "Relationship map" of where each dashboard section is currently APPLIED. Two
+ * axes via the Brand/Agency toggle:
  *  - Brand   → matrix of section (rows) × CLIENT (cols); a cell shows how many of
  *              the client's datagroups use the section (datagroup-dashboardsections).
  *  - Agency  → matrix of section (rows) × RETAILER (cols) (retailer-dashboardsections).
- * Every filled cell (and every list chip) is clickable → opens that section +
- * target in the Massive update tool to edit (insert/remove).
+ *
+ * Read mode: clicking a filled cell/chip opens it in the Massive update tool.
+ * Edit mode (toggle): clicking a cell APPLIES the relation live — Agency cells
+ * toggle the single retailer↔section assignment; Brand cells open a popover of the
+ * client's datagroups, each toggleable. The map never creates new sections — it
+ * only inserts/removes the relation within the existing section×target grid.
  */
 export function RelationshipMap({
   catalog,
@@ -37,9 +44,11 @@ export function RelationshipMap({
   loading,
   synced,
   retailerLabels,
+  loadedEnv,
   onLoad,
   onClose,
   onEdit,
+  onWrite,
 }: {
   catalog: MuCatalog;
   assigned: Set<string>;
@@ -49,10 +58,14 @@ export function RelationshipMap({
   synced: Set<"dg" | "dgr">;
   /** Retailer labels — to filter the agency retailer columns by label. */
   retailerLabels: RetailerLabel[];
+  /** Environment the on-screen data came from (for the live-write warning). */
+  loadedEnv: "prod" | "develop";
   /** Request loading an axis's assignments (heavy → lazy, only the active one). */
   onLoad: (kind: "dg" | "dgr") => void;
   onClose: () => void;
   onEdit: (e: MapEdit) => void;
+  /** Apply ONE assignment change live (Edit mode). Resolves to {ok,error}. */
+  onWrite: (w: MapWrite) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const [appId, setAppId] = useState(catalog.apps[0]?.id ?? "");
   const [q, setQ] = useState("");
@@ -63,6 +76,16 @@ export function RelationshipMap({
   // Retailer-label filter (Agency only) — narrows columns to retailers in a label.
   const [labelFilter, setLabelFilter] = useState<string[]>([]);
   const labelForName = (name: string) => labelForRetailer(retailerLabels, name);
+
+  // --- inline edit state --------------------------------------------------
+  const [editMode, setEditMode] = useState(false);
+  const [confirmedWrites, setConfirmedWrites] = useState(false); // confirmed once per map session
+  const [pending, setPending] = useState<Set<string>>(new Set()); // pairKeys with an in-flight write
+  const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
+  const [brandPopover, setBrandPopover] = useState<{ sectionId: string; clientId: string } | null>(null);
+  // pairKeys touched during this edit session — their section row + target column
+  // stay rendered even at 0 assignments, so a remove → re-add round-trip is stable.
+  const [touched, setTouched] = useState<Set<string>>(new Set());
 
   // Lazily load the ACTIVE axis's assignments once (the brand list is ~9MB, so we
   // never pull both). requested guards against re-firing on partial loads.
@@ -83,12 +106,70 @@ export function RelationshipMap({
   const ql = q.trim().toLowerCase();
   const retailers = catalog.retailers ?? [];
 
+  // Section ids / target keys touched this edit session (kept visible at 0 assigns).
+  const touchedSecs = useMemo(() => new Set([...touched].map((k) => k.split("::")[0])), [touched]);
+  const touchedTargets = useMemo(() => new Set([...touched].map((k) => k.split("::")[1])), [touched]);
+  // Brand columns are CLIENTS, so map a touched dataGroupId back to its client.
+  const touchedClients = useMemo(() => {
+    const s = new Set<string>();
+    for (const id of touchedTargets) {
+      const dg = catalog.dataGroups.find((d) => d.id === id);
+      if (dg) s.add(dg.clientId);
+    }
+    return s;
+  }, [touchedTargets, catalog]);
+
   // The option set changes with the application + axis → reload (reset) the filter
   // whenever either changes, so stale picks from another app can't linger.
   useEffect(() => {
     setColFilter([]);
     setLabelFilter([]);
+    setBrandPopover(null);
+    setTouched(new Set());
   }, [appId, mode]);
+
+  // --- live write helpers (Edit mode) -------------------------------------
+  const runWrite = async (w: MapWrite) => {
+    const k = pairKey(w.sectionId, w.targetId);
+    setTouched((t) => new Set(t).add(k)); // keep this row + column visible for re-add
+    setPending((p) => new Set(p).add(k));
+    const res = await onWrite(w);
+    setPending((p) => {
+      const n = new Set(p);
+      n.delete(k);
+      return n;
+    });
+    const noun = w.kind === "dgr" ? "retailer" : "datagroup";
+    if (!res.ok) toast.error(`${w.op === "insert" ? "Add" : "Remove"} failed: ${res.error ?? ""}`);
+    else toast.success(`${w.op === "insert" ? "Added to" : "Removed from"} ${noun} (live).`);
+  };
+  // Gate the FIRST live write of the session behind a PRODUCTION confirmation.
+  const gatedWrite = (w: MapWrite) => {
+    const k = pairKey(w.sectionId, w.targetId);
+    if (pending.has(k)) return; // already writing this cell
+    if (confirmedWrites) {
+      void runWrite(w);
+      return;
+    }
+    setConfirmAction(() => () => {
+      setConfirmedWrites(true);
+      void runWrite(w);
+    });
+  };
+
+  // A click on a matrix cell: read mode → jump to tool; edit mode → toggle live
+  // (Agency) or open the datagroup popover (Brand).
+  const handleCellClick = (sectionId: string, colKey: string, info: { n: number; ids: string[] }) => {
+    if (!editMode) {
+      if (info.n > 0) onEdit({ sectionId, kind: mode, targetIds: info.ids });
+      return;
+    }
+    if (mode === "dgr") {
+      gatedWrite({ op: info.n > 0 ? "remove" : "insert", sectionId, targetId: colKey, kind: "dgr" });
+    } else {
+      setBrandPopover({ sectionId, clientId: colKey });
+    }
+  };
 
   // Group → rows; a row is shown only if it has assignments in the active mode.
   const groups = useMemo(() => {
@@ -102,11 +183,11 @@ export function RelationshipMap({
             dgs: catalog.dataGroups.filter((d) => assigned.has(pairKey(s.id, d.id))),
             rets: retailers.filter((r) => assigned.has(pairKey(s.id, r.id))),
           }))
-          .filter((r) => (mode === "dg" ? r.dgs.length > 0 : r.rets.length > 0));
+          .filter((r) => (mode === "dg" ? r.dgs.length > 0 : r.rets.length > 0) || (editMode && touchedSecs.has(r.section.id)));
         return { group: g, rows };
       })
       .filter((g) => g.rows.length > 0);
-  }, [catalog, app, assigned, ql, mode, retailers]);
+  }, [catalog, app, assigned, ql, mode, retailers, editMode, touchedSecs]);
 
   const allRows = groups.flatMap((g) => g.rows);
 
@@ -115,16 +196,18 @@ export function RelationshipMap({
     if (mode === "dg") {
       const ids = new Set<string>();
       for (const r of allRows) for (const d of r.dgs) ids.add(d.clientId);
+      if (editMode) for (const c of touchedClients) ids.add(c); // keep edited client cols
       return [...ids].map((id) => ({ key: id, label: clientName(id) })).sort((a, b) => a.label.localeCompare(b.label));
     }
     const ids = new Set<string>();
     for (const r of allRows) for (const ret of r.rets) ids.add(ret.id);
+    if (editMode) for (const id of touchedTargets) ids.add(id); // keep edited retailer cols
     return retailers
       .filter((r) => ids.has(r.id))
       .map((r) => ({ key: r.id, label: r.name }))
       .sort((a, b) => a.label.localeCompare(b.label));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allRows, mode, retailers]);
+  }, [allRows, mode, retailers, editMode, touchedClients, touchedTargets]);
 
   // Apply the column filter(s) → visible columns + visible rows (a row is kept
   // only if it still has a target in the visible columns). Two filters can apply:
@@ -190,7 +273,8 @@ export function RelationshipMap({
           <Network className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold tracking-tight">Relationship map</h2>
           <span className="hidden text-sm text-muted-foreground lg:inline">
-            which {mode === "dg" ? "clients" : "retailers"} use which sections — click a cell to edit
+            which {mode === "dg" ? "clients" : "retailers"} use which sections
+            {editMode ? " — click a cell to insert / remove live" : " — click a cell to edit"}
           </span>
           <button
             onClick={onClose}
@@ -233,6 +317,28 @@ export function RelationshipMap({
             </Toggle>
           </div>
 
+          {/* Edit toggle — only meaningful with live data + the matrix view */}
+          {live && view === "matrix" && (
+            <button
+              type="button"
+              onClick={() => {
+                if (editMode) setTouched(new Set()); // turning off → forget kept-visible cells
+                setEditMode((v) => !v);
+              }}
+              className={cn(
+                "flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                editMode
+                  ? loadedEnv === "prod"
+                    ? "border-rose-300 bg-rose-50 text-rose-700"
+                    : "border-amber-300 bg-amber-50 text-amber-700"
+                  : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground",
+              )}
+              title="Toggle inline editing — clicking a cell inserts/removes the assignment live"
+            >
+              <Pencil className="h-3.5 w-3.5" /> {editMode ? "Editing" : "Edit"}
+            </button>
+          )}
+
           {/* Filter columns by client (Brand) or retailer (Agency) */}
           <FilterChip
             label={mode === "dg" ? "Clients" : "Retailers"}
@@ -271,6 +377,20 @@ export function RelationshipMap({
             <span className={mode === "dg" ? "text-emerald-700" : "text-violet-700"}>{totalLinks} links</span>
           </span>
         </div>
+        {editMode && (
+          <p
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs",
+              loadedEnv === "prod" ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-700",
+            )}
+          >
+            <TriangleAlert className="h-3.5 w-3.5 shrink-0" />
+            Edit mode — every click writes to <strong>{loadedEnv.toUpperCase()}</strong> live.{" "}
+            {mode === "dg"
+              ? "Click a Clients cell to pick which datagroups get the section."
+              : "Click a cell to add/remove the retailer. To wire up a retailer or section not shown in this grid, use the main Massive update tool."}
+          </p>
+        )}
       </div>
 
       {/* Body */}
@@ -347,7 +467,9 @@ export function RelationshipMap({
                   columns={columns}
                   mode={mode}
                   cell={cell}
-                  onEdit={onEdit}
+                  editMode={editMode}
+                  pending={pending}
+                  onCell={handleCellClick}
                 />
               ))}
             </tbody>
@@ -388,9 +510,125 @@ export function RelationshipMap({
         )}
       </div>
       <div className="shrink-0 border-t border-border px-6 py-2 text-center text-[11px] text-muted-foreground">
-        Click a filled cell to open that section + {mode === "dg" ? "client's datagroups" : "retailer"} in the Massive update tool{" "}
-        <ArrowRight className="inline h-3 w-3" /> edit (insert / remove).
+        {editMode ? (
+          <>
+            Clicking a cell inserts / removes the relation live (existing sections only — no new sections).
+            {mode === "dg" ? " Clients cells open a datagroup picker." : ""}
+          </>
+        ) : (
+          <>
+            Click a filled cell to open that section + {mode === "dg" ? "client's datagroups" : "retailer"} in the Massive update tool{" "}
+            <ArrowRight className="inline h-3 w-3" /> edit — or use <strong>Edit</strong> to insert/remove here.
+          </>
+        )}
       </div>
+
+      {/* Brand datagroup popover (Edit mode, Clients axis) */}
+      {brandPopover &&
+        (() => {
+          const sec = catalog.sections.find((s) => s.id === brandPopover.sectionId);
+          // The client's BRAND datagroups (for new inserts) PLUS any datagroup
+          // already assigned to this section (so a legacy/non-BRAND assignment the
+          // cell counted is still removable — the cell count and list never diverge).
+          const dgs = catalog.dataGroups.filter(
+            (d) =>
+              d.clientId === brandPopover.clientId &&
+              (d.dashboardType === "BRAND" || assigned.has(pairKey(brandPopover.sectionId, d.id))),
+          );
+          return (
+            <div className="fixed inset-0 z-[60] grid place-items-center bg-black/40 p-4" onClick={() => setBrandPopover(null)}>
+              <div
+                className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+                  <Building2 className="h-4 w-4 text-primary" />
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold">{clientName(brandPopover.clientId)}</div>
+                    <div className="truncate text-[11px] text-muted-foreground">{sec?.label} · datagroups</div>
+                  </div>
+                  <button onClick={() => setBrandPopover(null)} className="ml-auto rounded-md border border-border px-2 py-1 hover:bg-secondary">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <p className="border-b border-border px-4 py-2 text-[11px] text-muted-foreground">
+                  Toggle a datagroup to insert / remove this section (writes to {loadedEnv.toUpperCase()} live).
+                </p>
+                <div className="min-h-0 flex-1 overflow-y-auto p-2">
+                  {dgs.map((d) => {
+                    const k = pairKey(brandPopover.sectionId, d.id);
+                    const on = assigned.has(k);
+                    const busy = pending.has(k);
+                    return (
+                      <button
+                        key={d.id}
+                        disabled={busy}
+                        onClick={() => gatedWrite({ op: on ? "remove" : "insert", sectionId: brandPopover.sectionId, targetId: d.id, kind: "dg" })}
+                        className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm hover:bg-secondary/60 disabled:opacity-60"
+                      >
+                        <span
+                          className={cn(
+                            "grid h-4 w-4 shrink-0 place-items-center rounded border",
+                            on ? "border-emerald-600 bg-emerald-600 text-white" : "border-border",
+                          )}
+                        >
+                          {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : on ? <Check className="h-3 w-3" /> : null}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate">{d.name}</span>
+                        <span className="shrink-0 text-[11px] text-muted-foreground">{d.country}</span>
+                      </button>
+                    );
+                  })}
+                  {!dgs.length && (
+                    <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+                      No BRAND datagroups for this client.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+      {/* First-write PRODUCTION confirmation */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-[70] grid place-items-center bg-black/50 p-4" onClick={() => setConfirmAction(null)}>
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <TriangleAlert className={cn("h-5 w-5", loadedEnv === "prod" ? "text-rose-500" : "text-amber-500")} />
+              <h3 className="text-base font-semibold">Write to {loadedEnv.toUpperCase()} live?</h3>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Editing in the map applies to{" "}
+              <strong className={loadedEnv === "prod" ? "text-rose-600" : "text-amber-600"}>
+                {loadedEnv === "prod" ? "PRODUCTION" : "develop"}
+              </strong>{" "}
+              immediately — each click inserts or removes a real dashboard-section assignment. You won't be asked again while the map is open.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const fn = confirmAction;
+                  setConfirmAction(null);
+                  fn();
+                }}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium text-white",
+                  loadedEnv === "prod" ? "bg-rose-600 hover:bg-rose-700" : "bg-amber-600 hover:bg-amber-700",
+                )}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -401,14 +639,18 @@ function FragmentRows({
   columns,
   mode,
   cell,
-  onEdit,
+  editMode,
+  pending,
+  onCell,
 }: {
   group: string;
   rows: Row[];
   columns: { key: string; label: string }[];
   mode: "dg" | "dgr";
   cell: (row: Row, colKey: string) => { n: number; ids: string[] };
-  onEdit: (e: MapEdit) => void;
+  editMode: boolean;
+  pending: Set<string>;
+  onCell: (sectionId: string, colKey: string, info: { n: number; ids: string[] }) => void;
 }) {
   return (
     <>
@@ -429,29 +671,48 @@ function FragmentRows({
             {r.section.path}
           </td>
           {columns.map((c) => {
-            const { n, ids } = cell(r, c.key);
+            const info = cell(r, c.key);
+            const { n } = info;
+            const busy = pending.has(pairKey(r.section.id, c.key));
+            const filled = n > 0;
+            // Edit mode: every cell is clickable (filled → remove/edit, empty → add).
+            // Read mode: only filled cells are clickable (→ open in tool).
+            if (!editMode && !filled) {
+              return (
+                <td key={c.key} className="px-1 py-1 text-center">
+                  <span className="mx-auto block h-1 w-1 rounded-full bg-border" />
+                </td>
+              );
+            }
             return (
               <td key={c.key} className="px-1 py-1 text-center">
-                {n > 0 ? (
-                  <button
-                    onClick={() => onEdit({ sectionId: r.section.id, kind: mode, targetIds: ids })}
-                    title={`${c.label} — ${n} ${mode === "dg" ? "datagroup(s)" : ""} · click to edit`}
-                    className={cn(
-                      "mx-auto grid h-5 min-w-5 place-items-center rounded px-1 text-[10px] font-semibold transition-transform hover:scale-110",
-                      mode === "dgr"
+                <button
+                  disabled={busy}
+                  onClick={() => onCell(r.section.id, c.key, info)}
+                  title={
+                    editMode
+                      ? filled
+                        ? mode === "dg"
+                          ? `${c.label} — ${n} datagroup(s) · click to edit`
+                          : `${c.label} · click to remove`
+                        : `${c.label} · click to add`
+                      : `${c.label} — ${n} ${mode === "dg" ? "datagroup(s)" : ""} · click to edit`
+                  }
+                  className={cn(
+                    "mx-auto grid h-5 min-w-5 place-items-center rounded px-1 text-[10px] font-semibold transition-transform hover:scale-110 disabled:opacity-60",
+                    filled
+                      ? mode === "dgr"
                         ? "bg-violet-500 text-white"
                         : n >= 4
                           ? "bg-emerald-600 text-white"
                           : n >= 2
                             ? "bg-emerald-300 text-emerald-900"
-                            : "bg-emerald-100 text-emerald-800",
-                    )}
-                  >
-                    {mode === "dg" ? n : "✓"}
-                  </button>
-                ) : (
-                  <span className="mx-auto block h-1 w-1 rounded-full bg-border" />
-                )}
+                            : "bg-emerald-100 text-emerald-800"
+                      : "border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary",
+                  )}
+                >
+                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : filled ? (mode === "dg" ? n : "✓") : <Plus className="h-3 w-3" />}
+                </button>
               </td>
             );
           })}

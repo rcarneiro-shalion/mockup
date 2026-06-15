@@ -170,6 +170,13 @@ export function MassiveUpdatePage() {
   // In-flight syncAssignments promise per target — dedups concurrent picks (the
   // `synced` flag only flips AFTER a multi-second pull completes).
   const syncInflight = useRef<Map<"dg" | "dgr", Promise<{ ids: Map<string, string>; maxPos: Map<string, number> }>>>(new Map());
+  // pairKeys with an in-flight single-change write (relationship-map inline edit).
+  // A synchronous ref (not state) so a double-click can't slip a duplicate POST
+  // through before setAssigned/setPending commit.
+  const inFlightWrites = useRef<Set<string>>(new Set());
+  // Next position reserved per target across rapid same-target inline inserts, so
+  // two quick inserts don't both pick maxPos+1 and force a 409 retry.
+  const reservedPos = useRef<Map<string, number>>(new Map());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [applyLog, setApplyLog] = useState<string>("");
   const [mapOpen, setMapOpen] = useState(false);
@@ -522,6 +529,115 @@ export function MassiveUpdatePage() {
     return { ids: merged, maxPos: nextMaxPos };
   };
 
+  // --- single-change live writers (shared by doApply + the relationship map) ---
+  // POST one assignment, appending at `startPos` and bumping + retrying on a 409
+  // position conflict (the (target, position) pair is unique upstream). Pure
+  // network — does NOT touch React state. Returns the new record id + landed pos.
+  const postAssignment = async (
+    ep: string,
+    kind: "dg" | "dgr",
+    colKey: string,
+    sectionId: string,
+    startPos: number,
+    tok: string,
+    idt: string,
+  ): Promise<{ ok: boolean; recordId?: string; position?: number; status: number; error?: string }> => {
+    let pos = startPos;
+    let lastStatus = 0;
+    let lastErr = "";
+    for (let attempt = 0; attempt < 80; attempt++, pos++) {
+      const body: Record<string, unknown> =
+        kind === "dgr"
+          ? { retailerId: colKey, dashboardSectionId: sectionId, position: pos }
+          : { dataGroupId: colKey, dashboardSectionId: sectionId, position: pos };
+      const res = await mutateLive({
+        data: { service: "visualization", env: loadedEnv, method: "POST", path: ep, body, token: tok || undefined, idToken: idt || undefined },
+      });
+      if (res.ok) return { ok: true, recordId: (res.data as { id?: string } | null)?.id, position: pos, status: res.status };
+      if (res.status === 409) {
+        lastStatus = 409;
+        lastErr = res.error ?? "conflict";
+        continue;
+      }
+      return { ok: false, status: res.status, error: res.error ?? String(res.status) };
+    }
+    void lastErr;
+    return { ok: false, status: lastStatus || 409, error: "no free position (80 tries)" };
+  };
+
+  const deleteAssignment = async (
+    ep: string,
+    recordId: string,
+    tok: string,
+    idt: string,
+  ): Promise<{ ok: boolean; status: number; error?: string }> => {
+    const res = await mutateLive({
+      data: { service: "visualization", env: loadedEnv, method: "DELETE", path: `${ep}/${recordId}`, token: tok || undefined, idToken: idt || undefined },
+    });
+    return { ok: res.ok, status: res.status, error: res.error };
+  };
+
+  // Apply ONE assignment change live (used by the relationship map's inline edit).
+  // Updates assigned / recordIds / colMaxPos so the map AND the main tool stay in
+  // sync. Inserts append at a free position; removes need the synced record id.
+  const writeAssignment = async (
+    change: { op: "insert" | "remove"; sectionId: string; targetId: string; kind: "dg" | "dgr" },
+  ): Promise<{ ok: boolean; error?: string }> => {
+    if (!liveOn) return { ok: false, error: "Not connected to live data." };
+    const k = pairKey(change.sectionId, change.targetId);
+    // Synchronous re-entrancy guard: a double-click fires two handlers against the
+    // same render before setAssigned/setPending commit — without this, both would
+    // POST and create a duplicate row (the unique constraint is on position, so the
+    // second lands at a different position rather than 409-ing).
+    if (inFlightWrites.current.has(k)) return { ok: true };
+    inFlightWrites.current.add(k);
+    try {
+      const saved = getDevTokens();
+      const tok = token || saved.token;
+      const idt = idToken || saved.idToken;
+      const ep = change.kind === "dgr" ? AGENCY_EP : BRAND_EP;
+      if (change.op === "insert") {
+        if (assigned.has(k)) return { ok: true };
+        // Inserting while the axis is only partially loaded risks duplicating an
+        // assignment that exists upstream but isn't in `assigned` yet.
+        if (!synced.has(change.kind)) return { ok: false, error: "Assignments still loading — reload the map, then retry." };
+        // Reserve a position synchronously so rapid same-target inserts don't all
+        // pick maxPos+1 (which would force 409 retries).
+        const base = Math.max(reservedPos.current.get(change.targetId) ?? 0, (colMaxPos.get(change.targetId) ?? 99) + 1);
+        reservedPos.current.set(change.targetId, base + 1);
+        const r = await postAssignment(ep, change.kind, change.targetId, change.sectionId, base, tok, idt);
+        if (!r.ok) return { ok: false, error: r.error };
+        setAssigned((prev) => new Set(prev).add(k));
+        if (r.recordId) setRecordIds((prev) => new Map(prev).set(k, r.recordId!));
+        if (r.position != null) {
+          if (r.position + 1 > (reservedPos.current.get(change.targetId) ?? 0)) reservedPos.current.set(change.targetId, r.position + 1);
+          setColMaxPos((prev) => {
+            if (r.position! <= (prev.get(change.targetId) ?? 0)) return prev;
+            return new Map(prev).set(change.targetId, r.position!);
+          });
+        }
+        return { ok: true };
+      }
+      const rid = recordIds.get(k);
+      if (!rid) return { ok: false, error: "Assignment id not loaded — reload the map." };
+      const r = await deleteAssignment(ep, rid, tok, idt);
+      if (!r.ok) return { ok: false, error: r.error };
+      setAssigned((prev) => {
+        const n = new Set(prev);
+        n.delete(k);
+        return n;
+      });
+      setRecordIds((prev) => {
+        const n = new Map(prev);
+        n.delete(k);
+        return n;
+      });
+      return { ok: true };
+    } finally {
+      inFlightWrites.current.delete(k);
+    }
+  };
+
   // Real apply: sequential POST (insert) / DELETE (remove) through the write
   // proxy, against the loaded environment. Brand → datagroup-dashboardsections
   // (keyed by dataGroupId); Agency → retailer-dashboardsections (keyed by retailerId).
@@ -589,44 +705,19 @@ export function MassiveUpdatePage() {
             await sleep(20);
             continue;
           }
-          // colKey is the dataGroupId (brand) or retailerId (agency). Both bodies
-          // require a position that is unique within the target — append at the
-          // next free slot, and bump + retry if the slot was taken (409 on position).
-          let pos = freePosFor(colKey);
-          let placed = false;
-          let lastErr = "";
-          let lastStatus = 0;
-          for (let attempt = 0; attempt < 80 && !placed; attempt++, pos++) {
-            const body: Record<string, unknown> =
-              target === "dgr"
-                ? { retailerId: colKey, dashboardSectionId: sectionId, position: pos } // NewRetailerDashboardSectionRequestBody
-                : { dataGroupId: colKey, dashboardSectionId: sectionId, position: pos }; // NewDataGroupDashboardSectionRequestBody
-            const res = await mutateLive({
-              data: { service: "visualization", env: loadedEnv, method: "POST", path: ep, body, token: tok || undefined, idToken: idt || undefined },
-            });
-            if (res.ok) {
-              nextAssigned.add(k);
-              const rid = (res.data as { id?: string } | null)?.id;
-              if (rid) nextIds.set(k, rid);
-              createdN++;
-              placed = true;
-              // Reserve positions: this one is now taken, next insert tries +1.
-              nextPosByCol.set(colKey, pos + 1);
-              if (pos > (nextMaxPos.get(colKey) ?? 0)) nextMaxPos.set(colKey, pos);
-            } else if (res.status === 409) {
-              // Position already in use for this target — try the next slot.
-              lastStatus = 409;
-              lastErr = res.error ?? "conflict";
-              continue;
-            } else {
-              lastStatus = res.status;
-              lastErr = res.error ?? String(res.status);
-              break;
+          // Append at the next free position (bump + retry on a 409 position conflict).
+          const r = await postAssignment(ep, target, colKey, sectionId, freePosFor(colKey), tok, idt);
+          if (r.ok) {
+            nextAssigned.add(k);
+            if (r.recordId) nextIds.set(k, r.recordId);
+            createdN++;
+            if (r.position != null) {
+              nextPosByCol.set(colKey, r.position + 1); // reserve: next insert tries +1
+              if (r.position > (nextMaxPos.get(colKey) ?? 0)) nextMaxPos.set(colKey, r.position);
             }
-          }
-          if (!placed) {
+          } else {
             failN++;
-            errs.push(`insert ${k.slice(0, 28)}: ${lastStatus === 409 ? "no free position (80 tries)" : lastErr}`);
+            errs.push(`insert ${k.slice(0, 28)}: ${r.error}`);
           }
         } else {
           const rid = nextIds.get(k);
@@ -635,16 +726,14 @@ export function MassiveUpdatePage() {
             errs.push(`remove ${k.slice(0, 28)}: record id unknown`);
             continue;
           }
-          const res = await mutateLive({
-            data: { service: "visualization", env: loadedEnv, method: "DELETE", path: `${ep}/${rid}`, token: tok || undefined, idToken: idt || undefined },
-          });
-          if (res.ok) {
+          const r = await deleteAssignment(ep, rid, tok, idt);
+          if (r.ok) {
             nextAssigned.delete(k);
             nextIds.delete(k);
             removedN++;
           } else {
             failN++;
-            errs.push(`remove ${k.slice(0, 28)}: ${res.error ?? res.status}`);
+            errs.push(`remove ${k.slice(0, 28)}: ${r.error ?? r.status}`);
           }
         }
       } catch (e) {
@@ -734,6 +823,7 @@ export function MassiveUpdatePage() {
       setAssigned(new Set()); // assignments load on demand via "Sync current state"
       setRecordIds(new Map());
       setColMaxPos(new Map());
+      reservedPos.current = new Map();
       setSynced(new Set());
       setSelDgs(new Set());
       setSelSections(new Set());
@@ -1384,6 +1474,8 @@ export function MassiveUpdatePage() {
           onLoad={(kind) => void syncAssignments(kind)}
           onClose={() => setMapOpen(false)}
           onEdit={editFromMap}
+          onWrite={writeAssignment}
+          loadedEnv={loadedEnv}
         />
       )}
 
