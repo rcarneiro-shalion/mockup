@@ -42,11 +42,19 @@ import {
   Rocket,
   RefreshCw,
   Network,
+  Tags,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { RelationshipMap, type MapEdit } from "./RelationshipMap";
+import { RetailerGroupsModal } from "./RetailerGroupsModal";
+import {
+  GROUP_COLOR_CLASSES,
+  SEED_RETAILER_GROUPS,
+  groupForRetailer,
+  type RetailerGroup,
+} from "@/lib/retailerGroups";
 
 type CellState = "assigned" | "add" | "remove" | "none";
 
@@ -115,6 +123,13 @@ export function MassiveUpdatePage() {
   const [sectionQ, setSectionQ] = useState("");
   const [clientQ, setClientQ] = useState("");
   const [retailerQ, setRetailerQ] = useState(""); // retailer search (agency mode list)
+  const [selGroups, setSelGroups] = useState<string[]>([]); // retailer-group ids to filter the agency list
+  const [groupsModalOpen, setGroupsModalOpen] = useState(false);
+  // User-defined retailer groups (classification by section kind) — persisted.
+  const [retailerGroups, setRetailerGroups] = usePersistentState<RetailerGroup[]>(
+    "mu:retailer-groups:v1",
+    SEED_RETAILER_GROUPS,
+  );
   const [selClients, setSelClients] = useState<string[]>([]); // client ids; empty = all
   // Target: send the section to a datagroup (Brand) or a datagroup + retailer (Agency).
   const [target, setTarget] = useState<"dg" | "dgr">("dg");
@@ -203,8 +218,14 @@ export function MassiveUpdatePage() {
   // "Datagroup + retailer" mode the right-side list IS retailers (not datagroups).
   const allRetailers = catalog.retailers ?? [];
   const retailerName = (id: string) => allRetailers.find((r) => r.id === id)?.name ?? id;
+  // Retailer → its group (for the colored tag + the Group filter facilitator).
+  const groupForRet = (name: string) => groupForRetailer(retailerGroups, name);
   const rq = retailerQ.trim().toLowerCase();
-  const visibleRetailers = allRetailers.filter((r) => !rq || r.name.toLowerCase().includes(rq));
+  const visibleRetailers = allRetailers.filter(
+    (r) =>
+      (!rq || r.name.toLowerCase().includes(rq)) &&
+      (selGroups.length === 0 || selGroups.includes(groupForRet(r.name).id)),
+  );
   const selRetailerList = allRetailers.filter((r) => selRetailers.includes(r.id));
 
   // The "target" columns of the matrix:
@@ -852,6 +873,15 @@ export function MassiveUpdatePage() {
                     <div className="relative flex-1">
                       <SearchInput value={retailerQ} onChange={setRetailerQ} placeholder="Filter retailers by name" />
                     </div>
+                    <FilterChip
+                      label="Group"
+                      icon={Tags}
+                      options={retailerGroups.map((g) => g.id)}
+                      value={selGroups}
+                      onChange={setSelGroups}
+                      getLabel={(id) => retailerGroups.find((g) => g.id === id)?.name ?? id}
+                      searchable
+                    />
                   </div>
                   <div className="flex items-center justify-between">
                     <SelectAllRow
@@ -859,12 +889,21 @@ export function MassiveUpdatePage() {
                       onAll={() => setSelRetailers([...new Set([...selRetailers, ...visibleRetailers.map((r) => r.id)])])}
                       onClear={() => setSelRetailers([])}
                     />
-                    <span className="text-xs text-muted-foreground">
-                      {selRetailers.length
-                        ? `${selRetailers.length} retailer${selRetailers.length === 1 ? "" : "s"} selected`
-                        : `${allRetailers.length} retailer${allRetailers.length === 1 ? "" : "s"}`}
-                    </span>
+                    <button
+                      onClick={() => setGroupsModalOpen(true)}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <Tags className="h-3.5 w-3.5" /> Manage groups
+                    </button>
                   </div>
+                  <span className="text-[11px] text-muted-foreground">
+                    {selRetailers.length
+                      ? `${selRetailers.length} selected`
+                      : selGroups.length
+                        ? `${visibleRetailers.length} in ${selGroups.length} group${selGroups.length === 1 ? "" : "s"}`
+                        : `${allRetailers.length} retailers`}{" "}
+                    · pick a Group to bulk-select for insert/remove
+                  </span>
                 </>
               )}
             </div>
@@ -897,7 +936,9 @@ export function MassiveUpdatePage() {
                 </>
               ) : (
                 <>
-                  {visibleRetailers.map((r) => (
+                  {visibleRetailers.map((r) => {
+                    const g = groupForRet(r.name);
+                    return (
                     <Row
                       key={r.id}
                       checked={selRetailers.includes(r.id)}
@@ -907,10 +948,11 @@ export function MassiveUpdatePage() {
                         )
                       }
                       title={r.name}
-                      badge="Retailer"
-                      badgeTone="violet"
+                      badge={g.name}
+                      badgeClass={GROUP_COLOR_CLASSES[g.color]}
                     />
-                  ))}
+                    );
+                  })}
                   {!visibleRetailers.length && <Empty>No retailers match.</Empty>}
                 </>
               )}
@@ -1045,6 +1087,15 @@ export function MassiveUpdatePage() {
           onEdit={editFromMap}
         />
       )}
+
+      {groupsModalOpen && (
+        <RetailerGroupsModal
+          groups={retailerGroups}
+          setGroups={setRetailerGroups}
+          retailers={allRetailers}
+          onClose={() => setGroupsModalOpen(false)}
+        />
+      )}
     </AppShell>
   );
 }
@@ -1098,6 +1149,7 @@ function Row({
   subtitle,
   badge,
   badgeTone = "slate",
+  badgeClass,
 }: {
   checked: boolean;
   onToggle: () => void;
@@ -1105,6 +1157,8 @@ function Row({
   subtitle?: string;
   badge?: string;
   badgeTone?: "slate" | "violet";
+  /** Full color classes for the badge (overrides badgeTone) — e.g. retailer group tag. */
+  badgeClass?: string;
 }) {
   return (
     <button
@@ -1131,7 +1185,11 @@ function Row({
         <span
           className={cn(
             "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-            badgeTone === "violet" ? "bg-violet-100 text-violet-700" : "bg-secondary text-muted-foreground",
+            badgeClass
+              ? cn("border", badgeClass)
+              : badgeTone === "violet"
+                ? "bg-violet-100 text-violet-700"
+                : "bg-secondary text-muted-foreground",
           )}
         >
           {badge}
