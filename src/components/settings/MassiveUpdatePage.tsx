@@ -1095,6 +1095,7 @@ export function MassiveUpdatePage() {
           live={liveOn}
           loading={syncing}
           synced={synced}
+          retailerLabels={retailerLabels}
           onLoad={(kind) => void syncAssignments(kind)}
           onClose={() => setMapOpen(false)}
           onEdit={editFromMap}

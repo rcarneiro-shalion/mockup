@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Network, Loader2, Building2, Store, ArrowRight, LayoutGrid, List } from "lucide-react";
+import { X, Network, Loader2, Building2, Store, ArrowRight, LayoutGrid, List, Tags } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { pairKey, type MuCatalog } from "@/lib/massiveUpdate";
 import { FilterChip } from "@/components/seeds/FilterChip";
+import { LABEL_COLOR_CLASSES, labelForRetailer, type RetailerLabel } from "@/lib/retailerLabels";
 import {
   Select,
   SelectContent,
@@ -35,6 +36,7 @@ export function RelationshipMap({
   live,
   loading,
   synced,
+  retailerLabels,
   onLoad,
   onClose,
   onEdit,
@@ -45,6 +47,8 @@ export function RelationshipMap({
   loading: boolean;
   /** Which axes' assignments are fully loaded ("dg" = brand, "dgr" = agency). */
   synced: Set<"dg" | "dgr">;
+  /** Retailer labels — to filter the agency retailer columns by label. */
+  retailerLabels: RetailerLabel[];
   /** Request loading an axis's assignments (heavy → lazy, only the active one). */
   onLoad: (kind: "dg" | "dgr") => void;
   onClose: () => void;
@@ -56,6 +60,9 @@ export function RelationshipMap({
   const [view, setView] = useState<"matrix" | "list">("matrix");
   // Column filter: client ids (Brand) or retailer ids (Agency) to narrow columns.
   const [colFilter, setColFilter] = useState<string[]>([]);
+  // Retailer-label filter (Agency only) — narrows columns to retailers in a label.
+  const [labelFilter, setLabelFilter] = useState<string[]>([]);
+  const labelForName = (name: string) => labelForRetailer(retailerLabels, name);
 
   // Lazily load the ACTIVE axis's assignments once (the brand list is ~9MB, so we
   // never pull both). requested guards against re-firing on partial loads.
@@ -80,6 +87,7 @@ export function RelationshipMap({
   // whenever either changes, so stale picks from another app can't linger.
   useEffect(() => {
     setColFilter([]);
+    setLabelFilter([]);
   }, [appId, mode]);
 
   // Group → rows; a row is shown only if it has assignments in the active mode.
@@ -118,13 +126,22 @@ export function RelationshipMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allRows, mode, retailers]);
 
-  // Apply the column filter → visible columns + visible rows (a row is kept only
-  // if it still has a target in the filtered columns).
+  // Apply the column filter(s) → visible columns + visible rows (a row is kept
+  // only if it still has a target in the visible columns). Two filters can apply:
+  // the per-column id filter (Clients/Retailers) and — Agency only — the retailer
+  // LABEL filter (col.label is the retailer name).
   const filterSet = useMemo(() => new Set(colFilter), [colFilter]);
-  const columns = colFilter.length ? allColumns.filter((c) => filterSet.has(c.key)) : allColumns;
+  const labelSet = useMemo(() => new Set(labelFilter), [labelFilter]);
+  const columns = allColumns.filter(
+    (c) =>
+      (!colFilter.length || filterSet.has(c.key)) &&
+      (mode !== "dgr" || !labelFilter.length || labelSet.has(labelForName(c.label).id)),
+  );
+  const colKeySet = useMemo(() => new Set(columns.map((c) => c.key)), [columns]);
+  const filtersActive = colFilter.length > 0 || (mode === "dgr" && labelFilter.length > 0);
   const rowInFilter = (r: Row) =>
-    !colFilter.length ||
-    (mode === "dg" ? r.dgs.some((d) => filterSet.has(d.clientId)) : r.rets.some((x) => filterSet.has(x.id)));
+    !filtersActive ||
+    (mode === "dg" ? r.dgs.some((d) => colKeySet.has(d.clientId)) : r.rets.some((x) => colKeySet.has(x.id)));
   const allDisplayGroups = groups
     .map((g) => ({ group: g.group, rows: g.rows.filter(rowInFilter) }))
     .filter((g) => g.rows.length > 0);
@@ -226,6 +243,18 @@ export function RelationshipMap({
             getLabel={(id) => allColumns.find((c) => c.key === id)?.label ?? id}
             searchable
           />
+          {/* Agency: also filter the retailer columns by retailer LABEL */}
+          {mode === "dgr" && (
+            <FilterChip
+              label="Label"
+              icon={Tags}
+              options={retailerLabels.map((l) => l.id)}
+              value={labelFilter}
+              onChange={setLabelFilter}
+              getLabel={(id) => retailerLabels.find((l) => l.id === id)?.name ?? id}
+              searchable
+            />
+          )}
 
           <input
             value={q}
@@ -237,7 +266,7 @@ export function RelationshipMap({
             <span>{displayRows.length} sections</span>
             <span>
               {columns.length}
-              {colFilter.length ? `/${allColumns.length}` : ""} {mode === "dg" ? "clients" : "retailers"}
+              {columns.length !== allColumns.length ? `/${allColumns.length}` : ""} {mode === "dg" ? "clients" : "retailers"}
             </span>
             <span className={mode === "dg" ? "text-emerald-700" : "text-violet-700"}>{totalLinks} links</span>
           </span>
@@ -294,8 +323,16 @@ export function RelationshipMap({
                 </th>
                 {columns.map((c) => (
                   <th key={c.key} className="sticky top-0 z-10 border-b border-border bg-background px-1 py-1.5 align-bottom">
-                    <div className="mx-auto max-h-44 w-5 overflow-hidden whitespace-nowrap text-[11px] text-foreground/80 [writing-mode:vertical-rl] rotate-180" title={c.label}>
-                      {c.label}
+                    <div className="flex flex-col items-center gap-1">
+                      {mode === "dgr" && (
+                        <span
+                          className={cn("h-2 w-2 rounded-full border", LABEL_COLOR_CLASSES[labelForName(c.label).color])}
+                          title={labelForName(c.label).name}
+                        />
+                      )}
+                      <div className="mx-auto max-h-44 w-5 overflow-hidden whitespace-nowrap text-[11px] text-foreground/80 [writing-mode:vertical-rl] rotate-180" title={c.label}>
+                        {c.label}
+                      </div>
                     </div>
                   </th>
                 ))}
