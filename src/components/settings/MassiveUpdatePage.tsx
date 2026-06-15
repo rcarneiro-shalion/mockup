@@ -162,6 +162,13 @@ export function MassiveUpdatePage() {
   // per target: a target is in `synced` once its assignments have been pulled.
   const [synced, setSynced] = useState<Set<"dg" | "dgr">>(new Set());
   const [syncing, setSyncing] = useState(false);
+  // Section ids that were CHECKED automatically (req #1: a picked target loads its
+  // assigned sections). Tracked so deselecting that target can drop the ones it no
+  // longer justifies, without touching the user's manual section picks.
+  const autoSections = useRef<Set<string>>(new Set());
+  // In-flight syncAssignments promise per target — dedups concurrent picks (the
+  // `synced` flag only flips AFTER a multi-second pull completes).
+  const syncInflight = useRef<Map<"dg" | "dgr", Promise<{ ids: Map<string, string>; maxPos: Map<string, number> }>>>(new Map());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [applyLog, setApplyLog] = useState<string>("");
   const [mapOpen, setMapOpen] = useState(false);
@@ -231,12 +238,29 @@ export function MassiveUpdatePage() {
   // Retailer → its label (for the colored tag + the Label filter facilitator).
   const labelForRet = (name: string) => labelForRetailer(retailerLabels, name);
   const rq = retailerQ.trim().toLowerCase();
-  const visibleRetailers = allRetailers.filter(
-    (r) =>
-      (!rq || r.name.toLowerCase().includes(rq)) &&
-      (selLabels.length === 0 || selLabels.includes(labelForRet(r.name).id)),
+  // Search narrows the list; the Label chip no longer HIDES non-members — instead
+  // it GROUPS the selected label's retailers on top (see labelGroups) and keeps the
+  // rest below, so a whole label can be picked while other retailers stay reachable.
+  const visibleRetailers = useMemo(
+    () => allRetailers.filter((r) => !rq || r.name.toLowerCase().includes(rq)),
+    [allRetailers, rq],
   );
   const selRetailerList = allRetailers.filter((r) => selRetailers.includes(r.id));
+
+  // When ≥1 label is selected, partition the (search-filtered) retailers into one
+  // group per selected label (members on top, under a colored header) + "the rest".
+  const labelGroups = useMemo(() => {
+    if (!selLabels.length) return null;
+    const chosen = retailerLabels.filter((l) => selLabels.includes(l.id));
+    const memberIds = new Set<string>();
+    const groups = chosen.map((l) => {
+      const members = visibleRetailers.filter((r) => labelForRetailer(retailerLabels, r.name).id === l.id);
+      members.forEach((m) => memberIds.add(m.id));
+      return { label: l, members };
+    });
+    const others = visibleRetailers.filter((r) => !memberIds.has(r.id));
+    return { groups, others, memberCount: memberIds.size };
+  }, [selLabels, retailerLabels, visibleRetailers]);
 
   // The "target" columns of the matrix:
   //  - Brand → one column per selected datagroup (key = dataGroupId; datagroup-dashboardsections).
@@ -274,15 +298,130 @@ export function MassiveUpdatePage() {
     setSelDgs(new Set());
     setSelClients([]);
     setSelRetailers([]);
+    setSelSections(new Set()); // auto-loaded sections were for the old target
+    autoSections.current = new Set();
     setStaged(new Map());
   };
 
-  // Switching application auto-fills ALL of its dashboard groups, and resets the
-  // section picks (sections belong to the previous app's groups).
-  const onAppChange = (id: string) => {
+  // --- auto-load current setup (req #1) -----------------------------------
+  // Section ids that belong to a given application (the left list is app-scoped).
+  const sectionIdsOfApp = (appIdent: string): Set<string> => {
+    const grpIds = new Set(groupIdsForApp(catalog, appIdent));
+    return new Set(catalog.sections.filter((s) => grpIds.has(s.groupId)).map((s) => s.id));
+  };
+
+  // When target column(s) are newly picked, tick the dashboard sections (of the
+  // current app) already assigned to them — i.e. load the live setup so it can be
+  // seen and edited. Auto-syncs the target's assignments first if not loaded yet.
+  const loadAssignedSections = async (cols: string[], forAppId: string = appId, kind: "dg" | "dgr" = target) => {
+    if (!cols.length) return;
+    let keys: Iterable<string> = assigned;
+    if (liveOn && !synced.has(kind)) {
+      const r = await syncAssignments(kind);
+      keys = r.ids.keys();
+    }
+    const colSet = new Set(cols);
+    const appSecs = sectionIdsOfApp(forAppId);
+    const add = new Set<string>();
+    for (const key of keys) {
+      const [secId, tgtId] = key.split("::");
+      if (colSet.has(tgtId) && appSecs.has(secId)) add.add(secId);
+    }
+    if (!add.size) return;
+    add.forEach((id) => autoSections.current.add(id));
+    // Keep the left list, the matrix and the "selected" count consistent: reveal
+    // the groups of every auto-checked section and drop a section search that would
+    // otherwise hide some of them (auto-check is the one path that bypasses filters).
+    const grpIds = new Set<string>();
+    for (const s of catalog.sections) if (add.has(s.id)) grpIds.add(s.groupId);
+    setGroupSel((prev) => [...new Set([...prev, ...grpIds])]);
+    setSectionQ("");
+    setSelSections((prev) => new Set([...prev, ...add]));
+  };
+
+  // Drop auto-checked sections no longer justified by any still-selected target
+  // (manual section picks are left untouched). Called when a target is deselected.
+  const pruneAutoSections = (remainingCols: string[]) => {
+    if (!autoSections.current.size) return;
+    const colSet = new Set(remainingCols);
+    const keep = new Set<string>();
+    for (const key of assigned) {
+      const [secId, tgtId] = key.split("::");
+      if (autoSections.current.has(secId) && colSet.has(tgtId)) keep.add(secId);
+    }
+    const drop = [...autoSections.current].filter((id) => !keep.has(id));
+    if (!drop.length) return;
+    autoSections.current = keep;
+    setSelSections((prev) => {
+      const n = new Set(prev);
+      drop.forEach((id) => n.delete(id));
+      return n;
+    });
+  };
+
+  // Add retailers to the agency selection (+ auto-load their assigned sections).
+  const selectRetailers = (ids: string[]) => {
+    const added = ids.filter((id) => !selRetailers.includes(id));
+    if (!added.length) return;
+    setSelRetailers((prev) => [...new Set([...prev, ...ids])]);
+    void loadAssignedSections(added);
+  };
+
+  // Toggle a single retailer; selecting auto-loads its sections, deselecting prunes them.
+  const toggleRetailer = (id: string) => {
+    if (selRetailers.includes(id)) {
+      const remaining = selRetailers.filter((x) => x !== id);
+      setSelRetailers(remaining);
+      pruneAutoSections(remaining);
+    } else selectRetailers([id]);
+  };
+
+  // Toggle a single datagroup (brand); selecting auto-loads its sections, deselecting prunes.
+  const toggleDatagroup = (id: string) => {
+    if (selDgs.has(id)) {
+      const remaining = [...selDgs].filter((x) => x !== id);
+      toggle(selDgs, id, setSelDgs);
+      pruneAutoSections(remaining);
+    } else {
+      toggle(selDgs, id, setSelDgs);
+      void loadAssignedSections([id]);
+    }
+  };
+
+  // A single retailer row (used flat and inside label groups).
+  const renderRetailerRow = (r: { id: string; name: string }) => {
+    const l = labelForRet(r.name);
+    return (
+      <Row
+        key={r.id}
+        checked={selRetailers.includes(r.id)}
+        onToggle={() => toggleRetailer(r.id)}
+        title={r.name}
+        badge={l.name}
+        badgeClass={LABEL_COLOR_CLASSES[l.color]}
+      />
+    );
+  };
+
+  // A section the user toggles by hand is no longer auto-managed (so a later target
+  // deselect won't prune it). Used by the left-list rows.
+  const toggleSection = (id: string) => {
+    autoSections.current.delete(id);
+    toggle(selSections, id, setSelSections);
+  };
+
+  // Switching application auto-fills ALL of its dashboard groups, resets the
+  // section picks (sections belong to the previous app's groups), then re-loads
+  // the current setup for any already-selected target(s) in the NEW app. The
+  // Relationship-map edit opts OUT (it sets the exact target+section itself).
+  const onAppChange = (id: string, opts: { autoLoad?: boolean } = {}) => {
     setAppId(id);
     setGroupSel(groupIdsForApp(catalog, id));
     setSelSections(new Set());
+    autoSections.current = new Set();
+    if (opts.autoLoad === false) return;
+    const cols = target === "dg" ? [...selDgs] : selRetailers;
+    if (cols.length) void loadAssignedSections(cols, id);
   };
 
   const stageInsert = () => {
@@ -326,7 +465,23 @@ export function MassiveUpdatePage() {
   // datagroup-dashboardsections keyed by dataGroupId; Agency ~1.5k from
   // retailer-dashboardsections keyed by retailerId) so removes can resolve their
   // record id and the matrix shows current state.
-  const syncAssignments = async (
+  const syncAssignments = (
+    kind: "dg" | "dgr",
+  ): Promise<{ ids: Map<string, string>; maxPos: Map<string, number> }> => {
+    // Dedup concurrent pulls for the same target (the `synced` flag only flips
+    // after the multi-second fetch completes, so back-to-back picks would each
+    // launch a full pull). Share one in-flight promise per kind.
+    const inflight = syncInflight.current.get(kind);
+    if (inflight) return inflight;
+    const p = runSyncAssignments(kind);
+    syncInflight.current.set(kind, p);
+    void p.finally(() => {
+      if (syncInflight.current.get(kind) === p) syncInflight.current.delete(kind);
+    });
+    return p;
+  };
+
+  const runSyncAssignments = async (
     kind: "dg" | "dgr",
   ): Promise<{ ids: Map<string, string>; maxPos: Map<string, number> }> => {
     const saved = getDevTokens();
@@ -581,6 +736,7 @@ export function MassiveUpdatePage() {
       setSynced(new Set());
       setSelDgs(new Set());
       setSelSections(new Set());
+      autoSections.current = new Set();
       setSelClients([]);
       setStaged(new Map());
       setLiveOn(true);
@@ -637,6 +793,7 @@ export function MassiveUpdatePage() {
     setSynced(new Set());
     setSelDgs(new Set());
     setSelSections(new Set());
+    autoSections.current = new Set();
     setSelClients([]);
     setStaged(new Map());
     setLiveOn(false);
@@ -655,9 +812,12 @@ export function MassiveUpdatePage() {
     const sec = catalog.sections.find((s) => s.id === e.sectionId);
     const grp = catalog.groups.find((g) => g.id === sec?.groupId);
     const app = catalog.apps.find((a) => a.slug === grp?.appSlug);
-    if (app) onAppChange(app.id); // sets appId + groupSel + clears selSections
+    // The map gives the EXACT section + target(s) to edit, so opt out of the
+    // auto-load (it would otherwise async-union the previous target's sections in).
+    if (app) onAppChange(app.id, { autoLoad: false });
     setTarget(e.kind);
     setStaged(new Map());
+    autoSections.current = new Set();
     setSelSections(new Set([e.sectionId]));
     if (e.kind === "dg") {
       setSelDgs(new Set(e.targetIds));
@@ -871,7 +1031,7 @@ export function MassiveUpdatePage() {
                 <Row
                   key={s.id}
                   checked={selSections.has(s.id)}
-                  onToggle={() => toggle(selSections, s.id, setSelSections)}
+                  onToggle={() => toggleSection(s.id)}
                   title={s.label}
                   subtitle={s.path}
                   badge={appGroups.find((g) => g.id === s.groupId)?.label}
@@ -942,8 +1102,15 @@ export function MassiveUpdatePage() {
                   <div className="flex items-center justify-between">
                     <SelectAllRow
                       label={`Select all filtered (${visibleDgs.length})`}
-                      onAll={() => setSelDgs(new Set([...selDgs, ...visibleDgs.map((d) => d.id)]))}
-                      onClear={() => setSelDgs(new Set())}
+                      onAll={() => {
+                        const added = visibleDgs.map((d) => d.id).filter((id) => !selDgs.has(id));
+                        setSelDgs(new Set([...selDgs, ...visibleDgs.map((d) => d.id)]));
+                        void loadAssignedSections(added);
+                      }}
+                      onClear={() => {
+                        setSelDgs(new Set());
+                        pruneAutoSections([]);
+                      }}
                     />
                     <span className="text-xs text-muted-foreground">
                       {selClients.length
@@ -970,9 +1137,22 @@ export function MassiveUpdatePage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <SelectAllRow
-                      label={`Select all filtered (${visibleRetailers.length})`}
-                      onAll={() => setSelRetailers([...new Set([...selRetailers, ...visibleRetailers.map((r) => r.id)])])}
-                      onClear={() => setSelRetailers([])}
+                      label={
+                        labelGroups
+                          ? `Select all in label${selLabels.length === 1 ? "" : "s"} (${labelGroups.memberCount})`
+                          : `Select all filtered (${visibleRetailers.length})`
+                      }
+                      onAll={() =>
+                        selectRetailers(
+                          labelGroups
+                            ? labelGroups.groups.flatMap((g) => g.members.map((m) => m.id))
+                            : visibleRetailers.map((r) => r.id),
+                        )
+                      }
+                      onClear={() => {
+                        setSelRetailers([]);
+                        pruneAutoSections([]);
+                      }}
                     />
                     <button
                       onClick={() => setLabelsModalOpen(true)}
@@ -984,10 +1164,10 @@ export function MassiveUpdatePage() {
                   <span className="text-[11px] text-muted-foreground">
                     {selRetailers.length
                       ? `${selRetailers.length} selected`
-                      : selLabels.length
-                        ? `${visibleRetailers.length} in ${selLabels.length} label${selLabels.length === 1 ? "" : "s"}`
+                      : labelGroups
+                        ? `${labelGroups.memberCount} in ${selLabels.length} label${selLabels.length === 1 ? "" : "s"} · ${labelGroups.others.length} others`
                         : `${allRetailers.length} retailers`}{" "}
-                    · pick a Label to bulk-select for insert/remove
+                    · pick a Label to group its retailers on top
                   </span>
                 </>
               )}
@@ -1007,7 +1187,7 @@ export function MassiveUpdatePage() {
                           <Row
                             key={d.id}
                             checked={selDgs.has(d.id)}
-                            onToggle={() => toggle(selDgs, d.id, setSelDgs)}
+                            onToggle={() => toggleDatagroup(d.id)}
                             title={d.name}
                             subtitle={d.country}
                             badge={d.dashboardType}
@@ -1019,25 +1199,52 @@ export function MassiveUpdatePage() {
                   })}
                   {!visibleDgs.length && <Empty>No datagroups match.</Empty>}
                 </>
+              ) : labelGroups ? (
+                <>
+                  {/* Selected label(s): members grouped + prioritized on top */}
+                  {labelGroups.groups.map(({ label, members }) =>
+                    members.length ? (
+                      <div key={label.id} className="mb-1">
+                        <div className="flex items-center justify-between px-2 pb-0.5 pt-1.5">
+                          <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            <span className={cn("h-2 w-2 shrink-0 rounded-full border", LABEL_COLOR_CLASSES[label.color])} />
+                            {label.name} ({members.length})
+                          </span>
+                          <button
+                            onClick={() => selectRetailers(members.map((m) => m.id))}
+                            className="text-[11px] font-medium text-[var(--sidebar-active-fg)] hover:underline"
+                          >
+                            Select all
+                          </button>
+                        </div>
+                        {members.slice(0, RETAILER_RENDER_CAP).map(renderRetailerRow)}
+                        {members.length > RETAILER_RENDER_CAP && (
+                          <p className="px-2 py-1 text-[11px] text-muted-foreground">
+                            Showing {RETAILER_RENDER_CAP} of {members.length} — search to narrow.
+                          </p>
+                        )}
+                      </div>
+                    ) : null,
+                  )}
+                  {/* Everything not in the selected label(s), kept below */}
+                  {labelGroups.others.length > 0 && (
+                    <div className="mb-1">
+                      <div className="px-2 pb-0.5 pt-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        Other retailers ({labelGroups.others.length})
+                      </div>
+                      {labelGroups.others.slice(0, RETAILER_RENDER_CAP).map(renderRetailerRow)}
+                      {labelGroups.others.length > RETAILER_RENDER_CAP && (
+                        <p className="px-2 py-1 text-[11px] text-muted-foreground">
+                          Showing {RETAILER_RENDER_CAP} of {labelGroups.others.length} others — search to narrow.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {!visibleRetailers.length && <Empty>No retailers match.</Empty>}
+                </>
               ) : (
                 <>
-                  {visibleRetailers.slice(0, RETAILER_RENDER_CAP).map((r) => {
-                    const l = labelForRet(r.name);
-                    return (
-                    <Row
-                      key={r.id}
-                      checked={selRetailers.includes(r.id)}
-                      onToggle={() =>
-                        setSelRetailers(
-                          selRetailers.includes(r.id) ? selRetailers.filter((x) => x !== r.id) : [...selRetailers, r.id],
-                        )
-                      }
-                      title={r.name}
-                      badge={l.name}
-                      badgeClass={LABEL_COLOR_CLASSES[l.color]}
-                    />
-                    );
-                  })}
+                  {visibleRetailers.slice(0, RETAILER_RENDER_CAP).map(renderRetailerRow)}
                   {visibleRetailers.length > RETAILER_RENDER_CAP && (
                     <p className="px-2 py-2 text-[11px] text-muted-foreground">
                       Showing {RETAILER_RENDER_CAP} of {visibleRetailers.length} — search or filter by Label to narrow.
