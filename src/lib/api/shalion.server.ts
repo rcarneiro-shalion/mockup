@@ -88,7 +88,7 @@ function resolveIdToken(clientIdToken?: string): string | undefined {
 // slow and drops pages. Instead we paginate SERVER-SIDE (fast server-to-server,
 // no per-page client serialization) and return only the compact
 // {id, sectionId, targetId} triples the relationship map needs.
-export type AssignmentPair = { id: string; sectionId: string; targetId: string };
+export type AssignmentPair = { id: string; sectionId: string; targetId: string; position: number };
 
 export async function aggregateAssignments(args: {
   kind: "brand" | "agency";
@@ -115,7 +115,12 @@ export async function aggregateAssignments(args: {
   const rec = (r: Record<string, unknown>): AssignmentPair => {
     const sec = (r.dashboardSection ?? {}) as Record<string, unknown>;
     const tgt = (args.kind === "agency" ? r.retailer : r.dataGroup) as Record<string, unknown> | undefined;
-    return { id: String(r.id ?? ""), sectionId: String(sec.id ?? ""), targetId: String(tgt?.id ?? "") };
+    return {
+      id: String(r.id ?? ""),
+      sectionId: String(sec.id ?? ""),
+      targetId: String(tgt?.id ?? ""),
+      position: Number(r.position) || 0,
+    };
   };
   const getPage = async (page: number): Promise<{ ok: boolean; rows: Record<string, unknown>[]; total?: number }> => {
     try {

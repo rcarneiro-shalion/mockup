@@ -154,6 +154,10 @@ export function MassiveUpdatePage() {
   const [loadedEnv, setLoadedEnv] = useState<"prod" | "develop">("prod");
   // pairKey(section, colKey) -> existing assignment record id (needed to DELETE).
   const [recordIds, setRecordIds] = useState<Map<string, string>>(new Map());
+  // colKey (dataGroupId | retailerId) -> highest `position` currently used by that
+  // target. The (colKey, position) pair is UNIQUE upstream, so new inserts must use
+  // a free position — we append at max+1 (and bump on a 409 position conflict).
+  const [colMaxPos, setColMaxPos] = useState<Map<string, number>>(new Map());
   // Current assignments are large (~3k brand, ~1.5k agency) so they load on demand
   // per target: a target is in `synced` once its assignments have been pulled.
   const [synced, setSynced] = useState<Set<"dg" | "dgr">>(new Set());
@@ -322,24 +326,32 @@ export function MassiveUpdatePage() {
   // datagroup-dashboardsections keyed by dataGroupId; Agency ~1.5k from
   // retailer-dashboardsections keyed by retailerId) so removes can resolve their
   // record id and the matrix shows current state.
-  const syncAssignments = async (kind: "dg" | "dgr"): Promise<Map<string, string>> => {
+  const syncAssignments = async (
+    kind: "dg" | "dgr",
+  ): Promise<{ ids: Map<string, string>; maxPos: Map<string, number> }> => {
     const saved = getDevTokens();
     const tok = token || saved.token;
     const idt = idToken || saved.idToken;
     setSyncing(true);
     let merged = new Map(recordIds);
+    let nextMaxPos = new Map(colMaxPos);
     try {
       const res = await fetchAssignments({
         data: { kind: kind === "dgr" ? "agency" : "brand", token: tok || undefined, idToken: idt || undefined, env: loadedEnv },
       });
-      const pairs = (res.pairs ?? []).map((p) => ({ id: p.id, key: pairKey(p.sectionId, p.targetId) }));
+      const pairs = (res.pairs ?? []).map((p) => ({ id: p.id, key: pairKey(p.sectionId, p.targetId), targetId: p.targetId, position: p.position }));
       const nextAssigned = new Set(assigned);
       for (const p of pairs) {
         merged.set(p.key, p.id);
         nextAssigned.add(p.key);
+        // Track the highest occupied position per target column so inserts can
+        // append at a free slot (the upstream (target, position) pair is unique).
+        const cur = nextMaxPos.get(p.targetId) ?? 0;
+        if (p.position > cur) nextMaxPos.set(p.targetId, p.position);
       }
       setRecordIds(merged);
       setAssigned(nextAssigned);
+      setColMaxPos(nextMaxPos);
       if (res.ok && res.complete) setSynced((s) => new Set(s).add(kind));
       if (!res.ok) toast.error(res.error || "Couldn't load assignments.");
       else
@@ -351,7 +363,7 @@ export function MassiveUpdatePage() {
     } finally {
       setSyncing(false);
     }
-    return merged;
+    return { ids: merged, maxPos: nextMaxPos };
   };
 
   // Real apply: sequential POST (insert) / DELETE (remove) through the write
@@ -383,16 +395,31 @@ export function MassiveUpdatePage() {
     const idt = idToken || saved.idToken;
     const ep = target === "dgr" ? AGENCY_EP : BRAND_EP;
 
-    // Removes need a record id; if the current target's assignments aren't loaded
-    // yet, sync them first so we can resolve the record id to DELETE.
+    // Inserts AND removes both need the target's current assignments loaded:
+    //  - removes need the record id to DELETE;
+    //  - inserts need the occupied positions (the upstream (target, position) pair
+    //    is UNIQUE, so a new row must use a free position) and need to know which
+    //    sections are already assigned (so we don't create a duplicate).
+    // Load once per target per session (gated by `synced`).
     let ids = recordIds;
-    const hasUnresolvedRemove = [...staged.entries()].some(([k, op]) => op === "remove" && !ids.has(k));
-    if (hasUnresolvedRemove && !synced.has(target)) ids = await syncAssignments(target);
+    let maxPos = colMaxPos;
+    if (staged.size && !synced.has(target)) {
+      const r = await syncAssignments(target);
+      ids = r.ids;
+      maxPos = r.maxPos;
+    }
 
     const nextAssigned = new Set(assigned);
     const nextIds = new Map(ids);
-    const posByCol = new Map<string, number>();
-    let okN = 0;
+    const nextMaxPos = new Map(maxPos);
+    // Next free position to try per target column — start one above the highest
+    // currently-occupied position (append at the end), then increment locally.
+    const nextPosByCol = new Map<string, number>();
+    const freePosFor = (colKey: string): number =>
+      nextPosByCol.get(colKey) ?? (nextMaxPos.get(colKey) ?? 99) + 1;
+    let createdN = 0; // real new rows written (2xx)
+    let existedN = 0; // already assigned — no change
+    let removedN = 0;
     let failN = 0;
     const errs: string[] = [];
 
@@ -400,25 +427,50 @@ export function MassiveUpdatePage() {
       const [sectionId, colKey] = k.split("::");
       try {
         if (op === "insert") {
+          // Already assigned to this target? Don't create a duplicate row.
+          if (nextAssigned.has(k) || ids.has(k)) {
+            existedN++;
+            await sleep(20);
+            continue;
+          }
           // colKey is the dataGroupId (brand) or retailerId (agency). Both bodies
-          // require position (per visualization-api swagger).
-          const pos = posByCol.get(colKey) ?? 100;
-          posByCol.set(colKey, pos + 1);
-          const body: Record<string, unknown> =
-            target === "dgr"
-              ? { retailerId: colKey, dashboardSectionId: sectionId, position: pos } // NewRetailerDashboardSectionRequestBody
-              : { dataGroupId: colKey, dashboardSectionId: sectionId, position: pos }; // NewDataGroupDashboardSectionRequestBody
-          const res = await mutateLive({
-            data: { service: "visualization", env: loadedEnv, method: "POST", path: ep, body, token: tok || undefined, idToken: idt || undefined },
-          });
-          if (res.ok || res.status === 409) {
-            nextAssigned.add(k);
-            const rid = (res.data as { id?: string } | null)?.id;
-            if (rid) nextIds.set(k, rid);
-            okN++;
-          } else {
+          // require a position that is unique within the target — append at the
+          // next free slot, and bump + retry if the slot was taken (409 on position).
+          let pos = freePosFor(colKey);
+          let placed = false;
+          let lastErr = "";
+          let lastStatus = 0;
+          for (let attempt = 0; attempt < 80 && !placed; attempt++, pos++) {
+            const body: Record<string, unknown> =
+              target === "dgr"
+                ? { retailerId: colKey, dashboardSectionId: sectionId, position: pos } // NewRetailerDashboardSectionRequestBody
+                : { dataGroupId: colKey, dashboardSectionId: sectionId, position: pos }; // NewDataGroupDashboardSectionRequestBody
+            const res = await mutateLive({
+              data: { service: "visualization", env: loadedEnv, method: "POST", path: ep, body, token: tok || undefined, idToken: idt || undefined },
+            });
+            if (res.ok) {
+              nextAssigned.add(k);
+              const rid = (res.data as { id?: string } | null)?.id;
+              if (rid) nextIds.set(k, rid);
+              createdN++;
+              placed = true;
+              // Reserve positions: this one is now taken, next insert tries +1.
+              nextPosByCol.set(colKey, pos + 1);
+              if (pos > (nextMaxPos.get(colKey) ?? 0)) nextMaxPos.set(colKey, pos);
+            } else if (res.status === 409) {
+              // Position already in use for this target — try the next slot.
+              lastStatus = 409;
+              lastErr = res.error ?? "conflict";
+              continue;
+            } else {
+              lastStatus = res.status;
+              lastErr = res.error ?? String(res.status);
+              break;
+            }
+          }
+          if (!placed) {
             failN++;
-            errs.push(`insert ${k.slice(0, 28)}: ${res.error ?? res.status}`);
+            errs.push(`insert ${k.slice(0, 28)}: ${lastStatus === 409 ? "no free position (80 tries)" : lastErr}`);
           }
         } else {
           const rid = nextIds.get(k);
@@ -433,7 +485,7 @@ export function MassiveUpdatePage() {
           if (res.ok) {
             nextAssigned.delete(k);
             nextIds.delete(k);
-            okN++;
+            removedN++;
           } else {
             failN++;
             errs.push(`remove ${k.slice(0, 28)}: ${res.error ?? res.status}`);
@@ -448,11 +500,20 @@ export function MassiveUpdatePage() {
 
     setAssigned(nextAssigned);
     setRecordIds(nextIds);
+    setColMaxPos(nextMaxPos);
     setStaged(new Map());
     setApplying(false);
     setApplyLog(errs.slice(0, 10).join("\n"));
-    if (failN === 0) toast.success(`Applied to ${loadedEnv.toUpperCase()}: ${okN} change(s) OK.`);
-    else toast.warning(`Applied to ${loadedEnv.toUpperCase()}: ${okN} OK · ${failN} failed (see details).`);
+    const parts = [
+      createdN && `${createdN} created`,
+      removedN && `${removedN} removed`,
+      existedN && `${existedN} already existed`,
+      failN && `${failN} failed`,
+    ].filter(Boolean);
+    const env = loadedEnv.toUpperCase();
+    if (failN) toast.warning(`Applied to ${env}: ${parts.join(" · ")} (see details).`);
+    else if (createdN || removedN) toast.success(`Applied to ${env}: ${parts.join(" · ")}.`);
+    else toast.info(`${env}: nothing to write — ${existedN} already existed.`);
   };
 
   // --- live connect -------------------------------------------------------
@@ -516,6 +577,7 @@ export function MassiveUpdatePage() {
       setGroupSel(dsm ? groupIdsForApp(nextCatalog, dsm.id) : []);
       setAssigned(new Set()); // assignments load on demand via "Sync current state"
       setRecordIds(new Map());
+      setColMaxPos(new Map());
       setSynced(new Set());
       setSelDgs(new Set());
       setSelSections(new Set());
