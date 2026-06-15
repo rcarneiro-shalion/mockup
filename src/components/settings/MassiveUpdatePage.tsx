@@ -18,10 +18,8 @@ import {
   mapLiveApps,
   mapLiveGroups,
   mapLiveSections,
-  mapDatagroupRetailers,
   pairKey,
   type MuCatalog,
-  type MuRetailer,
   type MuSection,
 } from "@/lib/massiveUpdate";
 import {
@@ -75,9 +73,9 @@ type PagedResult = { ok: boolean; complete: boolean; error?: string; rows: unkno
  * target the SAME env. Admin lists are paged at 100/row and ignore size/filter,
  * so pages are pulled sequentially (one retry each) and concatenated.
  */
-function makeLiveCtx(env: LiveEnvName, token: string, idToken: string) {
+function makeLiveCtx(env: LiveEnvName, token: string, idToken: string, service = "visualization") {
   const opts = (path: string) => ({
-    data: { service: "visualization", env, path, token: token || undefined, idToken: idToken || undefined },
+    data: { service, env, path, token: token || undefined, idToken: idToken || undefined },
   });
   const fetchPage = async (pathBase: string, page: number) => {
     const o = opts(`${pathBase}?page=${page}&size=100`);
@@ -114,6 +112,9 @@ const BRAND_EP = "/v1.0/admin/datagroup-dashboardsections";
 // not datagroup. The agency datagroup only scopes which retailers are available.
 const AGENCY_EP = "/v1.0/admin/retailer-dashboardsections";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+// The retailer master list is ~1k; cap rendered rows for responsiveness (Select
+// all / search / Label filter still operate on the full filtered set).
+const RETAILER_RENDER_CAP = 250;
 
 export function MassiveUpdatePage() {
   const [catalog, setCatalog] = useState<MuCatalog>(MU_SEED);
@@ -150,9 +151,6 @@ export function MassiveUpdatePage() {
   const [loadedEnv, setLoadedEnv] = useState<"prod" | "develop">("prod");
   // pairKey(section, colKey) -> existing assignment record id (needed to DELETE).
   const [recordIds, setRecordIds] = useState<Map<string, string>>(new Map());
-  // `${dataGroupId}#${retailerId}` keys of existing datagroup↔retailer links —
-  // used to scope which retailers an agency datagroup has.
-  const [dgrId, setDgrId] = useState<Map<string, string>>(new Map());
   // Current assignments are large (~3k brand, ~1.5k agency) so they load on demand
   // per target: a target is in `synced` once its assignments have been pulled.
   const [synced, setSynced] = useState<Set<"dg" | "dgr">>(new Set());
@@ -468,15 +466,17 @@ export function MassiveUpdatePage() {
     setLiveMsg("");
     try {
       const { opts, fetchAllPages } = makeLiveCtx(env, a, i);
-      // Catalog + the datagroup↔retailer join (scopes which retailers an agency
-      // datagroup has). Assignments (~3k brand, ~1.5k agency) load on demand via
-      // "Sync current state". Endpoints run in parallel; pages within each are sequential.
-      const [dgAll, appRes, groupAll, sectionAll, dgrAll] = await Promise.all([
+      // The agency target is ANY retailer (retailer-dashboardsections keyed by
+      // retailerId), so load the FULL retailer master list from backoffice-api —
+      // not just the agency-linked ones — so every retailer is pickable.
+      const boRetailers = makeLiveCtx(env, a, i, "backoffice").fetchAllPages;
+      // Assignments (~3k brand, ~1.5k agency) load on demand via "Sync current state".
+      const [dgAll, appRes, groupAll, sectionAll, retAll] = await Promise.all([
         fetchAllPages("/v1.0/admin/datagroups"),
         fetchLive(opts("/v1.0/admin/dashboardapplications")),
         fetchAllPages("/v1.0/admin/dashboardgroups"),
         fetchAllPages("/v1.0/admin/dashboardsections"),
-        fetchAllPages("/v1.0/admin/datagroup-retailers"),
+        boRetailers("/v1.0/admin/retailers", 5),
       ]);
       if (!dgAll.ok) {
         setLiveStatus("error");
@@ -496,25 +496,18 @@ export function MassiveUpdatePage() {
       const groups = liveGroups.length ? liveGroups : MU_SEED.groups;
       const sections = liveSections.length ? liveSections : MU_SEED.sections;
 
-      // datagroup↔retailer join → real retailers + which retailers each agency
-      // datagroup has (keys `${dgId}#${retId}`).
-      const dgRetailers = mapDatagroupRetailers(dgrAll.rows);
-      const retailerMap = new Map<string, MuRetailer>();
-      const nextDgrId = new Map<string, string>();
-      for (const r of dgRetailers) {
-        if (!retailerMap.has(r.retailerId)) retailerMap.set(r.retailerId, { id: r.retailerId, name: r.retailerName || r.retailerId });
-        nextDgrId.set(`${r.dataGroupId}#${r.retailerId}`, r.id);
-      }
-      const retailers = retailerMap.size
-        ? [...retailerMap.values()].sort((x, y) => x.name.localeCompare(y.name))
-        : MU_SEED.retailers;
+      // Full retailer master list (backoffice) → {id, name}, excluding archived.
+      const liveRetailers = (retAll.rows as Array<Record<string, unknown>>)
+        .filter((r) => r && r.id && !r.isArchived)
+        .map((r) => ({ id: String(r.id), name: String(r.name ?? r.id) }))
+        .sort((x, y) => x.name.localeCompare(y.name));
+      const retailers = liveRetailers.length ? liveRetailers : MU_SEED.retailers;
 
       const nextCatalog = { ...MU_SEED, apps, groups, sections, clients, dataGroups, retailers };
       setCatalog(nextCatalog);
       const dsm = apps.find((a2) => a2.slug === "dsm") ?? apps[0];
       setAppId(dsm?.id ?? "");
       setGroupSel(dsm ? groupIdsForApp(nextCatalog, dsm.id) : []);
-      setDgrId(nextDgrId);
       setAssigned(new Set()); // assignments load on demand via "Sync current state"
       setRecordIds(new Map());
       setSynced(new Set());
@@ -530,9 +523,9 @@ export function MassiveUpdatePage() {
         !dgAll.complete && "datagroups",
         !groupAll.complete && "groups",
         !sectionAll.complete && "sections",
-        !dgrAll.complete && "dg-retailers",
+        !retAll.complete && "retailers",
       ].filter(Boolean);
-      const summary = `Live (${env}): ${apps.length} apps · ${groups.length} groups · ${sections.length} sections · ${dataGroups.length} datagroups · ${dgRetailers.length} dg-retailers.`;
+      const summary = `Live (${env}): ${apps.length} apps · ${groups.length} groups · ${sections.length} sections · ${dataGroups.length} datagroups · ${retailers.length} retailers.`;
       if (incomplete.length)
         toast.warning(`${summary} Partial: ${incomplete.join(", ")} — reconnect to retry.`);
       else toast.success(summary);
@@ -573,7 +566,6 @@ export function MassiveUpdatePage() {
     setGroupSel(groupIdsForApp(MU_SEED, "app-dsm"));
     setAssigned(new Set(MU_SEED.assignments));
     setRecordIds(new Map());
-    setDgrId(new Map());
     setSynced(new Set());
     setSelDgs(new Set());
     setSelSections(new Set());
@@ -682,9 +674,21 @@ export function MassiveUpdatePage() {
               </button>
             </div>
             {liveOn ? (
-              <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={disconnect}>
-                <PlugZap className="h-4 w-4 text-emerald-600" /> Live ({loadedEnv}) · disconnect
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5"
+                  title="Reload the latest data from live (apps, datagroups, sections, retailers)"
+                  disabled={liveStatus === "loading"}
+                  onClick={() => void connect()}
+                >
+                  <RefreshCw className={cn("h-3.5 w-3.5", liveStatus === "loading" && "animate-spin")} /> Refresh
+                </Button>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={disconnect}>
+                  <PlugZap className="h-4 w-4 text-emerald-600" /> Live ({loadedEnv}) · disconnect
+                </Button>
+              </>
             ) : liveStatus === "loading" ? (
               <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled>
                 <Loader2 className="h-4 w-4 animate-spin" /> Loading live data…
@@ -949,7 +953,7 @@ export function MassiveUpdatePage() {
                 </>
               ) : (
                 <>
-                  {visibleRetailers.map((r) => {
+                  {visibleRetailers.slice(0, RETAILER_RENDER_CAP).map((r) => {
                     const l = labelForRet(r.name);
                     return (
                     <Row
@@ -966,6 +970,11 @@ export function MassiveUpdatePage() {
                     />
                     );
                   })}
+                  {visibleRetailers.length > RETAILER_RENDER_CAP && (
+                    <p className="px-2 py-2 text-[11px] text-muted-foreground">
+                      Showing {RETAILER_RENDER_CAP} of {visibleRetailers.length} — search or filter by Label to narrow.
+                    </p>
+                  )}
                   {!visibleRetailers.length && <Empty>No retailers match.</Empty>}
                 </>
               )}
