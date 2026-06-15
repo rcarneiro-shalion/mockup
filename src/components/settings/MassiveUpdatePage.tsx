@@ -130,7 +130,10 @@ export function MassiveUpdatePage() {
   const [labelsModalOpen, setLabelsModalOpen] = useState(false);
   // User-defined retailer labels (classification by section kind) — persisted.
   const [retailerLabels, setRetailerLabels] = usePersistentState<RetailerLabel[]>(
-    "mu:retailer-labels:v1",
+    // v3: full xlsx classification — STANDARD is its own 54-retailer label and
+    // everything not in the sheet defaults to NON-CLASSIFIED. (Bump re-seeds,
+    // overriding older persisted copies; edits after this persist under v3.)
+    "mu:retailer-labels:v3",
     SEED_RETAILER_LABELS,
   );
   const [selClients, setSelClients] = useState<string[]>([]); // client ids; empty = all

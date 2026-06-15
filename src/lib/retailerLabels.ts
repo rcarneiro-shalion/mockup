@@ -16,6 +16,7 @@ export const LABEL_COLOR_CLASSES = {
   slate: "border-slate-200 bg-slate-100 text-slate-700",
   pink: "border-pink-200 bg-pink-100 text-pink-800",
   teal: "border-teal-200 bg-teal-100 text-teal-800",
+  zinc: "border-zinc-200 bg-zinc-100 text-zinc-500",
 } as const;
 export type LabelColor = keyof typeof LABEL_COLOR_CLASSES;
 export const LABEL_COLOR_KEYS = Object.keys(LABEL_COLOR_CLASSES) as LabelColor[];
@@ -24,13 +25,31 @@ export const LABEL_COLOR_KEYS = Object.keys(LABEL_COLOR_CLASSES) as LabelColor[]
  * environments; live retailer ids differ between prod/dev). */
 export type RetailerLabel = { id: string; name: string; color: LabelColor; retailers: string[] };
 
-export const STANDARD_LABEL_ID = "lbl-standard";
+// The default catch-all: any retailer NOT explicitly in another label is
+// "NON-CLASSIFIED" (e.g. retailers not present in groups_of_retailers.xlsx).
+// STANDARD is now a normal label with its own explicit members from the sheet.
+export const DEFAULT_LABEL_ID = "lbl-non-classified";
 
-// Full classification from groups_of_retailers.xlsx (84 retailers). STANDARD is
-// the catch-all default (its `retailers` list is ignored). AMAZON - FLAGSHIP has
-// no members yet but exists in the legend.
+// Full classification from groups_of_retailers.xlsx (84 classified retailers).
+// Everything else falls into NON-CLASSIFIED (the default).
 export const SEED_RETAILER_LABELS: RetailerLabel[] = [
-  { id: STANDARD_LABEL_ID, name: "STANDARD", color: "amber", retailers: [] },
+  { id: DEFAULT_LABEL_ID, name: "NON-CLASSIFIED", color: "zinc", retailers: [] },
+  {
+    id: "lbl-standard",
+    name: "STANDARD",
+    color: "amber",
+    retailers: [
+      "Alcampo ES", "Asda UK", "Auchan FR", "Best Buy US", "Bol NL", "Boots UK", "Carrefour ES",
+      "Carrefour FR", "Carrefour IT", "Chewy US", "Coop IT", "Costco US", "CVS US", "Dia ES",
+      "Dollar General US", "Douglas DE", "Douglas ES", "Druni ES", "eBay US", "El Corte Ingles ES",
+      "Eroski ES", "Flipkart IN", "Giant Eagle US", "Glovo ES", "GoPuff US", "HEB US", "Home Depot US",
+      "Intermarche FR", "Kaufland DE", "Leclerc FR", "Media Markt DE", "Media Markt ES", "Media World IT",
+      "Meijer US", "Morrisons UK", "Noon AE", "Noon Minutes AE", "Ocado UK", "Otto DE", "Petco US",
+      "Petsmart US", "Primor ES", "Rewe DE", "Sainsburys UK", "Tesco UK", "Tigros IT", "Ulta US",
+      "Walgreens US", "Walmart CA", "Wayfair US", "Zooplus DE", "Zooplus UK", "Priceline AU",
+      "Chemist Warehouse AU",
+    ],
+  },
   {
     id: "lbl-amazon",
     name: "AMAZON",
@@ -57,35 +76,35 @@ export const SEED_RETAILER_LABELS: RetailerLabel[] = [
   { id: "lbl-geoloc", name: "GEOLOC", color: "pink", retailers: ["Target US", "Walmart US"] },
 ];
 
-/** The label a retailer (by name) belongs to — its explicit label, else STANDARD. */
+/** The label a retailer (by name) belongs to — its explicit label, else NON-CLASSIFIED. */
 export function labelForRetailer(labels: RetailerLabel[], retailerName: string): RetailerLabel {
-  const explicit = labels.find((l) => l.id !== STANDARD_LABEL_ID && l.retailers.includes(retailerName));
-  const standard = labels.find((l) => l.id === STANDARD_LABEL_ID);
-  return explicit ?? standard ?? labels[0];
+  const explicit = labels.find((l) => l.id !== DEFAULT_LABEL_ID && l.retailers.includes(retailerName));
+  const fallback = labels.find((l) => l.id === DEFAULT_LABEL_ID);
+  return explicit ?? fallback ?? labels[0];
 }
 
 /** Assign a retailer (by name) to a label — single membership (removed from others).
- * Assigning to STANDARD just clears it from every non-standard label. */
+ * Assigning to the default (NON-CLASSIFIED) just clears it from every other label. */
 export function assignRetailerToLabel(labels: RetailerLabel[], retailerName: string, labelId: string): RetailerLabel[] {
   return labels.map((l) => {
     const without = l.retailers.filter((r) => r !== retailerName);
-    if (l.id === labelId && l.id !== STANDARD_LABEL_ID) return { ...l, retailers: [...without, retailerName] };
+    if (l.id === labelId && l.id !== DEFAULT_LABEL_ID) return { ...l, retailers: [...without, retailerName] };
     return { ...l, retailers: without };
   });
 }
 
 /** Assign MANY retailers (by name) to a label at once (single membership).
- * labelId === STANDARD just clears them from every non-standard label. */
+ * labelId === default just clears them from every other label. */
 export function assignManyToLabel(labels: RetailerLabel[], retailerNames: string[], labelId: string): RetailerLabel[] {
   const set = new Set(retailerNames);
   return labels.map((l) => {
     const without = l.retailers.filter((r) => !set.has(r));
-    if (l.id === labelId && l.id !== STANDARD_LABEL_ID) return { ...l, retailers: [...without, ...retailerNames] };
+    if (l.id === labelId && l.id !== DEFAULT_LABEL_ID) return { ...l, retailers: [...without, ...retailerNames] };
     return { ...l, retailers: without };
   });
 }
 
-/** Remove MANY retailers (by name) from a specific label (→ STANDARD). */
+/** Remove MANY retailers (by name) from a specific label (→ NON-CLASSIFIED). */
 export function clearManyFromLabel(labels: RetailerLabel[], retailerNames: string[], labelId: string): RetailerLabel[] {
   const set = new Set(retailerNames);
   return labels.map((l) => (l.id === labelId ? { ...l, retailers: l.retailers.filter((r) => !set.has(r)) } : l));

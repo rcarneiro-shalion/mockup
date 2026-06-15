@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   LABEL_COLOR_CLASSES,
   LABEL_COLOR_KEYS,
-  STANDARD_LABEL_ID,
+  DEFAULT_LABEL_ID,
   assignManyToLabel,
   assignRetailerToLabel,
   clearManyFromLabel,
@@ -30,7 +30,7 @@ export function RetailerLabelsModal({
   retailers: { id: string; name: string }[];
   onClose: () => void;
 }) {
-  const [selId, setSelId] = useState(labels[0]?.id ?? STANDARD_LABEL_ID);
+  const [selId, setSelId] = useState(labels[0]?.id ?? DEFAULT_LABEL_ID);
   const [q, setQ] = useState("");
   const [newName, setNewName] = useState("");
 
@@ -41,8 +41,8 @@ export function RetailerLabelsModal({
     [retailers, ql],
   );
   const countFor = (l: RetailerLabel) =>
-    l.id === STANDARD_LABEL_ID
-      ? retailers.filter((r) => labelForRetailer(labels, r.name).id === STANDARD_LABEL_ID).length
+    l.id === DEFAULT_LABEL_ID
+      ? retailers.filter((r) => labelForRetailer(labels, r.name).id === DEFAULT_LABEL_ID).length
       : l.retailers.filter((name) => retailers.some((r) => r.name === name)).length;
 
   const createLabel = () => {
@@ -58,13 +58,13 @@ export function RetailerLabelsModal({
   const rename = (name: string) => setLabels(labels.map((l) => (l.id === selId ? { ...l, name } : l)));
   const recolor = (color: LabelColor) => setLabels(labels.map((l) => (l.id === selId ? { ...l, color } : l)));
   const removeLabel = () => {
-    if (!selected || selected.id === STANDARD_LABEL_ID) return;
+    if (!selected || selected.id === DEFAULT_LABEL_ID) return;
     setLabels(labels.filter((l) => l.id !== selected.id)); // its retailers fall back to STANDARD
-    setSelId(STANDARD_LABEL_ID);
+    setSelId(DEFAULT_LABEL_ID);
   };
   const toggleRetailer = (name: string) => {
-    const inSel = selected && selected.id !== STANDARD_LABEL_ID && selected.retailers.includes(name);
-    setLabels(assignRetailerToLabel(labels, name, inSel ? STANDARD_LABEL_ID : selId));
+    const inSel = selected && selected.id !== DEFAULT_LABEL_ID && selected.retailers.includes(name);
+    setLabels(assignRetailerToLabel(labels, name, inSel ? DEFAULT_LABEL_ID : selId));
   };
 
   return (
@@ -123,13 +123,13 @@ export function RetailerLabelsModal({
                   <input
                     value={selected.name}
                     onChange={(e) => rename(e.target.value)}
-                    disabled={selected.id === STANDARD_LABEL_ID}
+                    disabled={selected.id === DEFAULT_LABEL_ID}
                     className="h-9 flex-1 rounded-md border border-border bg-background px-2.5 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-60"
                   />
                   <span className={cn("rounded-full border px-2.5 py-1 text-xs font-medium", LABEL_COLOR_CLASSES[selected.color])}>
                     {selected.name}
                   </span>
-                  {selected.id !== STANDARD_LABEL_ID && (
+                  {selected.id !== DEFAULT_LABEL_ID && (
                     <Button variant="ghost" size="sm" className="h-9 gap-1 text-red-600 hover:text-red-700" onClick={removeLabel}>
                       <Trash2 className="h-4 w-4" /> Delete
                     </Button>
@@ -161,8 +161,8 @@ export function RetailerLabelsModal({
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">
-                    {selected.id === STANDARD_LABEL_ID
-                      ? "STANDARD is the default — retailers not in another label are STANDARD."
+                    {selected.id === DEFAULT_LABEL_ID
+                      ? "NON-CLASSIFIED is the default — any retailer not in another label lands here."
                       : "Check a retailer to add it to this label (removed from any other)."}
                   </p>
                   <div className="flex shrink-0 items-center gap-2 text-xs">
@@ -171,10 +171,10 @@ export function RetailerLabelsModal({
                       className="font-medium text-primary hover:underline"
                       onClick={() => setLabels(assignManyToLabel(labels, visibleRetailers.map((r) => r.name), selId))}
                     >
-                      {selected.id === STANDARD_LABEL_ID ? "Reset all" : "Select all"}
+                      {selected.id === DEFAULT_LABEL_ID ? "Reset all" : "Select all"}
                       {q.trim() ? " (filtered)" : ""} ({visibleRetailers.length})
                     </button>
-                    {selected.id !== STANDARD_LABEL_ID && (
+                    {selected.id !== DEFAULT_LABEL_ID && (
                       <button
                         type="button"
                         className="text-muted-foreground hover:text-foreground"
