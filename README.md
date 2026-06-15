@@ -67,6 +67,39 @@ lint        # eslint
 format      # prettier --write .
 ```
 
+> Use **`dev`** (not `preview`) for day-to-day use: the dev server runs the
+> TanStack **server functions** that power the optional live-data proxy. The app
+> works fully offline on seeded data; to read **real** data, click the **🔑** in the
+> top bar and paste a Visualization-API **Bearer + x-id-token** (prod is a public
+> host, so no VPN is needed for prod; develop/staging do need VPN).
+
+## Desktop launcher (macOS)
+
+For a one-click experience without the terminal, double-click **`start-app.command`**
+in the repo root. It runs `npm install` on first launch, starts the dev server, waits
+for it, opens the app in your browser, and streams the logs — **close the window to
+stop** the server. (Requires Node.js installed.)
+
+To get an **app-style icon on your Desktop**, build a tiny wrapper app once (from the
+repo root):
+
+```bash
+APP="$HOME/Desktop/Massive Update.app"
+printf 'do shell script "open " & quoted form of "%s"\n' "$PWD/start-app.command" > /tmp/launch.applescript
+osacompile -o "$APP" /tmp/launch.applescript
+
+# optional: use the Shalion favicon as the app icon
+ISET="$(mktemp -d)/icon.iconset"; mkdir -p "$ISET"
+for s in 16 32 64 128 256 512; do
+  sips -s format png -z "$s" "$s" public/favicon.ico --out "$ISET/icon_${s}x${s}.png" >/dev/null
+done
+iconutil -c icns "$ISET" -o "$APP/Contents/Resources/applet.icns"
+```
+
+Then double-click **Massive Update** on your Desktop. First launch may need
+right-click → **Open** → **Open** once (Gatekeeper). The app is tied to this repo
+folder — if you move it, recreate the launcher. Other OSes: just run `npm run dev`.
+
 ## Deploy (Vercel)
 
 The build is configured for Vercel via the Nitro `vercel` preset in
