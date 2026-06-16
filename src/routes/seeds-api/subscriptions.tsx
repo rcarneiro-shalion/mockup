@@ -19,6 +19,7 @@ import {
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { Calendar, Store, Sprout } from "lucide-react";
 import {
@@ -129,13 +130,7 @@ function SubscriptionsPage() {
                   </div>
                 </Td>
                 <Td>
-                  <div className="flex flex-wrap gap-1">
-                    {(r.seeds ?? []).length ? (
-                      (r.seeds ?? []).map((s) => <Pill key={s} tone="green">{s}</Pill>)
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </div>
+                  <SeedsCell seeds={r.seeds ?? []} onSeeAll={() => setSelectedId(r.id)} />
                 </Td>
                 <Td><LinkText>{r.scrappingOption}</LinkText></Td>
                 <Td><Pill tone="violet">{r.geo}</Pill></Td>
@@ -179,5 +174,59 @@ function SubscriptionsPage() {
         }}
       />
     </AppShell>
+  );
+}
+
+/**
+ * Seeds column: up to 3 seeds show as pills; 4+ collapse to a "N seeds" count with
+ * a hover card listing them (capped at 20, "…" beyond) and a "See all" link that
+ * opens the subscription's edit dialog (where the Assigned seeds section lives).
+ */
+const SEEDS_INLINE_MAX = 3;
+const SEEDS_TOOLTIP_MAX = 20;
+
+function SeedsCell({ seeds, onSeeAll }: { seeds: string[]; onSeeAll: () => void }) {
+  if (!seeds.length) return <span className="text-muted-foreground">—</span>;
+  if (seeds.length <= SEEDS_INLINE_MAX) {
+    return (
+      <div className="flex flex-wrap gap-1">
+        {seeds.map((s) => (
+          <Pill key={s} tone="green">{s}</Pill>
+        ))}
+      </div>
+    );
+  }
+  const shown = seeds.slice(0, SEEDS_TOOLTIP_MAX);
+  const hidden = seeds.length - shown.length;
+  return (
+    <HoverCard openDelay={120} closeDelay={80}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          onClick={onSeeAll}
+          className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 hover:bg-emerald-100"
+        >
+          <Sprout className="h-3 w-3" /> {seeds.length} seeds
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="w-72 p-3">
+        <div className="mb-2 text-xs font-semibold text-foreground">Seeds ({seeds.length})</div>
+        <div className="flex flex-wrap gap-1">
+          {shown.map((s) => (
+            <Pill key={s} tone="green">{s}</Pill>
+          ))}
+        </div>
+        <div className="mt-2 flex items-center gap-1 text-xs">
+          {hidden > 0 && <span className="text-muted-foreground">…+{hidden} more</span>}
+          <button
+            type="button"
+            onClick={onSeeAll}
+            className="ml-auto font-medium text-[var(--sidebar-active-fg)] hover:underline"
+          >
+            See all
+          </button>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
   );
 }
