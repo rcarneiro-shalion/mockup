@@ -3917,7 +3917,7 @@ export const SPECS: Record<string, ApproxSpec> = {
       },
       {
         "key": "apiOrigin",
-        "label": "Api origin",
+        "label": "API origin",
         "type": "textarea",
         "required": false
       },

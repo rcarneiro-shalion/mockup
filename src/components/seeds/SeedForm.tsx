@@ -126,7 +126,7 @@ export function SeedForm({
 
             {fieldsOpen && (
               <div className="mt-5 space-y-5">
-                {/* Primary value — Url / API origin / Keyword, by seed type. The
+                {/* Primary value — URL / API origin / Keyword, by seed type. The
                     defining field of a seed, so it leads the form, full width. */}
                 <Field label={valueLabel} required>
                   <Input

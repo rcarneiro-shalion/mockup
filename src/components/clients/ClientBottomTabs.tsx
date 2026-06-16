@@ -232,7 +232,7 @@ function SeedTagsTab() {
   const rows = allSeeds.filter(
     (s) => (s.type ?? "KEYWORD") === seedType && (!q || s.d.toLowerCase().includes(q) || (s.value ?? "").toLowerCase().includes(q)),
   );
-  const valueHeader = seedType === "URL" ? "URL" : seedType === "API" ? "Api origin" : "Keyword";
+  const valueHeader = seedType === "URL" ? "URL" : seedType === "API" ? "API origin" : "Keyword";
 
   return (
     <div className="mt-4 rounded-xl border border-border bg-card p-4 shadow-sm">

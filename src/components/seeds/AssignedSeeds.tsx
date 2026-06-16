@@ -18,7 +18,7 @@ import { Plus, Search, Sprout, X } from "lucide-react";
 const TABS: { key: SeedType; label: string }[] = [
   { key: "KEYWORD", label: "Keyword" },
   { key: "URL", label: "URL" },
-  { key: "API", label: "Api" },
+  { key: "API", label: "API" },
 ];
 
 function StatusDot({ status }: { status?: Seed["status"] }) {
@@ -32,7 +32,7 @@ function StatusDot({ status }: { status?: Seed["status"] }) {
 }
 
 /**
- * Assigned seeds for a subscription — a 3-tab (Keyword / Url / Api) searchable grid.
+ * Assigned seeds for a subscription — a 3-tab (Keyword / URL / API) searchable grid.
  * `seeds` holds the assigned seed descriptions; each is resolved against the seeds
  * store to render type-specific columns.
  */
@@ -61,7 +61,7 @@ export function AssignedSeeds({ seeds, onChange }: { seeds: string[]; onChange: 
   const add = (name: string) => { if (!seeds.includes(name)) onChange([...seeds, name]); };
   const available = all.filter((s) => !seeds.includes(s.d));
 
-  const valueHeader = tab === "URL" ? "URL" : tab === "API" ? "Api origin" : "Keyword";
+  const valueHeader = tab === "URL" ? "URL" : tab === "API" ? "API origin" : "Keyword";
   const extraHeader = tab === "KEYWORD" ? "Keyword type" : "Page type";
   const tabLabel = TABS.find((t) => t.key === tab)?.label.toLowerCase() ?? "";
 
