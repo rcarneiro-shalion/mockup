@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Label } from "@/components/ui/label";
@@ -11,10 +11,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Pill } from "@/components/seeds/ListPrimitives";
+import { Pill, Th, Td, LinkText } from "@/components/seeds/ListPrimitives";
 import { STORE_OPTIONS, CATEGORY_OPTIONS, PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
 import { emptySeed, seedValueLabel, KEYWORD_TYPE_OPTIONS, SEED_STATUS_OPTIONS, type Seed, type SeedType, type KeywordType, type SeedStatus } from "@/lib/seeds";
-import { nowStamp } from "@/lib/clients";
+import { nowStamp, getClientsForProject } from "@/lib/clients";
+import { getSubscriptions } from "@/lib/subscriptions";
+import { getProjects } from "@/lib/projects";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ArrowLeft, ChevronUp, HelpCircle, MoreHorizontal, Sprout, Trash2 } from "lucide-react";
@@ -39,6 +41,24 @@ export function SeedForm({
   );
   const [fieldsOpen, setFieldsOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Subscriptions this seed belongs to — indirect: a subscription lists its seeds
+  // by description (Subscription.seeds = seed.d), each tied to a project → client(s).
+  // Keyed off the PERSISTED description (initial.d), not the live-edited one, and
+  // loaded client-side (localStorage) to avoid an SSR/hydration mismatch.
+  const [inSubs, setInSubs] = useState<{ id: string; name: string; project: string; clients: string[] }[]>([]);
+  useEffect(() => {
+    if (!initial) {
+      setInSubs([]);
+      return;
+    }
+    const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
+    setInSubs(
+      getSubscriptions()
+        .filter((s) => (s.seeds ?? []).includes(initial.d))
+        .map((s) => ({ id: s.id, name: s.name, project: s.project, clients: getClientsForProject(projectIdByName.get(s.project) ?? "") })),
+    );
+  }, [initial]);
 
   const set = <K extends keyof Seed>(k: K, v: Seed[K]) =>
     setSeed((prev) => ({ ...prev, [k]: v }));
@@ -175,6 +195,53 @@ export function SeedForm({
               </div>
             )}
           </div>
+
+          {/* Subscriptions this seed belongs to (read-only) */}
+          {isEdit && (
+            <div className="mx-auto mt-5 max-w-5xl rounded-xl border border-border bg-card p-6 shadow-sm">
+              <div className="flex items-baseline gap-2">
+                <span className="text-base font-semibold text-foreground">Subscriptions</span>
+                <span className="text-sm text-muted-foreground">where this seed is used</span>
+              </div>
+              <div className="mt-4 overflow-hidden rounded-lg border border-border">
+                <table className="w-full text-sm">
+                  <thead className="bg-secondary/60">
+                    <tr>
+                      <Th>Subscription name</Th>
+                      <Th>Projects assigned</Th>
+                      <Th>Clients belongs</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inSubs.length === 0 ? (
+                      <tr>
+                        <Td className="text-muted-foreground">
+                          <span className="block py-2">This seed isn't used in any subscription yet.</span>
+                        </Td>
+                        <Td /><Td />
+                      </tr>
+                    ) : (
+                      inSubs.map((s) => (
+                        <tr key={s.id} className="border-t border-border hover:bg-secondary/40">
+                          <Td><LinkText>{s.name}</LinkText></Td>
+                          <Td>{s.project ? <LinkText>{s.project}</LinkText> : <span className="text-muted-foreground">—</span>}</Td>
+                          <Td>
+                            <div className="flex flex-wrap gap-1">
+                              {s.clients.length ? (
+                                s.clients.map((c) => <Pill key={c} tone="green">{c}</Pill>)
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </div>
+                          </Td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
