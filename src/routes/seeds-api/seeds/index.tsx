@@ -157,7 +157,7 @@ function SeedsPage() {
     sortKey: "value",
     cell: (r) =>
       r.value ? (
-        <span className="block max-w-[280px] truncate text-foreground/80" title={r.value}>{r.value}</span>
+        <span className="block max-w-[160px] truncate text-foreground/80" title={r.value}>{r.value}</span>
       ) : (
         dash
       ),
