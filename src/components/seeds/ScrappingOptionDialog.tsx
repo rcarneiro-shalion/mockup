@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectBox } from "@/components/seeds/SelectBox";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import {
   STORE_OPTIONS,
@@ -386,33 +387,6 @@ function Field({
       </Label>
       {children}
     </div>
-  );
-}
-
-function SelectBox({
-  value,
-  onChange,
-  options,
-  disabled,
-  className,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-  disabled?: boolean;
-  className?: string;
-}) {
-  return (
-    <Select value={value || undefined} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger className={className}>
-        <SelectValue placeholder="Select a value" />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((o) => (
-          <SelectItem key={o} value={o}>{o}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
 

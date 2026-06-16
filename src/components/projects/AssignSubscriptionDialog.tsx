@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectBox } from "@/components/seeds/SelectBox";
 import { getSubscriptions } from "@/lib/subscriptions";
 import { ASSIGN_TYPE_OPTIONS, type AssignedSubscription } from "@/lib/projects";
 
@@ -63,18 +64,13 @@ export function AssignSubscriptionDialog({
             <Label className="text-sm font-medium text-foreground/80">
               Subscription <span className="text-destructive">*</span>
             </Label>
-            <Select value={name || undefined} onValueChange={setName}>
-              <SelectTrigger>
-                <SelectValue placeholder={available.length ? "Select a subscription" : "No subscriptions available"} />
-              </SelectTrigger>
-              <SelectContent>
-                {available.map((s) => (
-                  <SelectItem key={s.id} value={s.name}>
-                    {s.name} · {s.store}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SelectBox
+              value={name}
+              onChange={setName}
+              options={available.map((s) => ({ value: s.name, label: `${s.name} · ${s.store}` }))}
+              disabled={!available.length}
+              placeholder={available.length ? "Select a subscription" : "No subscriptions available"}
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">

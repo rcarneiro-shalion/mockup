@@ -14,13 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectBox } from "@/components/seeds/SelectBox";
 import {
   STORE_OPTIONS,
   FREQUENCY_OPTIONS,
@@ -196,17 +190,3 @@ function Field({ label, required, className, children }: { label: string; requir
   );
 }
 
-function SelectBox({ value, onChange, options, disabled, placeholder }: { value: string; onChange: (v: string) => void; options: string[]; disabled?: boolean; placeholder?: string }) {
-  return (
-    <Select value={value || undefined} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger>
-        <SelectValue placeholder={placeholder ?? "Select a value"} />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((o) => (
-          <SelectItem key={o} value={o}>{o}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
