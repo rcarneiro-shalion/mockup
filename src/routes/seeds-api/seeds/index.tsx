@@ -148,7 +148,14 @@ function SeedsPage() {
       key: "type",
       label: "Seed type",
       sortKey: "type",
-      cell: (r) => (r.type ? <Pill tone="blue">{r.type}</Pill> : dash),
+      // API = orange, URL = blue, Keyword = pink. KEYWORD is abbreviated to "KW"
+      // with the full word on hover (title).
+      cell: (r) => {
+        if (!r.type) return dash;
+        const tone = r.type === "API" ? "orange" : r.type === "URL" ? "blue" : "pink";
+        const isKw = r.type === "KEYWORD";
+        return <Pill tone={tone} title={isKw ? "Keyword" : undefined}>{isKw ? "KW" : r.type}</Pill>;
+      },
     });
   }
   cols.push({

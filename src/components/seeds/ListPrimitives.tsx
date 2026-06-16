@@ -229,7 +229,7 @@ export function UserCell({ email = "rcarneiro@..." }: { email?: string }) {
   );
 }
 
-type PillTone = "violet" | "amber" | "blue" | "slate" | "red" | "green";
+type PillTone = "violet" | "amber" | "blue" | "slate" | "red" | "green" | "orange" | "pink";
 
 const toneClass: Record<PillTone, string> = {
   violet: "bg-violet-100 text-violet-700",
@@ -238,19 +238,24 @@ const toneClass: Record<PillTone, string> = {
   slate: "bg-slate-100 text-slate-700",
   red: "border border-rose-200 bg-rose-50 text-rose-700",
   green: "bg-emerald-100 text-emerald-700",
+  orange: "bg-orange-100 text-orange-800",
+  pink: "bg-pink-100 text-pink-700",
 };
 
 export function Pill({
   children,
   tone = "slate",
   className,
+  title,
 }: {
   children: ReactNode;
   tone?: PillTone;
   className?: string;
+  title?: string;
 }) {
   return (
     <span
+      title={title}
       className={cn(
         "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium",
         toneClass[tone],
