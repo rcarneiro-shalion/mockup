@@ -80,25 +80,15 @@ in the repo root. It runs `npm install` on first launch, starts the dev server, 
 for it, opens the app in your browser, and streams the logs — **close the window to
 stop** the server. (Requires Node.js installed.)
 
-To get an **app-style icon on your Desktop**, build a tiny wrapper app once (from the
-repo root):
+To get an **app-style icon on your Desktop**, double-click **`scripts/make-mac-app.command`**
+once. It builds **`Massive Update.app`** on your Desktop with the Shalion icon (a tiny
+AppleScript wrapper that runs `start-app.command`). No paths to edit — it captures the
+repo location automatically.
 
-```bash
-APP="$HOME/Desktop/Massive Update.app"
-printf 'do shell script "open " & quoted form of "%s"\n' "$PWD/start-app.command" > /tmp/launch.applescript
-osacompile -o "$APP" /tmp/launch.applescript
-
-# optional: use the Shalion favicon as the app icon
-ISET="$(mktemp -d)/icon.iconset"; mkdir -p "$ISET"
-for s in 16 32 64 128 256 512; do
-  sips -s format png -z "$s" "$s" public/favicon.ico --out "$ISET/icon_${s}x${s}.png" >/dev/null
-done
-iconutil -c icns "$ISET" -o "$APP/Contents/Resources/applet.icns"
-```
-
-Then double-click **Massive Update** on your Desktop. First launch may need
-right-click → **Open** → **Open** once (Gatekeeper). The app is tied to this repo
-folder — if you move it, recreate the launcher. Other OSes: just run `npm run dev`.
+Then double-click **Massive Update** on your Desktop (or drag it onto the Dock to pin
+it). First launch may need right-click → **Open** → **Open** once (Gatekeeper). The app
+is tied to this repo folder — if you move the repo, just double-click
+`scripts/make-mac-app.command` again to rebuild it. Other OSes: run `npm run dev`.
 
 ## Deploy (Vercel)
 
