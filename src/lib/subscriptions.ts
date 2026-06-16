@@ -21,7 +21,7 @@ export type Subscription = {
 
 export const SUBSCRIPTIONS_KEY = "seeds-api:subscriptions";
 
-export const SUBSCRIPTION_GEOLOC_OPTIONS = ["NONE", "AUTOMATIC", "MANUAL"];
+export const SUBSCRIPTION_GEOLOC_OPTIONS = ["NONE", "AUTOMATIC", "MANUAL", "VIRTUAL_STORE"];
 
 export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
   {
