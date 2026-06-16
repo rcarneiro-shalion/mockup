@@ -12,6 +12,7 @@ import {
   type Seed,
 } from "@/lib/seeds";
 import { PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
+import { getSubscriptions } from "@/lib/subscriptions";
 import {
   PageHeader,
   FilterBar,
@@ -35,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
-import { Calendar, Store } from "lucide-react";
+import { Calendar, Store, Layers } from "lucide-react";
 
 const SEED_TYPE_FILTER_OPTIONS = ["All", "URL", "API", "KEYWORD"];
 
@@ -68,8 +69,15 @@ function SeedsPage() {
   const [fPageType, setFPageType] = useState<string[]>([]);
   const [fKwType, setFKwType] = useState<string[]>([]);
   const [fStatus, setFStatus] = useState<string[]>([]);
+  const [fSub, setFSub] = useState<string[]>([]);
   const sort = useSort("seeds");
   const navigate = useNavigate();
+
+  // Indirect relationship: a subscription holds its assigned seeds by description
+  // (Subscription.seeds = seed.d). The set of seed descriptions covered by the
+  // currently-picked subscriptions — a seed row matches if its description is in it.
+  const allSubs = getSubscriptions();
+  const subSeedSet = new Set(allSubs.filter((s) => fSub.includes(s.name)).flatMap((s) => s.seeds ?? []));
 
   // Switching the seed type resets the type-specific filters.
   const changeSeedType = (t: string) => {
@@ -90,7 +98,8 @@ function SeedsPage() {
     (!fCat.length || fCat.includes(r.cat)) &&
     (!fPageType.length || fPageType.includes(r.pageType ?? "")) &&
     (!fKwType.length || fKwType.includes(r.keywordType ?? "")) &&
-    (!fStatus.length || fStatus.includes(r.status ?? "Active")),
+    (!fStatus.length || fStatus.includes(r.status ?? "Active")) &&
+    (!fSub.length || subSeedSet.has(r.d)),
   );
 
   // Searchable value filter — its label + options follow the selected seed type.
@@ -198,6 +207,14 @@ function SeedsPage() {
             onChange={setFValue}
             searchable
             getLabel={(v) => (v.length > 48 ? v.slice(0, 48) + "…" : v)}
+          />
+          <FilterChip
+            label="Subscriptions"
+            icon={Layers}
+            options={allSubs.map((s) => s.name)}
+            value={fSub}
+            onChange={setFSub}
+            searchable
           />
           <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
           <FilterChip label="Categories" options={distinct(rows, (r) => r.cat)} value={fCat} onChange={setFCat} />
