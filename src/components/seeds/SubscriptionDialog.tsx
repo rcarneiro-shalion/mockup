@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectBox } from "@/components/seeds/SelectBox";
+import { ScrappingOptionPicker } from "@/components/seeds/ScrappingOptionPicker";
+import type { ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import {
   FREQUENCY_OPTIONS,
   ROTATION_OPTIONS,
@@ -65,10 +67,9 @@ export function SubscriptionDialog({
   const set = <K extends keyof Subscription>(k: K, val: Subscription[K]) =>
     setV((prev) => ({ ...prev, [k]: val }));
 
-  // Scrapping options carry the extraction type that drives the Destination option
-  // field (PLP / MEDIA) and the Virtual Seed tab (PDP).
-  const scrappingOptions = readPersistedList<{ name: string; extractionType: string }>("seeds-api:scrapping-options");
-  const scrappingOptionNames = scrappingOptions.map((s) => s.name);
+  // Scrapping options drive the searchable picker plus the extraction-type logic:
+  // the Destination option field (PLP / MEDIA) and the Virtual Seed tab (PDP).
+  const scrappingOptions = readPersistedList<ScrappingOptionValues>("seeds-api:scrapping-options");
   const extractionByOption = new Map(scrappingOptions.map((s) => [s.name, s.extractionType]));
   const selectedExtraction = extractionByOption.get(v.scrappingOption) ?? "";
   const showDestination = selectedExtraction === "DIGITAL_SHELF_PLP" || selectedExtraction === "MEDIA";
@@ -138,7 +139,7 @@ export function SubscriptionDialog({
               </Field>
 
               <Field label="Scrapping option" required className="sm:col-span-2">
-                <SelectBox value={v.scrappingOption} onChange={(x) => set("scrappingOption", x)} options={scrappingOptionNames} />
+                <ScrappingOptionPicker value={v.scrappingOption} onChange={(x) => set("scrappingOption", x)} options={scrappingOptions} />
               </Field>
 
               {showDestination && (
