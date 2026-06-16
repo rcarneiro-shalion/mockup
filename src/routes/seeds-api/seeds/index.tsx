@@ -78,6 +78,14 @@ function SeedsPage() {
   // currently-picked subscriptions — a seed row matches if its description is in it.
   const allSubs = getSubscriptions();
   const subSeedSet = new Set(allSubs.filter((s) => fSub.includes(s.name)).flatMap((s) => s.seeds ?? []));
+  // Inverse of the relationship: seed description → the subscription name(s) it's
+  // assigned to (a seed can belong to several). Drives the Subscriptions column.
+  const subsBySeedDesc = new Map<string, string[]>();
+  for (const sub of allSubs) for (const d of sub.seeds ?? []) {
+    const arr = subsBySeedDesc.get(d);
+    if (arr) arr.push(sub.name);
+    else subsBySeedDesc.set(d, [sub.name]);
+  }
 
   // Switching the seed type resets the type-specific filters.
   const changeSeedType = (t: string) => {
@@ -120,6 +128,7 @@ function SeedsPage() {
     status: (r) => r.status ?? "Active",
     createdAt: (r) => r.c,
     updatedAt: (r) => r.u,
+    subscriptions: (r) => (subsBySeedDesc.get(r.d) ?? []).join(", "),
   });
 
   const valueLabel =
@@ -171,6 +180,23 @@ function SeedsPage() {
   }
   cols.push({ key: "store", label: "Store", sortKey: "store", cell: (r) => <LinkText>{r.store}</LinkText> });
   cols.push({ key: "cat", label: "Category", sortKey: "category", cell: (r) => <span className="text-foreground/80">{r.cat}</span> });
+  cols.push({
+    key: "subs",
+    label: "Subscriptions",
+    sortKey: "subscriptions",
+    cell: (r) => {
+      const names = subsBySeedDesc.get(r.d) ?? [];
+      return names.length ? (
+        <div className="flex max-w-[260px] flex-wrap gap-1">
+          {names.map((n) => (
+            <Pill key={n} tone="violet">{n}</Pill>
+          ))}
+        </div>
+      ) : (
+        dash
+      );
+    },
+  });
   cols.push({ key: "c", label: "Created at", sortKey: "createdAt", cell: (r) => <span className="text-muted-foreground">{r.c}</span> });
   cols.push({ key: "u", label: "Updated at", sortKey: "updatedAt", cell: (r) => <span className="text-muted-foreground">{r.u}</span> });
   cols.push({ key: "status", label: "Status", sortKey: "status", cell: (r) => <StatusCell status={r.status} /> });
