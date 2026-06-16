@@ -36,10 +36,21 @@ function EditProjectPage() {
       initial={project}
       onCancel={goBack}
       onSave={(updated) => {
+        // The Save button commits only the header fields — the grids auto-save
+        // themselves, so preserve the project's (already-persisted) subscriptions.
         setProjects((prev) =>
-          prev.map((p) => (p.id === projectId ? { ...updated, updatedAt: nowStamp() } : p)),
+          prev.map((p) =>
+            p.id === projectId ? { ...p, name: updated.name, bom: updated.bom, status: updated.status, updatedAt: nowStamp() } : p,
+          ),
         );
         goBack();
+      }}
+      onSubscriptionsChange={(subs) => {
+        // Auto-save: persist the subscription grid immediately (same setter as the
+        // Save button, so neither clobbers the other).
+        setProjects((prev) =>
+          prev.map((p) => (p.id === projectId ? { ...p, assignedSubscriptions: subs, updatedAt: nowStamp() } : p)),
+        );
       }}
       onDelete={() => {
         setProjects((prev) => prev.filter((p) => p.id !== projectId));

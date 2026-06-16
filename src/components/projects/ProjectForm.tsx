@@ -23,7 +23,7 @@ import {
 import { AssignSubscriptionDialog } from "@/components/projects/AssignSubscriptionDialog";
 import { AssignClientDialog } from "@/components/projects/AssignClientDialog";
 import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimitives";
-import type { Project } from "@/lib/projects";
+import type { Project, AssignedSubscription } from "@/lib/projects";
 import { getAssignedClientsForProject, setProjectClients, type ProjectClient } from "@/lib/clients";
 import { toast } from "sonner";
 import { ArrowLeft, HelpCircle, Plus, Trash2, X } from "lucide-react";
@@ -34,12 +34,15 @@ export function ProjectForm({
   onSave,
   onCancel,
   onDelete,
+  onSubscriptionsChange,
 }: {
   mode: "add" | "edit";
   initial: Project;
   onSave: (project: Project) => void;
   onCancel: () => void;
   onDelete?: () => void;
+  /** Persist a subscription-grid change immediately (auto-save) — edit mode only. */
+  onSubscriptionsChange?: (subs: AssignedSubscription[]) => void;
 }) {
   const [project, setProject] = useState<Project>(initial);
   const [isSaving, setIsSaving] = useState(false);
@@ -47,7 +50,6 @@ export function ProjectForm({
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignClientOpen, setAssignClientOpen] = useState(false);
   // Assigned clients = the inverse of the client↔project link (lives on the client).
-  // Loaded client-side (localStorage) on mount; reconciled back to the Clients store on save.
   const [assignedClients, setAssignedClients] = useState<ProjectClient[]>([]);
   useEffect(() => {
     setAssignedClients(getAssignedClientsForProject(initial.id));
@@ -57,9 +59,43 @@ export function ProjectForm({
     setProject((prev) => ({ ...prev, [k]: v }));
 
   const assignedSubscriptions = project.assignedSubscriptions ?? [];
+  // The two relationship grids AUTO-SAVE on every add/remove (they don't wait for
+  // the Save button). Only possible for an existing project, so they're gated to
+  // edit mode — in add mode you save the project first (name/BoM/status), then edit.
+  const canAssign = mode === "edit";
 
   const canSave = project.name.trim().length > 0;
 
+  // --- auto-save handlers (persist immediately) ---------------------------
+  const projectRef = { id: initial.id, name: initial.name, bom: initial.bom };
+
+  const assignClient = (c: ProjectClient) => {
+    const next = [...assignedClients, c];
+    setAssignedClients(next);
+    setProjectClients(projectRef, next); // → Clients store (single source of truth)
+    toast.success(`${c.name} assigned`);
+  };
+  const removeClient = (c: ProjectClient) => {
+    const next = assignedClients.filter((x) => x.clientId !== c.clientId);
+    setAssignedClients(next);
+    setProjectClients(projectRef, next);
+    toast.success(`${c.name} removed`);
+  };
+  const assignSubscription = (sp: AssignedSubscription) => {
+    const next = [...assignedSubscriptions, sp];
+    set("assignedSubscriptions", next);
+    onSubscriptionsChange?.(next); // → Projects store, via the route's setter
+    toast.success(`${sp.name} assigned`);
+  };
+  const removeSubscription = (sp: AssignedSubscription) => {
+    const next = assignedSubscriptions.filter((x) => x.id !== sp.id);
+    set("assignedSubscriptions", next);
+    onSubscriptionsChange?.(next);
+    toast.success(`${sp.name} removed`);
+  };
+
+  // The Save button only commits the header fields (name, BoM, status). The grids
+  // persist themselves above, so saving never touches them.
   const handleSave = async () => {
     if (!canSave) {
       toast.error("Name is required");
@@ -68,9 +104,6 @@ export function ProjectForm({
     setIsSaving(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 300));
-      // Persist the client↔project links back to the Clients store (single source
-      // of truth) so the Client page stays in sync, then save the project itself.
-      setProjectClients({ id: project.id, name: project.name, bom: project.bom }, assignedClients);
       onSave(project);
       toast.success(`Project ${mode === "add" ? "created" : "saved"} successfully`);
     } catch {
@@ -146,7 +179,7 @@ export function ProjectForm({
           <div className="mt-5 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-foreground">Assigned clients</h2>
-              <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setAssignClientOpen(true)}>
+              <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={!canAssign} onClick={() => setAssignClientOpen(true)}>
                 <Plus className="h-3.5 w-3.5" />
                 Assign client
               </Button>
@@ -167,7 +200,7 @@ export function ProjectForm({
                   {assignedClients.length === 0 ? (
                     <tr>
                       <Td className="text-muted-foreground">
-                        <span className="block py-2">No clients assigned yet.</span>
+                        <span className="block py-2">{canAssign ? "No clients assigned yet." : "Save the project first to assign clients."}</span>
                       </Td>
                       <Td /><Td /><Td /><Td />
                     </tr>
@@ -180,7 +213,7 @@ export function ProjectForm({
                         <Td className="text-muted-foreground">{c.activeTo}</Td>
                         <Td>
                           <button
-                            onClick={() => setAssignedClients(assignedClients.filter((x) => x.clientId !== c.clientId))}
+                            onClick={() => removeClient(c)}
                             className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
                             aria-label={`Remove ${c.name}`}
                           >
@@ -200,7 +233,7 @@ export function ProjectForm({
           <div className="mt-5 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-foreground">Assigned subscriptions</h2>
-              <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setAssignOpen(true)}>
+              <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={!canAssign} onClick={() => setAssignOpen(true)}>
                 <Plus className="h-3.5 w-3.5" />
                 Assign subscription
               </Button>
@@ -222,7 +255,7 @@ export function ProjectForm({
                   {assignedSubscriptions.length === 0 ? (
                     <tr>
                       <Td className="text-muted-foreground">
-                        <span className="block py-2">No subscriptions assigned yet.</span>
+                        <span className="block py-2">{canAssign ? "No subscriptions assigned yet." : "Save the project first to assign subscriptions."}</span>
                       </Td>
                       <Td /><Td /><Td /><Td /><Td />
                     </tr>
@@ -236,7 +269,7 @@ export function ProjectForm({
                         <Td className="text-muted-foreground">{sp.expiration}</Td>
                         <Td>
                           <button
-                            onClick={() => set("assignedSubscriptions", assignedSubscriptions.filter((x) => x.id !== sp.id))}
+                            onClick={() => removeSubscription(sp)}
                             className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
                             aria-label={`Remove ${sp.name}`}
                           >
@@ -288,14 +321,14 @@ export function ProjectForm({
         open={assignOpen}
         onOpenChange={setAssignOpen}
         assignedNames={assignedSubscriptions.map((sp) => sp.name)}
-        onAssign={(sp) => set("assignedSubscriptions", [...assignedSubscriptions, sp])}
+        onAssign={assignSubscription}
       />
 
       <AssignClientDialog
         open={assignClientOpen}
         onOpenChange={setAssignClientOpen}
         assignedIds={assignedClients.map((c) => c.clientId)}
-        onAssign={(c) => setAssignedClients([...assignedClients, c])}
+        onAssign={assignClient}
       />
     </AppShell>
   );
