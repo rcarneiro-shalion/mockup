@@ -141,10 +141,10 @@ export function SubscriptionDialog({
               </Field>
 
               <Field label="Frequency">
-                <SelectBox value={v.frequency} onChange={(x) => set("frequency", x)} options={FREQUENCY_OPTIONS} />
+                <SelectBox value={v.frequency} onChange={(x) => set("frequency", x)} options={FREQUENCY_OPTIONS} clearable />
               </Field>
               <Field label="Rotation">
-                <SelectBox value={v.rotation} onChange={(x) => set("rotation", x)} options={ROTATION_OPTIONS} />
+                <SelectBox value={v.rotation} onChange={(x) => set("rotation", x)} options={ROTATION_OPTIONS} clearable />
               </Field>
             </section>
 

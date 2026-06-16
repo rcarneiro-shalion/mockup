@@ -93,6 +93,8 @@ function SubscriptionsPage() {
               <SortTh label="Seeds" sortKey="seeds" sort={sort} />
               <SortTh label="Scrapping option" sortKey="scrappingOption" sort={sort} />
               <SortTh label="Geoloc" sortKey="geo" sort={sort} />
+              <SortTh label="Frequency" sortKey="frequency" sort={sort} />
+              <SortTh label="Rotation" sortKey="rotation" sort={sort} />
               <Th>Active</Th>
               <Th className="w-10" />
             </tr>
@@ -137,6 +139,8 @@ function SubscriptionsPage() {
                 </Td>
                 <Td><LinkText>{r.scrappingOption}</LinkText></Td>
                 <Td><Pill tone="violet">{r.geo}</Pill></Td>
+                <Td>{r.frequency ? <Pill tone="slate">{r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
+                <Td>{r.rotation ? <Pill tone="slate">{r.rotation}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td><Switch defaultChecked /></Td>
                 <Td>
                   <RowActionsMenu
