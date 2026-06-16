@@ -24,7 +24,8 @@ import {
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
-import { Calendar, PlayCircle } from "lucide-react";
+import { getSubscriptions } from "@/lib/subscriptions";
+import { Calendar, Layers, PlayCircle } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/scrapping-options")({
   head: () => ({ meta: [{ title: "Scrapping options — Shalion" }] }),
@@ -68,15 +69,33 @@ function ScrappingOptionsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [fExtraction, setFExtraction] = useState<string[]>([]);
+  const [fSub, setFSub] = useState<string[]>([]);
   const sort = useSort("scrapping-options");
+
+  // Indirect relationship: a subscription references its scrapping option by name
+  // (Subscription.scrappingOption). Build the inverse — option name → subscription
+  // name(s) — for the column, plus the set of option names covered by the selected
+  // subscriptions for the filter.
+  const allSubs = getSubscriptions();
+  const subsByOption = new Map<string, string[]>();
+  for (const s of allSubs) {
+    const arr = subsByOption.get(s.scrappingOption);
+    if (arr) arr.push(s.name);
+    else subsByOption.set(s.scrappingOption, [s.name]);
+  }
+  const optionNamesForSelectedSubs = new Set(
+    allSubs.filter((s) => fSub.includes(s.name)).map((s) => s.scrappingOption),
+  );
 
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&
-    (!fExtraction.length || fExtraction.includes(r.extractionType)),
+    (!fExtraction.length || fExtraction.includes(r.extractionType)) &&
+    (!fSub.length || optionNamesForSelectedSubs.has(r.name)),
   );
   const sorted = sortRows(filtered, sort, {
     options: (r) => summaryPills(r).length,
+    subscriptions: (r) => (subsByOption.get(r.name) ?? []).join(", "),
   });
 
   return (
@@ -88,6 +107,7 @@ function ScrappingOptionsPage() {
         />
         <FilterBar search="Search by Scrapping option name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Extraction types" icon={PlayCircle} options={distinct(rows, (r) => r.extractionType)} value={fExtraction} onChange={setFExtraction} />
+          <FilterChip label="Subscriptions" icon={Layers} options={allSubs.map((s) => s.name)} value={fSub} onChange={setFSub} searchable />
           <FilterChip label="Joints" />
           <FilterChip label="Disjoints" />
           <FilterChip label="Created at" icon={Calendar} />
@@ -99,12 +119,15 @@ function ScrappingOptionsPage() {
               <SortTh label="Name" sortKey="name" sort={sort} />
               <SortTh label="Extraction type" sortKey="extractionType" sort={sort} />
               <SortTh label="Options" sortKey="options" sort={sort} />
+              <SortTh label="Subscriptions" sortKey="subscriptions" sort={sort} />
               <Th>Active</Th>
               <Th className="w-10" />
             </tr>
           </thead>
           <tbody>
-            {sorted.map((r, i) => (
+            {sorted.map((r, i) => {
+              const subNames = subsByOption.get(r.name) ?? [];
+              return (
               <tr key={i} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
                 <Td><Pill tone="slate">{r.extractionType}</Pill></Td>
@@ -119,6 +142,15 @@ function ScrappingOptionsPage() {
                     )}
                   </div>
                 </Td>
+                <Td>
+                  {subNames.length ? (
+                    <div className="flex max-w-[260px] flex-wrap gap-1">
+                      {subNames.map((n) => (<Pill key={n} tone="violet">{n}</Pill>))}
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </Td>
                 <Td><Switch defaultChecked={r.status === "Active"} /></Td>
                 <Td>
                   <RowActionsMenu
@@ -128,7 +160,8 @@ function ScrappingOptionsPage() {
                   />
                 </Td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </TableShell>
         <Pagination total={sorted.length} />
