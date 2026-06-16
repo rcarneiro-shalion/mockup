@@ -13,6 +13,8 @@ import {
 } from "@/lib/seeds";
 import { PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
 import { getSubscriptions } from "@/lib/subscriptions";
+import { getProjects } from "@/lib/projects";
+import { getClientsForProject } from "@/lib/clients";
 import {
   PageHeader,
   FilterBar,
@@ -36,7 +38,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
-import { Calendar, Store, Layers } from "lucide-react";
+import { Calendar, Store, Layers, FolderKanban, Users } from "lucide-react";
 
 const SEED_TYPE_FILTER_OPTIONS = ["All", "URL", "API", "KEYWORD"];
 
@@ -70,6 +72,8 @@ function SeedsPage() {
   const [fKwType, setFKwType] = useState<string[]>([]);
   const [fStatus, setFStatus] = useState<string[]>([]);
   const [fSub, setFSub] = useState<string[]>([]);
+  const [fProject, setFProject] = useState<string[]>([]);
+  const [fClient, setFClient] = useState<string[]>([]);
   const sort = useSort("seeds");
   const navigate = useNavigate();
 
@@ -86,6 +90,34 @@ function SeedsPage() {
     if (arr) arr.push(sub.name);
     else subsBySeedDesc.set(d, [sub.name]);
   }
+
+  // Deeper indirect chains for the Projects / Clients filters:
+  //   seed (d) → subscription (seeds[]) → project (sub.project) → client(s).
+  // A subscription's project resolves to its assigned clients via the
+  // client↔project relationship; cache the lookup per project name.
+  const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
+  const clientsByProjectName = new Map<string, string[]>();
+  const clientsOf = (projectName: string) => {
+    let c = clientsByProjectName.get(projectName);
+    if (!c) {
+      c = getClientsForProject(projectIdByName.get(projectName) ?? "");
+      clientsByProjectName.set(projectName, c);
+    }
+    return c;
+  };
+  // Seed descriptions reachable through the subscriptions matching the picked
+  // projects / clients — a seed row matches if its description is in the set.
+  const projectSeedSet = new Set(
+    allSubs.filter((s) => fProject.includes(s.project)).flatMap((s) => s.seeds ?? []),
+  );
+  const clientSeedSet = new Set(
+    allSubs
+      .filter((s) => clientsOf(s.project).some((c) => fClient.includes(c)))
+      .flatMap((s) => s.seeds ?? []),
+  );
+  // Only projects / clients reachable through a subscription can ever match.
+  const projectFilterOptions = [...new Set(allSubs.map((s) => s.project).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const clientFilterOptions = [...new Set(allSubs.flatMap((s) => clientsOf(s.project)))].sort((a, b) => a.localeCompare(b));
 
   // Switching the seed type resets the type-specific filters.
   const changeSeedType = (t: string) => {
@@ -107,7 +139,9 @@ function SeedsPage() {
     (!fPageType.length || fPageType.includes(r.pageType ?? "")) &&
     (!fKwType.length || fKwType.includes(r.keywordType ?? "")) &&
     (!fStatus.length || fStatus.includes(r.status ?? "Active")) &&
-    (!fSub.length || subSeedSet.has(r.d)),
+    (!fSub.length || subSeedSet.has(r.d)) &&
+    (!fProject.length || projectSeedSet.has(r.d)) &&
+    (!fClient.length || clientSeedSet.has(r.d)),
   );
 
   // Searchable value filter — its label + options follow the selected seed type.
@@ -247,6 +281,22 @@ function SeedsPage() {
             options={allSubs.map((s) => s.name)}
             value={fSub}
             onChange={setFSub}
+            searchable
+          />
+          <FilterChip
+            label="Projects"
+            icon={FolderKanban}
+            options={projectFilterOptions}
+            value={fProject}
+            onChange={setFProject}
+            searchable
+          />
+          <FilterChip
+            label="Clients"
+            icon={Users}
+            options={clientFilterOptions}
+            value={fClient}
+            onChange={setFClient}
             searchable
           />
           <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
