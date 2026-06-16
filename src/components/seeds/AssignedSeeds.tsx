@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
@@ -13,7 +13,7 @@ import { Pill } from "@/components/seeds/ListPrimitives";
 import { readPersistedList } from "@/lib/seedOptions";
 import { SEEDS_KEY, INITIAL_SEEDS, type Seed, type SeedType } from "@/lib/seeds";
 import { cn } from "@/lib/utils";
-import { Plus, Search, Sprout, X } from "lucide-react";
+import { Plus, Search, Sparkles, Sprout, X } from "lucide-react";
 
 const TABS: { key: SeedType; label: string }[] = [
   { key: "KEYWORD", label: "Keyword" },
@@ -36,10 +36,25 @@ function StatusDot({ status }: { status?: Seed["status"] }) {
  * `seeds` holds the assigned seed descriptions; each is resolved against the seeds
  * store to render type-specific columns.
  */
-export function AssignedSeeds({ seeds, onChange }: { seeds: string[]; onChange: (next: string[]) => void }) {
-  const [tab, setTab] = useState<SeedType>("KEYWORD");
+export function AssignedSeeds({
+  seeds,
+  onChange,
+  enableVirtualSeed = false,
+}: {
+  seeds: string[];
+  onChange: (next: string[]) => void;
+  /** Enables the Virtual Seed tab — only for Digital Shelf PDP scrapping options. */
+  enableVirtualSeed?: boolean;
+}) {
+  const [tab, setTab] = useState<SeedType | "VIRTUAL">("KEYWORD");
   const [search, setSearch] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
+
+  // Fall back to a seed tab if Virtual Seed gets disabled while it's selected
+  // (e.g. the scrapping option is switched away from Digital Shelf PDP).
+  useEffect(() => {
+    if (!enableVirtualSeed && tab === "VIRTUAL") setTab("KEYWORD");
+  }, [enableVirtualSeed, tab]);
 
   const store = readPersistedList<Seed>(SEEDS_KEY);
   const all = store.length ? store : INITIAL_SEEDS;
@@ -123,8 +138,34 @@ export function AssignedSeeds({ seeds, onChange }: { seeds: string[]; onChange: 
             <span className="rounded-full bg-secondary px-1.5 text-[11px] text-muted-foreground">{countByType(t.key)}</span>
           </button>
         ))}
+        <button
+          type="button"
+          disabled={!enableVirtualSeed}
+          onClick={() => setTab("VIRTUAL")}
+          title={enableVirtualSeed ? undefined : "Available when the scrapping option's extraction type is Digital Shelf PDP"}
+          className={cn(
+            "flex items-center gap-1.5 border-b-2 px-0.5 pb-2 text-sm transition-colors",
+            tab === "VIRTUAL"
+              ? "border-primary font-medium text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground",
+            !enableVirtualSeed && "cursor-not-allowed opacity-40 hover:text-muted-foreground",
+          )}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          Virtual Seed
+        </button>
       </div>
 
+      {tab === "VIRTUAL" ? (
+        <div className="mt-3 rounded-md border border-dashed border-border bg-secondary/20 px-6 py-8 text-center">
+          <Sparkles className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
+          <p className="text-sm font-medium text-foreground">Virtual seeds</p>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+            Virtual seeds are derived automatically for Digital Shelf PDP subscriptions.
+          </p>
+        </div>
+      ) : (
+        <>
       {/* Search within tab */}
       <div className="relative mt-3">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -187,6 +228,8 @@ export function AssignedSeeds({ seeds, onChange }: { seeds: string[]; onChange: 
           </tbody>
         </table>
       </div>
+        </>
+      )}
     </div>
   );
 }

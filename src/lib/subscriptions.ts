@@ -14,6 +14,9 @@ export type Subscription = {
   locationSet: string;
   frequency: string; // Daily | Weekly | Monthly
   rotation: string; // Zipcode | Locations | Seeds
+  // Set only when the scrapping option's extraction type is DIGITAL_SHELF_PLP or
+  // MEDIA — points to a sibling subscription whose scrapping option is a PDP one.
+  destinationOption?: string;
 };
 
 export const SUBSCRIPTIONS_KEY = "seeds-api:subscriptions";
@@ -64,5 +67,6 @@ export function emptySubscription(): Subscription {
     locationSet: "",
     frequency: "Daily",
     rotation: "",
+    destinationOption: "",
   };
 }

@@ -26,6 +26,7 @@ import { getStores } from "@/lib/retailers";
 import {
   SUBSCRIPTION_GEOLOC_OPTIONS,
   emptySubscription,
+  getSubscriptions,
   type Subscription,
 } from "@/lib/subscriptions";
 import { AssignedSeeds } from "@/components/seeds/AssignedSeeds";
@@ -64,7 +65,18 @@ export function SubscriptionDialog({
   const set = <K extends keyof Subscription>(k: K, val: Subscription[K]) =>
     setV((prev) => ({ ...prev, [k]: val }));
 
-  const scrappingOptionNames = readPersistedList<{ name: string }>("seeds-api:scrapping-options").map((s) => s.name);
+  // Scrapping options carry the extraction type that drives the Destination option
+  // field (PLP / MEDIA) and the Virtual Seed tab (PDP).
+  const scrappingOptions = readPersistedList<{ name: string; extractionType: string }>("seeds-api:scrapping-options");
+  const scrappingOptionNames = scrappingOptions.map((s) => s.name);
+  const extractionByOption = new Map(scrappingOptions.map((s) => [s.name, s.extractionType]));
+  const selectedExtraction = extractionByOption.get(v.scrappingOption) ?? "";
+  const showDestination = selectedExtraction === "DIGITAL_SHELF_PLP" || selectedExtraction === "MEDIA";
+  const enableVirtualSeed = selectedExtraction === "DIGITAL_SHELF_PDP";
+  // Destination option choices: sibling subscriptions whose scrapping option is a PDP one.
+  const pdpSubscriptionNames = getSubscriptions()
+    .filter((s) => s.id !== v.id && extractionByOption.get(s.scrappingOption) === "DIGITAL_SHELF_PDP")
+    .map((s) => s.name);
   const projectNames = getProjects().map((p) => p.name);
   // Store options come from the Stores entity (Retailers › Stores), deduped by name.
   const storeOptions = [...new Set(getStores().map((s) => s.name))].sort((a, b) => a.localeCompare(b));
@@ -129,6 +141,18 @@ export function SubscriptionDialog({
                 <SelectBox value={v.scrappingOption} onChange={(x) => set("scrappingOption", x)} options={scrappingOptionNames} />
               </Field>
 
+              {showDestination && (
+                <Field label="Destination option" className="sm:col-span-2">
+                  <SelectBox
+                    value={v.destinationOption ?? ""}
+                    onChange={(x) => set("destinationOption", x)}
+                    options={pdpSubscriptionNames}
+                    clearable
+                    placeholder="Select a Digital Shelf PDP subscription"
+                  />
+                </Field>
+              )}
+
               <Field label="Geolocation mode" required>
                 <SelectBox value={v.geo} onChange={(x) => set("geo", x)} options={SUBSCRIPTION_GEOLOC_OPTIONS} />
               </Field>
@@ -151,7 +175,7 @@ export function SubscriptionDialog({
             </section>
 
             <section className="mt-6 border-t border-border pt-5">
-              <AssignedSeeds seeds={v.seeds} onChange={(next) => set("seeds", next)} />
+              <AssignedSeeds seeds={v.seeds} onChange={(next) => set("seeds", next)} enableVirtualSeed={enableVirtualSeed} />
             </section>
           </div>
 
