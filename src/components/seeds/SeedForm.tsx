@@ -44,6 +44,8 @@ export function SeedForm({
     setSeed((prev) => ({ ...prev, [k]: v }));
 
   const valueLabel = seedValueLabel(effectiveType);
+  const valuePlaceholder =
+    effectiveType === "URL" ? "https://www.example.com/dp/…" : effectiveType === "API" ? "API origin" : "e.g. water";
   const canSave =
     seed.d.trim() && seed.store.trim() && seed.discoveryKey?.trim() && seed.pageType?.trim() && seed.value?.trim() &&
     (effectiveType !== "KEYWORD" || !!seed.keywordType);
@@ -116,6 +118,25 @@ export function SeedForm({
 
             {fieldsOpen && (
               <div className="mt-5 space-y-5">
+                {/* Primary value — Url / API origin / Keyword, by seed type. The
+                    defining field of a seed, so it leads the form, full width. */}
+                <Field label={valueLabel} required>
+                  <Input
+                    value={seed.value ?? ""}
+                    onChange={(e) => set("value", e.target.value)}
+                    placeholder={valuePlaceholder}
+                    className="h-11 text-base"
+                  />
+                </Field>
+                {effectiveType === "KEYWORD" && (
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+                    <Field label="Keyword type" required>
+                      <SelectBox value={seed.keywordType ?? ""} onChange={(v) => set("keywordType", v as KeywordType)} options={KEYWORD_TYPE_OPTIONS} />
+                    </Field>
+                    <div />
+                  </div>
+                )}
+
                 <Field label="Description" required>
                   <textarea
                     value={seed.d}
@@ -164,20 +185,6 @@ export function SeedForm({
                   </label>
                 </div>
 
-                {effectiveType === "KEYWORD" ? (
-                  <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
-                    <Field label="Keyword type" required>
-                      <SelectBox value={seed.keywordType ?? ""} onChange={(v) => set("keywordType", v as KeywordType)} options={KEYWORD_TYPE_OPTIONS} />
-                    </Field>
-                    <Field label={valueLabel} required>
-                      <Input value={seed.value ?? ""} onChange={(e) => set("value", e.target.value)} />
-                    </Field>
-                  </div>
-                ) : (
-                  <Field label={valueLabel} required>
-                    <Input value={seed.value ?? ""} onChange={(e) => set("value", e.target.value)} />
-                  </Field>
-                )}
               </div>
             )}
           </div>
