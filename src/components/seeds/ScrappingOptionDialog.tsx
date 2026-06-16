@@ -152,7 +152,7 @@ export function ScrappingOptionDialog({
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-destructive"
+                className="mr-6 rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-destructive"
                 aria-label="Delete"
               >
                 <Trash2 className="h-4 w-4" />
