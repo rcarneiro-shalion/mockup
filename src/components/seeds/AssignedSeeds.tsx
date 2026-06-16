@@ -17,7 +17,7 @@ import { Plus, Search, Sprout, X } from "lucide-react";
 
 const TABS: { key: SeedType; label: string }[] = [
   { key: "KEYWORD", label: "Keyword" },
-  { key: "URL", label: "Url" },
+  { key: "URL", label: "URL" },
   { key: "API", label: "Api" },
 ];
 
@@ -61,7 +61,7 @@ export function AssignedSeeds({ seeds, onChange }: { seeds: string[]; onChange: 
   const add = (name: string) => { if (!seeds.includes(name)) onChange([...seeds, name]); };
   const available = all.filter((s) => !seeds.includes(s.d));
 
-  const valueHeader = tab === "URL" ? "Url" : tab === "API" ? "Api origin" : "Keyword";
+  const valueHeader = tab === "URL" ? "URL" : tab === "API" ? "Api origin" : "Keyword";
   const extraHeader = tab === "KEYWORD" ? "Keyword type" : "Page type";
   const tabLabel = TABS.find((t) => t.key === tab)?.label.toLowerCase() ?? "";
 

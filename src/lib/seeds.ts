@@ -244,7 +244,7 @@ export const INITIAL_SEEDS: Seed[] = [...BASE_SEEDS, ...KEYWORD_SEEDS, ...URL_SE
 // Label for the type-specific value field.
 export function seedValueLabel(type: SeedType): string {
   switch (type) {
-    case "URL": return "Url";
+    case "URL": return "URL";
     case "API": return "API origin";
     case "KEYWORD": return "Keyword";
   }

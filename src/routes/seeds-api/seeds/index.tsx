@@ -95,7 +95,7 @@ function SeedsPage() {
 
   // Searchable value filter — its label + options follow the selected seed type.
   const valueFilterLabel =
-    seedType === "URL" ? "Url" : seedType === "API" ? "Api origin" : seedType === "KEYWORD" ? "Keyword" : "Value";
+    seedType === "URL" ? "URL" : seedType === "API" ? "Api origin" : seedType === "KEYWORD" ? "Keyword" : "Value";
   const valueOptions = distinct(
     rows.filter((r) => seedType === "All" || (r.type ?? "") === seedType),
     (r) => r.value ?? "",
@@ -114,7 +114,7 @@ function SeedsPage() {
   });
 
   const valueLabel =
-    seedType === "URL" ? "Url" : seedType === "API" ? "Api origin" : seedType === "KEYWORD" ? "Keyword" : "Value";
+    seedType === "URL" ? "URL" : seedType === "API" ? "Api origin" : seedType === "KEYWORD" ? "Keyword" : "Value";
 
   const showKwType = seedType === "KEYWORD" || seedType === "All";
   const showPageType = seedType === "URL" || seedType === "API" || seedType === "All";

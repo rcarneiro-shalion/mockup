@@ -3899,7 +3899,7 @@ export const SPECS: Record<string, ApproxSpec> = {
       },
       {
         "key": "url",
-        "label": "Url",
+        "label": "URL",
         "type": "text",
         "required": false
       },
