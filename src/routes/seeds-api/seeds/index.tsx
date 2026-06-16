@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
-import { Calendar, Store, Layers, FolderKanban, Users } from "lucide-react";
+import { Calendar, Store, Layers, FolderKanban, Users, Shapes } from "lucide-react";
 
 const SEED_TYPE_FILTER_OPTIONS = ["All", "URL", "API", "KEYWORD"];
 
@@ -74,6 +74,7 @@ function SeedsPage() {
   const [fSub, setFSub] = useState<string[]>([]);
   const [fProject, setFProject] = useState<string[]>([]);
   const [fClient, setFClient] = useState<string[]>([]);
+  const [fSeedType, setFSeedType] = useState<string[]>([]);
   const sort = useSort("seeds");
   const navigate = useNavigate();
 
@@ -125,6 +126,7 @@ function SeedsPage() {
     setFValue([]);
     setFPageType([]);
     setFKwType([]);
+    setFSeedType([]); // multi-type filter only applies in the "All" view
   };
 
   const goEdit = (r: Seed) => navigate({ to: "/seeds-api/seeds/$seedId", params: { seedId: r.id } });
@@ -132,6 +134,7 @@ function SeedsPage() {
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) =>
     (seedType === "All" || (r.type ?? "") === seedType) &&
+    (!fSeedType.length || fSeedType.includes(r.type ?? "")) &&
     (!q || r.d.toLowerCase().includes(q) || (r.value ?? "").toLowerCase().includes(q)) &&
     (!fValue.length || fValue.includes(r.value ?? "")) &&
     (!fStore.length || fStore.includes(r.store)) &&
@@ -267,6 +270,15 @@ function SeedsPage() {
           }}
         />
         <FilterBar search="Search by Seed description" searchValue={query} onSearchChange={setQuery}>
+          {seedType === "All" && (
+            <FilterChip
+              label="Seed type"
+              icon={Shapes}
+              options={["URL", "API", "KEYWORD"]}
+              value={fSeedType}
+              onChange={setFSeedType}
+            />
+          )}
           <FilterChip
             label={valueFilterLabel}
             options={valueOptions}
