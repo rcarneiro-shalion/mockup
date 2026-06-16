@@ -68,12 +68,11 @@ export const SORT_OPTIONS = [
   "newest",
 ];
 
-// Client-oriented option: how often the Stuff re-runs.
-export const FREQUENCY_OPTIONS = [
-  "NO_ROTATE_DAILY",
-  "ROTATE_WEEKLY",
-  "ROTATE_MONTHLY",
-];
+// Subscription: how often it re-runs.
+export const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly"];
+
+// Subscription: what the rotation cycles through.
+export const ROTATION_OPTIONS = ["Zipcode", "Locations", "Seeds"];
 
 // Location SET — a named group of locations referenced by a Stuff.
 export const LOCATION_SET_OPTIONS = [

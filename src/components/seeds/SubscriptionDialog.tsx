@@ -18,6 +18,7 @@ import { SelectBox } from "@/components/seeds/SelectBox";
 import {
   STORE_OPTIONS,
   FREQUENCY_OPTIONS,
+  ROTATION_OPTIONS,
   LOCATION_SET_OPTIONS,
   readPersistedList,
 } from "@/lib/seedOptions";
@@ -141,6 +142,9 @@ export function SubscriptionDialog({
 
               <Field label="Frequency">
                 <SelectBox value={v.frequency} onChange={(x) => set("frequency", x)} options={FREQUENCY_OPTIONS} />
+              </Field>
+              <Field label="Rotation">
+                <SelectBox value={v.rotation} onChange={(x) => set("rotation", x)} options={ROTATION_OPTIONS} />
               </Field>
             </section>
 

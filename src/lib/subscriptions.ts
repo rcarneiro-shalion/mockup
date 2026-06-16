@@ -12,7 +12,8 @@ export type Subscription = {
   scrappingOption: string;
   geo: string; // NONE | AUTOMATIC | MANUAL
   locationSet: string;
-  frequency: string;
+  frequency: string; // Daily | Weekly | Monthly
+  rotation: string; // Zipcode | Locations | Seeds
 };
 
 export const SUBSCRIPTIONS_KEY = "seeds-api:subscriptions";
@@ -29,7 +30,8 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
     scrappingOption: "ME_KW_WATER — Amazon US",
     geo: "MANUAL",
     locationSet: "Amazon US — All locations",
-    frequency: "NO_ROTATE_DAILY",
+    frequency: "Daily",
+    rotation: "Locations",
   },
   {
     id: "sub2",
@@ -40,7 +42,8 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
     scrappingOption: "PDP_BEAM_US — Amazon US",
     geo: "AUTOMATIC",
     locationSet: "",
-    frequency: "ROTATE_WEEKLY",
+    frequency: "Weekly",
+    rotation: "Seeds",
   },
 ];
 
@@ -59,6 +62,7 @@ export function emptySubscription(): Subscription {
     scrappingOption: "",
     geo: "NONE",
     locationSet: "",
-    frequency: "NO_ROTATE_DAILY",
+    frequency: "Daily",
+    rotation: "",
   };
 }
