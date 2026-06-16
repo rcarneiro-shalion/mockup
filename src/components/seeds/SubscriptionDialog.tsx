@@ -16,13 +16,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectBox } from "@/components/seeds/SelectBox";
 import {
-  STORE_OPTIONS,
   FREQUENCY_OPTIONS,
   ROTATION_OPTIONS,
   LOCATION_SET_OPTIONS,
   readPersistedList,
 } from "@/lib/seedOptions";
 import { getProjects } from "@/lib/projects";
+import { getStores } from "@/lib/retailers";
 import {
   SUBSCRIPTION_GEOLOC_OPTIONS,
   emptySubscription,
@@ -66,6 +66,8 @@ export function SubscriptionDialog({
 
   const scrappingOptionNames = readPersistedList<{ name: string }>("seeds-api:scrapping-options").map((s) => s.name);
   const projectNames = getProjects().map((p) => p.name);
+  // Store options come from the Stores entity (Retailers › Stores), deduped by name.
+  const storeOptions = [...new Set(getStores().map((s) => s.name))].sort((a, b) => a.localeCompare(b));
 
   const locationEnabled = v.geo === "MANUAL";
 
@@ -120,7 +122,7 @@ export function SubscriptionDialog({
                 <SelectBox value={v.project} onChange={(x) => set("project", x)} options={projectNames} />
               </Field>
               <Field label="Store" required>
-                <SelectBox value={v.store} onChange={(x) => set("store", x)} options={STORE_OPTIONS} />
+                <SelectBox value={v.store} onChange={(x) => set("store", x)} options={storeOptions} />
               </Field>
 
               <Field label="Scrapping option" required className="sm:col-span-2">
