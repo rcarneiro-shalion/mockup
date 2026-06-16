@@ -30,17 +30,16 @@ import {
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
-import { Calendar, Store, Layers, FolderKanban, Users, Shapes } from "lucide-react";
-
-const SEED_TYPE_FILTER_OPTIONS = ["All", "URL", "API", "KEYWORD"];
+import { Calendar, Store, Layers, FolderKanban, Users, Shapes, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/seeds/")({
   head: () => ({ meta: [{ title: "Seeds — Shalion" }] }),
@@ -63,7 +62,6 @@ type Col = { key: string; label: ReactNode; sortKey?: string; cell: (r: Seed) =>
 
 function SeedsPage() {
   const [rows, setRows] = usePersistentState<Seed[]>(SEEDS_KEY, INITIAL_SEEDS);
-  const [seedType, setSeedType] = useState("All");
   const [query, setQuery] = useState("");
   const [fValue, setFValue] = useState<string[]>([]);
   const [fStore, setFStore] = useState<string[]>([]);
@@ -120,20 +118,13 @@ function SeedsPage() {
   const projectFilterOptions = [...new Set(allSubs.map((s) => s.project).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const clientFilterOptions = [...new Set(allSubs.flatMap((s) => clientsOf(s.project)))].sort((a, b) => a.localeCompare(b));
 
-  // Switching the seed type resets the type-specific filters.
-  const changeSeedType = (t: string) => {
-    setSeedType(t);
-    setFValue([]);
-    setFPageType([]);
-    setFKwType([]);
-    setFSeedType([]); // multi-type filter only applies in the "All" view
-  };
-
   const goEdit = (r: Seed) => navigate({ to: "/seeds-api/seeds/$seedId", params: { seedId: r.id } });
+  // Add seed: the type is picked from the button's menu first, then the form opens.
+  const addSeed = (type: "URL" | "API" | "KEYWORD") =>
+    navigate({ to: "/seeds-api/seeds/new", search: { type } });
 
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) =>
-    (seedType === "All" || (r.type ?? "") === seedType) &&
     (!fSeedType.length || fSeedType.includes(r.type ?? "")) &&
     (!q || r.d.toLowerCase().includes(q) || (r.value ?? "").toLowerCase().includes(q)) &&
     (!fValue.length || fValue.includes(r.value ?? "")) &&
@@ -147,13 +138,8 @@ function SeedsPage() {
     (!fClient.length || clientSeedSet.has(r.d)),
   );
 
-  // Searchable value filter — its label + options follow the selected seed type.
-  const valueFilterLabel =
-    seedType === "URL" ? "URL" : seedType === "API" ? "API origin" : seedType === "KEYWORD" ? "Keyword" : "Value";
-  const valueOptions = distinct(
-    rows.filter((r) => seedType === "All" || (r.type ?? "") === seedType),
-    (r) => r.value ?? "",
-  ).filter(Boolean);
+  // Searchable value filter across all seed types.
+  const valueOptions = distinct(rows, (r) => r.value ?? "").filter(Boolean);
   const visible = sortRows(filtered, sort, {
     description: (r) => r.d,
     value: (r) => r.value ?? "",
@@ -168,36 +154,27 @@ function SeedsPage() {
     subscriptions: (r) => (subsBySeedDesc.get(r.d) ?? []).join(", "),
   });
 
-  const valueLabel =
-    seedType === "URL" ? "URL" : seedType === "API" ? "API origin" : seedType === "KEYWORD" ? "Keyword" : "Value";
-
-  const showKwType = seedType === "KEYWORD" || seedType === "All";
-  const showPageType = seedType === "URL" || seedType === "API" || seedType === "All";
-
-  // In "All" every variant column is shown and each cell renders only the field
-  // relevant to that row's seed type ("—" otherwise). Single-type views keep just
-  // their own fields.
+  // Every seed type is listed together, so each variant column is always shown and
+  // each cell renders only the field relevant to that row's seed type ("—" otherwise).
   const cols: Col[] = [
     { key: "d", label: "Description", sortKey: "description", cell: (r) => <LinkText onClick={() => goEdit(r)}>{r.d}</LinkText> },
   ];
-  if (seedType === "All") {
-    cols.push({
-      key: "type",
-      label: "Seed type",
-      sortKey: "type",
-      // API = orange, URL = blue, Keyword = violet (outlined). KEYWORD is abbreviated
-      // to "KW" with the full word on hover (title).
-      cell: (r) => {
-        if (!r.type) return dash;
-        const tone = r.type === "API" ? "orange" : r.type === "URL" ? "blue" : "violetOutline";
-        const isKw = r.type === "KEYWORD";
-        return <Pill tone={tone} title={isKw ? "Keyword" : undefined}>{isKw ? "KW" : r.type}</Pill>;
-      },
-    });
-  }
+  cols.push({
+    key: "type",
+    label: "Seed type",
+    sortKey: "type",
+    // API = orange, URL = blue, Keyword = violet (outlined). KEYWORD is abbreviated
+    // to "KW" with the full word on hover (title).
+    cell: (r) => {
+      if (!r.type) return dash;
+      const tone = r.type === "API" ? "orange" : r.type === "URL" ? "blue" : "violetOutline";
+      const isKw = r.type === "KEYWORD";
+      return <Pill tone={tone} title={isKw ? "Keyword" : undefined}>{isKw ? "KW" : r.type}</Pill>;
+    },
+  });
   cols.push({
     key: "value",
-    label: valueLabel,
+    label: "Value",
     sortKey: "value",
     cell: (r) =>
       r.value ? (
@@ -206,22 +183,18 @@ function SeedsPage() {
         dash
       ),
   });
-  if (showKwType) {
-    cols.push({
-      key: "kwt",
-      label: "Keyword type",
-      sortKey: "keywordType",
-      cell: (r) => (r.keywordType ? <Pill tone={r.keywordType === "BRANDED" ? "violet" : "slate"}>{r.keywordType}</Pill> : dash),
-    });
-  }
-  if (showPageType) {
-    cols.push({
-      key: "pt",
-      label: "Page type",
-      sortKey: "pageType",
-      cell: (r) => (r.pageType ? <Pill tone="slate">{r.pageType}</Pill> : dash),
-    });
-  }
+  cols.push({
+    key: "kwt",
+    label: "Keyword type",
+    sortKey: "keywordType",
+    cell: (r) => (r.keywordType ? <Pill tone={r.keywordType === "BRANDED" ? "violet" : "slate"}>{r.keywordType}</Pill> : dash),
+  });
+  cols.push({
+    key: "pt",
+    label: "Page type",
+    sortKey: "pageType",
+    cell: (r) => (r.pageType ? <Pill tone="slate">{r.pageType}</Pill> : dash),
+  });
   cols.push({ key: "store", label: "Store", sortKey: "store", cell: (r) => <LinkText>{r.store}</LinkText> });
   cols.push({ key: "cat", label: "Category", sortKey: "category", cell: (r) => <span className="text-foreground/80">{r.cat}</span> });
   cols.push({
@@ -250,37 +223,39 @@ function SeedsPage() {
       <div className="flex h-full flex-col">
         <PageHeader
           title="Seeds"
-          trailing={
-            <Select value={seedType} onValueChange={changeSeedType}>
-              <SelectTrigger className="h-8 w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SEED_TYPE_FILTER_OPTIONS.map((o) => (
-                  <SelectItem key={o} value={o}>{o}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          actionSlot={
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" className="h-8 gap-1.5">
+                  <Plus className="h-4 w-4" />
+                  Add seed
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuLabel>Select seed type</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => addSeed("URL")}>
+                  <Pill tone="blue">URL</Pill>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => addSeed("API")}>
+                  <Pill tone="orange">API</Pill>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => addSeed("KEYWORD")}>
+                  <Pill tone="violetOutline">Keyword</Pill>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           }
-          action={{
-            label: "Add seed",
-            disabled: seedType === "All",
-            onClick: () =>
-              navigate({ to: "/seeds-api/seeds/new", search: { type: seedType as "URL" | "API" | "KEYWORD" } }),
-          }}
         />
         <FilterBar search="Search by Seed description" searchValue={query} onSearchChange={setQuery}>
-          {seedType === "All" && (
-            <FilterChip
-              label="Seed type"
-              icon={Shapes}
-              options={["URL", "API", "KEYWORD"]}
-              value={fSeedType}
-              onChange={setFSeedType}
-            />
-          )}
           <FilterChip
-            label={valueFilterLabel}
+            label="Seed type"
+            icon={Shapes}
+            options={["URL", "API", "KEYWORD"]}
+            value={fSeedType}
+            onChange={setFSeedType}
+          />
+          <FilterChip
+            label="Value"
             options={valueOptions}
             value={fValue}
             onChange={setFValue}
@@ -313,12 +288,8 @@ function SeedsPage() {
           />
           <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
           <FilterChip label="Categories" options={distinct(rows, (r) => r.cat)} value={fCat} onChange={setFCat} />
-          {seedType !== "KEYWORD" && (
-            <FilterChip label="Page types" options={PAGE_TYPE_OPTIONS} value={fPageType} onChange={setFPageType} />
-          )}
-          {(seedType === "KEYWORD" || seedType === "All") && (
-            <FilterChip label="Keyword type" options={KEYWORD_TYPE_OPTIONS} value={fKwType} onChange={setFKwType} />
-          )}
+          <FilterChip label="Page types" options={PAGE_TYPE_OPTIONS} value={fPageType} onChange={setFPageType} />
+          <FilterChip label="Keyword type" options={KEYWORD_TYPE_OPTIONS} value={fKwType} onChange={setFKwType} />
           <FilterChip label="Status" options={SEED_STATUS_OPTIONS} value={fStatus} onChange={setFStatus} />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />

@@ -103,10 +103,13 @@ export function PageHeader({
   title,
   trailing,
   action,
+  actionSlot,
 }: {
   title: string;
   trailing?: ReactNode;
   action?: { label: string; disabled?: boolean; onClick?: () => void };
+  /** Custom right-side content; takes precedence over `action` (e.g. a menu button). */
+  actionSlot?: ReactNode;
 }) {
   return (
     <div className="flex items-center justify-between px-6 pt-5">
@@ -114,7 +117,9 @@ export function PageHeader({
         <h1 className="text-[17px] font-semibold text-foreground">{title}</h1>
         {trailing}
       </div>
-      {action ? (
+      {actionSlot ? (
+        actionSlot
+      ) : action ? (
         <Button disabled={action.disabled} onClick={action.onClick} size="sm" className="h-8 gap-1.5">
           <Plus className="h-4 w-4" />
           {action.label}
