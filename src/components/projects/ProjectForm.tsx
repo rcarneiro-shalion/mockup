@@ -26,7 +26,7 @@ import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimi
 import type { Project, AssignedSubscription } from "@/lib/projects";
 import { getAssignedClientsForProject, setProjectClients, type ProjectClient } from "@/lib/clients";
 import { toast } from "sonner";
-import { ArrowLeft, HelpCircle, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, HelpCircle, Pencil, Plus, Trash2, X } from "lucide-react";
 
 export function ProjectForm({
   mode,
@@ -49,6 +49,8 @@ export function ProjectForm({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignClientOpen, setAssignClientOpen] = useState(false);
+  const [editClient, setEditClient] = useState<ProjectClient | null>(null);
+  const [editSub, setEditSub] = useState<AssignedSubscription | null>(null);
   // Assigned clients = the inverse of the client↔project link (lives on the client).
   const [assignedClients, setAssignedClients] = useState<ProjectClient[]>([]);
   useEffect(() => {
@@ -81,6 +83,12 @@ export function ProjectForm({
     setProjectClients(projectRef, next);
     toast.success(`${c.name} removed`);
   };
+  const updateClient = (c: ProjectClient) => {
+    const next = assignedClients.map((x) => (x.clientId === c.clientId ? c : x));
+    setAssignedClients(next);
+    setProjectClients(projectRef, next);
+    toast.success(`${c.name} updated`);
+  };
   const assignSubscription = (sp: AssignedSubscription) => {
     const next = [...assignedSubscriptions, sp];
     set("assignedSubscriptions", next);
@@ -92,6 +100,12 @@ export function ProjectForm({
     set("assignedSubscriptions", next);
     onSubscriptionsChange?.(next);
     toast.success(`${sp.name} removed`);
+  };
+  const updateSubscription = (sp: AssignedSubscription) => {
+    const next = assignedSubscriptions.map((x) => (x.id === sp.id ? sp : x));
+    set("assignedSubscriptions", next);
+    onSubscriptionsChange?.(next);
+    toast.success(`${sp.name} updated`);
   };
 
   // The Save button only commits the header fields (name, BoM, status). The grids
@@ -212,13 +226,22 @@ export function ProjectForm({
                         <Td className="text-muted-foreground">{c.activeFrom}</Td>
                         <Td className="text-muted-foreground">{c.activeTo}</Td>
                         <Td>
-                          <button
-                            onClick={() => removeClient(c)}
-                            className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
-                            aria-label={`Remove ${c.name}`}
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-0.5">
+                            <button
+                              onClick={() => setEditClient(c)}
+                              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              aria-label={`Edit ${c.name}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => removeClient(c)}
+                              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
+                              aria-label={`Remove ${c.name}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
                         </Td>
                       </tr>
                     ))
@@ -268,13 +291,22 @@ export function ProjectForm({
                         <Td><Pill tone="slate">{sp.type}</Pill></Td>
                         <Td className="text-muted-foreground">{sp.expiration}</Td>
                         <Td>
-                          <button
-                            onClick={() => removeSubscription(sp)}
-                            className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
-                            aria-label={`Remove ${sp.name}`}
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-0.5">
+                            <button
+                              onClick={() => setEditSub(sp)}
+                              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              aria-label={`Edit ${sp.name}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => removeSubscription(sp)}
+                              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
+                              aria-label={`Remove ${sp.name}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
                         </Td>
                       </tr>
                     ))
@@ -318,17 +350,19 @@ export function ProjectForm({
       </AlertDialog>
 
       <AssignSubscriptionDialog
-        open={assignOpen}
-        onOpenChange={setAssignOpen}
+        open={assignOpen || !!editSub}
+        onOpenChange={(v) => { if (!v) { setAssignOpen(false); setEditSub(null); } }}
         assignedNames={assignedSubscriptions.map((sp) => sp.name)}
-        onAssign={assignSubscription}
+        editing={editSub}
+        onAssign={(sp) => (editSub ? updateSubscription(sp) : assignSubscription(sp))}
       />
 
       <AssignClientDialog
-        open={assignClientOpen}
-        onOpenChange={setAssignClientOpen}
+        open={assignClientOpen || !!editClient}
+        onOpenChange={(v) => { if (!v) { setAssignClientOpen(false); setEditClient(null); } }}
         assignedIds={assignedClients.map((c) => c.clientId)}
-        onAssign={assignClient}
+        editing={editClient}
+        onAssign={(c) => (editClient ? updateClient(c) : assignClient(c))}
       />
     </AppShell>
   );
