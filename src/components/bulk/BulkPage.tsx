@@ -72,7 +72,7 @@ const stamp = () => new Date().toDateString();
 export function BulkPage() {
   const [rows, setRows] = usePersistentState<BulkProcess[]>("bulk:processes:v1", INITIAL);
   const [q, setQ] = useState("");
-  const sort = useSort();
+  const sort = useSort("bulk");
   const [newOpen, setNewOpen] = useState(false);
 
   const ql = q.trim().toLowerCase();

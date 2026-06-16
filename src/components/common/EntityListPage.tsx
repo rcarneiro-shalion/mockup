@@ -72,7 +72,7 @@ export function EntityListPage({
   const [rows, setRows] = usePersistentState<ApproxRow[]>(`approx:${spec.key}:v3`, spec.rows);
   const [liveRows, setLiveRows] = useState<ApproxRow[] | null>(null);
   const [q, setQ] = useState("");
-  const sort = useSort();
+  const sort = useSort(`entity:${spec.key}`);
   const navigate = useNavigate();
   // Dynamic, registry-driven paths: the typed router can't know them statically.
   const go = (to: string) => navigate({ to } as never);

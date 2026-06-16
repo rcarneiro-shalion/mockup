@@ -47,7 +47,7 @@ function ProjectsListPage() {
   const [fBom, setFBom] = useState<string[]>([]);
   const [fClient, setFClient] = useState<string[]>([]);
   const [fSubscription, setFSubscription] = useState<string[]>([]);
-  const sort = useSort();
+  const sort = useSort("projects");
   const navigate = useNavigate();
 
   const clientOptions = getClientNames();

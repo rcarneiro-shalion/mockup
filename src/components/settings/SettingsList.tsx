@@ -43,7 +43,7 @@ export function SettingsList<T extends { id: string }>({
   headerActions?: ReactNode;
 }) {
   const [query, setQuery] = useState("");
-  const sort = useSort();
+  const sort = useSort(`settings:${title}`);
 
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) => !q || searchText(r).toLowerCase().includes(q));

@@ -18,7 +18,7 @@ function RetailersListPage() {
   const [persisted, setPersisted] = usePersistentState<Retailer[]>(RETAILERS_KEY, INITIAL_RETAILERS);
   const rows = [...persisted, ...deriveStoreRetailers(persisted)];
   const [query, setQuery] = useState("");
-  const sort = useSort();
+  const sort = useSort("retailers");
   const q = query.trim().toLowerCase();
   const filtered = q ? rows.filter((r) => r.name.toLowerCase().includes(q)) : rows;
   const sorted = sortRows(filtered, sort);

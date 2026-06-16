@@ -68,7 +68,7 @@ function SeedsPage() {
   const [fPageType, setFPageType] = useState<string[]>([]);
   const [fKwType, setFKwType] = useState<string[]>([]);
   const [fStatus, setFStatus] = useState<string[]>([]);
-  const sort = useSort();
+  const sort = useSort("seeds");
   const navigate = useNavigate();
 
   // Switching the seed type resets the type-specific filters.

@@ -32,7 +32,7 @@ function StoresListPage() {
   const [fCountry, setFCountry] = useState<string[]>([]);
   const [fType, setFType] = useState<string[]>([]);
   const [fStatus, setFStatus] = useState<string[]>([]);
-  const sort = useSort();
+  const sort = useSort("stores");
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((s) =>
     (!q || s.name.toLowerCase().includes(q)) &&

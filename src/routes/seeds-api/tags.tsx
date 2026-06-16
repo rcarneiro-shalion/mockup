@@ -45,7 +45,7 @@ function TagsPage() {
   const clientOptions = getClientNames();
   const [query, setQuery] = useState("");
   const [fClient, setFClient] = useState<string[]>([]);
-  const sort = useSort();
+  const sort = useSort("tags");
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&

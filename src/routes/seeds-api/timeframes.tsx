@@ -57,7 +57,7 @@ function TimeframesPage() {
   const [fSeedFreq, setFSeedFreq] = useState<string[]>([]);
   const [fGroup, setFGroup] = useState<string[]>([]);
   const [fProduct, setFProduct] = useState<string[]>([]);
-  const sort = useSort();
+  const sort = useSort("timeframes");
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&

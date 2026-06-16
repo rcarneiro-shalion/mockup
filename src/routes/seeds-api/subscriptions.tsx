@@ -45,7 +45,7 @@ function SubscriptionsPage() {
   const [fSeed, setFSeed] = useState<string[]>([]);
   const [fScrap, setFScrap] = useState<string[]>([]);
   const [fGeo, setFGeo] = useState<string[]>([]);
-  const sort = useSort();
+  const sort = useSort("subscriptions");
   const navigate = useNavigate();
 
   const q = query.trim().toLowerCase();

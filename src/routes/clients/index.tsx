@@ -31,7 +31,7 @@ function ClientsListPage() {
   const [query, setQuery] = useState("");
   const [fAcronym, setFAcronym] = useState<string[]>([]);
   const [fIsTest, setFIsTest] = useState<string[]>([]);
-  const sort = useSort();
+  const sort = useSort("clients");
   const navigate = useNavigate();
 
   const q = query.trim().toLowerCase();

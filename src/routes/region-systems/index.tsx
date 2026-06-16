@@ -18,7 +18,7 @@ function RegionSystemsListPage() {
   const [rows, setRows] = usePersistentState<RegionSystem[]>(REGION_SYSTEMS_KEY, INITIAL_REGION_SYSTEMS);
   const [query, setQuery] = useState("");
   const [fCountry, setFCountry] = useState<string[]>([]);
-  const sort = useSort();
+  const sort = useSort("region-systems");
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&

@@ -29,7 +29,7 @@ export const Route = createFileRoute("/codification/brands/")({
 function BrandsListPage() {
   const [rows, setRows] = usePersistentState<Brand[]>(BRANDS_KEY, INITIAL_BRANDS);
   const navigate = useNavigate();
-  const sort = useSort();
+  const sort = useSort("codification-brands");
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<string[]>([]);
   const [manufacturer, setManufacturer] = useState<string[]>([]);

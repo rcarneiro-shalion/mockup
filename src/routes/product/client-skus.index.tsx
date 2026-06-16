@@ -139,7 +139,7 @@ function SkusTab({
   goClient: (name: string) => void;
   goDetail: (id: string) => void;
 }) {
-  const sort = useSort();
+  const sort = useSort("product-client-skus");
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState<string[]>([]);
   const [country, setCountry] = useState<string[]>([]);
@@ -281,7 +281,7 @@ function RegionsTab({
   goClient: (name: string) => void;
   goDetail: (id: string) => void;
 }) {
-  const sort = useSort();
+  const sort = useSort("product-client-sku-regions");
   const [client, setClient] = useState<string[]>([]);
   const [region, setRegion] = useState<string[]>([]);
   const [country, setCountry] = useState<string[]>([]);

@@ -71,7 +71,7 @@ function ScrappingOptionsPage() {
   const [query, setQuery] = useState("");
   const [fStore, setFStore] = useState<string[]>([]);
   const [fExtraction, setFExtraction] = useState<string[]>([]);
-  const sort = useSort();
+  const sort = useSort("scrapping-options");
 
   const q = query.trim().toLowerCase();
   const storeOptions = [...new Set(rows.flatMap((r) => r.stores ?? []))].sort();

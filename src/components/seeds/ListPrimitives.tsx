@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -18,15 +18,30 @@ export function distinct<T>(rows: T[], get: (r: T) => string | undefined | null)
 
 export type SortState = { key: string | null; dir: "asc" | "desc"; toggle: (k: string) => void };
 
-/** Click-to-sort state: first click on a column sorts asc, next toggles desc. */
-export function useSort(initialKey: string | null = null, initialDir: "asc" | "desc" = "asc"): SortState {
-  const [key, setKey] = useState<string | null>(initialKey);
-  const [dir, setDir] = useState<"asc" | "desc">(initialDir);
-  const toggle = (k: string) => {
-    if (key === k) setDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setKey(k); setDir("asc"); }
-  };
-  return { key, dir, toggle };
+/** Click-to-sort state: first click on a column sorts asc, next toggles desc.
+ *  Pass `persistKey` to remember the chosen column + direction across navigation
+ *  and reloads (localStorage, keyed per table). Omit it for ephemeral sorting. */
+export function useSort(persistKey?: string, initialKey: string | null = null, initialDir: "asc" | "desc" = "asc"): SortState {
+  const storageKey = persistKey ? `pref:sort:${persistKey}` : null;
+  const [state, setState] = useState<{ key: string | null; dir: "asc" | "desc" }>(() => {
+    if (storageKey && typeof window !== "undefined") {
+      try {
+        const raw = window.localStorage.getItem(storageKey);
+        if (raw) {
+          const p = JSON.parse(raw) as { key: string | null; dir: "asc" | "desc" };
+          if (p && (p.key === null || typeof p.key === "string") && (p.dir === "asc" || p.dir === "desc")) return p;
+        }
+      } catch { /* ignore */ }
+    }
+    return { key: initialKey, dir: initialDir };
+  });
+  useEffect(() => {
+    if (!storageKey || typeof window === "undefined") return;
+    try { window.localStorage.setItem(storageKey, JSON.stringify(state)); } catch { /* ignore */ }
+  }, [storageKey, state]);
+  const toggle = (k: string) =>
+    setState((s) => (s.key === k ? { key: k, dir: s.dir === "asc" ? "desc" : "asc" } : { key: k, dir: "asc" }));
+  return { key: state.key, dir: state.dir, toggle };
 }
 
 function sortValue(v: unknown): string | number {
