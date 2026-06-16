@@ -243,6 +243,48 @@ export function getClientsForProject(projectId: string): string[] {
     .map((c) => c.name);
 }
 
+// Project-side view of the one client↔project relationship (rendered on the
+// Project page's "Assigned clients" grid). The link still lives on the client —
+// this is just the inverse projection, with the assignment's active range.
+export type ProjectClient = { clientId: string; name: string; acronym: string; activeFrom: string; activeTo: string };
+
+/** Clients (with the assignment's date range) that have the given project assigned. */
+export function getAssignedClientsForProject(projectId: string): ProjectClient[] {
+  return getClients().flatMap((c) => {
+    const ap = (c.assignedProjects ?? []).find((p) => p.projectId === projectId);
+    return ap ? [{ clientId: c.id, name: c.name, acronym: c.acronym, activeFrom: ap.activeFrom, activeTo: ap.activeTo }] : [];
+  });
+}
+
+/**
+ * Reconcile the Clients store so EXACTLY the given clients have `project` assigned
+ * (the relationship's single source of truth is `client.assignedProjects`). Adds /
+ * updates / removes this project on each client and persists — so the Client page
+ * stays in sync with edits made from the Project page. No-op on the server.
+ */
+export function setProjectClients(
+  project: { id: string; name: string; bom: string },
+  links: ProjectClient[],
+): void {
+  if (typeof window === "undefined") return;
+  const want = new Map(links.map((l) => [l.clientId, l]));
+  const next = getClients().map((c) => {
+    const existing = c.assignedProjects ?? [];
+    const others = existing.filter((p) => p.projectId !== project.id);
+    const link = want.get(c.id);
+    if (link) {
+      const ap: AssignedProject = { projectId: project.id, name: project.name, bom: project.bom, activeFrom: link.activeFrom, activeTo: link.activeTo };
+      return { ...c, assignedProjects: [...others, ap] };
+    }
+    return others.length !== existing.length ? { ...c, assignedProjects: others } : c;
+  });
+  try {
+    window.localStorage.setItem(CLIENTS_KEY, JSON.stringify(next));
+  } catch {
+    /* ignore quota / serialization errors */
+  }
+}
+
 export function emptyClient(): Client {
   return {
     id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),

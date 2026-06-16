@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -21,8 +21,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AssignSubscriptionDialog } from "@/components/projects/AssignSubscriptionDialog";
+import { AssignClientDialog } from "@/components/projects/AssignClientDialog";
 import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimitives";
 import type { Project } from "@/lib/projects";
+import { getAssignedClientsForProject, setProjectClients, type ProjectClient } from "@/lib/clients";
 import { toast } from "sonner";
 import { ArrowLeft, HelpCircle, Plus, Trash2, X } from "lucide-react";
 
@@ -43,6 +45,13 @@ export function ProjectForm({
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [assignClientOpen, setAssignClientOpen] = useState(false);
+  // Assigned clients = the inverse of the client↔project link (lives on the client).
+  // Loaded client-side (localStorage) on mount; reconciled back to the Clients store on save.
+  const [assignedClients, setAssignedClients] = useState<ProjectClient[]>([]);
+  useEffect(() => {
+    setAssignedClients(getAssignedClientsForProject(initial.id));
+  }, [initial.id]);
 
   const set = <K extends keyof Project>(k: K, v: Project[K]) =>
     setProject((prev) => ({ ...prev, [k]: v }));
@@ -59,6 +68,9 @@ export function ProjectForm({
     setIsSaving(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 300));
+      // Persist the client↔project links back to the Clients store (single source
+      // of truth) so the Client page stays in sync, then save the project itself.
+      setProjectClients({ id: project.id, name: project.name, bom: project.bom }, assignedClients);
       onSave(project);
       toast.success(`Project ${mode === "add" ? "created" : "saved"} successfully`);
     } catch {
@@ -128,6 +140,60 @@ export function ProjectForm({
                 </Select>
               </div>
             </div>
+          </div>
+
+          {/* Assigned clients (inverse of the client↔project link) */}
+          <div className="mt-5 rounded-xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-foreground">Assigned clients</h2>
+              <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setAssignClientOpen(true)}>
+                <Plus className="h-3.5 w-3.5" />
+                Assign client
+              </Button>
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-lg border border-border">
+              <table className="w-full text-sm">
+                <thead className="bg-secondary/60">
+                  <tr>
+                    <Th>Client</Th>
+                    <Th>Acronym</Th>
+                    <Th>Active from</Th>
+                    <Th>Active to</Th>
+                    <Th className="w-10" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignedClients.length === 0 ? (
+                    <tr>
+                      <Td className="text-muted-foreground">
+                        <span className="block py-2">No clients assigned yet.</span>
+                      </Td>
+                      <Td /><Td /><Td /><Td />
+                    </tr>
+                  ) : (
+                    assignedClients.map((c) => (
+                      <tr key={c.clientId} className="border-t border-border hover:bg-secondary/40">
+                        <Td><LinkText>{c.name}</LinkText></Td>
+                        <Td><Pill tone="slate">{c.acronym}</Pill></Td>
+                        <Td className="text-muted-foreground">{c.activeFrom}</Td>
+                        <Td className="text-muted-foreground">{c.activeTo}</Td>
+                        <Td>
+                          <button
+                            onClick={() => setAssignedClients(assignedClients.filter((x) => x.clientId !== c.clientId))}
+                            className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
+                            aria-label={`Remove ${c.name}`}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </Td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <Pagination total={assignedClients.length} />
           </div>
 
           {/* Assigned subscriptions */}
@@ -223,6 +289,13 @@ export function ProjectForm({
         onOpenChange={setAssignOpen}
         assignedNames={assignedSubscriptions.map((sp) => sp.name)}
         onAssign={(sp) => set("assignedSubscriptions", [...assignedSubscriptions, sp])}
+      />
+
+      <AssignClientDialog
+        open={assignClientOpen}
+        onOpenChange={setAssignClientOpen}
+        assignedIds={assignedClients.map((c) => c.clientId)}
+        onAssign={(c) => setAssignedClients([...assignedClients, c])}
       />
     </AppShell>
   );
