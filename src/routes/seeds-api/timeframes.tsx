@@ -26,7 +26,7 @@ import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { Calendar, PlayCircle } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/timeframes")({
-  head: () => ({ meta: [{ title: "Timeframes — Shalion" }] }),
+  head: () => ({ meta: [{ title: "TaskGroup — Shalion" }] }),
   component: TimeframesPage,
 });
 
@@ -40,7 +40,7 @@ type Row = {
 
 const INITIAL_ROWS: Row[] = [
   {
-    name: "Dummy timeframe bc425bf...",
+    name: "Dummy task group bc425bf...",
     locFreq: "NO_ROTATE_DAILY",
     seedFreq: "ROTATE_WEEKLY",
     group: "group-123",
@@ -73,7 +73,7 @@ function TimeframesPage() {
         { kind: "text", label: "Name", value: selected.name, required: true, span: 2 },
         { kind: "select", label: "Location frequency", value: selected.locFreq, required: true, options: LOCATION_FREQUENCY_OPTIONS },
         { kind: "select", label: "Seed frequency", value: selected.seedFreq, required: true, options: SEED_FREQUENCY_OPTIONS },
-        { kind: "text", label: "Timeframe group", value: selected.group },
+        { kind: "text", label: "Group", value: selected.group },
         { kind: "text", label: "Product", value: selected.product },
       ]
     : [];
@@ -82,7 +82,7 @@ function TimeframesPage() {
     { kind: "text", label: "Name", required: true, span: 2 },
     { kind: "select", label: "Location frequency", required: true, options: LOCATION_FREQUENCY_OPTIONS },
     { kind: "select", label: "Seed frequency", required: true, options: SEED_FREQUENCY_OPTIONS },
-    { kind: "text", label: "Timeframe group" },
+    { kind: "text", label: "Group" },
     { kind: "text", label: "Product" },
   ];
 
@@ -90,14 +90,14 @@ function TimeframesPage() {
     <AppShell>
       <div className="flex h-full flex-col">
         <PageHeader
-          title="Timeframes"
-          action={{ label: "Add timeframe", onClick: () => setAddOpen(true) }}
+          title="TaskGroup"
+          action={{ label: "Add task group", onClick: () => setAddOpen(true) }}
         />
-        <FilterBar search="Search by Timeframe name" searchValue={query} onSearchChange={setQuery}>
+        <FilterBar search="Search by TaskGroup name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Location frequency" options={distinct(rows, (r) => r.locFreq)} value={fLocFreq} onChange={setFLocFreq} />
           <FilterChip label="Seed frequency" options={distinct(rows, (r) => r.seedFreq)} value={fSeedFreq} onChange={setFSeedFreq} />
           <FilterChip label="Jobs" icon={PlayCircle} />
-          <FilterChip label="Timeframe group" options={distinct(rows, (r) => r.group)} value={fGroup} onChange={setFGroup} />
+          <FilterChip label="Group" options={distinct(rows, (r) => r.group)} value={fGroup} onChange={setFGroup} />
           <FilterChip label="Product" options={distinct(rows, (r) => r.product)} value={fProduct} onChange={setFProduct} />
           <FilterChip label="Status" />
           <FilterChip label="Created at" icon={Calendar} />
@@ -109,7 +109,7 @@ function TimeframesPage() {
               <SortTh label="Name" sortKey="name" sort={sort} />
               <SortTh label="Location frequency" sortKey="locationFrequency" sort={sort} />
               <SortTh label="Seed frequency" sortKey="seedFrequency" sort={sort} />
-              <SortTh label="Timeframe group" sortKey="group" sort={sort} />
+              <SortTh label="Group" sortKey="group" sort={sort} />
               <SortTh label="Product" sortKey="product" sort={sort} />
               <Th>Created by</Th>
               <Th>Updated by</Th>
@@ -134,7 +134,7 @@ function TimeframesPage() {
                   <RowActionsMenu
                     id={r.name}
                     onDelete={() => setRows((prev) => prev.filter((x) => x.name !== r.name))}
-                    entityLabel="timeframe"
+                    entityLabel="task group"
                   />
                 </Td>
               </tr>
@@ -147,15 +147,15 @@ function TimeframesPage() {
       <AddRecordDialog
         open={addOpen}
         onOpenChange={setAddOpen}
-        title="Add new timeframe"
-        saveLabel="Add timeframe"
+        title="Add new task group"
+        saveLabel="Add task group"
         fields={addFields}
         onSave={(values) => {
           const newRow: Row = {
             name: (values["Name"] as string) || "Untitled",
             locFreq: values["Location frequency"] as string,
             seedFreq: values["Seed frequency"] as string,
-            group: values["Timeframe group"] as string,
+            group: values["Group"] as string,
             product: values["Product"] as string,
           };
           setRows((prev) => [...prev, newRow]);
@@ -166,7 +166,7 @@ function TimeframesPage() {
         open={!!selected}
         onOpenChange={(v) => { if (!v) setSelected(null); }}
         title={selected?.name ?? ""}
-        saveLabel="Save timeframe"
+        saveLabel="Save task group"
         fields={editFields}
         onSave={(values) => {
           setRows((prev) =>
@@ -177,7 +177,7 @@ function TimeframesPage() {
                     name: values["Name"] as string,
                     locFreq: values["Location frequency"] as string,
                     seedFreq: values["Seed frequency"] as string,
-                    group: values["Timeframe group"] as string,
+                    group: values["Group"] as string,
                     product: values["Product"] as string,
                   }
                 : r,

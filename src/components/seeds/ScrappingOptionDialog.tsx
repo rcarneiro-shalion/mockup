@@ -22,17 +22,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SelectBox } from "@/components/seeds/SelectBox";
-import { Pill } from "@/components/seeds/ListPrimitives";
+import { Pill, Th, Td, LinkText } from "@/components/seeds/ListPrimitives";
 import {
-  STORE_OPTIONS,
   EXTRACTION_TYPE_OPTIONS,
   TIMEFRAME_OPTIONS,
   MODALITY_OPTIONS,
   SORT_OPTIONS,
 } from "@/lib/seedOptions";
+import { getSubscriptions } from "@/lib/subscriptions";
+import { getProjects } from "@/lib/projects";
+import { getClientsForProject } from "@/lib/clients";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Plus, Trash2, X } from "lucide-react";
+import { ChevronUp, Pencil, Plus, Trash2, X } from "lucide-react";
 
 const STATUS_OPTIONS = ["Active", "Inactive"];
 
@@ -40,7 +42,6 @@ export type ScrappingOptionValues = {
   name: string;
   status: string;
   extractionType: string;
-  stores: string[];
   timeframes: string[];
   // Joints (conjuntos)
   multivariants: boolean;
@@ -48,18 +49,19 @@ export type ScrappingOptionValues = {
   maxPage: string;
   limitedDiscovery: boolean;
   maxRank: string;
-  // Disjoints (disjuntos)
+  // Disjoints (disjuntos) — modalities is now multi-select
   modalities: boolean;
-  modality: string;
+  modalityValues: string[];
   sorting: boolean;
   sort: string;
+  // Free-form JSON meta properties (mirrors the Clients form)
+  meta: string;
 };
 
 export const EMPTY_SCRAPPING_OPTION: ScrappingOptionValues = {
   name: "",
   status: "Active",
   extractionType: "MEDIA",
-  stores: [],
   timeframes: ["All Day (1 x day)"],
   multivariants: false,
   pagination: false,
@@ -67,9 +69,10 @@ export const EMPTY_SCRAPPING_OPTION: ScrappingOptionValues = {
   limitedDiscovery: false,
   maxRank: "",
   modalities: false,
-  modality: "pickup",
+  modalityValues: [],
   sorting: false,
   sort: "best_seller",
+  meta: "{}",
 };
 
 export function ScrappingOptionDialog({
@@ -90,27 +93,44 @@ export function ScrappingOptionDialog({
   const [v, setV] = useState<ScrappingOptionValues>(EMPTY_SCRAPPING_OPTION);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [metaOpen, setMetaOpen] = useState(true);
+  const [metaEditing, setMetaEditing] = useState(false);
+  // Subscriptions using this scrapping option — indirect: a subscription references
+  // its scrapping option by name (Subscription.scrappingOption), each tied to a
+  // project → client(s). Keyed off the persisted name; loaded client-side.
+  const [inSubs, setInSubs] = useState<{ id: string; name: string; project: string; clients: string[] }[]>([]);
 
   useEffect(() => {
     if (open) {
       // Merge over defaults so older saved records (missing newer fields like
-      // `timeframes`) get safe array/string defaults instead of crashing.
+      // `timeframes` / `modalityValues` / `meta`) get safe defaults instead of crashing.
       setV(initial ? { ...EMPTY_SCRAPPING_OPTION, ...initial } : EMPTY_SCRAPPING_OPTION);
       setIsSaving(false);
       setShowDeleteConfirm(false);
+      setMetaEditing(false);
     }
   }, [open, initial]);
 
+  useEffect(() => {
+    if (!open || mode !== "edit" || !initial) {
+      setInSubs([]);
+      return;
+    }
+    const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
+    setInSubs(
+      getSubscriptions()
+        .filter((s) => s.scrappingOption === initial.name)
+        .map((s) => ({
+          id: s.id,
+          name: s.name,
+          project: s.project,
+          clients: getClientsForProject(projectIdByName.get(s.project) ?? ""),
+        })),
+    );
+  }, [open, initial, mode]);
+
   const set = <K extends keyof ScrappingOptionValues>(k: K, val: ScrappingOptionValues[K]) =>
     setV((prev) => ({ ...prev, [k]: val }));
-
-  const addStore = (store: string) => {
-    if (!v.stores.includes(store)) set("stores", [...v.stores, store]);
-  };
-  const removeStore = (store: string) =>
-    set("stores", v.stores.filter((s) => s !== store));
-
-  const availableStores = STORE_OPTIONS.filter((s) => !v.stores.includes(s));
 
   const addTimeframe = (t: string) => {
     if (!v.timeframes.includes(t)) set("timeframes", [...v.timeframes, t]);
@@ -118,6 +138,13 @@ export function ScrappingOptionDialog({
   const removeTimeframe = (t: string) =>
     set("timeframes", v.timeframes.filter((x) => x !== t));
   const availableTimeframes = TIMEFRAME_OPTIONS.filter((t) => !v.timeframes.includes(t));
+
+  const addModality = (m: string) => {
+    if (!v.modalityValues.includes(m)) set("modalityValues", [...v.modalityValues, m]);
+  };
+  const removeModality = (m: string) =>
+    set("modalityValues", v.modalityValues.filter((x) => x !== m));
+  const availableModalities = MODALITY_OPTIONS.filter((m) => !v.modalityValues.includes(m));
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -174,11 +201,11 @@ export function ScrappingOptionDialog({
               <Field label="Extraction type" required className="sm:col-span-2">
                 <SelectBox value={v.extractionType} onChange={(x) => set("extractionType", x)} options={EXTRACTION_TYPE_OPTIONS} />
               </Field>
-              {/* Timeframes — 1:N multi-select */}
-              <Field label="Timeframes" required className="sm:col-span-2">
+              {/* TaskGroup — 1:N multi-select */}
+              <Field label="TaskGroup" required className="sm:col-span-2">
                 <div className="flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5">
                   {v.timeframes.length === 0 && (
-                    <span className="px-1 text-sm text-muted-foreground">No timeframes selected</span>
+                    <span className="px-1 text-sm text-muted-foreground">No task groups selected</span>
                   )}
                   {v.timeframes.map((t) => (
                     <span
@@ -200,49 +227,11 @@ export function ScrappingOptionDialog({
                     <Select value="" onValueChange={addTimeframe}>
                       <SelectTrigger className="h-6 w-auto gap-1 border-dashed px-2 text-xs text-muted-foreground">
                         <Plus className="h-3 w-3" />
-                        <span>Add timeframe</span>
+                        <span>Add task group</span>
                       </SelectTrigger>
                       <SelectContent>
                         {availableTimeframes.map((t) => (
                           <SelectItem key={t} value={t}>{t}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              </Field>
-
-              {/* Stores or retailer — n:n multi-select */}
-              <Field label="Stores or retailer" required className="sm:col-span-4">
-                <div className="flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5">
-                  {v.stores.length === 0 && (
-                    <span className="px-1 text-sm text-muted-foreground">No stores selected</span>
-                  )}
-                  {v.stores.map((s) => (
-                    <span
-                      key={s}
-                      className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground"
-                    >
-                      {s}
-                      <button
-                        type="button"
-                        onClick={() => removeStore(s)}
-                        className="text-muted-foreground hover:text-destructive"
-                        aria-label={`Remove ${s}`}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                  {availableStores.length > 0 && (
-                    <Select value="" onValueChange={addStore}>
-                      <SelectTrigger className="h-6 w-auto gap-1 border-dashed px-2 text-xs text-muted-foreground">
-                        <Plus className="h-3 w-3" />
-                        <span>Add store</span>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableStores.map((s) => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -303,13 +292,46 @@ export function ScrappingOptionDialog({
                   checked={v.modalities}
                   onChange={(c) => set("modalities", c)}
                   input={
-                    <SelectBox
-                      value={v.modality}
-                      onChange={(x) => set("modality", x)}
-                      options={MODALITY_OPTIONS}
-                      disabled={!v.modalities}
-                      className="h-8"
-                    />
+                    <div
+                      className={cn(
+                        "flex min-h-8 flex-wrap items-center gap-1 rounded-md border border-input bg-background px-2 py-1",
+                        !v.modalities && "opacity-50",
+                      )}
+                    >
+                      {v.modalityValues.length === 0 && (
+                        <span className="px-1 text-xs text-muted-foreground">No modalities selected</span>
+                      )}
+                      {v.modalityValues.map((m) => (
+                        <span
+                          key={m}
+                          className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground"
+                        >
+                          {m}
+                          <button
+                            type="button"
+                            disabled={!v.modalities}
+                            onClick={() => removeModality(m)}
+                            className="text-muted-foreground hover:text-destructive disabled:cursor-not-allowed"
+                            aria-label={`Remove ${m}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                      {v.modalities && availableModalities.length > 0 && (
+                        <Select value="" onValueChange={addModality}>
+                          <SelectTrigger className="h-6 w-auto gap-1 border-dashed px-2 text-xs text-muted-foreground">
+                            <Plus className="h-3 w-3" />
+                            <span>Add</span>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableModalities.map((m) => (
+                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
                   }
                 />
                 <Toggle
@@ -331,6 +353,87 @@ export function ScrappingOptionDialog({
                 />
               </div>
             </section>
+
+            {/* Meta properties — mirrors the Clients form edit */}
+            <section className="rounded-xl border border-border bg-card p-5">
+              <div className="flex items-center justify-between">
+                <button type="button" onClick={() => setMetaOpen((s) => !s)} className="flex items-center gap-2">
+                  <span className="grid h-7 w-7 place-items-center rounded-md bg-secondary text-muted-foreground">
+                    <ChevronUp className={cn("h-4 w-4 transition-transform", !metaOpen && "rotate-180")} />
+                  </span>
+                  <span className="text-base font-semibold text-foreground">Meta properties</span>
+                </button>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={() => set("meta", "{}")}>
+                    Clear
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setMetaEditing((s) => !s)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                    {metaEditing ? "Done" : "Edit"}
+                  </Button>
+                </div>
+              </div>
+              {metaOpen && (
+                <textarea
+                  value={v.meta}
+                  onChange={(e) => set("meta", e.target.value)}
+                  readOnly={!metaEditing}
+                  spellCheck={false}
+                  rows={metaEditing ? 6 : 1}
+                  className={cn(
+                    "mt-4 w-full rounded-md border border-input px-3 py-2 font-mono text-sm text-emerald-700 focus:outline-none focus:ring-1 focus:ring-ring",
+                    metaEditing ? "bg-background" : "bg-secondary/40",
+                  )}
+                />
+              )}
+            </section>
+
+            {/* Subscriptions using this scrapping option (read-only) — same layout as the seed form */}
+            {mode === "edit" && (
+              <section className="rounded-xl border border-border bg-card p-5">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-base font-semibold text-foreground">Subscriptions</span>
+                  <span className="text-sm text-muted-foreground">where this scrapping option is used</span>
+                </div>
+                <div className="mt-4 overflow-hidden rounded-lg border border-border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-secondary/60">
+                      <tr>
+                        <Th>Subscription name</Th>
+                        <Th>Projects assigned</Th>
+                        <Th>Clients belongs</Th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {inSubs.length === 0 ? (
+                        <tr>
+                          <Td className="text-muted-foreground">
+                            <span className="block py-2">This scrapping option isn't used in any subscription yet.</span>
+                          </Td>
+                          <Td /><Td />
+                        </tr>
+                      ) : (
+                        inSubs.map((s) => (
+                          <tr key={s.id} className="border-t border-border hover:bg-secondary/40">
+                            <Td><LinkText>{s.name}</LinkText></Td>
+                            <Td>{s.project ? <LinkText>{s.project}</LinkText> : <span className="text-muted-foreground">—</span>}</Td>
+                            <Td>
+                              <div className="flex flex-wrap gap-1">
+                                {s.clients.length ? (
+                                  s.clients.map((c) => <Pill key={c} tone="green">{c}</Pill>)
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </div>
+                            </Td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
           </div>
 
           {/* Footer */}

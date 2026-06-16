@@ -60,7 +60,7 @@ const ecometryNav: NavItem[] = [
       { label: "Seeds", to: "/seeds-api/seeds" },
       { label: "Scrapping options", to: "/seeds-api/scrapping-options" },
       { label: "Tags", to: "/seeds-api/tags" },
-      { label: "Timeframes", to: "/seeds-api/timeframes" },
+      { label: "TaskGroup", to: "/seeds-api/timeframes" },
     ],
   },
   {
