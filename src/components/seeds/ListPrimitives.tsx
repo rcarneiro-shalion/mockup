@@ -229,7 +229,7 @@ export function UserCell({ email = "rcarneiro@..." }: { email?: string }) {
   );
 }
 
-type PillTone = "violet" | "amber" | "blue" | "slate" | "red" | "green" | "orange" | "pink";
+type PillTone = "violet" | "amber" | "blue" | "slate" | "red" | "green" | "orange" | "violetOutline";
 
 const toneClass: Record<PillTone, string> = {
   violet: "bg-violet-100 text-violet-700",
@@ -239,7 +239,7 @@ const toneClass: Record<PillTone, string> = {
   red: "border border-rose-200 bg-rose-50 text-rose-700",
   green: "bg-emerald-100 text-emerald-700",
   orange: "bg-orange-100 text-orange-800",
-  pink: "bg-pink-100 text-pink-700",
+  violetOutline: "border border-violet-200 bg-violet-100 text-violet-800",
 };
 
 export function Pill({

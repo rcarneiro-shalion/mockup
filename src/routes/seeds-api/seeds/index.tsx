@@ -148,11 +148,11 @@ function SeedsPage() {
       key: "type",
       label: "Seed type",
       sortKey: "type",
-      // API = orange, URL = blue, Keyword = pink. KEYWORD is abbreviated to "KW"
-      // with the full word on hover (title).
+      // API = orange, URL = blue, Keyword = violet (outlined). KEYWORD is abbreviated
+      // to "KW" with the full word on hover (title).
       cell: (r) => {
         if (!r.type) return dash;
-        const tone = r.type === "API" ? "orange" : r.type === "URL" ? "blue" : "pink";
+        const tone = r.type === "API" ? "orange" : r.type === "URL" ? "blue" : "violetOutline";
         const isKw = r.type === "KEYWORD";
         return <Pill tone={tone} title={isKw ? "Keyword" : undefined}>{isKw ? "KW" : r.type}</Pill>;
       },
