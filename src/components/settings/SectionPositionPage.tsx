@@ -15,7 +15,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ArrowLeft, GripVertical, Plus, X, Store, Building2, Layers } from "lucide-react";
+import { ArrowLeft, GripVertical, Plus, X, Store, Building2, Layers, Tags } from "lucide-react";
+import { FilterChip } from "@/components/seeds/FilterChip";
+import { LABEL_COLOR_CLASSES, SEED_RETAILER_LABELS, labelForRetailer, type RetailerLabel } from "@/lib/retailerLabels";
 import { getDashboardApps } from "@/lib/dashboardApps";
 import {
   POSITION_TARGETS,
@@ -27,7 +29,11 @@ import {
   type PositionMap,
 } from "@/lib/dashboardSectionPositions";
 
-type CatalogSection = { id: string; path: string; label: string; type: string; appId: string; appLabel: string };
+/** Short app code (uppercased slug, e.g. RMMS / DSM), falling back to initials. */
+const appShortOf = (a: { slug?: string; label: string }) =>
+  (a.slug?.trim() || a.label.split(/\s+/).filter(Boolean).map((w) => w[0]).join("")).toUpperCase();
+
+type CatalogSection = { id: string; path: string; label: string; type: string; appId: string; appLabel: string; appShort: string; group: string };
 
 export function SectionPositionPage() {
   const [positions, setPositions] = usePersistentState<PositionMap>(SECTION_POSITIONS_KEY, SEED_POSITIONS);
@@ -38,7 +44,7 @@ export function SectionPositionPage() {
     for (const a of getDashboardApps())
       for (const g of a.groups)
         for (const s of g.sections)
-          out.push({ id: s.id, path: s.path, label: s.label, type: s.type, appId: a.id, appLabel: a.label });
+          out.push({ id: s.id, path: s.path, label: s.label, type: s.type, appId: a.id, appLabel: a.label, appShort: appShortOf(a), group: g.label });
     return out;
   }, []);
   const byId = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
@@ -55,6 +61,10 @@ export function SectionPositionPage() {
   const targetsOfKind = POSITION_TARGETS.filter((t) => t.kind === kind);
   const [targetId, setTargetId] = useState<string>(() => POSITION_TARGETS.find((t) => t.kind === "retailer")?.id ?? "");
   const [applyTargets, setApplyTargets] = useState<string[]>([]);
+  // Facet filters for the bulk-apply list: retailers by label group, datagroups by client.
+  const [retailerLabels] = usePersistentState<RetailerLabel[]>("mu:retailer-labels:v4", SEED_RETAILER_LABELS);
+  const [fLabels, setFLabels] = useState<string[]>([]);
+  const [fClients, setFClients] = useState<string[]>([]);
   const target = POSITION_TARGETS.find((t) => t.id === targetId) ?? null;
 
   const switchKind = (k: PosTargetKind) => {
@@ -62,6 +72,8 @@ export function SectionPositionPage() {
     setKind(k);
     setTargetId(POSITION_TARGETS.find((t) => t.kind === k)?.id ?? "");
     setApplyTargets([]);
+    setFLabels([]);
+    setFClients([]);
   };
 
   // Order for the selected application + target. The client's dashboard for that
@@ -93,9 +105,23 @@ export function SectionPositionPage() {
   const targetLabel = (t: PosTarget) => (t.client ? `${t.client} · ${t.name}` : t.name);
   const kindLabel = kind === "retailer" ? "retailer" : "datagroup";
 
+  // Bulk-apply target list, narrowed by the active facet: retailers by label
+  // group (agency), datagroups by client name (brand).
+  const labelOf = (name: string) => labelForRetailer(retailerLabels, name);
+  const filteredTargets = targetsOfKind.filter((t) =>
+    kind === "retailer"
+      ? !fLabels.length || fLabels.includes(labelOf(t.name).id)
+      : !fClients.length || (!!t.client && fClients.includes(t.client)),
+  );
+  const labelOptions = [...new Set(POSITION_TARGETS.filter((t) => t.kind === "retailer").map((t) => labelOf(t.name).id))];
+  const clientOptions = [...new Set(POSITION_TARGETS.filter((t) => t.kind === "datagroup" && t.client).map((t) => t.client as string))];
+
   // Bulk apply: copy the current (app) order onto every selected target, same app.
-  const allSelected = targetsOfKind.length > 0 && targetsOfKind.every((t) => applyTargets.includes(t.id));
-  const toggleAll = () => setApplyTargets(allSelected ? [] : targetsOfKind.map((t) => t.id));
+  const allSelected = filteredTargets.length > 0 && filteredTargets.every((t) => applyTargets.includes(t.id));
+  const toggleAll = () => {
+    const ids = filteredTargets.map((t) => t.id);
+    setApplyTargets((prev) => (allSelected ? prev.filter((id) => !ids.includes(id)) : [...new Set([...prev, ...ids])]));
+  };
   const toggleApply = (id: string) =>
     setApplyTargets((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   const applyToAll = () => {
@@ -215,8 +241,8 @@ export function SectionPositionPage() {
                   {s ? (
                     <>
                       <span className="truncate font-mono text-sm text-foreground" title={s.path}>{s.path}</span>
-                      <Pill tone="slate">{s.type}</Pill>
-                      <Pill tone="amber">{s.appLabel}</Pill>
+                      <Pill tone="slate">{s.group}</Pill>
+                      <Pill tone="amber">{s.appShort}</Pill>
                     </>
                   ) : (
                     <span className="font-mono text-sm text-muted-foreground">{secId} (missing)</span>
@@ -261,8 +287,8 @@ export function SectionPositionPage() {
                           className="flex items-center gap-2"
                         >
                           <span className="min-w-0 flex-1 truncate font-mono text-xs">{s.path}</span>
-                          <Pill tone="slate">{s.type}</Pill>
-                          <Pill tone="amber">{s.appLabel}</Pill>
+                          <Pill tone="slate">{s.group}</Pill>
+                          <Pill tone="amber">{s.appShort}</Pill>
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -285,23 +311,50 @@ export function SectionPositionPage() {
                     Apply to {applyTargets.length} {kindLabel}{applyTargets.length === 1 ? "" : "s"}
                   </Button>
                 </div>
-                <label className="mt-3 flex w-fit cursor-pointer items-center gap-2 text-sm font-medium text-foreground">
-                  <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded border-border" />
-                  Select all {kindLabel}s ({targetsOfKind.length})
-                </label>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {kind === "retailer" ? (
+                    <FilterChip
+                      label="Label group"
+                      icon={Tags}
+                      options={labelOptions}
+                      value={fLabels}
+                      onChange={setFLabels}
+                      getLabel={(id) => retailerLabels.find((l) => l.id === id)?.name ?? id}
+                      searchable
+                    />
+                  ) : (
+                    <FilterChip label="Client" icon={Building2} options={clientOptions} value={fClients} onChange={setFClients} searchable />
+                  )}
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground">
+                    <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded border-border" />
+                    Select all ({filteredTargets.length})
+                  </label>
+                  {applyTargets.length > 0 && (
+                    <button type="button" onClick={() => setApplyTargets([])} className="text-xs font-medium text-muted-foreground hover:text-foreground">
+                      Clear ({applyTargets.length})
+                    </button>
+                  )}
+                </div>
                 <div className="mt-2 grid grid-cols-1 gap-0.5 sm:grid-cols-2">
-                  {targetsOfKind.map((t) => (
-                    <label key={t.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm text-foreground/90 hover:bg-secondary/40">
-                      <input
-                        type="checkbox"
-                        checked={applyTargets.includes(t.id)}
-                        onChange={() => toggleApply(t.id)}
-                        className="h-4 w-4 rounded border-border"
-                      />
-                      <span className="truncate">{targetLabel(t)}</span>
-                      {t.id === target.id && <span className="shrink-0 text-[10px] text-muted-foreground">(current)</span>}
-                    </label>
-                  ))}
+                  {filteredTargets.length === 0 && (
+                    <p className="col-span-full px-2 py-2 text-xs text-muted-foreground">No {kindLabel}s match the filter.</p>
+                  )}
+                  {filteredTargets.map((t) => {
+                    const lbl = kind === "retailer" ? labelOf(t.name) : null;
+                    return (
+                      <label key={t.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm text-foreground/90 hover:bg-secondary/40">
+                        <input
+                          type="checkbox"
+                          checked={applyTargets.includes(t.id)}
+                          onChange={() => toggleApply(t.id)}
+                          className="h-4 w-4 rounded border-border"
+                        />
+                        <span className="truncate">{targetLabel(t)}</span>
+                        {lbl && <span className={cn("shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium", LABEL_COLOR_CLASSES[lbl.color])}>{lbl.name}</span>}
+                        {t.id === target.id && <span className="shrink-0 text-[10px] text-muted-foreground">(current)</span>}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             )}
