@@ -176,19 +176,25 @@ export async function aggregateAssignments(args: {
 // assignments (mirrors the bulks_scripts: datagroup-dashboardsections,
 // datagroup-retailer-dashboardsections, retailer-dashboardsections,
 // datagroup-retailers). Everything else is rejected before any network call.
+// POST / DELETE are limited to the assignment endpoints (Massive update).
 const WRITE_PATH_PREFIXES = [
   "/v1.0/admin/datagroup-dashboardsections",
   "/v1.0/admin/datagroup-retailer-dashboardsections",
   "/v1.0/admin/retailer-dashboardsections",
   "/v1.0/admin/datagroup-retailers",
 ];
+// PATCH is limited to section CONTENT (path/label/type/definition) — edited by the
+// Section editor's live mode (which snapshots a version before any write). No
+// POST/DELETE here: whole sections can't be created/deleted through this proxy.
+const PATCH_PATH_PREFIX = "/v1.0/admin/dashboardsections";
 
-export type LiveMethod = "POST" | "DELETE";
+export type LiveMethod = "POST" | "DELETE" | "PATCH";
 
 /**
- * Allow-listed write proxy to a Shalion API. Only POST/DELETE to the dashboard
- * assignment endpoints are permitted (anti-SSRF + blast-radius control). The
- * token, id token and x-caller-id are attached server-side.
+ * Allow-listed write proxy to a Shalion API. POST/DELETE to the dashboard
+ * assignment endpoints, plus PATCH to dashboardsections (section content), are
+ * permitted (anti-SSRF + blast-radius control). The token, id token and
+ * x-caller-id are attached server-side.
  */
 export async function mutateShalion(args: {
   service: string;
@@ -204,14 +210,19 @@ export async function mutateShalion(args: {
   const hadToken = !!resolveToken(args.token);
 
   if (!base) return { ok: false, status: 0, data: null, hadToken, error: `Unknown service "${args.service}".` };
-  if (args.method !== "POST" && args.method !== "DELETE")
+  if (args.method !== "POST" && args.method !== "DELETE" && args.method !== "PATCH")
     return { ok: false, status: 0, data: null, hadToken, error: `Method ${args.method} not allowed.` };
   if (!args.path.startsWith("/"))
     return { ok: false, status: 0, data: null, hadToken, error: "Path must start with '/'." };
-  // Strip any query string before checking the allow-list.
+  // Strip any query string, then gate per method: PATCH → section content only;
+  // POST/DELETE → the assignment endpoints only.
   const pathOnly = args.path.split("?")[0];
-  if (!WRITE_PATH_PREFIXES.some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`)))
+  if (args.method === "PATCH") {
+    if (!(pathOnly === PATCH_PATH_PREFIX || pathOnly.startsWith(`${PATCH_PATH_PREFIX}/`)))
+      return { ok: false, status: 0, data: null, hadToken, error: `PATCH is only allowed on ${PATCH_PATH_PREFIX}.` };
+  } else if (!WRITE_PATH_PREFIXES.some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`))) {
     return { ok: false, status: 0, data: null, hadToken, error: `Path "${pathOnly}" is not a writable endpoint.` };
+  }
 
   const token = resolveToken(args.token);
   if (!token)
@@ -227,9 +238,9 @@ export async function mutateShalion(args: {
         Accept: "application/json",
         "x-caller-id": "console",
         ...(idToken ? { "x-id-token": idToken } : {}),
-        ...(args.method === "POST" ? { "Content-Type": "application/json" } : {}),
+        ...(args.method === "POST" || args.method === "PATCH" ? { "Content-Type": "application/json" } : {}),
       },
-      body: args.method === "POST" ? JSON.stringify(args.body ?? {}) : undefined,
+      body: args.method === "POST" || args.method === "PATCH" ? JSON.stringify(args.body ?? {}) : undefined,
       signal: AbortSignal.timeout(20000),
     });
     const text = await res.text();
