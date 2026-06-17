@@ -67,6 +67,11 @@ type FlatRow = {
 const newId = () =>
   typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : String(Math.random()).slice(2, 10);
 
+/** Short app code for prefixing group-filter items — the slug (MSM, RMM, DSM…),
+ *  falling back to the label's initials. Keeps the group name readable. */
+const appShort = (a: { slug?: string; label: string }) =>
+  (a.slug?.trim() || a.label.split(/\s+/).filter(Boolean).map((w) => w[0]).join("")).toUpperCase();
+
 // ---- live → editor mapping (best-effort; real API field names may vary) ----
 const str = (v: unknown) => (v == null ? "" : String(v));
 const pickArr = (v: unknown): Record<string, unknown>[] =>
@@ -241,7 +246,7 @@ export function SectionsGridPage() {
     const seen = new Map<string, string>();
     for (const a of apps) {
       if (!fApps.includes(a.id)) continue;
-      for (const g of a.groups) seen.set(g.id, single ? g.label : `${a.label} · ${g.label}`);
+      for (const g of a.groups) seen.set(g.id, single ? g.label : `${appShort(a)} · ${g.label}`);
     }
     return [...seen.entries()];
   }, [apps, fApps]);
