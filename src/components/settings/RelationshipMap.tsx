@@ -450,8 +450,12 @@ export function RelationshipMap({
           <p className="flex flex-wrap items-center gap-1.5 rounded-md bg-secondary/60 px-3 py-1.5 text-xs text-muted-foreground">
             <ArrowDownUp className="h-3.5 w-3.5 shrink-0" />
             Rows ordered by <strong className="text-foreground">{refName}</strong> (first column).
-            <TriangleAlert className="ml-1 h-3.5 w-3.5 shrink-0 text-amber-500" />
-            marks a section another retailer keeps in a different order.
+            <span className="ml-1 inline-flex items-center gap-1">
+              <TriangleAlert className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+              <strong className="text-amber-600">Out of order</strong>
+            </span>
+            {" = this retailer shows the section in a different order than "}
+            <strong className="text-foreground">{refName}</strong>.
           </p>
         )}
       </div>
@@ -757,13 +761,14 @@ function FragmentRows({
                   disabled={busy}
                   onClick={() => onCell(r.section.id, c.key, info)}
                   title={
-                    editMode
+                    (editMode
                       ? filled
                         ? mode === "dg"
                           ? `${c.label} — ${n} datagroup(s) · click to edit`
                           : `${c.label} · click to remove`
                         : `${c.label} · click to add`
-                      : `${c.label} — ${n} ${mode === "dg" ? "datagroup(s)" : ""} · click to edit`
+                      : `${c.label} — ${n} ${mode === "dg" ? "datagroup(s)" : ""} · click to edit`) +
+                    (oo ? " · OUT OF ORDER (different order than the first retailer)" : "")
                   }
                   className={cn(
                     "mx-auto grid h-5 min-w-5 place-items-center rounded px-1 text-[10px] font-semibold transition-transform hover:scale-110 disabled:opacity-60",
