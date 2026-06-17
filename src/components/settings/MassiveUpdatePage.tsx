@@ -42,6 +42,8 @@ import {
   Network,
   Tags,
   Info,
+  Sheet,
+  ListOrdered,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -977,6 +979,17 @@ export function MassiveUpdatePage() {
             {/* Relationship map: where every section is currently applied. */}
             <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => void openMap()}>
               <Network className="h-4 w-4" /> Relationship map
+            </Button>
+            {/* Sibling tools (moved here from the Dashboard applications top bar). */}
+            <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
+              <Link to="/settings/dashboard-applications/sections-editor">
+                <Sheet className="h-4 w-4" /> Section editor
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
+              <Link to="/settings/dashboard-applications/section-position">
+                <ListOrdered className="h-4 w-4" /> Section position
+              </Link>
             </Button>
             {/* Environment for ALL live reads + writes. Prod = real changes. */}
             <div
