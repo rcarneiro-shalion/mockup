@@ -374,6 +374,10 @@ export function SectionPositionPage() {
       data: { service: "visualization", env: loadedEnv!, method: "PATCH", path: `${EP[kind]}/${recordId}`, body: { position }, token: tok || undefined, idToken: idt || undefined },
     });
   };
+  // Let the vacate-phase writes settle before the set-phase, so a just-freed slot
+  // isn't still seen as occupied (the upstream auto-bumps position on conflict,
+  // which would drift the final positions by +1 even though order is preserved).
+  const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
   // Run independent per-target jobs with limited concurrency.
   const pool = async <T,>(items: T[], worker: (it: T) => Promise<void>, conc = 4) => {
     let i = 0;
@@ -522,6 +526,7 @@ export function SectionPositionPage() {
           const r = await patchPos(moves[j].recordId, tempBase + j);
           if (!r.ok) failed++;
         }
+        await sleep(400); // let the vacates settle so final slots read as free
         // Phase 2 — drop each record into its final slot (now free).
         for (const m of moves) {
           const r = await patchPos(m.recordId, m.toPos);
@@ -578,6 +583,7 @@ export function SectionPositionPage() {
       const r = lastAction.restore;
       setWriteProgress({ done: 0, total: r.length });
       for (let j = 0; j < r.length; j++) await patchPos(r[j].recordId, 90000 + j);
+      await sleep(400); // let the vacates settle before restoring originals
       let restored = 0;
       let failed = 0;
       for (let n = 0; n < r.length; n++) {
