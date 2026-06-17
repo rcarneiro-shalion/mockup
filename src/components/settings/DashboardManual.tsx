@@ -15,8 +15,9 @@ import { ArrowLeft } from "lucide-react";
 const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-// Table of contents, in render order.
-const TOC: { id: string; title: string }[] = [
+// Table of contents, in render order. Exported so the helper modal can offer the
+// same quick-nav over the shared manual sections.
+export const MANUAL_TOC: { id: string; title: string }[] = [
   { id: "overview", title: "Overview" },
   { id: "products", title: "The Maestro products" },
   ...DASHBOARD_CONFIG_GROUPS.map((g) => ({ id: slug(g.category), title: g.category })),
@@ -47,6 +48,126 @@ function SectionTitle({ id, children }: { id: string; children: React.ReactNode 
   );
 }
 
+/** The manual body — the full set of sections, no page chrome. Shared by the
+ *  full-page manual route and the in-app helper modal. */
+export function DashboardManualSections() {
+  return (
+    <div className="min-w-0 space-y-10">
+      <section className="space-y-3">
+        <SectionTitle id="overview">Overview</SectionTitle>
+        {DASHBOARD_OVERVIEW.map((p, i) => (
+          <p key={i} className="text-sm leading-relaxed text-foreground/90">
+            {p}
+          </p>
+        ))}
+      </section>
+
+      <section className="space-y-3">
+        <SectionTitle id="products">The Maestro products</SectionTitle>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {DASHBOARD_PRODUCTS.map((p) => (
+            <div key={p.code} className="rounded-lg border border-border bg-card p-4">
+              <div className="flex items-center gap-2">
+                <span className="rounded-md bg-[var(--sidebar-active)] px-2 py-0.5 text-xs font-semibold text-[var(--sidebar-active-fg)]">
+                  {p.code}
+                </span>
+                <h3 className="text-sm font-semibold text-foreground">{p.name}</h3>
+              </div>
+              <p className="mt-1.5 text-sm text-foreground/90">{p.tagline}</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{p.measures}</p>
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {p.dashboards.map((d) => (
+                  <span
+                    key={d}
+                    className="rounded-full border border-border bg-secondary/60 px-2 py-0.5 text-[11px] text-foreground/80"
+                  >
+                    {d}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {DASHBOARD_CONFIG_GROUPS.map((g) => (
+        <section key={g.category} className="space-y-2">
+          <SectionTitle id={slug(g.category)}>{g.category}</SectionTitle>
+          <Bullets items={g.rules} />
+        </section>
+      ))}
+
+      <section className="space-y-3">
+        <SectionTitle id="section-catalogue">Dashboard sections catalogue</SectionTitle>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          The standard top-level section sets a client's data group can expose:
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {DASHBOARD_SECTION_CATALOGUE.map((s) => (
+            <div key={s.name} className="rounded-lg border border-border bg-card p-4">
+              <h3 className="text-sm font-semibold text-foreground">{s.name}</h3>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {s.items.map((it) => (
+                  <span
+                    key={it}
+                    className="rounded-full border border-border bg-secondary/60 px-2 py-0.5 text-[11px] text-foreground/80"
+                  >
+                    {it}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <SectionTitle id="data-sources">Where the dashboard gets its data</SectionTitle>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          The client dashboard (dashboard-frontend) is a thin layer — it reads everything
+          from backend services:
+        </p>
+        <div className="space-y-2.5">
+          {DASHBOARD_DATA_SOURCES.map((s) => (
+            <div key={s.api} className="rounded-lg border border-border bg-card p-4">
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-sm font-semibold text-foreground">{s.api}</h3>
+                <span className="text-xs text-muted-foreground">— {s.via}</span>
+              </div>
+              <Bullets items={s.calls} />
+            </div>
+          ))}
+        </div>
+        <p className="rounded-lg border border-dashed border-border bg-secondary/30 p-3 text-sm leading-relaxed text-muted-foreground">
+          {DASHBOARD_DATA_SOURCES_NOTE}
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <SectionTitle id="creating">Creating a dashboard</SectionTitle>
+        <ol className="space-y-2.5">
+          {DASHBOARD_CREATION_STEPS.map((s, i) => (
+            <li key={s.title} className="flex gap-3">
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--sidebar-active)] text-xs font-semibold text-[var(--sidebar-active-fg)]">
+                {i + 1}
+              </span>
+              <span className="text-sm leading-relaxed text-foreground/90">
+                <span className="font-medium text-foreground">{s.title}.</span> {s.text}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="space-y-2">
+        <SectionTitle id="pipeline">Behind the scenes (dbt &amp; Snowflake)</SectionTitle>
+        <Bullets items={DASHBOARD_PIPELINE} />
+      </section>
+    </div>
+  );
+}
+
+/** Full-page dashboard manual (the /manual route) — header + sticky TOC + body. */
 export function DashboardManual() {
   const navigate = useNavigate();
   const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -76,7 +197,7 @@ export function DashboardManual() {
                   On this page
                 </h3>
                 <nav className="mt-2 flex flex-col gap-1">
-                  {TOC.map((t) => (
+                  {MANUAL_TOC.map((t) => (
                     <button
                       key={t.id}
                       type="button"
@@ -91,118 +212,7 @@ export function DashboardManual() {
             </aside>
 
             {/* Content */}
-            <div className="min-w-0 space-y-10">
-              <section className="space-y-3">
-                <SectionTitle id="overview">Overview</SectionTitle>
-                {DASHBOARD_OVERVIEW.map((p, i) => (
-                  <p key={i} className="text-sm leading-relaxed text-foreground/90">
-                    {p}
-                  </p>
-                ))}
-              </section>
-
-              <section className="space-y-3">
-                <SectionTitle id="products">The Maestro products</SectionTitle>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {DASHBOARD_PRODUCTS.map((p) => (
-                    <div key={p.code} className="rounded-lg border border-border bg-card p-4">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-md bg-[var(--sidebar-active)] px-2 py-0.5 text-xs font-semibold text-[var(--sidebar-active-fg)]">
-                          {p.code}
-                        </span>
-                        <h3 className="text-sm font-semibold text-foreground">{p.name}</h3>
-                      </div>
-                      <p className="mt-1.5 text-sm text-foreground/90">{p.tagline}</p>
-                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{p.measures}</p>
-                      <div className="mt-2.5 flex flex-wrap gap-1.5">
-                        {p.dashboards.map((d) => (
-                          <span
-                            key={d}
-                            className="rounded-full border border-border bg-secondary/60 px-2 py-0.5 text-[11px] text-foreground/80"
-                          >
-                            {d}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {DASHBOARD_CONFIG_GROUPS.map((g) => (
-                <section key={g.category} className="space-y-2">
-                  <SectionTitle id={slug(g.category)}>{g.category}</SectionTitle>
-                  <Bullets items={g.rules} />
-                </section>
-              ))}
-
-              <section className="space-y-3">
-                <SectionTitle id="section-catalogue">Dashboard sections catalogue</SectionTitle>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  The standard top-level section sets a client's data group can expose:
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {DASHBOARD_SECTION_CATALOGUE.map((s) => (
-                    <div key={s.name} className="rounded-lg border border-border bg-card p-4">
-                      <h3 className="text-sm font-semibold text-foreground">{s.name}</h3>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {s.items.map((it) => (
-                          <span
-                            key={it}
-                            className="rounded-full border border-border bg-secondary/60 px-2 py-0.5 text-[11px] text-foreground/80"
-                          >
-                            {it}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section className="space-y-3">
-                <SectionTitle id="data-sources">Where the dashboard gets its data</SectionTitle>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  The client dashboard (dashboard-frontend) is a thin layer — it reads everything
-                  from backend services:
-                </p>
-                <div className="space-y-2.5">
-                  {DASHBOARD_DATA_SOURCES.map((s) => (
-                    <div key={s.api} className="rounded-lg border border-border bg-card p-4">
-                      <div className="flex items-baseline gap-2">
-                        <h3 className="text-sm font-semibold text-foreground">{s.api}</h3>
-                        <span className="text-xs text-muted-foreground">— {s.via}</span>
-                      </div>
-                      <Bullets items={s.calls} />
-                    </div>
-                  ))}
-                </div>
-                <p className="rounded-lg border border-dashed border-border bg-secondary/30 p-3 text-sm leading-relaxed text-muted-foreground">
-                  {DASHBOARD_DATA_SOURCES_NOTE}
-                </p>
-              </section>
-
-              <section className="space-y-3">
-                <SectionTitle id="creating">Creating a dashboard</SectionTitle>
-                <ol className="space-y-2.5">
-                  {DASHBOARD_CREATION_STEPS.map((s, i) => (
-                    <li key={s.title} className="flex gap-3">
-                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--sidebar-active)] text-xs font-semibold text-[var(--sidebar-active-fg)]">
-                        {i + 1}
-                      </span>
-                      <span className="text-sm leading-relaxed text-foreground/90">
-                        <span className="font-medium text-foreground">{s.title}.</span> {s.text}
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              </section>
-
-              <section className="space-y-2">
-                <SectionTitle id="pipeline">Behind the scenes (dbt &amp; Snowflake)</SectionTitle>
-                <Bullets items={DASHBOARD_PIPELINE} />
-              </section>
-            </div>
+            <DashboardManualSections />
           </div>
         </div>
       </div>
