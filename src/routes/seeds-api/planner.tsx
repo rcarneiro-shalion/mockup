@@ -10,12 +10,15 @@ import { getSubscriptions } from "@/lib/subscriptions";
 import { readPersistedList } from "@/lib/seedOptions";
 import type { ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import { cn } from "@/lib/utils";
-import { Users, FolderKanban, Layers, PlayCircle, RotateCcw, Sprout, Repeat, CalendarClock } from "lucide-react";
+import { Users, FolderKanban, Layers, PlayCircle, RotateCcw, Sprout, Repeat, CalendarClock, Calculator } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/planner")({
   head: () => ({ meta: [{ title: "Planner View — Shalion" }] }),
   component: PlannerPage,
 });
+
+// Placeholder location-set volume — the real per-store location count is TBD.
+const LOC_VOLUME_TBD = 10;
 
 // ---- Graph model -----------------------------------------------------------
 
@@ -65,9 +68,15 @@ function PlannerPage() {
   const [fClient, setFClient] = useState<string[]>([]);
   const [fProject, setFProject] = useState<string[]>([]);
   const [fSub, setFSub] = useState<string[]>([]);
+  const [fSeed, setFSeed] = useState<string[]>([]);
   const [fScrap, setFScrap] = useState<string[]>([]);
-  const hasFilter = fClient.length + fProject.length + fSub.length + fScrap.length > 0;
-  const resetFilters = () => { setFClient([]); setFProject([]); setFSub([]); setFScrap([]); };
+  const [fExtraction, setFExtraction] = useState<string[]>([]);
+  const hasFilter = fClient.length + fProject.length + fSub.length + fSeed.length + fScrap.length + fExtraction.length > 0;
+  const resetFilters = () => { setFClient([]); setFProject([]); setFSub([]); setFSeed([]); setFScrap([]); setFExtraction([]); };
+
+  // Filter option lists
+  const seedOptions = [...new Set(subs.flatMap((s) => s.seeds ?? []))].sort((a, b) => a.localeCompare(b));
+  const extractionOptions = [...new Set(baseScraps.map((o) => o.extractionType))].sort();
 
   // Build nodes + edges over the base set.
   const { nodes, edges, byKind } = useMemo(() => {
@@ -159,7 +168,11 @@ function PlannerPage() {
     for (const c of clients) if (fClient.includes(c.name) && nodes.has(`c:${c.id}`)) seeds.push(`c:${c.id}`);
     for (const p of projects) if (fProject.includes(p.name) && nodes.has(`p:${p.id}`)) seeds.push(`p:${p.id}`);
     for (const s of subs) if (fSub.includes(s.name) && nodes.has(`s:${s.id}`)) seeds.push(`s:${s.id}`);
+    // Seeds filter → the subscriptions that contain any selected seed.
+    if (fSeed.length) for (const s of subs) if ((s.seeds ?? []).some((d) => fSeed.includes(d)) && nodes.has(`s:${s.id}`)) seeds.push(`s:${s.id}`);
     for (const o of baseScraps) if (fScrap.includes(o.name)) seeds.push(`o:${o.name}`);
+    // Extraction type filter → scrapping options of the selected type(s).
+    if (fExtraction.length) for (const o of baseScraps) if (fExtraction.includes(o.extractionType)) seeds.push(`o:${o.name}`);
     const vis = new Set(seeds);
     const queue = [...seeds];
     while (queue.length) {
@@ -168,7 +181,19 @@ function PlannerPage() {
     }
     return vis;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, edges, hasFilter, fClient, fProject, fSub, fScrap]);
+  }, [nodes, edges, hasFilter, fClient, fProject, fSub, fSeed, fScrap, fExtraction]);
+
+  // Task generation estimation over the visible subscriptions.
+  // Rule (TBD): tasks ≈ seeds × locations per store, locations = location set volume.
+  const visibleSubs = subs.filter((s) => visible.has(`s:${s.id}`));
+  const estRows = visibleSubs.map((s) => {
+    const seedCount = (s.seeds ?? []).length;
+    const usesLoc = s.geo === "MANUAL" && !!s.locationSet;
+    const locations = usesLoc ? LOC_VOLUME_TBD : 1;
+    return { id: s.id, name: s.name, seeds: seedCount, locations, usesLoc, tasks: seedCount * locations };
+  });
+  const totalTasks = estRows.reduce((a, r) => a + r.tasks, 0);
+  const anyTbd = estRows.some((r) => r.usesLoc);
 
   const columns: { kind: NodeKind; label: string; icon: typeof Users; tone: string }[] = [
     { kind: "client", label: "Clients", icon: Users, tone: "text-emerald-600" },
@@ -204,6 +229,18 @@ function PlannerPage() {
         const dx = Math.max(40, (tx - sx) / 2);
         next.push({ id: `${e.source}->${e.target}`, d: `M ${sx} ${sy} C ${sx + dx} ${sy}, ${tx - dx} ${ty}, ${tx} ${ty}` });
       }
+      // each visible scrapping option feeds the task estimation box
+      const estPos = pos("est");
+      if (estPos) {
+        for (const o of baseScraps) {
+          if (!visible.has(`o:${o.name}`)) continue;
+          const a = pos(`o:${o.name}`);
+          if (!a) continue;
+          const sx = a.rx, sy = a.my, tx = estPos.lx, ty = estPos.my;
+          const dx = Math.max(40, (tx - sx) / 2);
+          next.push({ id: `o:${o.name}->est`, d: `M ${sx} ${sy} C ${sx + dx} ${sy}, ${tx - dx} ${ty}, ${tx} ${ty}` });
+        }
+      }
       setPaths(next);
     };
     measure();
@@ -230,7 +267,9 @@ function PlannerPage() {
           <FilterChip label="Clients" icon={Users} options={baseClients.map((c) => c.name)} value={fClient} onChange={setFClient} searchable />
           <FilterChip label="Projects" icon={FolderKanban} options={baseProjects.map((p) => p.name)} value={fProject} onChange={setFProject} searchable />
           <FilterChip label="Subscriptions" icon={Layers} options={subs.map((s) => s.name)} value={fSub} onChange={setFSub} searchable />
+          <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} searchable />
           <FilterChip label="Scrapping options" icon={PlayCircle} options={baseScraps.map((o) => o.name)} value={fScrap} onChange={setFScrap} searchable />
+          <FilterChip label="Extraction type" icon={Calculator} options={extractionOptions} value={fExtraction} onChange={setFExtraction} searchable />
           {hasFilter && (
             <button
               type="button"
@@ -284,6 +323,42 @@ function PlannerPage() {
                   </div>
                 );
               })}
+
+              {/* Task generation estimation — the pipeline's output */}
+              <div className="w-[300px] shrink-0">
+                <div className="mb-3 flex items-center gap-1.5">
+                  <Calculator className="h-4 w-4 text-rose-600" />
+                  <span className="text-sm font-semibold text-foreground">Task estimation</span>
+                </div>
+                <div
+                  ref={(el) => { if (el) cardEls.current.set("est", el); else cardEls.current.delete("est"); }}
+                  className="rounded-lg border border-border bg-card p-4 shadow-sm"
+                >
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    A task ≈ <span className="font-medium text-foreground">seeds × locations</span> per store. Locations ={" "}
+                    location set volume{" "}
+                    <span className="rounded bg-amber-100 px-1 text-[10px] font-medium text-amber-800">TBD</span>.
+                  </p>
+                  <div className="mt-3 space-y-1.5">
+                    {estRows.length === 0 && <p className="text-xs text-muted-foreground">No subscriptions in view.</p>}
+                    {estRows.map((r) => (
+                      <div key={r.id} className="flex items-center justify-between gap-2 text-xs">
+                        <span className="min-w-0 truncate text-foreground/80" title={r.name}>{r.name}</span>
+                        <span className="shrink-0 font-mono text-muted-foreground">
+                          {r.seeds}×{r.locations}{r.usesLoc ? "*" : ""} = <b className="text-foreground">{r.tasks}</b>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between border-t border-border pt-2">
+                    <span className="text-xs font-medium text-foreground">Estimated total</span>
+                    <span className="text-base font-semibold text-rose-600">{totalTasks.toLocaleString()} tasks</span>
+                  </div>
+                  {anyTbd && (
+                    <p className="mt-2 text-[11px] text-muted-foreground">* assumes {LOC_VOLUME_TBD} locations / set (TBD)</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
