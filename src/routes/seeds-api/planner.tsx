@@ -10,7 +10,7 @@ import { getSubscriptions } from "@/lib/subscriptions";
 import { readPersistedList } from "@/lib/seedOptions";
 import type { ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import { cn } from "@/lib/utils";
-import { Users, FolderKanban, Layers, PlayCircle, RotateCcw, Sprout, Repeat, CalendarClock, Calculator, ZoomIn, ZoomOut, Maximize2, Minimize2 } from "lucide-react";
+import { Users, FolderKanban, Layers, PlayCircle, RotateCcw, Sprout, Repeat, CalendarClock, Calculator, ZoomIn, ZoomOut, Maximize2, Minimize2, Store } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/planner")({
   head: () => ({ meta: [{ title: "Value Stream Map — Shalion" }] }),
@@ -71,13 +71,15 @@ function PlannerPage() {
   const [fClient, setFClient] = useState<string[]>([]);
   const [fProject, setFProject] = useState<string[]>([]);
   const [fSub, setFSub] = useState<string[]>([]);
+  const [fStore, setFStore] = useState<string[]>([]);
   const [fSeed, setFSeed] = useState<string[]>([]);
   const [fScrap, setFScrap] = useState<string[]>([]);
   const [fExtraction, setFExtraction] = useState<string[]>([]);
-  const hasFilter = fClient.length + fProject.length + fSub.length + fSeed.length + fScrap.length + fExtraction.length > 0;
-  const resetFilters = () => { setFClient([]); setFProject([]); setFSub([]); setFSeed([]); setFScrap([]); setFExtraction([]); };
+  const hasFilter = fClient.length + fProject.length + fSub.length + fStore.length + fSeed.length + fScrap.length + fExtraction.length > 0;
+  const resetFilters = () => { setFClient([]); setFProject([]); setFSub([]); setFStore([]); setFSeed([]); setFScrap([]); setFExtraction([]); };
 
   // Filter option lists
+  const storeOptions = [...new Set(subs.map((s) => s.store).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const seedOptions = [...new Set(subs.flatMap((s) => s.seeds ?? []))].sort((a, b) => a.localeCompare(b));
   const extractionOptions = [...new Set(baseScraps.map((o) => o.extractionType))].sort();
 
@@ -171,6 +173,8 @@ function PlannerPage() {
     for (const c of clients) if (fClient.includes(c.name) && nodes.has(`c:${c.id}`)) seeds.push(`c:${c.id}`);
     for (const p of projects) if (fProject.includes(p.name) && nodes.has(`p:${p.id}`)) seeds.push(`p:${p.id}`);
     for (const s of subs) if (fSub.includes(s.name) && nodes.has(`s:${s.id}`)) seeds.push(`s:${s.id}`);
+    // Store filter → the subscriptions on the selected store(s).
+    if (fStore.length) for (const s of subs) if (fStore.includes(s.store) && nodes.has(`s:${s.id}`)) seeds.push(`s:${s.id}`);
     // Seeds filter → the subscriptions that contain any selected seed.
     if (fSeed.length) for (const s of subs) if ((s.seeds ?? []).some((d) => fSeed.includes(d)) && nodes.has(`s:${s.id}`)) seeds.push(`s:${s.id}`);
     for (const o of baseScraps) if (fScrap.includes(o.name)) seeds.push(`o:${o.name}`);
@@ -184,7 +188,7 @@ function PlannerPage() {
     }
     return vis;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, edges, hasFilter, fClient, fProject, fSub, fSeed, fScrap, fExtraction]);
+  }, [nodes, edges, hasFilter, fClient, fProject, fSub, fStore, fSeed, fScrap, fExtraction]);
 
   // Task generation estimation over the visible subscriptions.
   // Rule (TBD): tasks ≈ seeds × locations per store, locations = location set volume.
@@ -330,6 +334,7 @@ function PlannerPage() {
           <FilterChip label="Clients" icon={Users} options={baseClients.map((c) => c.name)} value={fClient} onChange={setFClient} searchable />
           <FilterChip label="Projects" icon={FolderKanban} options={baseProjects.map((p) => p.name)} value={fProject} onChange={setFProject} searchable />
           <FilterChip label="Subscriptions" icon={Layers} options={subs.map((s) => s.name)} value={fSub} onChange={setFSub} searchable />
+          <FilterChip label="Store" icon={Store} options={storeOptions} value={fStore} onChange={setFStore} searchable />
           <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} searchable />
           <FilterChip label="Scrapping options" icon={PlayCircle} options={baseScraps.map((o) => o.name)} value={fScrap} onChange={setFScrap} searchable />
           <FilterChip label="Extraction type" icon={Calculator} options={extractionOptions} value={fExtraction} onChange={setFExtraction} searchable />
