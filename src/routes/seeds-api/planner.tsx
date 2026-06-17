@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { Users, FolderKanban, Layers, PlayCircle, RotateCcw, Sprout, Repeat, CalendarClock, Calculator } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/planner")({
-  head: () => ({ meta: [{ title: "Planner View — Shalion" }] }),
+  head: () => ({ meta: [{ title: "Value Stream Map — Shalion" }] }),
   component: PlannerPage,
 });
 
@@ -256,7 +256,7 @@ function PlannerPage() {
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between px-6 pt-5">
           <div>
-            <h1 className="text-[17px] font-semibold text-foreground">Planner View</h1>
+            <h1 className="text-[17px] font-semibold text-foreground">Value Stream Map</h1>
             <p className="text-sm text-muted-foreground">
               Visual map of the data-extraction setup — clients → projects → subscriptions → scrapping options.
             </p>

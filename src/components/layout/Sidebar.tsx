@@ -55,13 +55,13 @@ const ecometryNav: NavItem[] = [
     icon: Sprout,
     defaultOpen: true,
     children: [
-      { label: "Planner View", to: "/seeds-api/planner" },
       { label: "Projects", to: "/seeds-api/projects" },
       { label: "Subscriptions", to: "/seeds-api/subscriptions" },
       { label: "Seeds", to: "/seeds-api/seeds" },
       { label: "Scrapping options", to: "/seeds-api/scrapping-options" },
       { label: "Tags", to: "/seeds-api/tags" },
       { label: "TaskGroup", to: "/seeds-api/timeframes" },
+      { label: "Value Stream Map", to: "/seeds-api/planner" },
     ],
   },
   {
