@@ -10,7 +10,7 @@ import { getSubscriptions } from "@/lib/subscriptions";
 import { readPersistedList } from "@/lib/seedOptions";
 import type { ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import { cn } from "@/lib/utils";
-import { Users, FolderKanban, Layers, PlayCircle, RotateCcw, Sprout, Repeat, CalendarClock, Calculator } from "lucide-react";
+import { Users, FolderKanban, Layers, PlayCircle, RotateCcw, Sprout, Repeat, CalendarClock, Calculator, ZoomIn, ZoomOut, Maximize2, Minimize2 } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/planner")({
   head: () => ({ meta: [{ title: "Value Stream Map — Shalion" }] }),
@@ -19,6 +19,9 @@ export const Route = createFileRoute("/seeds-api/planner")({
 
 // Placeholder location-set volume — the real per-store location count is TBD.
 const LOC_VOLUME_TBD = 10;
+const ZOOM_MIN = 0.4;
+const ZOOM_MAX = 2;
+const ZOOM_STEP = 0.1;
 
 // ---- Graph model -----------------------------------------------------------
 
@@ -208,16 +211,35 @@ function PlannerPage() {
   const [paths, setPaths] = useState<{ id: string; d: string }[]>([]);
   const visKey = [...visible].sort().join("|");
 
+  // Zoom + full-screen
+  const [zoom, setZoom] = useState(1);
+  const [isFull, setIsFull] = useState(false);
+  const [natSize, setNatSize] = useState({ w: 0, h: 0 });
+  const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
+
+  useEffect(() => {
+    if (!isFull) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setIsFull(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isFull]);
+
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
     const measure = () => {
       const wr = wrap.getBoundingClientRect();
+      // wrap carries the zoom transform, so getBoundingClientRect is scaled —
+      // divide back to the wrap's unscaled coordinate space (the SVG scales with it).
       const pos = (key: string) => {
         const el = cardEls.current.get(key);
         if (!el) return null;
         const r = el.getBoundingClientRect();
-        return { lx: r.left - wr.left, rx: r.right - wr.left, my: r.top - wr.top + r.height / 2 };
+        return {
+          lx: (r.left - wr.left) / zoom,
+          rx: (r.right - wr.left) / zoom,
+          my: (r.top - wr.top + r.height / 2) / zoom,
+        };
       };
       const next: { id: string; d: string }[] = [];
       for (const e of edges) {
@@ -241,6 +263,9 @@ function PlannerPage() {
           next.push({ id: `o:${o.name}->est`, d: `M ${sx} ${sy} C ${sx + dx} ${sy}, ${tx - dx} ${ty}, ${tx} ${ty}` });
         }
       }
+      // wrap.offsetWidth/Height are layout sizes (unaffected by the transform);
+      // the sizer below reserves scaled space so the canvas scrolls when zoomed.
+      setNatSize((prev) => (prev.w === wrap.offsetWidth && prev.h === wrap.offsetHeight ? prev : { w: wrap.offsetWidth, h: wrap.offsetHeight }));
       setPaths(next);
     };
     measure();
@@ -249,17 +274,55 @@ function PlannerPage() {
     window.addEventListener("resize", measure);
     const t = setTimeout(measure, 60);
     return () => { ro.disconnect(); window.removeEventListener("resize", measure); clearTimeout(t); };
-  }, [edges, visible, visKey]);
+  }, [edges, visible, visKey, zoom]);
 
   return (
     <AppShell>
-      <div className="flex h-full flex-col">
+      <div className={cn("flex flex-col", isFull ? "fixed inset-0 z-50 bg-background" : "h-full")}>
         <div className="flex items-center justify-between px-6 pt-5">
           <div>
             <h1 className="text-[17px] font-semibold text-foreground">Value Stream Map</h1>
             <p className="text-sm text-muted-foreground">
               Visual map of the data-extraction setup — clients → projects → subscriptions → scrapping options.
             </p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center overflow-hidden rounded-md border border-border">
+              <button
+                type="button"
+                onClick={() => setZoom((z) => clampZoom(z - ZOOM_STEP))}
+                disabled={zoom <= ZOOM_MIN}
+                title="Zoom out"
+                className="p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-40"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoom(1)}
+                title="Reset zoom"
+                className="w-12 border-x border-border px-1 py-1.5 text-center text-xs font-medium tabular-nums text-foreground/80 hover:bg-secondary"
+              >
+                {Math.round(zoom * 100)}%
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoom((z) => clampZoom(z + ZOOM_STEP))}
+                disabled={zoom >= ZOOM_MAX}
+                title="Zoom in"
+                className="p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-40"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsFull((v) => !v)}
+              title={isFull ? "Exit full screen (Esc)" : "Full screen"}
+              className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            >
+              {isFull ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
           </div>
         </div>
 
@@ -282,7 +345,12 @@ function PlannerPage() {
         </div>
 
         <div className="flex-1 overflow-auto px-6 pb-6">
-          <div ref={wrapRef} className="relative min-w-max">
+          <div style={{ width: natSize.w ? natSize.w * zoom : undefined, height: natSize.h ? natSize.h * zoom : undefined }}>
+            <div
+              ref={wrapRef}
+              className="relative min-w-max"
+              style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}
+            >
             {/* connectors */}
             <svg className="pointer-events-none absolute inset-0 h-full w-full" style={{ overflow: "visible" }}>
               {paths.map((p) => (
@@ -360,6 +428,7 @@ function PlannerPage() {
                 </div>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
