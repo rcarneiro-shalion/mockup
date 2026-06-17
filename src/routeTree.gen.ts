@@ -93,6 +93,7 @@ import { Route as SettingsScopesIdRouteImport } from './routes/settings/scopes/$
 import { Route as SettingsRulesNewRouteImport } from './routes/settings/rules.new'
 import { Route as SettingsRulesRuleIdRouteImport } from './routes/settings/rules.$ruleId'
 import { Route as SettingsDashboardApplicationsSectionsEditorRouteImport } from './routes/settings/dashboard-applications.sections-editor'
+import { Route as SettingsDashboardApplicationsSectionPositionRouteImport } from './routes/settings/dashboard-applications.section-position'
 import { Route as SettingsDashboardApplicationsMassiveUpdateRouteImport } from './routes/settings/dashboard-applications.massive-update'
 import { Route as SettingsDashboardApplicationsManualRouteImport } from './routes/settings/dashboard-applications.manual'
 import { Route as SettingsDashboardApplicationsAppIdRouteImport } from './routes/settings/dashboard-applications.$appId'
@@ -632,6 +633,12 @@ const SettingsDashboardApplicationsSectionsEditorRoute =
   SettingsDashboardApplicationsSectionsEditorRouteImport.update({
     id: '/sections-editor',
     path: '/sections-editor',
+    getParentRoute: () => SettingsDashboardApplicationsRoute,
+  } as any)
+const SettingsDashboardApplicationsSectionPositionRoute =
+  SettingsDashboardApplicationsSectionPositionRouteImport.update({
+    id: '/section-position',
+    path: '/section-position',
     getParentRoute: () => SettingsDashboardApplicationsRoute,
   } as any)
 const SettingsDashboardApplicationsMassiveUpdateRoute =
@@ -1279,6 +1286,7 @@ export interface FileRoutesByFullPath {
   '/settings/dashboard-applications/$appId': typeof SettingsDashboardApplicationsAppIdRouteWithChildren
   '/settings/dashboard-applications/manual': typeof SettingsDashboardApplicationsManualRoute
   '/settings/dashboard-applications/massive-update': typeof SettingsDashboardApplicationsMassiveUpdateRoute
+  '/settings/dashboard-applications/section-position': typeof SettingsDashboardApplicationsSectionPositionRoute
   '/settings/dashboard-applications/sections-editor': typeof SettingsDashboardApplicationsSectionsEditorRoute
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
@@ -1453,6 +1461,7 @@ export interface FileRoutesByTo {
   '/settings/cubes/new': typeof SettingsCubesNewRoute
   '/settings/dashboard-applications/manual': typeof SettingsDashboardApplicationsManualRoute
   '/settings/dashboard-applications/massive-update': typeof SettingsDashboardApplicationsMassiveUpdateRoute
+  '/settings/dashboard-applications/section-position': typeof SettingsDashboardApplicationsSectionPositionRoute
   '/settings/dashboard-applications/sections-editor': typeof SettingsDashboardApplicationsSectionsEditorRoute
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
@@ -1634,6 +1643,7 @@ export interface FileRoutesById {
   '/settings/dashboard-applications/$appId': typeof SettingsDashboardApplicationsAppIdRouteWithChildren
   '/settings/dashboard-applications/manual': typeof SettingsDashboardApplicationsManualRoute
   '/settings/dashboard-applications/massive-update': typeof SettingsDashboardApplicationsMassiveUpdateRoute
+  '/settings/dashboard-applications/section-position': typeof SettingsDashboardApplicationsSectionPositionRoute
   '/settings/dashboard-applications/sections-editor': typeof SettingsDashboardApplicationsSectionsEditorRoute
   '/settings/rules/$ruleId': typeof SettingsRulesRuleIdRoute
   '/settings/rules/new': typeof SettingsRulesNewRoute
@@ -1817,6 +1827,7 @@ export interface FileRouteTypes {
     | '/settings/dashboard-applications/$appId'
     | '/settings/dashboard-applications/manual'
     | '/settings/dashboard-applications/massive-update'
+    | '/settings/dashboard-applications/section-position'
     | '/settings/dashboard-applications/sections-editor'
     | '/settings/rules/$ruleId'
     | '/settings/rules/new'
@@ -1991,6 +2002,7 @@ export interface FileRouteTypes {
     | '/settings/cubes/new'
     | '/settings/dashboard-applications/manual'
     | '/settings/dashboard-applications/massive-update'
+    | '/settings/dashboard-applications/section-position'
     | '/settings/dashboard-applications/sections-editor'
     | '/settings/rules/$ruleId'
     | '/settings/rules/new'
@@ -2171,6 +2183,7 @@ export interface FileRouteTypes {
     | '/settings/dashboard-applications/$appId'
     | '/settings/dashboard-applications/manual'
     | '/settings/dashboard-applications/massive-update'
+    | '/settings/dashboard-applications/section-position'
     | '/settings/dashboard-applications/sections-editor'
     | '/settings/rules/$ruleId'
     | '/settings/rules/new'
@@ -3001,6 +3014,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsDashboardApplicationsSectionsEditorRouteImport
       parentRoute: typeof SettingsDashboardApplicationsRoute
     }
+    '/settings/dashboard-applications/section-position': {
+      id: '/settings/dashboard-applications/section-position'
+      path: '/section-position'
+      fullPath: '/settings/dashboard-applications/section-position'
+      preLoaderRoute: typeof SettingsDashboardApplicationsSectionPositionRouteImport
+      parentRoute: typeof SettingsDashboardApplicationsRoute
+    }
     '/settings/dashboard-applications/massive-update': {
       id: '/settings/dashboard-applications/massive-update'
       path: '/massive-update'
@@ -3769,6 +3789,7 @@ interface SettingsDashboardApplicationsRouteChildren {
   SettingsDashboardApplicationsAppIdRoute: typeof SettingsDashboardApplicationsAppIdRouteWithChildren
   SettingsDashboardApplicationsManualRoute: typeof SettingsDashboardApplicationsManualRoute
   SettingsDashboardApplicationsMassiveUpdateRoute: typeof SettingsDashboardApplicationsMassiveUpdateRoute
+  SettingsDashboardApplicationsSectionPositionRoute: typeof SettingsDashboardApplicationsSectionPositionRoute
   SettingsDashboardApplicationsSectionsEditorRoute: typeof SettingsDashboardApplicationsSectionsEditorRoute
   SettingsDashboardApplicationsIndexRoute: typeof SettingsDashboardApplicationsIndexRoute
 }
@@ -3781,6 +3802,8 @@ const SettingsDashboardApplicationsRouteChildren: SettingsDashboardApplicationsR
       SettingsDashboardApplicationsManualRoute,
     SettingsDashboardApplicationsMassiveUpdateRoute:
       SettingsDashboardApplicationsMassiveUpdateRoute,
+    SettingsDashboardApplicationsSectionPositionRoute:
+      SettingsDashboardApplicationsSectionPositionRoute,
     SettingsDashboardApplicationsSectionsEditorRoute:
       SettingsDashboardApplicationsSectionsEditorRoute,
     SettingsDashboardApplicationsIndexRoute:

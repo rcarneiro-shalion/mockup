@@ -42,7 +42,7 @@ export type DashboardApp = {
 
 // v3: richer DSM groups/sections (with varied definitions + tabs) for the bulk
 // sections editor. Older data under v1/v2 keys is abandoned.
-export const DASHBOARD_APPS_KEY = "settings:dashboard-applications:v3";
+export const DASHBOARD_APPS_KEY = "settings:dashboard-applications:v4";
 
 /** Timestamp stamped onto created/updated fields when editing in-memory. */
 export const nowStamp = () => new Date().toDateString();
@@ -226,6 +226,23 @@ const DSM_GROUPS: DashGroup[] = [
   ),
 ];
 
+const RMMS_GROUPS: DashGroup[] = [
+  G(
+    "rmms-g",
+    "Retail Media",
+    "FundViewOutlined",
+    [
+      SEC("sec-rmms-cat", "/rmms-category", "Category", "BUILT_IN", [{ key: "label", value: "Category" }], [], "Fri, May 29, 2026 2:18", "Fri, May 29, 2026 2:18"),
+      SEC("sec-rmms-brand", "/rmms-brand", "Brand", "BUILT_IN", [{ key: "label", value: "Brand" }], [], "Fri, May 29, 2026 2:18", "Fri, May 29, 2026 2:18"),
+      SEC("sec-rmms-kw", "/rmms-keyword", "Keyword", "BUILT_IN", [{ key: "label", value: "Keyword" }], [], "Fri, May 29, 2026 2:18", "Fri, May 29, 2026 2:18"),
+      SEC("sec-rmms-item", "/rmms-item", "Item", "BUILT_IN", [{ key: "label", value: "Item" }], [], "Fri, May 29, 2026 2:18", "Fri, May 29, 2026 2:18"),
+      SEC("sec-rmms-audit", "/rmms-audit-setup", "Audit & Setup", "BUILT_IN", [{ key: "label", value: "Audit & Setup" }], [], "Fri, May 29, 2026 2:18", "Fri, May 29, 2026 2:18"),
+    ],
+    "Fri, May 29, 2026 2:18",
+    "Fri, May 29, 2026 2:18",
+  ),
+];
+
 const A = (
   id: string,
   label: string,
@@ -259,6 +276,7 @@ export const INITIAL_DASHBOARD_APPS: DashboardApp[] = [
     "rmms",
     "Fri, May 29, 2026 2:18",
     "Fri, May 29, 2026 2:18",
+    RMMS_GROUPS,
   ),
   A("dsm", "Digital Shelf Maestro", "dsm", "Thu, May 9, 2024 7:50", "Mon, Feb 2, 2026 6:20", DSM_GROUPS),
   A("asm", "Amazon Shelf Maestro", "asm", "Thu, May 23, 2024 1:30", "Fri, Mar 27, 2026 1:23"),
