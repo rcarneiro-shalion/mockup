@@ -40,8 +40,9 @@ export type DashboardApp = {
   updatedAt: string;
 };
 
-// v2: nested groups/sections/tabs schema (old flat data under the v1 key is abandoned).
-export const DASHBOARD_APPS_KEY = "settings:dashboard-applications:v2";
+// v3: richer DSM groups/sections (with varied definitions + tabs) for the bulk
+// sections editor. Older data under v1/v2 keys is abandoned.
+export const DASHBOARD_APPS_KEY = "settings:dashboard-applications:v3";
 
 /** Timestamp stamped onto created/updated fields when editing in-memory. */
 export const nowStamp = () => new Date().toDateString();
@@ -65,6 +66,27 @@ const G = (
   createdAt: string,
   updatedAt: string,
 ): DashGroup => ({ id, label, icon, sections, createdAt, updatedAt });
+
+const T = (
+  id: string,
+  label: string,
+  slug: string,
+  dashboardId: string,
+  description = "",
+  filterSet = "",
+  lookerId = "",
+): DashTab => ({ id, label, slug, description, dashboardId, lookerId, filterSet, panels: [] });
+
+const SEC = (
+  id: string,
+  path: string,
+  label: string,
+  type: DashSection["type"],
+  definition: DashDefinitionVar[],
+  tabs: DashTab[] = [],
+  createdAt = "Thu, May 9, 2024 7:50",
+  updatedAt = "Mon, Feb 2, 2026 6:20",
+): DashSection => ({ id, path, label, type, definition, tabs, createdAt, updatedAt });
 
 const MSM_GROUPS: DashGroup[] = [
   G(
@@ -116,6 +138,94 @@ const RMM_GROUPS: DashGroup[] = [
   ),
 ];
 
+const DSM_GROUPS: DashGroup[] = [
+  G(
+    "g-dsm-score",
+    "Scorecard",
+    "FundViewOutlined",
+    [
+      SEC(
+        "sec-dsm-score",
+        "/dsm-visibility/scorecard-lego",
+        "Scorecard",
+        "BUILT_IN",
+        [
+          { key: "label", value: "Scorecard" },
+          { key: "tab_1", value: "Overview - 0051cba4-fe0f-4134-b22d-9ec2a4a2c979" },
+          { key: "tab_4", value: "Campaigns - 351028b8-d4c5-4f44-884e-3b1a9d4dcdd1" },
+        ],
+        [
+          T("tab-dsm-ov", "Overview", "overview", "5d3805bb-c2e3-47af-8d18-7fe9f76dbb72", "# Scorecard --- # Metric Glo", "LegoDSM"),
+          T("tab-dsm-camp", "Campaigns", "campaigns", "411e2206-c13b-4487-85a5-3b1a9d4dcdd1", "", "LegoDSM"),
+        ],
+      ),
+    ],
+    "Thu, May 9, 2024 7:50",
+    "Mon, Feb 2, 2026 6:20",
+  ),
+  G(
+    "g-dsm-vis",
+    "Visibility",
+    "EyeOutlined",
+    [
+      SEC(
+        "sec-dsm-vis",
+        "/dsm-visibility/share-of-search-lego",
+        "Share of search",
+        "BUILT_IN",
+        [
+          { key: "label", value: "Visibility" },
+          { key: "tab_1", value: "Share of search - 7c1e2206-aa11-4c0e-9d33-22b1a9d4dcdd" },
+          { key: "default_metric", value: "sos" },
+        ],
+        [T("tab-dsm-sos", "Share of search", "share-of-search", "7c1e2206-aa11-4c0e-9d33-22b1a9d4dcdd", "", "LegoDSM")],
+      ),
+    ],
+    "Thu, May 9, 2024 7:50",
+    "Mon, Feb 2, 2026 6:20",
+  ),
+  G(
+    "g-dsm-audit",
+    "Setup & Audit",
+    "FolderOpenOutlined",
+    [
+      SEC(
+        "sec-dsm-audit",
+        "/dsm-setup/audit-lego",
+        "Setup & Audit",
+        "CUSTOM",
+        [
+          { key: "label", value: "Setup & Audit" },
+          { key: "embeddable_id", value: "a1b2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d" },
+        ],
+        [],
+      ),
+    ],
+    "Thu, May 9, 2024 7:50",
+    "Mon, Feb 2, 2026 6:20",
+  ),
+  G(
+    "g-dsm-raw",
+    "Raw Data",
+    "MonitorOutlined",
+    [
+      SEC(
+        "sec-dsm-raw",
+        "/dsm-raw/raw-data-lego",
+        "Raw Data",
+        "BUILT_IN",
+        [
+          { key: "label", value: "Raw Data" },
+          { key: "export_enabled", value: "true" },
+        ],
+        [T("tab-dsm-prod", "Products", "products", "9f0a1b2c-3d4e-4f5a-8b6c-7d8e9f0a1b2c", "", "LegoDSM")],
+      ),
+    ],
+    "Thu, May 9, 2024 7:50",
+    "Mon, Feb 2, 2026 6:20",
+  ),
+];
+
 const A = (
   id: string,
   label: string,
@@ -150,7 +260,7 @@ export const INITIAL_DASHBOARD_APPS: DashboardApp[] = [
     "Fri, May 29, 2026 2:18",
     "Fri, May 29, 2026 2:18",
   ),
-  A("dsm", "Digital Shelf Maestro", "dsm", "Thu, May 9, 2024 7:50", "Mon, Feb 2, 2026 6:20"),
+  A("dsm", "Digital Shelf Maestro", "dsm", "Thu, May 9, 2024 7:50", "Mon, Feb 2, 2026 6:20", DSM_GROUPS),
   A("asm", "Amazon Shelf Maestro", "asm", "Thu, May 23, 2024 1:30", "Fri, Mar 27, 2026 1:23"),
   A("odm", "Outlet Distribution Maestro", "odm", "Mon, May 12, 2025 8:00", "Mon, Jun 1, 2026 2:58"),
 ];
