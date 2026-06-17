@@ -150,16 +150,16 @@ function toDashApps(appsJson: unknown, groupRows: Record<string, unknown>[], sec
     const entry = groupById.get(str(grp.id));
     if (entry) entry.group.sections.push(toDashSection(s));
   }
-  return apps
-    .map((a) => ({
-      id: a.id,
-      label: a.label,
-      slug: a.slug,
-      groups: [...groupById.values()].filter((e) => e.appSlug === a.slug).map((e) => e.group),
-      createdAt: "",
-      updatedAt: "",
-    }))
-    .filter((a) => a.groups.length > 0);
+  // Keep EVERY application (even ones with no groups/sections yet) so the live
+  // dashboard-application list is complete; empty apps just contribute no rows.
+  return apps.map((a) => ({
+    id: a.id,
+    label: a.label,
+    slug: a.slug,
+    groups: [...groupById.values()].filter((e) => e.appSlug === a.slug).map((e) => e.group),
+    createdAt: "",
+    updatedAt: "",
+  }));
 }
 
 /** DashSection → PATCH body (definition back to a jsonb object). Tabs are NOT
@@ -390,7 +390,7 @@ export function SectionsGridPage() {
     const first = await get(0);
     if (!first.ok) return { ok: false, rows: [] as Record<string, unknown>[], error: first.error };
     let rows = (Array.isArray(first.data) ? first.data : []) as Record<string, unknown>[];
-    const pages = Math.min(Math.ceil((first.total ?? rows.length) / 100), 30);
+    const pages = Math.min(Math.ceil((first.total ?? rows.length) / 100), 60);
     for (let p = 1; p < pages; p++) {
       const r = await get(p);
       if (r.ok && Array.isArray(r.data)) rows = rows.concat(r.data as Record<string, unknown>[]);
@@ -416,23 +416,28 @@ export function SectionsGridPage() {
         fetchAllPages("/v1.0/admin/dashboardgroups", env, a, i),
         fetchAllPages("/v1.0/admin/dashboardsections", env, a, i),
       ]);
-      if (!sectionsRes.ok) {
-        toast.error(sectionsRes.error || "Couldn't load sections.");
+      if (!appsRes.ok) {
+        toast.error(appsRes.error || "Couldn't load dashboard applications.");
         setShowConnect(true);
         return;
       }
-      const mapped = toDashApps(appsRes.ok ? appsRes.data : [], groupsRes.rows, sectionsRes.rows);
+      const mapped = toDashApps(appsRes.data, groupsRes.rows, sectionsRes.rows);
       if (!mapped.length) {
-        toast.error("No dashboard sections returned (check the token / env).");
+        toast.error("No dashboard applications returned (check the token / env).");
         return;
       }
-      const total = mapped.reduce((n, app) => n + app.groups.reduce((m, g) => m + g.sections.length, 0), 0);
+      const groupCount = mapped.reduce((n, app) => n + app.groups.length, 0);
+      const sectionCount = mapped.reduce((n, app) => n + app.groups.reduce((m, g) => m + g.sections.length, 0), 0);
       setLiveApps(mapped);
       setLoadedEnv(env);
       setDirty(new Set());
       setExpanded(new Set());
       setShowConnect(false);
-      toast.success(`Live (${env}): ${mapped.length} apps · ${total} sections loaded.`);
+      // Surface what actually came back so partial loads are visible (not silent).
+      const msg = `Live (${env}): ${mapped.length} apps · ${groupCount} groups · ${sectionCount} sections.`;
+      const partial = [!groupsRes.ok && "groups", !sectionsRes.ok && "sections"].filter(Boolean);
+      if (partial.length) toast.warning(`${msg} Partial — ${partial.join(" & ")} failed to load; reconnect to retry.`);
+      else toast.success(msg);
     } catch (e) {
       toast.error(`Couldn't connect: ${(e as Error).message}`);
       setShowConnect(true);
