@@ -187,7 +187,7 @@ export type PosSectionMeta = {
   appLabel: string;
   group: string;
 };
-export type PosAssignment = { targetId: string; appId: string; sectionId: string; position: number };
+export type PosAssignment = { id: string; targetId: string; appId: string; sectionId: string; position: number };
 
 export async function aggregateSectionPositions(args: {
   kind: "brand" | "agency";
@@ -255,7 +255,7 @@ export async function aggregateSectionPositions(args: {
           group: str(group.label),
         });
       }
-      assignments.push({ targetId, appId, sectionId, position: Number(r.position) || 0 });
+      assignments.push({ id: String(r.id ?? ""), targetId, appId, sectionId, position: Number(r.position) || 0 });
     }
   };
 
@@ -316,10 +316,16 @@ const WRITE_PATH_PREFIXES = [
   "/v1.0/admin/retailer-dashboardsections",
   "/v1.0/admin/datagroup-retailers",
 ];
-// PATCH is limited to section CONTENT (path/label/type/definition) — edited by the
-// Section editor's live mode (which snapshots a version before any write). No
-// POST/DELETE here: whole sections can't be created/deleted through this proxy.
-const PATCH_PATH_PREFIX = "/v1.0/admin/dashboardsections";
+// PATCH is limited to:
+//  - section CONTENT (/dashboardsections) — Section editor live save (snapshots first); and
+//  - the `position` of section ASSIGNMENTS (retailer-/datagroup-dashboardsections) —
+//    the Section position page's "Enforce order" (snapshots + Undo). No POST/DELETE
+//    of whole sections here; PATCH only touches existing rows.
+const PATCH_PATH_PREFIXES = [
+  "/v1.0/admin/dashboardsections",
+  "/v1.0/admin/retailer-dashboardsections",
+  "/v1.0/admin/datagroup-dashboardsections",
+];
 
 export type LiveMethod = "POST" | "DELETE" | "PATCH";
 
@@ -351,8 +357,8 @@ export async function mutateShalion(args: {
   // POST/DELETE → the assignment endpoints only.
   const pathOnly = args.path.split("?")[0];
   if (args.method === "PATCH") {
-    if (!(pathOnly === PATCH_PATH_PREFIX || pathOnly.startsWith(`${PATCH_PATH_PREFIX}/`)))
-      return { ok: false, status: 0, data: null, hadToken, error: `PATCH is only allowed on ${PATCH_PATH_PREFIX}.` };
+    if (!PATCH_PATH_PREFIXES.some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`)))
+      return { ok: false, status: 0, data: null, hadToken, error: `PATCH is not allowed on "${pathOnly}".` };
   } else if (!WRITE_PATH_PREFIXES.some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`))) {
     return { ok: false, status: 0, data: null, hadToken, error: `Path "${pathOnly}" is not a writable endpoint.` };
   }
