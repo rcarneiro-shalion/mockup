@@ -59,6 +59,7 @@ import {
 type FlatRow = {
   appId: string;
   appLabel: string;
+  appShort: string;
   groupId: string;
   groupLabel: string;
   section: DashSection;
@@ -232,7 +233,7 @@ export function SectionsGridPage() {
     for (const a of apps)
       for (const g of a.groups)
         for (const s of g.sections)
-          out.push({ appId: a.id, appLabel: a.label, groupId: g.id, groupLabel: g.label, section: s });
+          out.push({ appId: a.id, appLabel: a.label, appShort: appShort(a), groupId: g.id, groupLabel: g.label, section: s });
     return out;
   }, [apps]);
 
@@ -700,7 +701,7 @@ export function SectionsGridPage() {
                             <ChevronRight className={cn("h-4 w-4 transition-transform", open && "rotate-90")} />
                           </button>
                         </td>
-                        <td className={cn(cellTd, "whitespace-nowrap px-2 text-foreground/70")}>{r.appLabel}</td>
+                        <td className={cn(cellTd, "whitespace-nowrap px-2 font-medium text-foreground/70")} title={r.appLabel}>{r.appShort}</td>
                         <td className={cn(cellTd, "whitespace-nowrap px-2 text-foreground/70")}>{r.groupLabel}</td>
                         <td className={cn(cellTd, "min-w-[220px]")}>
                           <Cell value={r.section.path} onChange={(v) => patchSection(r.appId, r.groupId, r.section.id, { path: v })} mono />
