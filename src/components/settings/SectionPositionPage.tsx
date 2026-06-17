@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { usePersistentState } from "@/hooks/usePersistentState";
@@ -15,10 +15,26 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ArrowLeft, GripVertical, Plus, X, Store, Building2, Layers, Tags } from "lucide-react";
+import {
+  ArrowLeft,
+  GripVertical,
+  Plus,
+  X,
+  Store,
+  Building2,
+  Layers,
+  Tags,
+  PlugZap,
+  Loader2,
+  Rocket,
+  FlaskConical,
+  RotateCcw,
+} from "lucide-react";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { LABEL_COLOR_CLASSES, SEED_RETAILER_LABELS, labelForRetailer, type RetailerLabel } from "@/lib/retailerLabels";
 import { getDashboardApps } from "@/lib/dashboardApps";
+import { fetchSectionPositions } from "@/lib/api/live.functions";
+import { getDevTokens } from "@/lib/devTokens";
 import {
   POSITION_TARGETS,
   SECTION_POSITIONS_KEY,
@@ -35,11 +51,35 @@ const appShortOf = (a: { slug?: string; label: string }) =>
 
 type CatalogSection = { id: string; path: string; label: string; type: string; appId: string; appLabel: string; appShort: string; group: string };
 
+/** Live bundle for one kind (agency = retailers, brand = datagroups). */
+type LiveBundle = {
+  targets: PosTarget[];
+  sections: CatalogSection[];
+  /** posKey(appId, targetId) → ordered section ids (by live `position`). */
+  orderMap: Record<string, string[]>;
+};
+const kindKeyOf = (k: PosTargetKind): "agency" | "brand" => (k === "retailer" ? "agency" : "brand");
+
 export function SectionPositionPage() {
   const [positions, setPositions] = usePersistentState<PositionMap>(SECTION_POSITIONS_KEY, SEED_POSITIONS);
 
-  // Flattened section catalogue (every app's groups → sections), read on mount.
-  const catalog = useMemo<CatalogSection[]>(() => {
+  // --- live connect ----------------------------------------------------------
+  const [token, setToken] = usePersistentState<string>("shalion:devToken", "");
+  const [idToken, setIdToken] = usePersistentState<string>("shalion:devIdToken", "");
+  const [liveEnv, setLiveEnv] = usePersistentState<"prod" | "develop">("mu:env", "prod");
+  const [loadedEnv, setLoadedEnv] = useState<"prod" | "develop" | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [showConnect, setShowConnect] = useState(false);
+  const [draftA, setDraftA] = useState("");
+  const [draftI, setDraftI] = useState("");
+  const [bundles, setBundles] = useState<Partial<Record<"agency" | "brand", LiveBundle>>>({});
+  const live = loadedEnv !== null;
+
+  const [kind, setKind] = useState<PosTargetKind>("retailer");
+  const bundle = live ? bundles[kindKeyOf(kind)] : undefined;
+
+  // Local section catalogue (every app's groups → sections) for local mode.
+  const localCatalog = useMemo<CatalogSection[]>(() => {
     const out: CatalogSection[] = [];
     for (const a of getDashboardApps())
       for (const g of a.groups)
@@ -47,41 +87,189 @@ export function SectionPositionPage() {
           out.push({ id: s.id, path: s.path, label: s.label, type: s.type, appId: a.id, appLabel: a.label, appShort: appShortOf(a), group: g.label });
     return out;
   }, []);
+
+  // Catalog + targets switch between local mockup and the live bundle.
+  const catalog = live && bundle ? bundle.sections : localCatalog;
   const byId = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
 
-  // Applications that actually have sections to order.
+  // Applications that actually have sections to order (label-sorted when live).
   const appOptions = useMemo(() => {
     const seen = new Map<string, string>();
     for (const s of catalog) if (!seen.has(s.appId)) seen.set(s.appId, s.appLabel);
-    return [...seen.entries()];
-  }, [catalog]);
+    const list = [...seen.entries()];
+    return live ? list.sort((a, b) => a[1].localeCompare(b[1])) : list;
+  }, [catalog, live]);
 
-  const [appId, setAppId] = useState<string>(() => (appOptions.some(([id]) => id === "rmms") ? "rmms" : appOptions[0]?.[0] ?? ""));
-  const [kind, setKind] = useState<PosTargetKind>("retailer");
-  const targetsOfKind = POSITION_TARGETS.filter((t) => t.kind === kind);
+  const [appId, setAppId] = useState<string>(() => (localCatalog.some((s) => s.appId === "rmms") ? "rmms" : localCatalog[0]?.appId ?? ""));
+  const targetsOfKind = useMemo<PosTarget[]>(
+    () => (live && bundle ? bundle.targets : POSITION_TARGETS.filter((t) => t.kind === kind)),
+    [live, bundle, kind],
+  );
   const [targetId, setTargetId] = useState<string>(() => POSITION_TARGETS.find((t) => t.kind === "retailer")?.id ?? "");
   const [applyTargets, setApplyTargets] = useState<string[]>([]);
   // Facet filters for the bulk-apply list: retailers by label group, datagroups by client.
   const [retailerLabels] = usePersistentState<RetailerLabel[]>("mu:retailer-labels:v4", SEED_RETAILER_LABELS);
   const [fLabels, setFLabels] = useState<string[]>([]);
   const [fClients, setFClients] = useState<string[]>([]);
-  const target = POSITION_TARGETS.find((t) => t.id === targetId) ?? null;
+  const target = targetsOfKind.find((t) => t.id === targetId) ?? null;
+
+  // Keep the app / target selections valid as the data source changes (live load,
+  // kind switch). Falls back to the first available option.
+  useEffect(() => {
+    if (appOptions.length && !appOptions.some(([id]) => id === appId)) setAppId(appOptions[0][0]);
+  }, [appOptions, appId]);
+  useEffect(() => {
+    if (!targetsOfKind.some((t) => t.id === targetId)) setTargetId(targetsOfKind[0]?.id ?? "");
+  }, [targetsOfKind, targetId]);
+
+  // --- live loading ----------------------------------------------------------
+  const buildBundle = (res: Awaited<ReturnType<typeof fetchSectionPositions>>): LiveBundle => {
+    const sections: CatalogSection[] = res.sections.map((s) => ({
+      id: s.id,
+      path: s.path,
+      label: s.label,
+      type: s.type,
+      appId: s.appId,
+      appLabel: s.appLabel,
+      appShort: appShortOf({ slug: s.appSlug, label: s.appLabel }),
+      group: s.group,
+    }));
+    const grouped: Record<string, { sectionId: string; position: number }[]> = {};
+    for (const a of res.assignments) {
+      const k = posKey(a.appId, a.targetId);
+      (grouped[k] ||= []).push({ sectionId: a.sectionId, position: a.position });
+    }
+    const orderMap: Record<string, string[]> = {};
+    for (const k of Object.keys(grouped))
+      orderMap[k] = grouped[k].sort((x, y) => x.position - y.position).map((x) => x.sectionId);
+    return { targets: res.targets.map((t) => ({ id: t.id, kind, name: t.name, client: t.client })), sections, orderMap };
+  };
+
+  const loadKind = async (k: PosTargetKind, env: "prod" | "develop", a: string, i: string): Promise<LiveBundle | null> => {
+    const res = await fetchSectionPositions({ data: { kind: kindKeyOf(k), env, token: a, idToken: i } });
+    if (!res.ok) {
+      toast.error(res.error || `Couldn't load section positions from ${env}.`);
+      return null;
+    }
+    const b = buildBundle(res);
+    const noun = k === "retailer" ? "retailers" : "datagroups";
+    toast.success(`Live (${env}): ${b.targets.length} ${noun} · ${b.sections.length} sections.${res.complete ? "" : " (partial — reconnect to retry)"}`);
+    return b;
+  };
+
+  const connectLive = async (env: "prod" | "develop"): Promise<boolean> => {
+    const saved = getDevTokens();
+    const a = (draftA || token || saved.token).trim();
+    const i = (draftI || idToken || saved.idToken).trim();
+    if (a && a !== token) setToken(a);
+    if (i && i !== idToken) setIdToken(i);
+    if (!a || !i) {
+      setShowConnect(true);
+      toast.error("Both an access token and an id token are required.");
+      return false;
+    }
+    setConnecting(true);
+    try {
+      const b = await loadKind(kind, env, a, i);
+      if (!b) return false;
+      setBundles({ [kindKeyOf(kind)]: b });
+      setLoadedEnv(env);
+      setShowConnect(false);
+      return true;
+    } catch (e) {
+      toast.error(`Couldn't connect to ${env}: ${(e as Error).message}`);
+      return false;
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const onEnvChange = (next: "prod" | "develop") => {
+    if (next === liveEnv && live) return;
+    setLiveEnv(next);
+    const saved = getDevTokens();
+    const haveTokens = !!((token || saved.token) && (idToken || saved.idToken));
+    if (!live && !haveTokens) {
+      setShowConnect(true);
+      return;
+    }
+    void connectLive(next).then((ok) => {
+      if (ok) return;
+      setLoadedEnv(null);
+      setBundles({});
+      setShowConnect(true);
+      toast.error(
+        next === "develop"
+          ? "Couldn't connect to develop — it's a separate environment needing a develop token + VPN (a prod token won't work there)."
+          : "Couldn't connect to production — paste a fresh token.",
+      );
+    });
+  };
+
+  // Lazy-load the other kind's bundle the first time it's viewed while live.
+  useEffect(() => {
+    if (!live || !loadedEnv || bundle || connecting) return;
+    const saved = getDevTokens();
+    const a = token || saved.token;
+    const i = idToken || saved.idToken;
+    if (!a || !i) return;
+    let cancelled = false;
+    setConnecting(true);
+    loadKind(kind, loadedEnv, a, i)
+      .then((b) => {
+        if (!cancelled && b) setBundles((prev) => ({ ...prev, [kindKeyOf(kind)]: b }));
+      })
+      .finally(() => !cancelled && setConnecting(false));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, loadedEnv, kind]);
+
+  // Auto-connect on open when tokens are already saved (top-bar 🔑), same as the
+  // Section editor — so live data loads without a manual connect.
+  const autoTried = useRef(false);
+  useEffect(() => {
+    if (autoTried.current) return;
+    autoTried.current = true;
+    const { token: t, idToken: i } = getDevTokens();
+    if (t && i) void connectLive(liveEnv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const disconnect = () => {
+    setLoadedEnv(null);
+    setBundles({});
+  };
 
   const switchKind = (k: PosTargetKind) => {
     if (k === kind) return;
     setKind(k);
-    setTargetId(POSITION_TARGETS.find((t) => t.kind === k)?.id ?? "");
+    if (!live) setTargetId(POSITION_TARGETS.find((t) => t.kind === k)?.id ?? "");
     setApplyTargets([]);
     setFLabels([]);
     setFClients([]);
   };
 
-  // Order for the selected application + target. The client's dashboard for that
-  // app shows its sections in this order; each (app, target) keeps its own list.
-  const order = (target && positions[posKey(appId, target.id)]) || [];
+  // Order for the selected application + target. When live, the real order comes
+  // from `position`; a local edit (drag/add/remove) overlays it (kept in
+  // localStorage, NOT written back to prod). When local, it's purely local.
+  const key = target ? posKey(appId, target.id) : "";
+  const liveDefault = live && bundle && target ? bundle.orderMap[key] ?? [] : [];
+  const hasOverride = !!target && key in positions;
+  const order = (target && positions[key]) || liveDefault;
   const setOrder = (next: string[]) => {
     if (!target) return;
-    setPositions((prev) => ({ ...prev, [posKey(appId, target.id)]: next }));
+    setPositions((prev) => ({ ...prev, [key]: next }));
+  };
+  const resetToLive = () => {
+    if (!target) return;
+    setPositions((prev) => {
+      const n = { ...prev };
+      delete n[key];
+      return n;
+    });
+    toast.success("Reverted to the live order.");
   };
   const move = (from: number, to: number) => {
     if (from === to) return;
@@ -113,8 +301,8 @@ export function SectionPositionPage() {
       ? !fLabels.length || fLabels.includes(labelOf(t.name).id)
       : !fClients.length || (!!t.client && fClients.includes(t.client)),
   );
-  const labelOptions = [...new Set(POSITION_TARGETS.filter((t) => t.kind === "retailer").map((t) => labelOf(t.name).id))];
-  const clientOptions = [...new Set(POSITION_TARGETS.filter((t) => t.kind === "datagroup" && t.client).map((t) => t.client as string))];
+  const labelOptions = [...new Set(targetsOfKind.filter((t) => t.kind === "retailer").map((t) => labelOf(t.name).id))];
+  const clientOptions = [...new Set(targetsOfKind.filter((t) => t.client).map((t) => t.client as string))].sort((a, b) => a.localeCompare(b));
 
   // Bulk apply: copy the current (app) order onto every selected target, same app.
   const allSelected = filteredTargets.length > 0 && filteredTargets.every((t) => applyTargets.includes(t.id));
@@ -138,22 +326,86 @@ export function SectionPositionPage() {
     <AppShell>
       <div className="flex h-full flex-col">
         {/* Header */}
-        <div className="px-6 pt-5">
-          <Link
-            to="/settings/dashboard-applications"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" /> Dashboard applications
-          </Link>
-          <div className="mt-1 flex items-center gap-2">
-            <Layers className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">Section position</h1>
+        <div className="flex flex-wrap items-start justify-between gap-3 px-6 pt-5">
+          <div>
+            <Link
+              to="/settings/dashboard-applications"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" /> Dashboard applications
+            </Link>
+            <div className="mt-1 flex items-center gap-2">
+              <Layers className="h-5 w-5 text-muted-foreground" />
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">Section position</h1>
+            </div>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              Order the dashboard sections of a retailer or datagroup. The order here is the position the client sees
+              their sections in, in the dashboard.{" "}
+              {live && <span className="text-foreground/70">Live order shown; drag/add edits stay local (not written back).</span>}
+            </p>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Order the dashboard sections of a retailer or datagroup. The order here is the position the client sees
-            their sections in, in the dashboard.
-          </p>
+          {/* Live connect controls */}
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="flex items-center gap-0.5 rounded-md border border-border bg-secondary/40 p-0.5 text-xs" title="Environment for live load">
+              <button
+                type="button"
+                onClick={() => onEnvChange("develop")}
+                className={cn("flex items-center gap-1 rounded px-2 py-1", liveEnv === "develop" ? "bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+              >
+                <FlaskConical className="h-3.5 w-3.5" /> Dev
+              </button>
+              <button
+                type="button"
+                onClick={() => onEnvChange("prod")}
+                className={cn("flex items-center gap-1 rounded px-2 py-1", liveEnv === "prod" ? "bg-rose-600 font-medium text-white shadow-sm" : "text-muted-foreground hover:text-foreground")}
+              >
+                <Rocket className="h-3.5 w-3.5" /> Prod
+              </button>
+            </div>
+            {live ? (
+              <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={disconnect}>
+                <PlugZap className="h-4 w-4 text-emerald-600" /> Live ({loadedEnv}) · disconnect
+              </Button>
+            ) : connecting ? (
+              <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled>
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setShowConnect((s) => !s)}>
+                <PlugZap className="h-4 w-4" /> Connect live
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* Live connect panel */}
+        {showConnect && !live && (
+          <div className="mx-6 mt-3 rounded-lg border border-border bg-card p-3 shadow-sm">
+            <p className="mb-2 text-xs text-muted-foreground">
+              Load the <strong>real retailers / datagroups</strong> and their dashboard section order from the Visualization
+              API ({liveEnv}) via the server proxy.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="password"
+                value={draftA}
+                onChange={(e) => setDraftA(e.target.value)}
+                placeholder="Authorization bearer token"
+                className="h-8 min-w-[220px] flex-1 rounded-md border border-border bg-background px-2.5 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <input
+                type="password"
+                value={draftI}
+                onChange={(e) => setDraftI(e.target.value)}
+                placeholder="x-id-token"
+                className="h-8 min-w-[220px] flex-1 rounded-md border border-border bg-background px-2.5 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <Button size="sm" className="h-8" onClick={() => void connectLive(liveEnv)} disabled={connecting}>
+                {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Connect"}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Application + target selector */}
         <div className="flex flex-wrap items-center gap-2 px-6 py-4">
@@ -189,7 +441,7 @@ export function SectionPositionPage() {
           <select
             value={targetId}
             onChange={(e) => setTargetId(e.target.value)}
-            className="h-9 min-w-[240px] rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            className="h-9 min-w-[240px] max-w-[320px] rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           >
             {targetsOfKind.map((t) => (
               <option key={t.id} value={t.id}>
@@ -197,7 +449,13 @@ export function SectionPositionPage() {
               </option>
             ))}
           </select>
-          <span className="ml-auto text-xs text-muted-foreground">
+          {live && <Pill tone="green">{targetsOfKind.length} live {kindLabel}s</Pill>}
+          <span className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+            {hasOverride && live && (
+              <button type="button" onClick={resetToLive} className="inline-flex items-center gap-1 font-medium text-foreground/70 hover:text-foreground">
+                <RotateCcw className="h-3.5 w-3.5" /> Reset to live order
+              </button>
+            )}
             {order.length} section{order.length === 1 ? "" : "s"}
           </span>
         </div>
@@ -205,9 +463,14 @@ export function SectionPositionPage() {
         {/* Ordered section list */}
         <div className="min-h-0 flex-1 overflow-auto px-6 pb-6">
           <div className="mx-auto max-w-3xl space-y-2">
-            {order.length === 0 && (
+            {connecting && order.length === 0 && (
+              <p className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading live data…
+              </p>
+            )}
+            {!connecting && order.length === 0 && (
               <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-                No sections assigned to {target ? targetLabel(target) : "this target"} yet. Add one below.
+                No sections assigned to {target ? targetLabel(target) : "this target"} for this application yet. Add one below.
               </p>
             )}
             {order.map((secId, i) => {
@@ -335,7 +598,7 @@ export function SectionPositionPage() {
                     </button>
                   )}
                 </div>
-                <div className="mt-2 grid grid-cols-1 gap-0.5 sm:grid-cols-2">
+                <div className="mt-2 grid max-h-72 grid-cols-1 gap-0.5 overflow-auto sm:grid-cols-2">
                   {filteredTargets.length === 0 && (
                     <p className="col-span-full px-2 py-2 text-xs text-muted-foreground">No {kindLabel}s match the filter.</p>
                   )}

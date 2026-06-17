@@ -169,6 +169,139 @@ export async function aggregateAssignments(args: {
   return { ok: true, complete, pairs };
 }
 
+// ---- section-position aggregator (server-side pagination) -----------------
+// The "Section position" page needs, per kind (agency = retailers, brand =
+// datagroups): the full target list (with names), the sections actually
+// assigned (with their app + group + path), and the order (`position`) each
+// section has within each target. The same assignment endpoints carry all of
+// this nested in every row, so we paginate them server-side (fast, concurrent)
+// and return compact, de-duplicated structures the page can render directly.
+export type PosTargetMeta = { id: string; name: string; client?: string };
+export type PosSectionMeta = {
+  id: string;
+  path: string;
+  label: string;
+  type: string;
+  appId: string;
+  appSlug: string;
+  appLabel: string;
+  group: string;
+};
+export type PosAssignment = { targetId: string; appId: string; sectionId: string; position: number };
+
+export async function aggregateSectionPositions(args: {
+  kind: "brand" | "agency";
+  token?: string;
+  idToken?: string;
+  env?: LiveEnv;
+}): Promise<{
+  ok: boolean;
+  complete: boolean;
+  error?: string;
+  targets: PosTargetMeta[];
+  sections: PosSectionMeta[];
+  assignments: PosAssignment[];
+}> {
+  const env: LiveEnv = args.env ?? "prod";
+  const base = baseUrlFor("visualization", env);
+  const token = resolveToken(args.token);
+  const idToken = resolveIdToken(args.idToken);
+  const empty = { targets: [] as PosTargetMeta[], sections: [] as PosSectionMeta[], assignments: [] as PosAssignment[] };
+  if (!base) return { ok: false, complete: false, error: "Unknown service.", ...empty };
+  if (!token) return { ok: false, complete: false, error: "No token.", ...empty };
+
+  const path = args.kind === "agency"
+    ? "/v1.0/admin/retailer-dashboardsections"
+    : "/v1.0/admin/datagroup-dashboardsections";
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/json",
+    "x-caller-id": "console",
+    ...(idToken ? { "x-id-token": idToken } : {}),
+  };
+
+  const targets = new Map<string, PosTargetMeta>();
+  const sections = new Map<string, PosSectionMeta>();
+  const assignments: PosAssignment[] = [];
+
+  const str = (v: unknown) => (v == null ? "" : String(v));
+  const push = (rows: Record<string, unknown>[]) => {
+    for (const r of rows) {
+      const tgt = (args.kind === "agency" ? r.retailer : r.dataGroup) as Record<string, unknown> | undefined;
+      const sec = r.dashboardSection as Record<string, unknown> | undefined;
+      if (!tgt?.id || !sec?.id) continue;
+      const group = (sec.dashboardGroup ?? {}) as Record<string, unknown>;
+      const app = (group.dashboardApplication ?? {}) as Record<string, unknown>;
+      const targetId = String(tgt.id);
+      const sectionId = String(sec.id);
+      const appId = str(app.id);
+      if (!targets.has(targetId)) {
+        const client = (tgt.client ?? undefined) as Record<string, unknown> | undefined;
+        targets.set(targetId, {
+          id: targetId,
+          name: str(tgt.name) || "—",
+          client: args.kind === "brand" && client?.name ? String(client.name) : undefined,
+        });
+      }
+      if (!sections.has(sectionId)) {
+        sections.set(sectionId, {
+          id: sectionId,
+          path: str(sec.path),
+          label: str(sec.label),
+          type: str(sec.type),
+          appId,
+          appSlug: str(app.slug),
+          appLabel: str(app.label),
+          group: str(group.label),
+        });
+      }
+      assignments.push({ targetId, appId, sectionId, position: Number(r.position) || 0 });
+    }
+  };
+
+  const getPage = async (page: number): Promise<{ ok: boolean; rows: Record<string, unknown>[]; total?: number }> => {
+    try {
+      const res = await fetch(`${base}${path}?page=${page}&size=100`, { headers, signal: AbortSignal.timeout(25000) });
+      if (!res.ok) return { ok: false, rows: [] };
+      const totalH = res.headers.get("x-total-count");
+      const total = totalH ? Number(totalH) : undefined;
+      const data = (await res.json().catch(() => [])) as unknown;
+      return { ok: true, rows: Array.isArray(data) ? (data as Record<string, unknown>[]) : [], total: Number.isFinite(total) ? total : undefined };
+    } catch {
+      return { ok: false, rows: [] };
+    }
+  };
+
+  const first = await getPage(0);
+  if (!first.ok) return { ok: false, complete: false, error: "Request failed (check token / network).", ...empty };
+  push(first.rows);
+  const pages = Math.min(Math.ceil((first.total ?? first.rows.length) / 100), 80);
+  let complete = true;
+  const rest = Array.from({ length: Math.max(0, pages - 1) }, (_, i) => i + 1);
+  const CONC = 10;
+  for (let i = 0; i < rest.length; i += CONC) {
+    const batch = rest.slice(i, i + CONC);
+    const results = await Promise.all(
+      batch.map(async (p) => {
+        let r = await getPage(p);
+        if (!r.ok) r = await getPage(p); // one retry
+        return r;
+      }),
+    );
+    for (const r of results) {
+      if (r.ok) push(r.rows);
+      else complete = false;
+    }
+  }
+  return {
+    ok: true,
+    complete,
+    targets: [...targets.values()].sort((a, b) => a.name.localeCompare(b.name)),
+    sections: [...sections.values()],
+    assignments,
+  };
+}
+
 // ---- write proxy (mutations) ---------------------------------------------
 // Mutations are far more dangerous than reads, so they are double-gated: only
 // these exact path prefixes may be written, and only with POST/DELETE. This is

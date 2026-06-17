@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import { fetchShalion, mutateShalion, aggregateAssignments } from "./shalion.server";
+import { fetchShalion, mutateShalion, aggregateAssignments, aggregateSectionPositions } from "./shalion.server";
 
 // Recursive JSON schema for a mutation body (matches JsonValue on the server).
 const jsonValue: z.ZodType = z.lazy(() =>
@@ -57,4 +57,21 @@ export const fetchAssignments = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     return aggregateAssignments(data);
+  });
+
+// Aggregate a kind's section assignments into the structures the "Section
+// position" page renders: target list (with names), assigned sections (with
+// app + group + path), and each section's `position` within each target. One
+// round-trip; pagination happens server-side.
+export const fetchSectionPositions = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      kind: z.enum(["brand", "agency"]),
+      token: z.string().optional(),
+      idToken: z.string().optional(),
+      env: z.enum(["develop", "staging", "prod"]).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    return aggregateSectionPositions(data);
   });
