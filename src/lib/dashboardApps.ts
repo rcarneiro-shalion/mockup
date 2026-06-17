@@ -42,7 +42,7 @@ export type DashboardApp = {
 
 // v3: richer DSM groups/sections (with varied definitions + tabs) for the bulk
 // sections editor. Older data under v1/v2 keys is abandoned.
-export const DASHBOARD_APPS_KEY = "settings:dashboard-applications:v4";
+export const DASHBOARD_APPS_KEY = "settings:dashboard-applications:v5";
 
 /** Timestamp stamped onto created/updated fields when editing in-memory. */
 export const nowStamp = () => new Date().toDateString();
@@ -226,21 +226,25 @@ const DSM_GROUPS: DashGroup[] = [
   ),
 ];
 
+// Category / Brand / Keyword / Item / Audit & Setup are the RMMS dashboard GROUPS;
+// each holds its section. (Section ids kept stable so saved positions still resolve.)
+const RMMS_TS = "Fri, May 29, 2026 2:18";
 const RMMS_GROUPS: DashGroup[] = [
-  G(
-    "rmms-g",
-    "Retail Media",
-    "FundViewOutlined",
-    [
-      SEC("sec-rmms-cat", "/rmms-category", "Category", "BUILT_IN", [{ key: "label", value: "Category" }], [], "Fri, May 29, 2026 2:18", "Fri, May 29, 2026 2:18"),
-      SEC("sec-rmms-brand", "/rmms-brand", "Brand", "BUILT_IN", [{ key: "label", value: "Brand" }], [], "Fri, May 29, 2026 2:18", "Fri, May 29, 2026 2:18"),
-      SEC("sec-rmms-kw", "/rmms-keyword", "Keyword", "BUILT_IN", [{ key: "label", value: "Keyword" }], [], "Fri, May 29, 2026 2:18", "Fri, May 29, 2026 2:18"),
-      SEC("sec-rmms-item", "/rmms-item", "Item", "BUILT_IN", [{ key: "label", value: "Item" }], [], "Fri, May 29, 2026 2:18", "Fri, May 29, 2026 2:18"),
-      SEC("sec-rmms-audit", "/rmms-audit-setup", "Audit & Setup", "BUILT_IN", [{ key: "label", value: "Audit & Setup" }], [], "Fri, May 29, 2026 2:18", "Fri, May 29, 2026 2:18"),
-    ],
-    "Fri, May 29, 2026 2:18",
-    "Fri, May 29, 2026 2:18",
-  ),
+  G("rmms-g-cat", "Category", "PieChartOutlined", [
+    SEC("sec-rmms-cat", "/rmms-category", "Category", "BUILT_IN", [{ key: "label", value: "Category" }], [], RMMS_TS, RMMS_TS),
+  ], RMMS_TS, RMMS_TS),
+  G("rmms-g-brand", "Brand", "LineChartOutlined", [
+    SEC("sec-rmms-brand", "/rmms-brand", "Brand", "BUILT_IN", [{ key: "label", value: "Brand" }], [], RMMS_TS, RMMS_TS),
+  ], RMMS_TS, RMMS_TS),
+  G("rmms-g-kw", "Keyword", "SearchOutlined", [
+    SEC("sec-rmms-kw", "/rmms-keyword", "Keyword", "BUILT_IN", [{ key: "label", value: "Keyword" }], [], RMMS_TS, RMMS_TS),
+  ], RMMS_TS, RMMS_TS),
+  G("rmms-g-item", "Item", "AppstoreOutlined", [
+    SEC("sec-rmms-item", "/rmms-item", "Item", "BUILT_IN", [{ key: "label", value: "Item" }], [], RMMS_TS, RMMS_TS),
+  ], RMMS_TS, RMMS_TS),
+  G("rmms-g-audit", "Audit & Setup", "FolderOpenOutlined", [
+    SEC("sec-rmms-audit", "/rmms-audit-setup", "Audit & Setup", "BUILT_IN", [{ key: "label", value: "Audit & Setup" }], [], RMMS_TS, RMMS_TS),
+  ], RMMS_TS, RMMS_TS),
 ];
 
 const A = (
