@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -398,7 +398,7 @@ export function SectionsGridPage() {
     return { ok: true, rows };
   };
 
-  const connectLive = async (env: "prod" | "develop") => {
+  const connectLive = async (env: "prod" | "develop"): Promise<boolean> => {
     const saved = getDevTokens();
     const a = (draftA || token || saved.token).trim();
     const i = (draftI || idToken || saved.idToken).trim();
@@ -407,7 +407,7 @@ export function SectionsGridPage() {
     if (!a || !i) {
       setShowConnect(true);
       toast.error("Both an access token and an id token are required.");
-      return;
+      return false;
     }
     setConnecting(true);
     try {
@@ -417,14 +417,13 @@ export function SectionsGridPage() {
         fetchAllPages("/v1.0/admin/dashboardsections", env, a, i),
       ]);
       if (!appsRes.ok) {
-        toast.error(appsRes.error || "Couldn't load dashboard applications.");
-        setShowConnect(true);
-        return;
+        toast.error(appsRes.error || `Couldn't load dashboard applications from ${env}.`);
+        return false;
       }
       const mapped = toDashApps(appsRes.data, groupsRes.rows, sectionsRes.rows);
       if (!mapped.length) {
-        toast.error("No dashboard applications returned (check the token / env).");
-        return;
+        toast.error(`No dashboard applications returned from ${env} (check the token / env).`);
+        return false;
       }
       const groupCount = mapped.reduce((n, app) => n + app.groups.length, 0);
       const sectionCount = mapped.reduce((n, app) => n + app.groups.reduce((m, g) => m + g.sections.length, 0), 0);
@@ -438,13 +437,48 @@ export function SectionsGridPage() {
       const partial = [!groupsRes.ok && "groups", !sectionsRes.ok && "sections"].filter(Boolean);
       if (partial.length) toast.warning(`${msg} Partial — ${partial.join(" & ")} failed to load; reconnect to retry.`);
       else toast.success(msg);
+      return true;
     } catch (e) {
-      toast.error(`Couldn't connect: ${(e as Error).message}`);
-      setShowConnect(true);
+      toast.error(`Couldn't connect to ${env}: ${(e as Error).message}`);
+      return false;
     } finally {
       setConnecting(false);
     }
   };
+
+  // Switch env (Dev ↔ Prod) and reconnect to it. Failures drop back to local +
+  // open the connect panel, so the toggle never silently shows the wrong env.
+  const onEnvChange = (next: "prod" | "develop") => {
+    if (next === liveEnv && live) return;
+    setLiveEnv(next);
+    const saved = getDevTokens();
+    const haveTokens = !!((token || saved.token) && (idToken || saved.idToken));
+    if (!live && !haveTokens) {
+      setShowConnect(true);
+      return;
+    }
+    void connectLive(next).then((ok) => {
+      if (ok) return;
+      setLiveApps(null);
+      setShowConnect(true);
+      toast.error(
+        next === "develop"
+          ? "Couldn't connect to develop — it's a separate environment needing a develop token + VPN (a prod token won't work there)."
+          : "Couldn't connect to production — paste a fresh token.",
+      );
+    });
+  };
+
+  // Auto-connect on open when tokens are already saved (top-bar 🔑), so live data
+  // loads without a manual connect — same as Massive update.
+  const autoTried = useRef(false);
+  useEffect(() => {
+    if (autoTried.current) return;
+    autoTried.current = true;
+    const { token: t, idToken: i } = getDevTokens();
+    if (t && i) void connectLive(liveEnv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const disconnect = () => {
     setLiveApps(null);
@@ -519,14 +553,14 @@ export function SectionsGridPage() {
             <div className="flex items-center gap-0.5 rounded-md border border-border bg-secondary/40 p-0.5 text-xs" title="Environment for live load + save">
               <button
                 type="button"
-                onClick={() => setLiveEnv("develop")}
+                onClick={() => onEnvChange("develop")}
                 className={cn("flex items-center gap-1 rounded px-2 py-1", liveEnv === "develop" ? "bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
               >
                 <FlaskConical className="h-3.5 w-3.5" /> Dev
               </button>
               <button
                 type="button"
-                onClick={() => setLiveEnv("prod")}
+                onClick={() => onEnvChange("prod")}
                 className={cn("flex items-center gap-1 rounded px-2 py-1", liveEnv === "prod" ? "bg-rose-600 font-medium text-white shadow-sm" : "text-muted-foreground hover:text-foreground")}
               >
                 <Rocket className="h-3.5 w-3.5" /> Prod
