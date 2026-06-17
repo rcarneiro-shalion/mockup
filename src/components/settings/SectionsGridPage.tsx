@@ -231,11 +231,17 @@ export function SectionsGridPage() {
     return out;
   }, [apps]);
 
+  // The Group filter cascades off the Application filter: it lists every group of
+  // the selected application(s) — including empty ones — and nothing until an
+  // application is chosen. With a single app the app prefix is dropped (it's the
+  // context); with several, groups are prefixed to disambiguate.
   const groupOptions = useMemo(() => {
+    if (!fApps.length) return [] as [string, string][];
+    const single = fApps.length === 1;
     const seen = new Map<string, string>();
     for (const a of apps) {
-      if (fApps.length && !fApps.includes(a.id)) continue;
-      for (const g of a.groups) seen.set(g.id, `${a.label} · ${g.label}`);
+      if (!fApps.includes(a.id)) continue;
+      for (const g of a.groups) seen.set(g.id, single ? g.label : `${a.label} · ${g.label}`);
     }
     return [...seen.entries()];
   }, [apps, fApps]);
@@ -559,15 +565,24 @@ export function SectionsGridPage() {
             getLabel={(id) => apps.find((a) => a.id === id)?.label ?? id}
             searchable
           />
-          <FilterChip
-            label="Group"
-            icon={Layers}
-            options={groupOptions.map(([id]) => id)}
-            value={fGroups}
-            onChange={setFGroups}
-            getLabel={(id) => groupOptions.find(([gid]) => gid === id)?.[1] ?? id}
-            searchable
-          />
+          {fApps.length === 0 ? (
+            <span
+              title="Filter an application first to choose its groups"
+              className="inline-flex h-8 cursor-not-allowed items-center gap-1.5 rounded-md border border-dashed border-border px-2.5 text-sm text-muted-foreground/60"
+            >
+              <Layers className="h-3.5 w-3.5" /> Group
+            </span>
+          ) : (
+            <FilterChip
+              label="Group"
+              icon={Layers}
+              options={groupOptions.map(([id]) => id)}
+              value={fGroups}
+              onChange={setFGroups}
+              getLabel={(id) => groupOptions.find(([gid]) => gid === id)?.[1] ?? id}
+              searchable
+            />
+          )}
           {addingCol ? (
             <span className="inline-flex items-center gap-1">
               <input
