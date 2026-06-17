@@ -179,19 +179,24 @@ function Cell({
   onChange,
   placeholder,
   mono,
+  grow,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   mono?: boolean;
+  /** Size the input to its content so the full value (e.g. the path) stays visible. */
+  grow?: boolean;
 }) {
   return (
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
+      size={grow ? Math.max(24, value.length + 2) : undefined}
       className={cn(
-        "w-full rounded bg-transparent px-2 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground/60 focus:bg-primary/5 focus:ring-1 focus:ring-inset focus:ring-ring",
+        "rounded bg-transparent px-2 py-1.5 text-sm text-foreground outline-none placeholder:text-muted-foreground/60 focus:bg-primary/5 focus:ring-1 focus:ring-inset focus:ring-ring",
+        grow ? "min-w-[240px]" : "w-full",
         mono && "font-mono text-xs",
       )}
     />
@@ -665,16 +670,16 @@ export function SectionsGridPage() {
         </div>
 
         {/* Grid */}
-        <div className="min-h-0 flex-1 px-6 pb-6">
-          <div className="h-full overflow-auto rounded-lg border border-border">
-            <table className="min-w-full border-collapse text-sm">
+        <div className="min-h-0 flex-1 overflow-auto px-6 pb-6">
+          <div className="inline-block min-w-full overflow-hidden rounded-lg border border-border align-top">
+            <table className="border-collapse text-sm">
               <thead className="bg-secondary/60">
                 <tr>
-                  <th className={cn(th, "sticky left-0 z-20 w-8 bg-secondary")} />
-                  <th className={cn(th, "sticky left-8 z-20 w-[240px] bg-secondary")}>Path</th>
-                  <th className={cn(th, "sticky left-[272px] z-20 w-[184px] border-r border-border bg-secondary")}>Label</th>
+                  <th className={cn(th, "w-8")} />
                   <th className={th}>Application</th>
                   <th className={th}>Group</th>
+                  <th className={th}>Path</th>
+                  <th className={th}>Label</th>
                   <th className={th}>Type</th>
                   {defKeys.map((k) => (
                     <th key={k} className={cn(th, "bg-primary/5")}>
@@ -710,7 +715,7 @@ export function SectionsGridPage() {
                   return (
                     <Fragment key={r.section.id}>
                       <tr className={cn("hover:bg-secondary/30", isDirty && "bg-amber-50/60")}>
-                        <td className={cn(cellTd, "sticky left-0 z-10 w-8 px-1 text-center", isDirty ? "bg-amber-50" : "bg-card")}>
+                        <td className={cn(cellTd, "px-1 text-center")}>
                           <button
                             type="button"
                             onClick={() => toggleExpand(r.section.id)}
@@ -720,14 +725,14 @@ export function SectionsGridPage() {
                             <ChevronRight className={cn("h-4 w-4 transition-transform", open && "rotate-90")} />
                           </button>
                         </td>
-                        <td className={cn(cellTd, "sticky left-8 z-10 w-[240px]", isDirty ? "bg-amber-50" : "bg-card")}>
-                          <Cell value={r.section.path} onChange={(v) => patchSection(r.appId, r.groupId, r.section.id, { path: v })} mono />
-                        </td>
-                        <td className={cn(cellTd, "sticky left-[272px] z-10 w-[184px] border-r border-border", isDirty ? "bg-amber-50" : "bg-card")}>
-                          <Cell value={r.section.label} onChange={(v) => patchSection(r.appId, r.groupId, r.section.id, { label: v })} />
-                        </td>
                         <td className={cn(cellTd, "whitespace-nowrap px-2 font-medium text-foreground/70")} title={r.appLabel}>{r.appShort}</td>
                         <td className={cn(cellTd, "whitespace-nowrap px-2 text-foreground/70")}>{r.groupLabel}</td>
+                        <td className={cellTd}>
+                          <Cell value={r.section.path} onChange={(v) => patchSection(r.appId, r.groupId, r.section.id, { path: v })} mono grow />
+                        </td>
+                        <td className={cn(cellTd, "min-w-[140px]")}>
+                          <Cell value={r.section.label} onChange={(v) => patchSection(r.appId, r.groupId, r.section.id, { label: v })} />
+                        </td>
                         <td className={cn(cellTd, "min-w-[110px]")}>
                           <select
                             value={r.section.type}
