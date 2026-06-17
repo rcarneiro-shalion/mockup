@@ -29,11 +29,14 @@ import {
   Rocket,
   FlaskConical,
   RotateCcw,
+  TriangleAlert,
+  Copy,
+  Undo2,
 } from "lucide-react";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { LABEL_COLOR_CLASSES, SEED_RETAILER_LABELS, labelForRetailer, type RetailerLabel } from "@/lib/retailerLabels";
 import { getDashboardApps } from "@/lib/dashboardApps";
-import { fetchSectionPositions } from "@/lib/api/live.functions";
+import { fetchSectionPositions, mutateLive } from "@/lib/api/live.functions";
 import { getDevTokens } from "@/lib/devTokens";
 import {
   POSITION_TARGETS,
@@ -57,8 +60,20 @@ type LiveBundle = {
   sections: CatalogSection[];
   /** posKey(appId, targetId) → ordered section ids (by live `position`). */
   orderMap: Record<string, string[]>;
+  /** targetId → highest `position` in use (global across apps; for safe appends). */
+  maxPos: Record<string, number>;
 };
 const kindKeyOf = (k: PosTargetKind): "agency" | "brand" => (k === "retailer" ? "agency" : "brand");
+
+// The live insert/delete endpoints (already allow-listed for POST/DELETE in the proxy).
+const EP = {
+  retailer: "/v1.0/admin/retailer-dashboardsections",
+  datagroup: "/v1.0/admin/datagroup-dashboardsections",
+} as const;
+const ID_FIELD = { retailer: "retailerId", datagroup: "dataGroupId" } as const;
+
+type ReplicateItem = { targetId: string; name: string; toAdd: string[]; already: number };
+type ReplicatePlan = { appLabel: string; sourceName: string; items: ReplicateItem[]; totalAdds: number; targetCount: number };
 
 export function SectionPositionPage() {
   const [positions, setPositions] = usePersistentState<PositionMap>(SECTION_POSITIONS_KEY, SEED_POSITIONS);
@@ -107,11 +122,19 @@ export function SectionPositionPage() {
   );
   const [targetId, setTargetId] = useState<string>(() => POSITION_TARGETS.find((t) => t.kind === "retailer")?.id ?? "");
   const [applyTargets, setApplyTargets] = useState<string[]>([]);
-  // Facet filters for the bulk-apply list: retailers by label group, datagroups by client.
+  // Facet filters — same shape as the relationship map: a per-entity filter
+  // (Retailers / Clients) plus, for retailers, a Label filter over every label.
   const [retailerLabels] = usePersistentState<RetailerLabel[]>("mu:retailer-labels:v4", SEED_RETAILER_LABELS);
+  const [fRetailers, setFRetailers] = useState<string[]>([]);
   const [fLabels, setFLabels] = useState<string[]>([]);
   const [fClients, setFClients] = useState<string[]>([]);
   const target = targetsOfKind.find((t) => t.id === targetId) ?? null;
+
+  // --- live replicate (safe write) -------------------------------------------
+  const [confirmPlan, setConfirmPlan] = useState<ReplicatePlan | null>(null);
+  const [writing, setWriting] = useState(false);
+  const [writeProgress, setWriteProgress] = useState<{ done: number; total: number } | null>(null);
+  const [lastCreated, setLastCreated] = useState<{ recordId: string }[]>([]);
 
   // Keep the app / target selections valid as the data source changes (live load,
   // kind switch). Falls back to the first available option.
@@ -135,14 +158,16 @@ export function SectionPositionPage() {
       group: s.group,
     }));
     const grouped: Record<string, { sectionId: string; position: number }[]> = {};
+    const maxPos: Record<string, number> = {};
     for (const a of res.assignments) {
       const k = posKey(a.appId, a.targetId);
       (grouped[k] ||= []).push({ sectionId: a.sectionId, position: a.position });
+      if (a.position > (maxPos[a.targetId] ?? 0)) maxPos[a.targetId] = a.position;
     }
     const orderMap: Record<string, string[]> = {};
     for (const k of Object.keys(grouped))
       orderMap[k] = grouped[k].sort((x, y) => x.position - y.position).map((x) => x.sectionId);
-    return { targets: res.targets.map((t) => ({ id: t.id, kind, name: t.name, client: t.client })), sections, orderMap };
+    return { targets: res.targets.map((t) => ({ id: t.id, kind, name: t.name, client: t.client })), sections, orderMap, maxPos };
   };
 
   const loadKind = async (k: PosTargetKind, env: "prod" | "develop", a: string, i: string): Promise<LiveBundle | null> => {
@@ -240,6 +265,7 @@ export function SectionPositionPage() {
   const disconnect = () => {
     setLoadedEnv(null);
     setBundles({});
+    setLastCreated([]);
   };
 
   const switchKind = (k: PosTargetKind) => {
@@ -247,8 +273,10 @@ export function SectionPositionPage() {
     setKind(k);
     if (!live) setTargetId(POSITION_TARGETS.find((t) => t.kind === k)?.id ?? "");
     setApplyTargets([]);
+    setFRetailers([]);
     setFLabels([]);
     setFClients([]);
+    setLastCreated([]);
   };
 
   // Order for the selected application + target. When live, the real order comes
@@ -293,18 +321,19 @@ export function SectionPositionPage() {
   const targetLabel = (t: PosTarget) => (t.client ? `${t.client} · ${t.name}` : t.name);
   const kindLabel = kind === "retailer" ? "retailer" : "datagroup";
 
-  // Bulk-apply target list, narrowed by the active facet: retailers by label
-  // group (agency), datagroups by client name (brand).
+  // Bulk-apply target list, narrowed by the active facets (relationship-map style).
   const labelOf = (name: string) => labelForRetailer(retailerLabels, name);
+  const retSet = useMemo(() => new Set(fRetailers), [fRetailers]);
   const filteredTargets = targetsOfKind.filter((t) =>
     kind === "retailer"
-      ? !fLabels.length || fLabels.includes(labelOf(t.name).id)
+      ? (!fRetailers.length || retSet.has(t.id)) && (!fLabels.length || fLabels.includes(labelOf(t.name).id))
       : !fClients.length || (!!t.client && fClients.includes(t.client)),
   );
-  const labelOptions = [...new Set(targetsOfKind.filter((t) => t.kind === "retailer").map((t) => labelOf(t.name).id))];
+  // Labels: every defined label (matches the relationship map), not just present ones.
+  const labelOptions = retailerLabels.map((l) => l.id);
   const clientOptions = [...new Set(targetsOfKind.filter((t) => t.client).map((t) => t.client as string))].sort((a, b) => a.localeCompare(b));
 
-  // Bulk apply: copy the current (app) order onto every selected target, same app.
+  // Bulk apply: copy the current (app) order onto every selected target.
   const allSelected = filteredTargets.length > 0 && filteredTargets.every((t) => applyTargets.includes(t.id));
   const toggleAll = () => {
     const ids = filteredTargets.map((t) => t.id);
@@ -312,7 +341,9 @@ export function SectionPositionPage() {
   };
   const toggleApply = (id: string) =>
     setApplyTargets((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  const applyToAll = () => {
+
+  // LOCAL apply (mockup mode): copy the order onto each selected target's overlay.
+  const applyToAllLocal = () => {
     if (!applyTargets.length) return;
     setPositions((prev) => {
       const next = { ...prev };
@@ -320,6 +351,128 @@ export function SectionPositionPage() {
       return next;
     });
     toast.success(`Applied this order to ${applyTargets.length} ${kindLabel}${applyTargets.length === 1 ? "" : "s"}.`);
+  };
+
+  // LIVE replicate: additive — for each selected target, add the source's sections
+  // it is MISSING, in source order, appended at a free position. Never deletes or
+  // reorders existing assignments (the unique constraint is on (target, position)).
+  const buildPlan = (): ReplicatePlan | null => {
+    if (!live || !bundle || !target) return null;
+    const src = order;
+    const items: ReplicateItem[] = [];
+    let totalAdds = 0;
+    for (const tId of applyTargets) {
+      if (tId === target.id) continue; // the source itself
+      const existing = new Set(bundle.orderMap[posKey(appId, tId)] ?? []);
+      const toAdd = src.filter((sid) => !existing.has(sid));
+      totalAdds += toAdd.length;
+      items.push({ targetId: tId, name: targetsOfKind.find((t) => t.id === tId)?.name ?? tId, toAdd, already: src.length - toAdd.length });
+    }
+    if (!items.length) return null;
+    return { appLabel: byId.get(src[0])?.appLabel ?? "this app", sourceName: targetLabel(target), items, totalAdds, targetCount: items.length };
+  };
+
+  const runReplicate = async (plan: ReplicatePlan) => {
+    if (!bundle || !loadedEnv) return;
+    setWriting(true);
+    setConfirmPlan(null);
+    const saved = getDevTokens();
+    const tok = token || saved.token;
+    const idt = idToken || saved.idToken;
+    const ep = EP[kind];
+    const idField = ID_FIELD[kind];
+    const created: { recordId: string }[] = [];
+    let added = 0;
+    let failed = 0;
+    const nextOrderMap = { ...bundle.orderMap };
+    const nextMax = { ...bundle.maxPos };
+    setWriteProgress({ done: 0, total: plan.totalAdds });
+    let done = 0;
+    for (const item of plan.items) {
+      let pos = (nextMax[item.targetId] ?? 0) + 1;
+      for (const sid of item.toAdd) {
+        let ok = false;
+        let tries = 0;
+        let lastErr = "";
+        while (!ok && tries < 40) {
+          const res = await mutateLive({
+            data: {
+              service: "visualization",
+              env: loadedEnv,
+              method: "POST",
+              path: ep,
+              body: { [idField]: item.targetId, dashboardSectionId: sid, position: pos },
+              token: tok || undefined,
+              idToken: idt || undefined,
+            },
+          });
+          if (res.ok) {
+            ok = true;
+            const recId = (res.data as { id?: string } | null)?.id;
+            if (recId) created.push({ recordId: recId });
+            added++;
+            nextMax[item.targetId] = pos;
+            const k2 = posKey(appId, item.targetId);
+            nextOrderMap[k2] = [...(nextOrderMap[k2] ?? []), sid];
+          } else if (res.status === 409) {
+            pos++; // (target, position) taken — try the next slot
+            tries++;
+            lastErr = res.error || "position conflict";
+          } else {
+            lastErr = res.error || `status ${res.status}`;
+            break;
+          }
+        }
+        if (!ok) failed++;
+        done++;
+        setWriteProgress({ done, total: plan.totalAdds });
+      }
+    }
+    setBundles((prev) => ({ ...prev, [kindKeyOf(kind)]: { ...bundle, orderMap: nextOrderMap, maxPos: nextMax } }));
+    setLastCreated(created);
+    setApplyTargets([]);
+    setWriting(false);
+    setWriteProgress(null);
+    if (failed) toast.warning(`Replicated to ${plan.targetCount} ${kindLabel}s: +${added} added, ${failed} failed. ${created.length} undoable.`);
+    else toast.success(`Replicated ${plan.sourceName}'s order to ${plan.targetCount} ${kindLabel}s: +${added} section assignments. Undo available.`);
+  };
+
+  const undoReplicate = async () => {
+    if (!lastCreated.length || !loadedEnv) return;
+    setWriting(true);
+    const saved = getDevTokens();
+    const tok = token || saved.token;
+    const idt = idToken || saved.idToken;
+    const ep = EP[kind];
+    let removed = 0;
+    let failed = 0;
+    setWriteProgress({ done: 0, total: lastCreated.length });
+    for (let n = 0; n < lastCreated.length; n++) {
+      const res = await mutateLive({
+        data: { service: "visualization", env: loadedEnv, method: "DELETE", path: `${ep}/${lastCreated[n].recordId}`, token: tok || undefined, idToken: idt || undefined },
+      });
+      if (res.ok) removed++;
+      else failed++;
+      setWriteProgress({ done: n + 1, total: lastCreated.length });
+    }
+    setLastCreated([]);
+    setWriting(false);
+    setWriteProgress(null);
+    toast.success(`Undo: removed ${removed}${failed ? `, ${failed} failed` : ""}. Reconnect to refresh exact order.`);
+  };
+
+  const onApply = () => {
+    if (!applyTargets.length) return;
+    if (live) {
+      const plan = buildPlan();
+      if (!plan) {
+        toast.info("Nothing to add — the selected targets already have every section in this order.");
+        return;
+      }
+      setConfirmPlan(plan);
+    } else {
+      applyToAllLocal();
+    }
   };
 
   return (
@@ -341,12 +494,12 @@ export function SectionPositionPage() {
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
               Order the dashboard sections of a retailer or datagroup. The order here is the position the client sees
               their sections in, in the dashboard.{" "}
-              {live && <span className="text-foreground/70">Live order shown; drag/add edits stay local (not written back).</span>}
+              {live && <span className="text-foreground/70">Drag/add edits stay local; the bulk panel can replicate this order to other {kindLabel}s live.</span>}
             </p>
           </div>
           {/* Live connect controls */}
           <div className="flex shrink-0 items-center gap-2">
-            <div className="flex items-center gap-0.5 rounded-md border border-border bg-secondary/40 p-0.5 text-xs" title="Environment for live load">
+            <div className="flex items-center gap-0.5 rounded-md border border-border bg-secondary/40 p-0.5 text-xs" title="Environment for live load + replicate">
               <button
                 type="button"
                 onClick={() => onEnvChange("develop")}
@@ -560,33 +713,75 @@ export function SectionPositionPage() {
               </PopoverContent>
             </Popover>
 
-            {/* Bulk apply — push this order onto many targets of the same app at once */}
+            {/* Bulk apply / replicate — push this order onto many targets at once */}
             {target && (
               <div className="mt-6 rounded-lg border border-border bg-card p-4 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Apply this order to multiple {kindLabel}s</p>
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                      {live ? <Copy className="h-4 w-4 text-rose-600" /> : null}
+                      {live ? `Replicate ${targetLabel(target)}'s order to other ${kindLabel}s` : `Apply this order to multiple ${kindLabel}s`}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Copies the {order.length}-section order above onto every selected {kindLabel}'s {byId.get(order[0])?.appLabel ?? "dashboard"} dashboard.
+                      {live ? (
+                        <>Adds the {order.length} <strong>{byId.get(order[0])?.appLabel ?? "dashboard"}</strong> sections above to each selected {kindLabel} that is missing them, in this order. Existing assignments are untouched.</>
+                      ) : (
+                        <>Copies the {order.length}-section order above onto every selected {kindLabel}'s {byId.get(order[0])?.appLabel ?? "dashboard"} dashboard.</>
+                      )}
                     </p>
                   </div>
-                  <Button size="sm" disabled={!applyTargets.length} onClick={applyToAll}>
-                    Apply to {applyTargets.length} {kindLabel}{applyTargets.length === 1 ? "" : "s"}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {live && lastCreated.length > 0 && !writing && (
+                      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => void undoReplicate()}>
+                        <Undo2 className="h-4 w-4" /> Undo ({lastCreated.length})
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      disabled={!applyTargets.length || writing}
+                      onClick={onApply}
+                      className={cn(live && "bg-rose-600 hover:bg-rose-700")}
+                    >
+                      {writing && writeProgress ? (
+                        <span className="flex items-center gap-1.5"><Loader2 className="h-4 w-4 animate-spin" /> {writeProgress.done}/{writeProgress.total}</span>
+                      ) : live ? (
+                        `Replicate to ${applyTargets.length} ${kindLabel}${applyTargets.length === 1 ? "" : "s"}`
+                      ) : (
+                        `Apply to ${applyTargets.length} ${kindLabel}${applyTargets.length === 1 ? "" : "s"}`
+                      )}
+                    </Button>
+                  </div>
                 </div>
+                {live && (
+                  <p className="mt-2 flex items-center gap-1.5 rounded-md bg-rose-50 px-3 py-1.5 text-[11px] text-rose-700">
+                    <TriangleAlert className="h-3.5 w-3.5 shrink-0" />
+                    Replicate writes to <strong>{loadedEnv?.toUpperCase()}</strong> live (additive POST per missing section). You'll confirm once, and can Undo the inserts.
+                  </p>
+                )}
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {kind === "retailer" ? (
-                    <FilterChip
-                      label="Label group"
-                      icon={Tags}
-                      options={labelOptions}
-                      value={fLabels}
-                      onChange={setFLabels}
-                      getLabel={(id) => retailerLabels.find((l) => l.id === id)?.name ?? id}
-                      searchable
-                    />
+                    <>
+                      <FilterChip
+                        label="Retailers"
+                        icon={Store}
+                        options={targetsOfKind.map((t) => t.id)}
+                        value={fRetailers}
+                        onChange={setFRetailers}
+                        getLabel={(id) => targetsOfKind.find((t) => t.id === id)?.name ?? id}
+                        searchable
+                      />
+                      <FilterChip
+                        label="Label"
+                        icon={Tags}
+                        options={labelOptions}
+                        value={fLabels}
+                        onChange={setFLabels}
+                        getLabel={(id) => retailerLabels.find((l) => l.id === id)?.name ?? id}
+                        searchable
+                      />
+                    </>
                   ) : (
-                    <FilterChip label="Client" icon={Building2} options={clientOptions} value={fClients} onChange={setFClients} searchable />
+                    <FilterChip label="Clients" icon={Building2} options={clientOptions} value={fClients} onChange={setFClients} searchable />
                   )}
                   <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground">
                     <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded border-border" />
@@ -624,6 +819,51 @@ export function SectionPositionPage() {
           </div>
         </div>
       </div>
+
+      {/* Replicate confirmation (live, safe) */}
+      {confirmPlan && (
+        <div className="fixed inset-0 z-[70] grid place-items-center bg-black/50 p-4" onClick={() => setConfirmPlan(null)}>
+          <div className="w-full max-w-lg rounded-xl border border-border bg-card p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <TriangleAlert className={cn("h-5 w-5", loadedEnv === "prod" ? "text-rose-500" : "text-amber-500")} />
+              <h3 className="text-base font-semibold">Replicate to {loadedEnv?.toUpperCase()} live?</h3>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Add <strong>{confirmPlan.sourceName}</strong>'s <strong>{confirmPlan.appLabel}</strong> section order to{" "}
+              <strong>{confirmPlan.targetCount}</strong> {kindLabel}{confirmPlan.targetCount === 1 ? "" : "s"} —{" "}
+              <strong className={loadedEnv === "prod" ? "text-rose-600" : "text-amber-600"}>{confirmPlan.totalAdds}</strong> new section assignment{confirmPlan.totalAdds === 1 ? "" : "s"} via POST.
+              Sections a {kindLabel} already has are skipped; nothing is reordered or removed. Each insert is undoable.
+            </p>
+            <div className="mt-3 max-h-56 overflow-auto rounded-md border border-border">
+              <table className="w-full text-sm">
+                <tbody>
+                  {confirmPlan.items.map((it) => (
+                    <tr key={it.targetId} className="border-b border-border/60 last:border-0">
+                      <td className="px-3 py-1.5 truncate">{it.name}</td>
+                      <td className="px-3 py-1.5 text-right tabular-nums text-emerald-700">+{it.toAdd.length}</td>
+                      <td className="px-3 py-1.5 text-right text-[11px] tabular-nums text-muted-foreground">{it.already} present</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setConfirmPlan(null)} className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-secondary">
+                Cancel
+              </button>
+              <button
+                onClick={() => void runReplicate(confirmPlan)}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-sm font-medium text-white",
+                  loadedEnv === "prod" ? "bg-rose-600 hover:bg-rose-700" : "bg-amber-600 hover:bg-amber-700",
+                )}
+              >
+                Replicate {confirmPlan.totalAdds} assignment{confirmPlan.totalAdds === 1 ? "" : "s"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
