@@ -27,14 +27,17 @@ export const POSITION_TARGETS: PosTarget[] = [
   { id: "dg-diageo-brand", kind: "datagroup", name: "BRAND", client: "Diageo" },
 ];
 
-export const SECTION_POSITIONS_KEY = "settings:dash-section-positions:v1";
+export const SECTION_POSITIONS_KEY = "settings:dash-section-positions:v2";
 
-/** targetId → ordered section ids (the section's position in that dashboard). */
+/** Order is per dashboard application AND target — the client's dashboard for a
+ *  given app shows that app's sections in this order. Keyed `appId::targetId`. */
 export type PositionMap = Record<string, string[]>;
 
-// Alcampo ES starts with the Retail Media Maestro Stretch sections in order,
-// matching the reference dashboard (Category · Brand · Keyword · Item · Audit & Setup).
+export const posKey = (appId: string, targetId: string) => `${appId}::${targetId}`;
+
+// Alcampo ES (RMMS app) starts with the Retail Media Maestro Stretch sections in
+// order, matching the reference dashboard (Category · Brand · Keyword · Item · Audit & Setup).
 export const SEED_POSITIONS: PositionMap = {
-  "ret-alcampo-es": ["sec-rmms-cat", "sec-rmms-brand", "sec-rmms-kw", "sec-rmms-item", "sec-rmms-audit"],
-  "dg-coca-brand": ["sec-dsm-score", "sec-dsm-vis", "sec-dsm-audit", "sec-dsm-raw"],
+  [posKey("rmms", "ret-alcampo-es")]: ["sec-rmms-cat", "sec-rmms-brand", "sec-rmms-kw", "sec-rmms-item", "sec-rmms-audit"],
+  [posKey("dsm", "dg-coca-brand")]: ["sec-dsm-score", "sec-dsm-vis", "sec-dsm-audit", "sec-dsm-raw"],
 };

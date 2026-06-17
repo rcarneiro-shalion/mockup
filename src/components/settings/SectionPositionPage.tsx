@@ -13,18 +13,21 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { ArrowLeft, GripVertical, Plus, X, Store, Building2, Layers } from "lucide-react";
 import { getDashboardApps } from "@/lib/dashboardApps";
 import {
   POSITION_TARGETS,
   SECTION_POSITIONS_KEY,
   SEED_POSITIONS,
+  posKey,
   type PosTarget,
   type PosTargetKind,
   type PositionMap,
 } from "@/lib/dashboardSectionPositions";
 
-type CatalogSection = { id: string; path: string; label: string; type: string; appLabel: string };
+type CatalogSection = { id: string; path: string; label: string; type: string; appId: string; appLabel: string };
 
 export function SectionPositionPage() {
   const [positions, setPositions] = usePersistentState<PositionMap>(SECTION_POSITIONS_KEY, SEED_POSITIONS);
@@ -35,26 +38,38 @@ export function SectionPositionPage() {
     for (const a of getDashboardApps())
       for (const g of a.groups)
         for (const s of g.sections)
-          out.push({ id: s.id, path: s.path, label: s.label, type: s.type, appLabel: a.label });
+          out.push({ id: s.id, path: s.path, label: s.label, type: s.type, appId: a.id, appLabel: a.label });
     return out;
   }, []);
   const byId = useMemo(() => new Map(catalog.map((s) => [s.id, s])), [catalog]);
 
+  // Applications that actually have sections to order.
+  const appOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const s of catalog) if (!seen.has(s.appId)) seen.set(s.appId, s.appLabel);
+    return [...seen.entries()];
+  }, [catalog]);
+
+  const [appId, setAppId] = useState<string>(() => (appOptions.some(([id]) => id === "rmms") ? "rmms" : appOptions[0]?.[0] ?? ""));
   const [kind, setKind] = useState<PosTargetKind>("retailer");
   const targetsOfKind = POSITION_TARGETS.filter((t) => t.kind === kind);
   const [targetId, setTargetId] = useState<string>(() => POSITION_TARGETS.find((t) => t.kind === "retailer")?.id ?? "");
+  const [applyTargets, setApplyTargets] = useState<string[]>([]);
   const target = POSITION_TARGETS.find((t) => t.id === targetId) ?? null;
 
   const switchKind = (k: PosTargetKind) => {
     if (k === kind) return;
     setKind(k);
     setTargetId(POSITION_TARGETS.find((t) => t.kind === k)?.id ?? "");
+    setApplyTargets([]);
   };
 
-  const order = (target && positions[target.id]) || [];
+  // Order for the selected application + target. The client's dashboard for that
+  // app shows its sections in this order; each (app, target) keeps its own list.
+  const order = (target && positions[posKey(appId, target.id)]) || [];
   const setOrder = (next: string[]) => {
     if (!target) return;
-    setPositions((prev) => ({ ...prev, [target.id]: next }));
+    setPositions((prev) => ({ ...prev, [posKey(appId, target.id)]: next }));
   };
   const move = (from: number, to: number) => {
     if (from === to) return;
@@ -72,9 +87,26 @@ export function SectionPositionPage() {
   const [overIdx, setOverIdx] = useState<number | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
-  const available = catalog.filter((s) => !order.includes(s.id));
+  // Add-section options: this application's sections not already in the order.
+  const available = catalog.filter((s) => s.appId === appId && !order.includes(s.id));
 
   const targetLabel = (t: PosTarget) => (t.client ? `${t.client} · ${t.name}` : t.name);
+  const kindLabel = kind === "retailer" ? "retailer" : "datagroup";
+
+  // Bulk apply: copy the current (app) order onto every selected target, same app.
+  const allSelected = targetsOfKind.length > 0 && targetsOfKind.every((t) => applyTargets.includes(t.id));
+  const toggleAll = () => setApplyTargets(allSelected ? [] : targetsOfKind.map((t) => t.id));
+  const toggleApply = (id: string) =>
+    setApplyTargets((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const applyToAll = () => {
+    if (!applyTargets.length) return;
+    setPositions((prev) => {
+      const next = { ...prev };
+      for (const id of applyTargets) next[posKey(appId, id)] = [...order];
+      return next;
+    });
+    toast.success(`Applied this order to ${applyTargets.length} ${kindLabel}${applyTargets.length === 1 ? "" : "s"}.`);
+  };
 
   return (
     <AppShell>
@@ -97,8 +129,21 @@ export function SectionPositionPage() {
           </p>
         </div>
 
-        {/* Target selector */}
+        {/* Application + target selector */}
         <div className="flex flex-wrap items-center gap-2 px-6 py-4">
+          <select
+            value={appId}
+            onChange={(e) => setAppId(e.target.value)}
+            title="Dashboard application"
+            className="h-9 rounded-md border border-border bg-background px-3 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            {appOptions.map(([id, label]) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <span className="text-muted-foreground">→</span>
           <div className="flex items-center gap-0.5 rounded-md border border-border bg-secondary/40 p-0.5 text-sm">
             <button
               type="button"
@@ -225,6 +270,41 @@ export function SectionPositionPage() {
                 </Command>
               </PopoverContent>
             </Popover>
+
+            {/* Bulk apply — push this order onto many targets of the same app at once */}
+            {target && (
+              <div className="mt-6 rounded-lg border border-border bg-card p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Apply this order to multiple {kindLabel}s</p>
+                    <p className="text-xs text-muted-foreground">
+                      Copies the {order.length}-section order above onto every selected {kindLabel}'s {byId.get(order[0])?.appLabel ?? "dashboard"} dashboard.
+                    </p>
+                  </div>
+                  <Button size="sm" disabled={!applyTargets.length} onClick={applyToAll}>
+                    Apply to {applyTargets.length} {kindLabel}{applyTargets.length === 1 ? "" : "s"}
+                  </Button>
+                </div>
+                <label className="mt-3 flex w-fit cursor-pointer items-center gap-2 text-sm font-medium text-foreground">
+                  <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 rounded border-border" />
+                  Select all {kindLabel}s ({targetsOfKind.length})
+                </label>
+                <div className="mt-2 grid grid-cols-1 gap-0.5 sm:grid-cols-2">
+                  {targetsOfKind.map((t) => (
+                    <label key={t.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm text-foreground/90 hover:bg-secondary/40">
+                      <input
+                        type="checkbox"
+                        checked={applyTargets.includes(t.id)}
+                        onChange={() => toggleApply(t.id)}
+                        className="h-4 w-4 rounded border-border"
+                      />
+                      <span className="truncate">{targetLabel(t)}</span>
+                      {t.id === target.id && <span className="shrink-0 text-[10px] text-muted-foreground">(current)</span>}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
