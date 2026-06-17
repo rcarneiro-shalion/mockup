@@ -29,6 +29,7 @@ import { Route as SeedsApiTimeframesRouteImport } from './routes/seeds-api/timef
 import { Route as SeedsApiTagsRouteImport } from './routes/seeds-api/tags'
 import { Route as SeedsApiSubscriptionsRouteImport } from './routes/seeds-api/subscriptions'
 import { Route as SeedsApiScrappingOptionsRouteImport } from './routes/seeds-api/scrapping-options'
+import { Route as SeedsApiPlannerRouteImport } from './routes/seeds-api/planner'
 import { Route as RetailersNewRouteImport } from './routes/retailers/new'
 import { Route as RetailersRetailerIdRouteImport } from './routes/retailers/$retailerId'
 import { Route as RegionSystemsNewRouteImport } from './routes/region-systems/new'
@@ -289,6 +290,11 @@ const SeedsApiScrappingOptionsRoute =
     path: '/seeds-api/scrapping-options',
     getParentRoute: () => rootRouteImport,
   } as any)
+const SeedsApiPlannerRoute = SeedsApiPlannerRouteImport.update({
+  id: '/seeds-api/planner',
+  path: '/seeds-api/planner',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RetailersNewRoute = RetailersNewRouteImport.update({
   id: '/retailers/new',
   path: '/retailers/new',
@@ -1175,6 +1181,7 @@ export interface FileRoutesByFullPath {
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
+  '/seeds-api/planner': typeof SeedsApiPlannerRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
@@ -1352,6 +1359,7 @@ export interface FileRoutesByTo {
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
+  '/seeds-api/planner': typeof SeedsApiPlannerRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
@@ -1526,6 +1534,7 @@ export interface FileRoutesById {
   '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
+  '/seeds-api/planner': typeof SeedsApiPlannerRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
@@ -1707,6 +1716,7 @@ export interface FileRouteTypes {
     | '/region-systems/new'
     | '/retailers/$retailerId'
     | '/retailers/new'
+    | '/seeds-api/planner'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
@@ -1884,6 +1894,7 @@ export interface FileRouteTypes {
     | '/region-systems/new'
     | '/retailers/$retailerId'
     | '/retailers/new'
+    | '/seeds-api/planner'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
@@ -2057,6 +2068,7 @@ export interface FileRouteTypes {
     | '/region-systems/new'
     | '/retailers/$retailerId'
     | '/retailers/new'
+    | '/seeds-api/planner'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
@@ -2237,6 +2249,7 @@ export interface RootRouteChildren {
   RegionSystemsNewRoute: typeof RegionSystemsNewRoute
   RetailersRetailerIdRoute: typeof RetailersRetailerIdRoute
   RetailersNewRoute: typeof RetailersNewRoute
+  SeedsApiPlannerRoute: typeof SeedsApiPlannerRoute
   SeedsApiScrappingOptionsRoute: typeof SeedsApiScrappingOptionsRoute
   SeedsApiSubscriptionsRoute: typeof SeedsApiSubscriptionsRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
@@ -2525,6 +2538,13 @@ declare module '@tanstack/react-router' {
       path: '/seeds-api/scrapping-options'
       fullPath: '/seeds-api/scrapping-options'
       preLoaderRoute: typeof SeedsApiScrappingOptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seeds-api/planner': {
+      id: '/seeds-api/planner'
+      path: '/seeds-api/planner'
+      fullPath: '/seeds-api/planner'
+      preLoaderRoute: typeof SeedsApiPlannerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/retailers/new': {
@@ -3776,6 +3796,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegionSystemsNewRoute: RegionSystemsNewRoute,
   RetailersRetailerIdRoute: RetailersRetailerIdRoute,
   RetailersNewRoute: RetailersNewRoute,
+  SeedsApiPlannerRoute: SeedsApiPlannerRoute,
   SeedsApiScrappingOptionsRoute: SeedsApiScrappingOptionsRoute,
   SeedsApiSubscriptionsRoute: SeedsApiSubscriptionsRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
