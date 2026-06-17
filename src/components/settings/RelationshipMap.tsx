@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { X, Network, Loader2, Building2, Store, ArrowRight, LayoutGrid, List, Tags, Pencil, Check, Plus, TriangleAlert } from "lucide-react";
+import { X, Network, Loader2, Building2, Store, ArrowRight, LayoutGrid, List, Tags, Pencil, Check, Plus, TriangleAlert, ArrowDownUp } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { pairKey, type MuCatalog } from "@/lib/massiveUpdate";
@@ -40,6 +40,7 @@ type Row = {
 export function RelationshipMap({
   catalog,
   assigned,
+  positions,
   live,
   loading,
   synced,
@@ -52,6 +53,8 @@ export function RelationshipMap({
 }: {
   catalog: MuCatalog;
   assigned: Set<string>;
+  /** pairKey(sectionId, targetId) → live `position` (Agency: order rows by the first retailer). */
+  positions: Map<string, number>;
   live: boolean;
   loading: boolean;
   /** Which axes' assignments are fully loaded ("dg" = brand, "dgr" = agency). */
@@ -225,9 +228,40 @@ export function RelationshipMap({
   const rowInFilter = (r: Row) =>
     !filtersActive ||
     (mode === "dg" ? r.dgs.some((d) => colKeySet.has(d.clientId)) : r.rets.some((x) => colKeySet.has(x.id)));
-  const allDisplayGroups = groups
-    .map((g) => ({ group: g.group, rows: g.rows.filter(rowInFilter) }))
+  // Agency: use the FIRST visible retailer column as the order reference — rows
+  // follow that retailer's live section order (by `position`), within each group
+  // and across groups (groups ordered by their earliest ref-ranked section).
+  const refKey = mode === "dgr" ? columns[0]?.key : undefined;
+  const refName = mode === "dgr" ? columns[0]?.label : undefined;
+  const refRank = useMemo(() => {
+    const m = new Map<string, number>();
+    if (!refKey) return m;
+    const withPos: { sec: string; pos: number }[] = [];
+    for (const r of allRows) {
+      const k = pairKey(r.section.id, refKey);
+      if (assigned.has(k)) withPos.push({ sec: r.section.id, pos: positions.get(k) ?? 0 });
+    }
+    withPos.sort((a, b) => a.pos - b.pos);
+    withPos.forEach((x, i) => m.set(x.sec, i));
+    return m;
+  }, [refKey, allRows, assigned, positions]);
+  const rankOf = (secId: string) => (refRank.has(secId) ? refRank.get(secId)! : Number.POSITIVE_INFINITY);
+
+  const orderedGroups = groups
+    .map((g) => {
+      let rows = g.rows.filter(rowInFilter);
+      if (refKey) rows = rows.slice().sort((a, b) => rankOf(a.section.id) - rankOf(b.section.id));
+      return { group: g.group, rows };
+    })
     .filter((g) => g.rows.length > 0);
+  const allDisplayGroups = refKey
+    ? orderedGroups
+        .slice()
+        .sort(
+          (ga, gb) =>
+            Math.min(...ga.rows.map((r) => rankOf(r.section.id))) - Math.min(...gb.rows.map((r) => rankOf(r.section.id))),
+        )
+    : orderedGroups;
   const displayRows = allDisplayGroups.flatMap((g) => g.rows);
 
   // Cap rendered rows so a big app (hundreds of applied sections × dozens of
@@ -244,6 +278,27 @@ export function RelationshipMap({
       out.push({ group: g.group, rows });
     }
     return out;
+  })();
+
+  // Out-of-order flags (Agency): walking the rows (ordered by the ref retailer),
+  // a non-ref retailer is "out of order" at a section whose position sits below
+  // one already shown above it — i.e. that retailer sequences it differently.
+  const outOfOrder = (() => {
+    const s = new Set<string>();
+    if (mode !== "dgr" || !refKey) return s;
+    const flat = displayGroups.flatMap((g) => g.rows);
+    for (const c of columns) {
+      if (c.key === refKey) continue;
+      let maxSoFar = -1;
+      for (const r of flat) {
+        const k = pairKey(r.section.id, c.key);
+        if (!assigned.has(k)) continue;
+        const p = positions.get(k) ?? 0;
+        if (p < maxSoFar) s.add(k);
+        maxSoFar = Math.max(maxSoFar, p);
+      }
+    }
+    return s;
   })();
 
   // cell value: Brand = # of the client's datagroups using the section (with their
@@ -391,6 +446,14 @@ export function RelationshipMap({
               : "Click a cell to add/remove the retailer. To wire up a retailer or section not shown in this grid, use the main Massive update tool."}
           </p>
         )}
+        {mode === "dgr" && refKey && view === "matrix" && (
+          <p className="flex flex-wrap items-center gap-1.5 rounded-md bg-secondary/60 px-3 py-1.5 text-xs text-muted-foreground">
+            <ArrowDownUp className="h-3.5 w-3.5 shrink-0" />
+            Rows ordered by <strong className="text-foreground">{refName}</strong> (first column).
+            <TriangleAlert className="ml-1 h-3.5 w-3.5 shrink-0 text-amber-500" />
+            marks a section another retailer keeps in a different order.
+          </p>
+        )}
       </div>
 
       {/* Body */}
@@ -469,6 +532,7 @@ export function RelationshipMap({
                   cell={cell}
                   editMode={editMode}
                   pending={pending}
+                  outOfOrder={outOfOrder}
                   onCell={handleCellClick}
                 />
               ))}
@@ -641,6 +705,7 @@ function FragmentRows({
   cell,
   editMode,
   pending,
+  outOfOrder,
   onCell,
 }: {
   group: string;
@@ -650,6 +715,7 @@ function FragmentRows({
   cell: (row: Row, colKey: string) => { n: number; ids: string[] };
   editMode: boolean;
   pending: Set<string>;
+  outOfOrder: Set<string>;
   onCell: (sectionId: string, colKey: string, info: { n: number; ids: string[] }) => void;
 }) {
   return (
@@ -675,6 +741,7 @@ function FragmentRows({
             const { n } = info;
             const busy = pending.has(pairKey(r.section.id, c.key));
             const filled = n > 0;
+            const oo = mode === "dgr" && filled && outOfOrder.has(pairKey(r.section.id, c.key));
             // Edit mode: every cell is clickable (filled → remove/edit, empty → add).
             // Read mode: only filled cells are clickable (→ open in tool).
             if (!editMode && !filled) {
@@ -702,7 +769,9 @@ function FragmentRows({
                     "mx-auto grid h-5 min-w-5 place-items-center rounded px-1 text-[10px] font-semibold transition-transform hover:scale-110 disabled:opacity-60",
                     filled
                       ? mode === "dgr"
-                        ? "bg-violet-500 text-white"
+                        ? oo
+                          ? "bg-amber-500 text-white ring-2 ring-amber-300"
+                          : "bg-violet-500 text-white"
                         : n >= 4
                           ? "bg-emerald-600 text-white"
                           : n >= 2
@@ -711,7 +780,13 @@ function FragmentRows({
                       : "border border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary",
                   )}
                 >
-                  {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : filled ? (mode === "dg" ? n : "✓") : <Plus className="h-3 w-3" />}
+                  {busy ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : filled ? (
+                    mode === "dg" ? n : oo ? <TriangleAlert className="h-3 w-3" /> : "✓"
+                  ) : (
+                    <Plus className="h-3 w-3" />
+                  )}
                 </button>
               </td>
             );

@@ -159,6 +159,9 @@ export function MassiveUpdatePage() {
   // target. The (colKey, position) pair is UNIQUE upstream, so new inserts must use
   // a free position — we append at max+1 (and bump on a 409 position conflict).
   const [colMaxPos, setColMaxPos] = useState<Map<string, number>>(new Map());
+  // pairKey(section, colKey) -> live `position` of that assignment, so the
+  // relationship map can order rows by the first retailer + flag out-of-order cells.
+  const [positions, setPositions] = useState<Map<string, number>>(new Map());
   // Current assignments are large (~3k brand, ~1.5k agency) so they load on demand
   // per target: a target is in `synced` once its assignments have been pulled.
   const [synced, setSynced] = useState<Set<"dg" | "dgr">>(new Set());
@@ -504,9 +507,11 @@ export function MassiveUpdatePage() {
       });
       const pairs = (res.pairs ?? []).map((p) => ({ id: p.id, key: pairKey(p.sectionId, p.targetId), targetId: p.targetId, position: p.position }));
       const nextAssigned = new Set(assigned);
+      const nextPositions = new Map(positions);
       for (const p of pairs) {
         merged.set(p.key, p.id);
         nextAssigned.add(p.key);
+        nextPositions.set(p.key, p.position);
         // Track the highest occupied position per target column so inserts can
         // append at a free slot (the upstream (target, position) pair is unique).
         const cur = nextMaxPos.get(p.targetId) ?? 0;
@@ -515,6 +520,7 @@ export function MassiveUpdatePage() {
       setRecordIds(merged);
       setAssigned(nextAssigned);
       setColMaxPos(nextMaxPos);
+      setPositions(nextPositions);
       if (res.ok && res.complete) setSynced((s) => new Set(s).add(kind));
       if (!res.ok) toast.error(res.error || "Couldn't load assignments.");
       else
@@ -615,6 +621,7 @@ export function MassiveUpdatePage() {
             if (r.position! <= (prev.get(change.targetId) ?? 0)) return prev;
             return new Map(prev).set(change.targetId, r.position!);
           });
+          setPositions((prev) => new Map(prev).set(k, r.position!));
         }
         return { ok: true };
       }
@@ -628,6 +635,11 @@ export function MassiveUpdatePage() {
         return n;
       });
       setRecordIds((prev) => {
+        const n = new Map(prev);
+        n.delete(k);
+        return n;
+      });
+      setPositions((prev) => {
         const n = new Map(prev);
         n.delete(k);
         return n;
@@ -1467,6 +1479,7 @@ export function MassiveUpdatePage() {
         <RelationshipMap
           catalog={catalog}
           assigned={assigned}
+          positions={positions}
           live={liveOn}
           loading={syncing}
           synced={synced}
