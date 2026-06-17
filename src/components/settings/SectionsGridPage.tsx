@@ -73,6 +73,25 @@ const newId = () =>
 const appShort = (a: { slug?: string; label: string }) =>
   (a.slug?.trim() || a.label.split(/\s+/).filter(Boolean).map((w) => w[0]).join("")).toUpperCase();
 
+/** Build a case-insensitive matcher where `%` is a wildcard (any run of chars),
+ *  SQL-LIKE style — e.g. "scor%lego" matches "scorecard-lego". The literal
+ *  segments are regex-escaped; an empty query matches everything. */
+function buildQueryMatch(query: string): (s: string) => boolean {
+  const q = query.trim();
+  if (!q) return () => true;
+  const pattern = q
+    .split("%")
+    .map((seg) => seg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join(".*");
+  try {
+    const re = new RegExp(pattern, "i");
+    return (s) => re.test(s);
+  } catch {
+    const lower = q.toLowerCase();
+    return (s) => s.toLowerCase().includes(lower);
+  }
+}
+
 // ---- live → editor mapping (best-effort; real API field names may vary) ----
 const str = (v: unknown) => (v == null ? "" : String(v));
 const pickArr = (v: unknown): Record<string, unknown>[] =>
@@ -252,12 +271,12 @@ export function SectionsGridPage() {
     return [...seen.entries()];
   }, [apps, fApps]);
 
-  const q = query.trim().toLowerCase();
+  const matchQuery = useMemo(() => buildQueryMatch(query), [query]);
   const rows = allRows.filter(
     (r) =>
       (!fApps.length || fApps.includes(r.appId)) &&
       (!fGroups.length || fGroups.includes(r.groupId)) &&
-      (!q || `${r.section.label} ${r.section.path}`.toLowerCase().includes(q)),
+      matchQuery(`${r.section.label} ${r.section.path}`),
   );
 
   const defKeys = useMemo(() => {
@@ -555,7 +574,7 @@ export function SectionsGridPage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search sections by name or path"
+              placeholder="Search by name or path — % = wildcard"
               className="h-9 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
