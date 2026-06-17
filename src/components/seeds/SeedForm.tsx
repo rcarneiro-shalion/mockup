@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectBox } from "@/components/seeds/SelectBox";
+import { StoreSelect } from "@/components/seeds/StoreSelect";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Pill, Th, Td, LinkText } from "@/components/seeds/ListPrimitives";
-import { STORE_OPTIONS, CATEGORY_OPTIONS, PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
+import { CATEGORY_OPTIONS, PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
 import { emptySeed, seedValueLabel, KEYWORD_TYPE_OPTIONS, SEED_STATUS_OPTIONS, type Seed, type SeedType, type KeywordType, type SeedStatus } from "@/lib/seeds";
 import { nowStamp, getClientsForProject } from "@/lib/clients";
 import { getSubscriptions } from "@/lib/subscriptions";
@@ -176,7 +177,7 @@ export function SeedForm({
 
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
                   <Field label="Store" required>
-                    <SelectBox value={seed.store} onChange={(v) => set("store", v)} options={STORE_OPTIONS} />
+                    <StoreSelect value={seed.store} onChange={(v) => set("store", v)} />
                   </Field>
                   <Field label="Category">
                     <SelectBox value={seed.cat} onChange={(v) => set("cat", v)} options={CATEGORY_OPTIONS} />
