@@ -48,12 +48,22 @@ if command -v sips >/dev/null 2>&1 && command -v iconutil >/dev/null 2>&1 && [ -
     name="${pair%=*}"; px="${pair#*=}"
     sips -s format png -z "$px" "$px" "$ICON_SRC" --out "$ISET/icon_${name}.png" >/dev/null 2>&1 || true
   done
-  if iconutil -c icns "$ISET" -o "$APP/Contents/Resources/applet.icns" >/dev/null 2>&1; then
-    touch "$APP"                      # bump mtime so Finder re-reads the bundle
-    # macOS caches app icons aggressively; a rebuilt bundle at the same path can
-    # keep showing the old/generic icon. Restarting the Dock forces a re-read.
-    /usr/bin/killall Dock 2>/dev/null || true
-    echo "✓ Icon applied (Shalion favicon) — Dock refreshed."
+  ICNS="$(dirname "$ISET")/shalion.icns"
+  if iconutil -c icns "$ISET" -o "$ICNS" >/dev/null 2>&1; then
+    cp "$ICNS" "$APP/Contents/Resources/applet.icns"   # the applet's own icon file
+    # Replacing applet.icns alone often won't show — macOS caches app icons hard.
+    # Set the bundle's CUSTOM icon via Cocoa (NSWorkspace setIcon:forFile:), which
+    # writes the icon + custom-icon flag and busts the icon-services cache reliably.
+    osascript - "$ICNS" "$APP" >/dev/null 2>&1 <<'OSA' || true
+use framework "AppKit"
+on run argv
+  set img to current application's NSImage's alloc()'s initWithContentsOfFile:(item 1 of argv)
+  current application's NSWorkspace's sharedWorkspace()'s setIcon:img forFile:(item 2 of argv) options:0
+end run
+OSA
+    touch "$APP"
+    /usr/bin/killall Dock 2>/dev/null || true   # nudge the Dock to repaint
+    echo "✓ Icon applied (Shalion) — Dock refreshed."
   else
     echo "⚠ Couldn't build the .icns — the app will use the generic icon (still works)."
   fi
