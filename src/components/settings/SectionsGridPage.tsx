@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { fetchLive, mutateLive } from "@/lib/api/live.functions";
 import { getDevTokens } from "@/lib/devTokens";
+import { buildQueryMatch } from "@/lib/textMatch";
 import {
   ArrowLeft,
   Search,
@@ -72,25 +73,6 @@ const newId = () =>
  *  falling back to the label's initials. Keeps the group name readable. */
 const appShort = (a: { slug?: string; label: string }) =>
   (a.slug?.trim() || a.label.split(/\s+/).filter(Boolean).map((w) => w[0]).join("")).toUpperCase();
-
-/** Build a case-insensitive matcher where `%` is a wildcard (any run of chars),
- *  SQL-LIKE style — e.g. "scor%lego" matches "scorecard-lego". The literal
- *  segments are regex-escaped; an empty query matches everything. */
-function buildQueryMatch(query: string): (s: string) => boolean {
-  const q = query.trim();
-  if (!q) return () => true;
-  const pattern = q
-    .split("%")
-    .map((seg) => seg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-    .join(".*");
-  try {
-    const re = new RegExp(pattern, "i");
-    return (s) => re.test(s);
-  } catch {
-    const lower = q.toLowerCase();
-    return (s) => s.toLowerCase().includes(lower);
-  }
-}
 
 // ---- live → editor mapping (best-effort; real API field names may vary) ----
 const str = (v: unknown) => (v == null ? "" : String(v));

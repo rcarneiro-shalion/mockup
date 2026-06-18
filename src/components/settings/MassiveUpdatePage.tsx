@@ -48,6 +48,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { FilterChip } from "@/components/seeds/FilterChip";
+import { buildQueryMatch } from "@/lib/textMatch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RelationshipMap, type MapEdit } from "./RelationshipMap";
 import { RetailerLabelsModal } from "./RetailerLabelsModal";
@@ -208,11 +209,12 @@ export function MassiveUpdatePage() {
     () => catalog.sections.filter((s) => appGroups.some((g) => g.id === s.groupId)),
     [catalog, appGroups],
   );
-  const sq = sectionQ.trim().toLowerCase();
+  // `%` wildcard search (SQL-LIKE) over label + path — e.g. "rmm%-lang".
+  const matchSection = useMemo(() => buildQueryMatch(sectionQ), [sectionQ]);
   const visibleSections = appSections.filter(
     (s) =>
       (groupSel.length === 0 || groupSel.includes(s.groupId)) &&
-      (!sq || `${s.label} ${s.path}`.toLowerCase().includes(sq)),
+      matchSection(`${s.label} ${s.path}`),
   );
 
   // A datagroup belongs to a target by its dashboard type: BRAND → "Datagroup"
@@ -227,17 +229,17 @@ export function MassiveUpdatePage() {
     () => catalog.clients.filter((c) => dgsOfType.some((d) => d.clientId === c.id)),
     [catalog, dgsOfType],
   );
-  const cq = clientQ.trim().toLowerCase();
-  // The text box filters by DATAGROUP name (the Clients chip still narrows by
-  // client). Datagroups stay grouped under their client.
+  // The text box filters by DATAGROUP name with `%` wildcard support (the Clients
+  // chip still narrows by client). Datagroups stay grouped under their client.
+  const matchDg = useMemo(() => buildQueryMatch(clientQ), [clientQ]);
   const visibleDgs = useMemo(
     () =>
       dgsOfType.filter(
         (d) =>
           (selClients.length === 0 || selClients.includes(d.clientId)) &&
-          (!cq || d.name.toLowerCase().includes(cq)),
+          matchDg(d.name),
       ),
-    [dgsOfType, selClients, cq],
+    [dgsOfType, selClients, matchDg],
   );
   const filteredClients = clientsWithDg.filter((c) => visibleDgs.some((d) => d.clientId === c.id));
   const clientName = (id: string) => catalog.clients.find((c) => c.id === id)?.name ?? "—";
@@ -250,13 +252,14 @@ export function MassiveUpdatePage() {
   const retailerName = (id: string) => allRetailers.find((r) => r.id === id)?.name ?? id;
   // Retailer → its label (for the colored tag + the Label filter facilitator).
   const labelForRet = (name: string) => labelForRetailer(retailerLabels, name);
-  const rq = retailerQ.trim().toLowerCase();
-  // Search narrows the list; the Label chip no longer HIDES non-members — instead
-  // it GROUPS the selected label's retailers on top (see labelGroups) and keeps the
-  // rest below, so a whole label can be picked while other retailers stay reachable.
+  // Search (with `%` wildcard) narrows the list; the Label chip no longer HIDES
+  // non-members — instead it GROUPS the selected label's retailers on top (see
+  // labelGroups) and keeps the rest below, so a whole label can be picked while
+  // other retailers stay reachable.
+  const matchRet = useMemo(() => buildQueryMatch(retailerQ), [retailerQ]);
   const visibleRetailers = useMemo(
-    () => allRetailers.filter((r) => !rq || r.name.toLowerCase().includes(rq)),
-    [allRetailers, rq],
+    () => allRetailers.filter((r) => matchRet(r.name)),
+    [allRetailers, matchRet],
   );
   const selRetailerList = allRetailers.filter((r) => selRetailers.includes(r.id));
 
@@ -1117,7 +1120,7 @@ export function MassiveUpdatePage() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
-                  <SearchInput value={sectionQ} onChange={setSectionQ} placeholder="Search sections by name or path" />
+                  <SearchInput value={sectionQ} onChange={setSectionQ} placeholder="Search sections — % = wildcard" />
                 </div>
                 <FilterChip
                   label="Groups"
@@ -1143,6 +1146,16 @@ export function MassiveUpdatePage() {
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
+              <SelectedTray
+                items={selSectionList.map((s) => ({
+                  id: s.id,
+                  title: s.label,
+                  subtitle: s.path,
+                  badge: catalog.groups.find((g) => g.id === s.groupId)?.label,
+                }))}
+                onToggle={toggleSection}
+                onClear={() => setSelSections(new Set())}
+              />
               {visibleSections.map((s) => (
                 <Row
                   key={s.id}
@@ -1203,7 +1216,7 @@ export function MassiveUpdatePage() {
                 <>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1">
-                      <SearchInput value={clientQ} onChange={setClientQ} placeholder="Filter datagroups by name" />
+                      <SearchInput value={clientQ} onChange={setClientQ} placeholder="Filter datagroups — % = wildcard" />
                     </div>
                     <FilterChip
                       label="Clients"
@@ -1239,7 +1252,7 @@ export function MassiveUpdatePage() {
                 <>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1">
-                      <SearchInput value={retailerQ} onChange={setRetailerQ} placeholder="Filter retailers by name" />
+                      <SearchInput value={retailerQ} onChange={setRetailerQ} placeholder="Filter retailers — % = wildcard" />
                     </div>
                     <FilterChip
                       label="Label"
@@ -1289,6 +1302,34 @@ export function MassiveUpdatePage() {
               )}
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
+              {target === "dg" ? (
+                <SelectedTray
+                  items={selDgList.map((d) => ({
+                    id: d.id,
+                    title: d.name,
+                    subtitle: d.country,
+                    badge: d.dashboardType,
+                    badgeTone: d.dashboardType === "AGENCY" ? "violet" : "slate",
+                  }))}
+                  onToggle={toggleDatagroup}
+                  onClear={() => {
+                    setSelDgs(new Set());
+                    pruneAutoSections([]);
+                  }}
+                />
+              ) : (
+                <SelectedTray
+                  items={selRetailerList.map((r) => {
+                    const l = labelForRet(r.name);
+                    return { id: r.id, title: r.name, badge: l.name, badgeClass: LABEL_COLOR_CLASSES[l.color] };
+                  })}
+                  onToggle={toggleRetailer}
+                  onClear={() => {
+                    setSelRetailers([]);
+                    pruneAutoSections([]);
+                  }}
+                />
+              )}
               {target === "dg" ? (
                 <>
                   {filteredClients.map((c) => {
@@ -1618,6 +1659,40 @@ function Row({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return <p className="px-3 py-10 text-center text-sm text-muted-foreground">{children}</p>;
+}
+
+/**
+ * Pinned "Selected (N)" group at the top of a picker list — the items currently
+ * checked, regardless of the active search/filter, so a scattered selection is
+ * easy to review (and uncheck) before applying. Each row toggles itself off.
+ */
+function SelectedTray({
+  items,
+  onToggle,
+  onClear,
+}: {
+  items: { id: string; title: string; subtitle?: string; badge?: string; badgeTone?: "slate" | "violet"; badgeClass?: string }[];
+  onToggle: (id: string) => void;
+  onClear: () => void;
+}) {
+  if (!items.length) return null;
+  return (
+    <div className="mb-2 rounded-md border border-[var(--sidebar-active-fg)]/30 bg-[var(--sidebar-active)]/30">
+      <div className="flex items-center justify-between px-2 py-1">
+        <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--sidebar-active-fg)]">
+          <Check className="h-3 w-3" /> Selected ({items.length})
+        </span>
+        <button type="button" onClick={onClear} className="text-[11px] font-medium text-muted-foreground hover:text-foreground">
+          Clear all
+        </button>
+      </div>
+      <div className="max-h-40 overflow-y-auto px-1 pb-1">
+        {items.map((it) => (
+          <Row key={it.id} checked onToggle={() => onToggle(it.id)} title={it.title} subtitle={it.subtitle} badge={it.badge} badgeTone={it.badgeTone} badgeClass={it.badgeClass} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function Matrix({
