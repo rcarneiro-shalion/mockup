@@ -27,7 +27,9 @@ fi
 
 LOG="$(mktemp -t mockup-dev)"
 echo "🚀 Starting the app…  (closing this window stops it)"
-npm run dev >"$LOG" 2>&1 &
+# Silence the harmless Node DEP0205 (module.register) warning from a dependency
+# on newer Node — keeps this window clean without hiding real warnings.
+NODE_OPTIONS="--disable-warning=DEP0205" npm run dev >"$LOG" 2>&1 &
 SERVER_PID=$!
 trap 'echo; echo "Stopping…"; kill $SERVER_PID 2>/dev/null; rm -f "$LOG"; exit 0' INT TERM
 
