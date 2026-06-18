@@ -14,7 +14,7 @@ import { getSubscriptions, SUBSCRIPTIONS_KEY, emptySubscription, type Subscripti
 import { getSeeds, INITIAL_SEEDS, SEEDS_KEY, type Seed, type SeedType } from "./seeds";
 import { getScrappingOptions, SCRAPPING_OPTIONS_KEY } from "./scrappingOptions";
 import { EMPTY_SCRAPPING_OPTION, type ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
-import { REAL_JOBS, CLIENT_LABELS, REAL_LOCATION_SETS, type RealJob } from "./scenarioSeedData";
+import { REAL_JOBS, CLIENT_LABELS, REAL_LOCATION_SETS, CLIENT_KEYWORDS, CLIENT_CATEGORY, type RealJob } from "./scenarioSeedData";
 
 const SIM_KEY = "seeds-api:sim:index";
 const LOC_VOLUME_TBD = 10;
@@ -71,6 +71,20 @@ const REAL_URLS = realByType("URL");
 const REAL_PDPS = realByType("PDP");
 const cloneSeed = (s: Seed, fromDiscovery = false): Seed => ({ ...s, id: uid(), c: nowStamp(), u: nowStamp(), status: "Active", isFromDiscovery: fromDiscovery });
 
+// Brand-accurate KEYWORD seeds for a client (the live job↔seed relation is
+// unavailable — seeds API times out). Tied to the subscription's store so a
+// Samsung job gets "samsung galaxy", a Danone job gets "activia", etc. Falls
+// back to the real keyword corpus for clients without a curated pool.
+const clientKeywordSeeds = (slug: string, store: string, seed: number, n: number): Seed[] => {
+  const kws = CLIENT_KEYWORDS[slug] ?? [];
+  if (!kws.length) return pick(REAL_KEYWORDS, n, seed).map((s) => cloneSeed(s));
+  const cat = CLIENT_CATEGORY[slug] ?? "Other > Other > Other";
+  return pick(kws, n, seed).map((kw) => ({
+    id: uid(), d: kw, store, cat, c: nowStamp(), u: nowStamp(),
+    type: "KEYWORD" as SeedType, status: "Active" as const, value: kw, keywordType: "CATEGORY" as const,
+  }));
+};
+
 // Assign a realistic location set to a geolocated subscription: prefer a set whose
 // store matches the job's store, else one in the same country, else any — so the
 // task estimate uses a REAL location volume (6–200+) instead of a flat placeholder.
@@ -119,10 +133,16 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
     const geo = geoToSub(job.geolocMode);
     const locationSet = geo === "MANUAL" ? pickLocationSet(job) : "";
 
-    // --- the seeds for this subscription (sampled + cloned from the REAL corpus)
+    // --- the seeds for this subscription. KEYWORD seeds are brand-accurate per
+    // client + store; URL/PDP seeds are cloned from the real corpus.
     const subSeeds: Seed[] = [];
-    const realPool = seedType === "PDP" ? REAL_PDPS : seedType === "URL" ? REAL_URLS : REAL_KEYWORDS;
-    pick(realPool, 2, ji).forEach((s) => subSeeds.push(cloneSeed(s)));
+    if (seedType === "KEYWORD") {
+      subSeeds.push(...clientKeywordSeeds(clientSlug, job.store, ji, 4));
+    } else if (seedType === "PDP") {
+      pick(REAL_PDPS, 3, ji).forEach((s) => subSeeds.push(cloneSeed(s)));
+    } else { // URL (SHELF)
+      pick(REAL_URLS, 3, ji).forEach((s) => subSeeds.push(cloneSeed(s)));
+    }
 
     const optName = `${job.name}`; // reuse the real job name as the option name
     const option: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: optName, status: "Active", extractionType: job.extractionType, ...optionPreset(job.extractionType) };
@@ -139,7 +159,7 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
       const pdpName = job.name.replace(/^(ME|PLP|MAG|MAT|GR|GC|GEO)[^_]*_/, "PDP_");
       const pdpOptName = `${pdpName} (PDP)`;
       const pdpOption: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: pdpOptName, status: "Active", extractionType: "DIGITAL_SHELF_PDP", ...optionPreset("DIGITAL_SHELF_PDP") };
-      const pdpSeeds: Seed[] = pick(REAL_PDPS, 2, ji + 1).map((s) => cloneSeed(s, true));
+      const pdpSeeds: Seed[] = pick(REAL_PDPS, 3, ji + 1).map((s) => cloneSeed(s, true));
       const pdpSub: Subscription = {
         ...emptySubscription(), id: uid(), name: `${pdpName} (PDP)`, project: project.name, store: job.store,
         seeds: pdpSeeds.map((s) => s.d), scrappingOption: pdpOptName, geo, locationSet,

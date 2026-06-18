@@ -1055,3 +1055,48 @@ export const REAL_LOCATION_SETS: LocationSet[] = [
   { name: "Pyszne PL - FSA — 7 locations", store: "Pyszne PL - FSA", country: "PL", count: 7, samples: ["sredzki-hermanow","97-319","pietno","kutnowski-ruszki","warszawa-wola-01-266"] },
   { name: "ShopeeFood MY - FSA — 6 locations", store: "ShopeeFood MY - FSA", country: "MY", count: 6, samples: ["Rumah Masam","Sungai Pandan Pandan","Parit Lapis Betong Nombor Satu","Tanjong Selidang","Kemajuan Tanah Chamek"] },
 ];
+
+// On-brand keyword pools + default category per client. The live job↔seed relation
+// is unavailable (the ecometry-tasks-api seeds endpoint times out on every query),
+// so these stand in as realistic, brand-accurate seed samples the generator uses for
+// KEYWORD-type subscriptions, tied to the subscription store.
+export const CLIENT_KEYWORDS: Record<string, string[]> = {
+  groupm: ["pet food","dog food","cat litter","laundry detergent","dishwasher tablets","shampoo","diapers"],
+  coca: ["coca cola","coca cola zero","sprite","fanta","fuze tea","powerade","del valle","aquarius"],
+  jde: ["l'or espresso","jacobs coffee","tassimo","senseo","douwe egberts","kenco","l'or capsules"],
+  lego: ["lego city","lego technic","lego star wars","lego friends","lego marvel","lego harry potter","lego icons"],
+  pepsico: ["pepsi","pepsi max","lays","doritos","gatorade","quaker oats","cheetos","7up"],
+  heineken: ["heineken","amstel","sol cerveza","tecate","dos equis","desperados","heineken 0.0"],
+  bimbo: ["pan bimbo","oroweat","thomas english muffins","sara lee","mantecadas","donas bimbo","pan integral"],
+  danone: ["activia","danone","oikos","actimel","alpro","danonino","light and fit"],
+  abinbev: ["budweiser","corona extra","stella artois","michelob ultra","bud light","modelo especial"],
+  ferrero: ["nutella","kinder bueno","ferrero rocher","tic tac","kinder sorpresa","raffaello","nutella biscuits"],
+  perfetti: ["mentos","chupa chups","fruittella","smint","alpenliebe","golia","vivident"],
+  deoleo: ["aceite bertolli","carbonell aceite de oliva","koipe","hojiblanca","aceite de oliva virgen extra"],
+  walmart: ["great value","equate","mainstays","parents choice","marca walmart"],
+  herdez: ["herdez salsa","doña maria mole","embasa","chiles herdez","salsa casera herdez"],
+  samsung: ["samsung galaxy s24","samsung tv qled","galaxy buds","samsung galaxy a55","samsung refrigerador","galaxy watch"],
+  osborne: ["jamon cinco jotas","brandy carlos i","osborne","veterano","magno brandy"],
+  nestle: ["nescafe","kitkat","nespresso","maggi","purina","la lechera","nesquik","cerelac"],
+  loewe: ["perfume loewe","solo loewe","aire loewe","loewe 001","bolso loewe"],
+};
+export const CLIENT_CATEGORY: Record<string, string> = {
+  groupm: "Pets > Dog > Food",
+  coca: "Beverages > Soft Drinks > Soda",
+  jde: "Pantry > Coffee > Capsules",
+  lego: "Toys and Games > Building Toys > Building Blocks",
+  pepsico: "Beverages > Soft Drinks > Soda",
+  heineken: "Beverages > Beer > Beer",
+  bimbo: "Pantry > Breakfast and Bakery > Bread",
+  danone: "Fresh and Frozen > Yogurt > Other",
+  abinbev: "Beverages > Beer > Beer",
+  ferrero: "Pantry > Chocolate > Other",
+  perfetti: "Pantry > Candy > Candies",
+  deoleo: "Pantry > Condiments and Sauces > Oil",
+  walmart: "Other > Other > Other",
+  herdez: "Pantry > Condiments and Sauces > Sauces",
+  samsung: "Home and Appliances > Electronics > Other",
+  osborne: "Beverages > Spirits > Brandy",
+  nestle: "Pantry > Coffee > Other",
+  loewe: "Beauty > Fragrances > Other",
+};
