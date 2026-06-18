@@ -84,7 +84,7 @@ function ScenarioGeneratorPage() {
               </Button>
             )}
             <Button size="sm" className="h-8 gap-1.5" onClick={generateAll}>
-              <PlayCircle className="h-4 w-4" /> Generate all 6
+              <PlayCircle className="h-4 w-4" /> Generate all {SCENARIO_CLIENTS.length}
             </Button>
           </div>
         </div>
