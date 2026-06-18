@@ -7,7 +7,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { FlaskConical, PlayCircle, Trash2, Network, TriangleAlert, Sprout, Calculator, Search, Check, ChevronsUpDown, Users, Layers, ListFilter, X } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { FlaskConical, PlayCircle, Trash2, Network, TriangleAlert, Sprout, Calculator, Search, Check, ChevronsUpDown, Users, Layers, ListFilter, X, Info } from "lucide-react";
 import { REAL_JOBS, CLIENT_LABELS, SCENARIO_CLIENTS, type RealJob } from "@/lib/scenarioSeedData";
 import { generateForClient, clearSimulated, hasSimulated, estimateTasks, validateScenario, extractionToSeedType, type BuiltScenario } from "@/lib/scenarioGenerator";
 import { buildQueryMatch } from "@/lib/textMatch";
@@ -125,6 +126,7 @@ function ScenarioGeneratorPage() {
     const use = chosen.length ? chosen : jobs; // none ticked → generate all (filtered) jobs
     const built = generateForClient(slug, use);
     setResults((r) => [built, ...r.filter((x) => x.project.id !== built.project.id)].slice(0, 18));
+    setSel((p) => ({ ...p, [slug]: new Set(use.map((j) => j.name)) }));
     setSimLive(true);
     toast.success(`Generated ${CLIENT_LABELS[slug]}: ${built.subscriptions.length} subscriptions · ${built.scrappingOptions.length} options · ${built.seeds.length} seeds`);
   };
@@ -133,6 +135,7 @@ function ScenarioGeneratorPage() {
     if (!visibleClients.length) return;
     const built = visibleClients.map((c) => generateForClient(c.slug, c.jobs));
     setResults(built);
+    setSel(Object.fromEntries(visibleClients.map((c) => [c.slug, new Set(c.jobs.map((j) => j.name))])));
     setSimLive(true);
     const subs = built.reduce((a, b) => a + b.subscriptions.length, 0);
     toast.success(`Generated ${built.length} client(s) · ${subs} subscriptions`);
@@ -156,12 +159,19 @@ function ScenarioGeneratorPage() {
               <FlaskConical className="h-5 w-5 text-muted-foreground" />
               <h1 className="text-xl font-semibold tracking-tight text-foreground">Scenario simulator</h1>
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">desk-test</span>
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" aria-label="About the scenario simulator" className="grid h-5 w-5 place-items-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground">
+                      <Info className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="start" className="max-w-sm text-xs leading-relaxed">
+                    Fabricate internally-consistent client → project → subscription → scrapping option → seeds scenarios from real production Jobs (ecometry-tasks-api), with real seeds and real store locations, then review them in the Value Stream Map. Cross-references are wired by name so the whole flow resolves.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Fabricate internally-consistent <strong>client → project → subscription → scrapping option → seeds</strong> scenarios from
-              real production Jobs (<code>ecometry-tasks-api</code>), with <strong>real seeds</strong> and <strong>real store locations</strong>,
-              then review them in the Value Stream Map. Cross-references are wired by name so the whole flow resolves.
-            </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => navigate({ to: "/seeds-api/planner" })}>
