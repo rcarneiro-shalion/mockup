@@ -1,6 +1,13 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1024" height="1024" rx="228" fill="#FFFFFF"/>
-  <g transform="translate(232,232) scale(23.33)">
+  <defs>
+    <filter id="tileShadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#1a1a1a" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <!-- macOS icon grid: 824x824 rounded tile centered in 1024 (100px inset), r=185 -->
+  <rect x="100" y="100" width="824" height="824" rx="185" ry="185" fill="#FFFFFF" filter="url(#tileShadow)"/>
+  <!-- Shalion pinwheel (24x24) scaled to 480px, centered at 512,512 -->
+  <g transform="translate(272,272) scale(20)">
     <path d="M0 11.435a11.02 11.02 0 0 0 7.807-3.252C9.806 6.18 11.045 3.413 11.05.357a11.77 11.77 0 0 0-7.614 3.445A11.825 11.825 0 0 0 0 11.435Z" fill="#B47CFF"/>
     <path d="M23.584 11.435a11.825 11.825 0 0 0-3.437-7.633A11.766 11.766 0 0 0 12.534.357a11.08 11.08 0 0 0 3.243 7.826 11.026 11.026 0 0 0 7.807 3.252Z" fill="#A1E335"/>
     <path d="M12.534 24a11.766 11.766 0 0 0 7.613-3.446 11.822 11.822 0 0 0 3.437-7.631 11.028 11.028 0 0 0-7.807 3.25A11.08 11.08 0 0 0 12.534 24Z" fill="#FEC100"/>
