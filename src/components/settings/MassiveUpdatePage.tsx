@@ -263,6 +263,13 @@ export function MassiveUpdatePage() {
   );
   const selRetailerList = allRetailers.filter((r) => selRetailers.includes(r.id));
 
+  // When every filtered result is already selected, the results list just repeats
+  // the Selected tray — collapse it (show only the tray) until the filter surfaces
+  // an unselected item. Applied to both boxes.
+  const sectionsResultsRedundant = visibleSections.length > 0 && visibleSections.every((s) => selSections.has(s.id));
+  const dgsResultsRedundant = visibleDgs.length > 0 && visibleDgs.every((d) => selDgs.has(d.id));
+  const retailersResultsRedundant = visibleRetailers.length > 0 && visibleRetailers.every((r) => selRetailers.includes(r.id));
+
   // When ≥1 label is selected, partition the (search-filtered) retailers into one
   // group per selected label (members on top, under a colored header) + "the rest".
   const labelGroups = useMemo(() => {
@@ -1168,17 +1175,25 @@ export function MassiveUpdatePage() {
                 onToggle={toggleSection}
                 onClear={() => setSelSections(new Set())}
               />
-              {visibleSections.map((s) => (
-                <Row
-                  key={s.id}
-                  checked={selSections.has(s.id)}
-                  onToggle={() => toggleSection(s.id)}
-                  title={s.label}
-                  subtitle={s.path}
-                  badge={appGroups.find((g) => g.id === s.groupId)?.label}
-                />
-              ))}
-              {!visibleSections.length && <Empty>No sections match.</Empty>}
+              {sectionsResultsRedundant ? (
+                <p className="px-3 py-2 text-center text-[11px] text-muted-foreground">
+                  All {visibleSections.length} matching section{visibleSections.length === 1 ? "" : "s"} selected — change the search to add more.
+                </p>
+              ) : (
+                <>
+                  {visibleSections.map((s) => (
+                    <Row
+                      key={s.id}
+                      checked={selSections.has(s.id)}
+                      onToggle={() => toggleSection(s.id)}
+                      title={s.label}
+                      subtitle={s.path}
+                      badge={appGroups.find((g) => g.id === s.groupId)?.label}
+                    />
+                  ))}
+                  {!visibleSections.length && <Empty>No sections match.</Empty>}
+                </>
+              )}
             </div>
           </Panel>
 
@@ -1343,6 +1358,11 @@ export function MassiveUpdatePage() {
                 />
               )}
               {target === "dg" ? (
+                dgsResultsRedundant ? (
+                  <p className="px-3 py-2 text-center text-[11px] text-muted-foreground">
+                    All {visibleDgs.length} matching datagroup{visibleDgs.length === 1 ? "" : "s"} selected — change the search to add more.
+                  </p>
+                ) : (
                 <>
                   {filteredClients.map((c) => {
                     const dgs = visibleDgs.filter((d) => d.clientId === c.id);
@@ -1368,6 +1388,11 @@ export function MassiveUpdatePage() {
                   })}
                   {!visibleDgs.length && <Empty>No datagroups match.</Empty>}
                 </>
+                )
+              ) : retailersResultsRedundant ? (
+                <p className="px-3 py-2 text-center text-[11px] text-muted-foreground">
+                  All {visibleRetailers.length} matching retailer{visibleRetailers.length === 1 ? "" : "s"} selected — change the search to add more.
+                </p>
               ) : labelGroups ? (
                 <>
                   {/* Selected label(s): members grouped + prioritized on top */}
