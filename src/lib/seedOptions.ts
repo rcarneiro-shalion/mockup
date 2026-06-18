@@ -1,3 +1,5 @@
+import { REAL_LOCATION_SETS } from "./scenarioSeedData";
+
 export const STORE_OPTIONS = [
   "Amazon US",
   "Walmart US",
@@ -80,6 +82,8 @@ export const LOCATION_SET_OPTIONS = [
   "Walmart East Coast — 50 locations",
   "Walmart East Coast — 100 locations",
   "No geolocation",
+  // Real store location sets pulled from backoffice-api (store > locations).
+  ...REAL_LOCATION_SETS.map((s) => s.name),
 ];
 
 // New seed model (3+1): seed type + scrapping type (PDP carries no scrapping type).

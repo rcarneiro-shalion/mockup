@@ -11,10 +11,10 @@
 import { getClients, setProjectClients, nowStamp, emptyClient, CLIENTS_KEY, type Client } from "./clients";
 import { getProjects, PROJECTS_KEY, type Project, type AssignedSubscription } from "./projects";
 import { getSubscriptions, SUBSCRIPTIONS_KEY, emptySubscription, type Subscription } from "./subscriptions";
-import { getSeeds, SEEDS_KEY, type Seed, type SeedType } from "./seeds";
+import { getSeeds, INITIAL_SEEDS, SEEDS_KEY, type Seed, type SeedType } from "./seeds";
 import { getScrappingOptions, SCRAPPING_OPTIONS_KEY } from "./scrappingOptions";
 import { EMPTY_SCRAPPING_OPTION, type ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
-import { REAL_JOBS, CLIENT_LABELS, KEYWORD_POOL, PRODUCT_POOL, type RealJob } from "./scenarioSeedData";
+import { REAL_JOBS, CLIENT_LABELS, REAL_LOCATION_SETS, type RealJob } from "./scenarioSeedData";
 
 const SIM_KEY = "seeds-api:sim:index";
 const LOC_VOLUME_TBD = 10;
@@ -62,6 +62,30 @@ const geoToSub = (mode: string) => (mode === "NO_GEOLOC" ? "NONE" : mode); // MA
 const freqFromName = (name: string) => (/_1d_|_1d /i.test(name) ? "Daily" : /_1w_/i.test(name) ? "Weekly" : /_1m_/i.test(name) ? "Monthly" : "Daily");
 const pick = <T,>(arr: T[], n: number, seed: number) => arr.filter((_, i) => i % Math.max(1, Math.round(arr.length / n)) === seed % Math.max(1, Math.round(arr.length / n))).slice(0, n);
 
+// Real seed corpus (collected from tasks > seeds), bucketed by type. The generator
+// samples + clones these so fabricated subscriptions carry REAL seed descriptions,
+// values, categories, keyword types/brands, page types and discovery keys.
+const realByType = (t: SeedType): Seed[] => INITIAL_SEEDS.filter((s) => (s.type ?? "KEYWORD") === t);
+const REAL_KEYWORDS = realByType("KEYWORD");
+const REAL_URLS = realByType("URL");
+const REAL_PDPS = realByType("PDP");
+const cloneSeed = (s: Seed, fromDiscovery = false): Seed => ({ ...s, id: uid(), c: nowStamp(), u: nowStamp(), status: "Active", isFromDiscovery: fromDiscovery });
+
+// Assign a realistic location set to a geolocated subscription: prefer a set whose
+// store matches the job's store, else one in the same country, else any — so the
+// task estimate uses a REAL location volume (6–200+) instead of a flat placeholder.
+const pickLocationSet = (job: RealJob): string => {
+  const sets = REAL_LOCATION_SETS;
+  if (!sets.length) return "Amazon US — All locations";
+  const js = job.store.toLowerCase();
+  const exact = sets.find((s) => { const ss = s.store.toLowerCase(); return ss.includes(js) || js.includes(ss.split(" -")[0]); });
+  if (exact) return exact.name;
+  const sameCountry = sets.filter((s) => s.country === (job.country || "").toUpperCase());
+  const pool = sameCountry.length ? sameCountry : sets;
+  return pool[job.name.length % pool.length].name;
+};
+const locationCount = (name?: string): number => { const m = /—\s*([\d,]+)\s*locations/i.exec(name || ""); return m ? parseInt(m[1].replace(/,/g, ""), 10) : 0; };
+
 // One built scenario = the records to persist for a single client (one project).
 export type BuiltScenario = {
   client: Client;
@@ -93,27 +117,12 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
   jobs.forEach((job, ji) => {
     const seedType = extractionToSeedType(job.extractionType);
     const geo = geoToSub(job.geolocMode);
-    const locationSet = geo === "MANUAL" ? "Amazon US — All locations" : "";
+    const locationSet = geo === "MANUAL" ? pickLocationSet(job) : "";
 
-    // --- the seeds for this subscription
+    // --- the seeds for this subscription (sampled + cloned from the REAL corpus)
     const subSeeds: Seed[] = [];
-    if (seedType === "KEYWORD") {
-      pick(KEYWORD_POOL, 2, ji).forEach((kw) => subSeeds.push({
-        id: uid(), d: kw, store: job.store, cat: "Beverages > Soft Drinks > Soda", c: nowStamp(), u: nowStamp(),
-        type: "KEYWORD", status: "Active", value: kw, keywordType: "CATEGORY",
-      }));
-    } else if (seedType === "PDP") {
-      pick(PRODUCT_POOL, 2, ji).forEach((p) => subSeeds.push({
-        id: uid(), d: p.d, store: job.store, cat: p.cat, c: nowStamp(), u: nowStamp(),
-        type: "PDP", status: "Active", value: `https://example.com${p.path}`, pageType: "LEGACY",
-        discoveryKey: `${job.store.toLowerCase().replace(/\s+/g, "-")}${p.path.replace(/\//g, "-")}`,
-      }));
-    } else { // URL (SHELF)
-      subSeeds.push({
-        id: uid(), d: `${job.store} category page`, store: job.store, cat: "Beverages > Soft Drinks", c: nowStamp(), u: nowStamp(),
-        type: "URL", status: "Active", value: `https://example.com/c/${job.country.toLowerCase()}/category`, pageType: "CATEGORY",
-      });
-    }
+    const realPool = seedType === "PDP" ? REAL_PDPS : seedType === "URL" ? REAL_URLS : REAL_KEYWORDS;
+    pick(realPool, 2, ji).forEach((s) => subSeeds.push(cloneSeed(s)));
 
     const optName = `${job.name}`; // reuse the real job name as the option name
     const option: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: optName, status: "Active", extractionType: job.extractionType, ...optionPreset(job.extractionType) };
@@ -130,11 +139,7 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
       const pdpName = job.name.replace(/^(ME|PLP|MAG|MAT|GR|GC|GEO)[^_]*_/, "PDP_");
       const pdpOptName = `${pdpName} (PDP)`;
       const pdpOption: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: pdpOptName, status: "Active", extractionType: "DIGITAL_SHELF_PDP", ...optionPreset("DIGITAL_SHELF_PDP") };
-      const pdpSeeds: Seed[] = pick(PRODUCT_POOL, 2, ji + 1).map((p) => ({
-        id: uid(), d: p.d, store: job.store, cat: p.cat, c: nowStamp(), u: nowStamp(),
-        type: "PDP" as SeedType, status: "Active" as const, value: `https://example.com${p.path}`, pageType: "LEGACY",
-        discoveryKey: `${job.store.toLowerCase().replace(/\s+/g, "-")}${p.path.replace(/\//g, "-")}`, isFromDiscovery: true,
-      }));
+      const pdpSeeds: Seed[] = pick(REAL_PDPS, 2, ji + 1).map((s) => cloneSeed(s, true));
       const pdpSub: Subscription = {
         ...emptySubscription(), id: uid(), name: `${pdpName} (PDP)`, project: project.name, store: job.store,
         seeds: pdpSeeds.map((s) => s.d), scrappingOption: pdpOptName, geo, locationSet,
@@ -214,7 +219,7 @@ export const hasSimulated = (): boolean => {
 // ---- task estimation (mirrors planner + extends with disjoint fan-out) ----------
 export function estimateTasks(sub: Subscription, opt?: ScrappingOptionValues): number {
   const seeds = sub.seeds.length || 1;
-  const locations = sub.geo === "MANUAL" && sub.locationSet ? LOC_VOLUME_TBD : 1;
+  const locations = sub.geo === "MANUAL" && sub.locationSet ? (locationCount(sub.locationSet) || LOC_VOLUME_TBD) : 1;
   const modalities = opt?.modalities && opt.modalityValues?.length ? opt.modalityValues.length : 1;
   const timeframes = opt?.timeframes?.length || 1;
   return seeds * locations * modalities * timeframes;

@@ -196,7 +196,8 @@ function PlannerPage() {
   const estRows = visibleSubs.map((s) => {
     const seedCount = (s.seeds ?? []).length;
     const usesLoc = s.geo === "MANUAL" && !!s.locationSet;
-    const locations = usesLoc ? LOC_VOLUME_TBD : 1;
+    const locMatch = usesLoc ? /—\s*([\d,]+)\s*locations/i.exec(s.locationSet || "") : null;
+    const locations = usesLoc ? (locMatch ? parseInt(locMatch[1].replace(/,/g, ""), 10) : LOC_VOLUME_TBD) : 1;
     return { id: s.id, name: s.name, seeds: seedCount, locations, usesLoc, tasks: seedCount * locations };
   });
   const totalTasks = estRows.reduce((a, r) => a + r.tasks, 0);
@@ -428,7 +429,7 @@ function PlannerPage() {
                     <span className="text-base font-semibold text-rose-600">{totalTasks.toLocaleString()} tasks</span>
                   </div>
                   {anyTbd && (
-                    <p className="mt-2 text-[11px] text-muted-foreground">* assumes {LOC_VOLUME_TBD} locations / set (TBD)</p>
+                    <p className="mt-2 text-[11px] text-muted-foreground">* location volume read from the assigned set (fallback {LOC_VOLUME_TBD})</p>
                   )}
                 </div>
               </div>

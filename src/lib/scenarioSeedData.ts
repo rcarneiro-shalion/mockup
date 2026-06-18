@@ -1032,3 +1032,26 @@ export const PRODUCT_POOL = [
   { d: "Pepsi Max 24 pack", path: "/dp/B07Q9MJKR2", cat: "Beverages > Soft Drinks > Soda" },
   { d: "JDE L'OR Espresso 40 caps", path: "/dp/B07PXG6N5K", cat: "Pantry > Coffee > Capsules" },
 ];
+
+// Real store location sets pulled from backoffice-api (store > locations) on 2026-06-19.
+// Used by the simulator to assign a realistic locationSet + location volume to
+// geolocated (MANUAL) subscriptions, instead of a flat placeholder count.
+export type LocationSet = { name: string; store: string; country: string; count: number; samples: string[] };
+export const REAL_LOCATION_SETS: LocationSet[] = [
+  { name: "Portillos US - FSA — 206 locations", store: "Portillos US - FSA", country: "US", count: 206, samples: ["Mobile County Health Department Newburn Clinic","White Pond","Ashburnham State Forest","Walker Spring","Township of Vesta"] },
+  { name: "GrabFood ID - FSA — 52 locations", store: "GrabFood ID - FSA", country: "ID", count: 52, samples: ["Dukuhan","Kebonpala","Gunung Medasih","Ngepoh","Sipangan Bolon"] },
+  { name: "ShopeeFood ID - FSA — 37 locations", store: "ShopeeFood ID - FSA", country: "ID", count: 37, samples: ["Boen","Blayu","Air Lesungriga","Laerias","Desa Lumban Sihite"] },
+  { name: "Rappi BR - FSA — 31 locations", store: "Rappi BR - FSA", country: "BR", count: 31, samples: ["Prefeitura Municipal de Maraã","Ilha do Sapo","Sítio Pedregulho","Porto Mapis Novo","Sítio Santa Rosa"] },
+  { name: "Maderos BR - FSA — 23 locations", store: "Maderos BR - FSA", country: "BR", count: 23, samples: ["Lajeado Passo dos Índios","Sítio Pedro Rivelino","Igarapé Paraíba","Riacho do Castanho","Pombos"] },
+  { name: "GrabFood TH - FSA — 19 locations", store: "GrabFood TH - FSA", country: "TH", count: 19, samples: ["Wat Bua Si","Wat Si Mongkhon","Doi Luk Chang","Wat Buppharam","Ban Don Si Chan"] },
+  { name: "iFood BR - FSA — 18 locations", store: "iFood BR - FSA", country: "BR", count: 18, samples: ["Cemitério São Sebastião","Riacho Mato dos Porcos","Setor D Um","Bituba","Anagé"] },
+  { name: "ShopeeFood TH - FSA — 17 locations", store: "ShopeeFood TH - FSA", country: "TH", count: 17, samples: ["Ban Muang Charoen Rat","Sima Thani Hotel","Khlong Phangka","Rongrian Ban Nong Kha Khok Kung","Ban Lamnao"] },
+  { name: "GrabFood VN - FSA — 16 locations", store: "GrabFood VN - FSA", country: "VN", count: 16, samples: ["Xã Suối Tre","Đặng Xá","Kong R’tam","Xã Lộc Giang","Đại Đồng"] },
+  { name: "Rappi PE - FSA — 11 locations", store: "Rappi PE - FSA", country: "PE", count: 11, samples: ["Quebrada Rumihuasi","Altos del Hueco","Lacuyo","Río Araya","Parque Cahuya"] },
+  { name: "iFood BR - QCA — 10 locations", store: "iFood BR - QCA", country: "BR", count: 10, samples: ["Arroio Joaquim","Rio da Chacrinha","Ibicuitinga","Chuí","Batalha"] },
+  { name: "GrabFood MM - FSA — 9 locations", store: "GrabFood MM - FSA", country: "MM", count: 9, samples: ["Wānmau","Nyaung gon ga lay","Nammākmo","Zaha","Welwin Taung"] },
+  { name: "GrabFood PH - FSA — 9 locations", store: "GrabFood PH - FSA", country: "PH", count: 9, samples: ["Guinacot","Madumug Island","Hinukay","Sibalat River","Masukol"] },
+  { name: "El Pollo Loco US - FSA — 7 locations", store: "El Pollo Loco US - FSA", country: "US", count: 7, samples: ["Wyandotte","Town of Redfield","Towson","Terrace Park","Town of Oneida"] },
+  { name: "Pyszne PL - FSA — 7 locations", store: "Pyszne PL - FSA", country: "PL", count: 7, samples: ["sredzki-hermanow","97-319","pietno","kutnowski-ruszki","warszawa-wola-01-266"] },
+  { name: "ShopeeFood MY - FSA — 6 locations", store: "ShopeeFood MY - FSA", country: "MY", count: 6, samples: ["Rumah Masam","Sungai Pandan Pandan","Parit Lapis Betong Nombor Satu","Tanjong Selidang","Kemajuan Tanah Chamek"] },
+];
