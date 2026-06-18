@@ -355,15 +355,14 @@ function PlannerPage() {
           <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} searchable />
           <FilterChip label="Scrapping options" icon={PlayCircle} options={baseScraps.map((o) => o.name)} value={fScrap} onChange={setFScrap} searchable />
           <FilterChip label="Extraction type" icon={Calculator} options={extractionOptions} value={fExtraction} onChange={setFExtraction} searchable />
-          {hasFilter && (
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> Reset
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={resetFilters}
+            disabled={!hasFilter}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Clear filters
+          </button>
         </div>
 
         <div className="flex-1 overflow-auto px-6 pb-6">

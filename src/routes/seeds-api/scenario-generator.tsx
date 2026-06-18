@@ -195,11 +195,9 @@ function ScenarioGeneratorPage() {
           <span className="ml-1 text-xs text-muted-foreground">
             <ListFilter className="mr-1 inline h-3.5 w-3.5" />{visibleClients.length}/{SCENARIO_CLIENTS.length} clients · {visibleJobCount} jobs
           </span>
-          {anyFilter && (
-            <button onClick={clearFilters} className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
-              <X className="h-3.5 w-3.5" /> Clear filters
-            </button>
-          )}
+          <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-muted-foreground" onClick={clearFilters} disabled={!anyFilter}>
+            <X className="h-3.5 w-3.5" /> Clear filters
+          </Button>
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto px-6 py-4">
