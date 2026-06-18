@@ -1,6 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SettingsList, type SettingsColumn } from "@/components/settings/SettingsList";
-import { DashboardGuideModal } from "@/components/settings/DashboardGuideModal";
 import { LinkText } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { Layers } from "lucide-react";
@@ -67,14 +66,11 @@ function DashboardApplicationsPage() {
       rows={rows}
       onDelete={(id) => setRows((prev) => prev.filter((r) => r.id !== id))}
       headerActions={
-        <>
-          <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
-            <Link to="/settings/dashboard-applications/massive-update">
-              <Layers className="h-4 w-4" /> Massive update
-            </Link>
-          </Button>
-          <DashboardGuideModal />
-        </>
+        <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
+          <Link to="/settings/dashboard-applications/massive-update">
+            <Layers className="h-4 w-4" /> Massive update
+          </Link>
+        </Button>
       }
     />
   );

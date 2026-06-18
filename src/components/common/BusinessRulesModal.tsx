@@ -128,11 +128,16 @@ export function BusinessRulesTrigger() {
   };
 
   const openModal = () => {
-    const startIdx = found
-      ? NAV.findIndex((e) => e.kind === "section" && e.key === found.section.section)
-      : 0;
+    // On the Dashboard applications pages, jump straight to the Dashboard guide
+    // (the manual) — it used to be a separate "Manual" button on that page.
+    const onDashboardApps = pathname.startsWith("/settings/dashboard-applications");
+    const startIdx = onDashboardApps
+      ? NAV.findIndex((e) => e.kind === "appendix" && e.key === "dashboard")
+      : found
+        ? NAV.findIndex((e) => e.kind === "section" && e.key === found.section.section)
+        : 0;
     setIdx(startIdx >= 0 ? startIdx : 0);
-    setPageKey(found ? found.activePageKey : "");
+    setPageKey(onDashboardApps ? "" : found ? found.activePageKey : "");
     setQuery("");
     setOpen(true);
   };
