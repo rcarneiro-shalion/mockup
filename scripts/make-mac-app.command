@@ -39,8 +39,11 @@ osacompile -o "$APP" "$TMP_SCPT"
 rm -f "$TMP_SCPT"
 echo "✓ App bundle created."
 
-# 2) Give it the Shalion favicon as its icon (best-effort; needs sips + iconutil).
-ICON_SRC="$REPO/public/favicon.ico"
+# 2) Give it the Shalion brand mark as its icon (best-effort; needs sips + iconutil).
+# Prefer the colorful Shalion pinwheel (public/shalion-icon.png); fall back to the
+# favicon if it's missing.
+ICON_SRC="$REPO/public/shalion-icon.png"
+[ -f "$ICON_SRC" ] || ICON_SRC="$REPO/public/favicon.ico"
 if command -v sips >/dev/null 2>&1 && command -v iconutil >/dev/null 2>&1 && [ -f "$ICON_SRC" ]; then
   ISET="$(mktemp -d)/icon.iconset"; mkdir -p "$ISET"
   # name=pixels pairs for the standard macOS iconset
