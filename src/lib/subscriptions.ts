@@ -14,12 +14,20 @@ export type Subscription = {
   locationSet: string;
   frequency: string; // Daily | Weekly | Monthly
   rotation: string; // Zipcode | Locations | Seeds
+  status?: SubscriptionStatus; // Active | Inactive
+  businessUnit?: string; // single Business Unit (CMI / FSA / DSM / RMM / MSH / GEN)
   // Set only when the scrapping option's extraction type is DIGITAL_SHELF_PLP or
   // MEDIA — points to a sibling subscription whose scrapping option is a PDP one.
   destinationOption?: string;
 };
 
+// Business Units — exactly one may be assigned to a subscription.
+export const BUSINESS_UNITS = ["CMI", "FSA", "DSM", "RMM", "MSH", "GEN"];
+
 export const SUBSCRIPTIONS_KEY = "seeds-api:subscriptions";
+
+export type SubscriptionStatus = "Active" | "Inactive";
+export const SUBSCRIPTION_STATUS_OPTIONS: SubscriptionStatus[] = ["Active", "Inactive"];
 
 export const SUBSCRIPTION_GEOLOC_OPTIONS = ["NONE", "AUTOMATIC", "MANUAL", "VIRTUAL_STORE"];
 
@@ -35,6 +43,8 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
     locationSet: "Amazon US — All locations",
     frequency: "Daily",
     rotation: "Locations",
+    status: "Active",
+    businessUnit: "CMI",
   },
   {
     id: "sub2",
@@ -47,6 +57,8 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
     locationSet: "",
     frequency: "Weekly",
     rotation: "Seeds",
+    status: "Active",
+    businessUnit: "FSA",
   },
 ];
 
@@ -67,6 +79,8 @@ export function emptySubscription(): Subscription {
     locationSet: "",
     frequency: "Daily",
     rotation: "",
+    status: "Active",
+    businessUnit: "",
     destinationOption: "",
   };
 }

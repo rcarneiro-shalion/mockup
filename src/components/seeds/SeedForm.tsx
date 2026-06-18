@@ -6,21 +6,29 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectBox } from "@/components/seeds/SelectBox";
 import { StoreSelect } from "@/components/seeds/StoreSelect";
+import { BrandSelect } from "@/components/seeds/BrandSelect";
+import { CategorySelect } from "@/components/seeds/CategorySelect";
+import { DiscoveryKeyField } from "@/components/seeds/DiscoveryKeyField";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pill, Th, Td, LinkText } from "@/components/seeds/ListPrimitives";
-import { CATEGORY_OPTIONS, PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
-import { emptySeed, seedValueLabel, KEYWORD_TYPE_OPTIONS, SEED_STATUS_OPTIONS, type Seed, type SeedType, type KeywordType, type SeedStatus } from "@/lib/seeds";
+import { PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
+import { emptySeed, seedValueLabel, getSeeds, discoveryKeyRequired, KEYWORD_TYPE_OPTIONS, SEED_STATUS_OPTIONS, type Seed, type SeedType, type KeywordType, type SeedStatus } from "@/lib/seeds";
 import { nowStamp, getClientsForProject } from "@/lib/clients";
 import { getSubscriptions } from "@/lib/subscriptions";
 import { getProjects } from "@/lib/projects";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ArrowLeft, ChevronUp, HelpCircle, MoreHorizontal, Sprout, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronUp, HelpCircle, Sprout, Trash2 } from "lucide-react";
 
 export function SeedForm({
   type,
@@ -42,6 +50,9 @@ export function SeedForm({
   );
   const [fieldsOpen, setFieldsOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  // Set when switching BRANDED → CATEGORY on a seed that already has a brand:
+  // holds the pending keyword type until the user confirms removing the brand bond.
+  const [pendingKwType, setPendingKwType] = useState<KeywordType | null>(null);
 
   // Subscriptions this seed belongs to — indirect: a subscription lists its seeds
   // by description (Subscription.seeds = seed.d), each tied to a project → client(s).
@@ -61,15 +72,48 @@ export function SeedForm({
     );
   }, [initial]);
 
+  // All seeds (client-side) for Discovery-key uniqueness + search. Loaded once.
+  const [allSeeds, setAllSeeds] = useState<Seed[]>([]);
+  useEffect(() => { setAllSeeds(getSeeds()); }, []);
+
   const set = <K extends keyof Seed>(k: K, v: Seed[K]) =>
     setSeed((prev) => ({ ...prev, [k]: v }));
+
+  // A Discovery key may not collide with another seed's. Matched case-insensitively
+  // on the trimmed value; the current seed is excluded.
+  const dupSeed = (() => {
+    const key = seed.discoveryKey?.trim().toLowerCase();
+    if (!key) return undefined;
+    return allSeeds.find((s) => s.id !== seed.id && (s.discoveryKey ?? "").trim().toLowerCase() === key);
+  })();
+
+  // A brand bond exists only on BRANDED keyword seeds. Applying CATEGORY (or any
+  // non-BRANDED value) drops the bond by clearing `brand`.
+  const applyKeywordType = (next: KeywordType) =>
+    setSeed((prev) => ({ ...prev, keywordType: next, brand: next === "BRANDED" ? prev.brand : "" }));
+
+  // Guard the change: switching away from BRANDED while a brand is set warns the
+  // user first (the bond will be removed). Everything else applies immediately.
+  const requestKeywordType = (next: KeywordType) => {
+    if (next === seed.keywordType) return;
+    if (seed.keywordType === "BRANDED" && next !== "BRANDED" && seed.brand?.trim()) {
+      setPendingKwType(next);
+      return;
+    }
+    applyKeywordType(next);
+  };
 
   const valueLabel = seedValueLabel(effectiveType);
   const valuePlaceholder =
     effectiveType === "URL" ? "https://www.example.com/dp/…" : effectiveType === "API" ? "API origin" : "e.g. water";
+  const isBranded = effectiveType === "KEYWORD" && seed.keywordType === "BRANDED";
+  const dkRequired = discoveryKeyRequired(effectiveType);
   const canSave =
-    seed.d.trim() && seed.store.trim() && seed.discoveryKey?.trim() && seed.pageType?.trim() && seed.value?.trim() &&
-    (effectiveType !== "KEYWORD" || !!seed.keywordType);
+    seed.d.trim() && seed.store.trim() && seed.pageType?.trim() && seed.value?.trim() &&
+    (!dkRequired || !!seed.discoveryKey?.trim()) &&
+    !dupSeed &&
+    (effectiveType !== "KEYWORD" || !!seed.keywordType) &&
+    (!isBranded || !!seed.brand?.trim());
 
   const handleSave = async () => {
     if (!canSave) {
@@ -101,49 +145,44 @@ export function SeedForm({
             <ArrowLeft className="h-4 w-4" />
             Seeds
           </button>
-          <div className="mt-1 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Sprout className="h-5 w-5 text-muted-foreground" />
-              <h1 className="text-xl font-semibold tracking-tight text-foreground">
-                {isEdit ? seed.d || "Seed" : "Add seed"}
-              </h1>
-              <Pill tone="blue">{effectiveType}</Pill>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Label className="text-sm font-medium text-foreground/80">Status</Label>
-                <div className="w-36">
-                  <SelectBox value={seed.status ?? "Active"} onChange={(v) => set("status", v as SeedStatus)} options={SEED_STATUS_OPTIONS} />
-                </div>
-              </div>
-              {isEdit && onDelete && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-secondary" aria-label="More options">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={onDelete}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete seed
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
+          <div className="mt-1 flex items-center gap-2">
+            <Sprout className="h-5 w-5 text-muted-foreground" />
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+              {isEdit ? seed.d || "Seed" : "Add seed"}
+            </h1>
+            <Pill tone="blue">{effectiveType}</Pill>
           </div>
         </div>
 
         {/* Body */}
         <div className="flex-1 overflow-auto px-6 py-5">
           <div className="mx-auto max-w-5xl rounded-xl border border-border bg-card p-6 shadow-sm">
-            <button type="button" onClick={() => setFieldsOpen((v) => !v)} className="flex items-center gap-2">
-              <span className="grid h-7 w-7 place-items-center rounded-md bg-secondary text-muted-foreground">
-                <ChevronUp className={cn("h-4 w-4 transition-transform", !fieldsOpen && "rotate-180")} />
-              </span>
-              <span className="text-base font-semibold text-foreground">Fields</span>
-            </button>
+            <div className="flex items-center justify-between gap-3">
+              <button type="button" onClick={() => setFieldsOpen((v) => !v)} className="flex items-center gap-2">
+                <span className="grid h-7 w-7 place-items-center rounded-md bg-secondary text-muted-foreground">
+                  <ChevronUp className={cn("h-4 w-4 transition-transform", !fieldsOpen && "rotate-180")} />
+                </span>
+                <span className="text-base font-semibold text-foreground">Fields</span>
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium text-foreground/80">Status</Label>
+                  <div className="w-36">
+                    <SelectBox value={seed.status ?? "Active"} onChange={(v) => set("status", v as SeedStatus)} options={SEED_STATUS_OPTIONS} />
+                  </div>
+                </div>
+                {isEdit && onDelete && (
+                  <button
+                    type="button"
+                    onClick={onDelete}
+                    className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-secondary hover:text-destructive"
+                    aria-label="Delete seed"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
 
             {fieldsOpen && (
               <div className="mt-5 space-y-5">
@@ -160,9 +199,17 @@ export function SeedForm({
                 {effectiveType === "KEYWORD" && (
                   <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
                     <Field label="Keyword type" required>
-                      <SelectBox value={seed.keywordType ?? ""} onChange={(v) => set("keywordType", v as KeywordType)} options={KEYWORD_TYPE_OPTIONS} />
+                      <SelectBox value={seed.keywordType ?? ""} onChange={(v) => requestKeywordType(v as KeywordType)} options={KEYWORD_TYPE_OPTIONS} />
                     </Field>
-                    <div />
+                    {/* Brand bond — only for BRANDED keyword seeds; CATEGORY hides it
+                        and the value is dropped (kept NULL). */}
+                    {isBranded ? (
+                      <Field label="Brand name" required>
+                        <BrandSelect value={seed.brand ?? ""} onChange={(v) => set("brand", v)} />
+                      </Field>
+                    ) : (
+                      <div />
+                    )}
                   </div>
                 )}
 
@@ -180,13 +227,18 @@ export function SeedForm({
                     <StoreSelect value={seed.store} onChange={(v) => set("store", v)} />
                   </Field>
                   <Field label="Category">
-                    <SelectBox value={seed.cat} onChange={(v) => set("cat", v)} options={CATEGORY_OPTIONS} />
+                    <CategorySelect value={seed.cat} onChange={(v) => set("cat", v)} />
                   </Field>
                 </div>
 
-                <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
-                  <Field label="Discovery key" required help>
-                    <Input value={seed.discoveryKey ?? ""} onChange={(e) => set("discoveryKey", e.target.value)} />
+                <div className="grid grid-cols-1 items-start gap-x-6 gap-y-5 sm:grid-cols-2">
+                  <Field label="Discovery key" required={dkRequired} help={DISCOVERY_KEY_HELP}>
+                    <DiscoveryKeyField
+                      value={seed.discoveryKey ?? ""}
+                      onChange={(v) => set("discoveryKey", v)}
+                      seeds={allSeeds}
+                      currentId={seed.id}
+                    />
                   </Field>
                   <Field label="Page type" required>
                     <SelectBox value={seed.pageType ?? ""} onChange={(v) => set("pageType", v)} options={PAGE_TYPE_OPTIONS} />
@@ -253,16 +305,56 @@ export function SeedForm({
           </Button>
         </div>
       </div>
+
+      {/* Warn before dropping a brand bond when leaving BRANDED. */}
+      <AlertDialog open={pendingKwType !== null} onOpenChange={(o) => { if (!o) setPendingKwType(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change keyword type?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Changing value to {pendingKwType === "CATEGORY" ? "Category" : pendingKwType} will remove the brand
+              associated. You will need to re-select a brand if you change back to Branded.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingKwType(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (pendingKwType) applyKeywordType(pendingKwType); setPendingKwType(null); }}>
+              Change
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
 
-function Field({ label, required, help, children }: { label: string; required?: boolean; help?: boolean; children: ReactNode }) {
+const DISCOVERY_KEY_HELP = (
+  <>
+    <span className="font-semibold">Discovery Key:</span> In Shalion, the identifier code for a product that has been
+    found in a retailer is called Discovery Key. A Discovery Key can be an ASIN when scraping Amazon or any other
+    internal code the retailer uses. The DK is frequently found within the URL. Different variants have different DK.
+  </>
+);
+
+// `help`, when provided, renders an info icon next to the label whose tooltip
+// shows the passed content.
+function Field({ label, required, help, children }: { label: string; required?: boolean; help?: ReactNode; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
       <Label className="flex items-center gap-1 text-sm font-medium text-foreground/80">
         {label}
-        {help && <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />}
+        {help && (
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" aria-label={`${label} help`} className="inline-flex text-muted-foreground hover:text-foreground">
+                  <HelpCircle className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs text-xs leading-relaxed">{help}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         {required && <span className="text-destructive">*</span>}
       </Label>
       {children}

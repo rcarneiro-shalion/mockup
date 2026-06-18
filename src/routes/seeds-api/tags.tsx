@@ -29,13 +29,13 @@ export const Route = createFileRoute("/seeds-api/tags")({
   component: TagsPage,
 });
 
-type Row = { name: string; client: string; parent: string; c: string; u: string };
+type Row = { name: string; client: string; c: string; u: string };
 
 const INITIAL_ROWS: Row[] = [
-  { name: "water", client: "Coca Cola", parent: "-", c: "2026-06-09, 10:12:03", u: "2026-06-09, 10:12:03" },
-  { name: "Postry", client: "Nestle", parent: "-", c: "2026-04-15, 10:50:42", u: "2026-04-15, 10:50:42" },
-  { name: "Coffe", client: "Nestle", parent: "-", c: "2026-06-09, 10:11:54", u: "2026-06-09, 10:11:54" },
-  { name: "Soft Drink", client: "Pepsico", parent: "-", c: "2026-06-09, 10:12:21", u: "2026-06-09, 10:12:21" },
+  { name: "water", client: "Coca Cola", c: "2026-06-09, 10:12:03", u: "2026-06-09, 10:12:03" },
+  { name: "Postry", client: "Nestle", c: "2026-04-15, 10:50:42", u: "2026-04-15, 10:50:42" },
+  { name: "Coffe", client: "Nestle", c: "2026-06-09, 10:11:54", u: "2026-06-09, 10:11:54" },
+  { name: "Soft Drink", client: "Pepsico", c: "2026-06-09, 10:12:21", u: "2026-06-09, 10:12:21" },
 ];
 
 function TagsPage() {
@@ -56,15 +56,13 @@ function TagsPage() {
   const editFields: FieldDef[] = selected
     ? [
         { kind: "text", label: "Name", value: selected.name, required: true, span: 2 },
-        { kind: "select", label: "Client", value: selected.client, required: true, options: clientOptions },
-        { kind: "select", label: "Parent tag", value: selected.parent, muted: true },
+        { kind: "select", label: "Client", value: selected.client, required: true, options: clientOptions, searchable: true },
       ]
     : [];
 
   const addFields: AddFieldDef[] = [
     { kind: "text", label: "Name", required: true, span: 2 },
-    { kind: "select", label: "Client", required: true, options: clientOptions },
-    { kind: "select", label: "Parent tag", muted: true },
+    { kind: "select", label: "Client", required: true, options: clientOptions, searchable: true },
   ];
 
   return (
@@ -75,7 +73,7 @@ function TagsPage() {
           action={{ label: "Add tag", onClick: () => setAddOpen(true) }}
         />
         <FilterBar search="Search by Tag name" searchValue={query} onSearchChange={setQuery}>
-          <FilterChip label="Client" options={distinct(rows, (r) => r.client)} value={fClient} onChange={setFClient} />
+          <FilterChip label="Client" options={distinct(rows, (r) => r.client)} value={fClient} onChange={setFClient} searchable />
           <FilterChip label="Seeds" />
           <FilterChip label="Status" />
           <FilterChip label="Created at" icon={Calendar} />
@@ -86,7 +84,6 @@ function TagsPage() {
             <tr>
               <SortTh label="Name" sortKey="name" sort={sort} />
               <SortTh label="Client" sortKey="client" sort={sort} />
-              <SortTh label="Parent" sortKey="parent" sort={sort} />
               <SortTh label="Created at" sortKey="createdAt" sort={sort} />
               <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <Th>Created by</Th>
@@ -99,7 +96,6 @@ function TagsPage() {
               <tr key={r.name} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
                 <Td><LinkText>{r.client}</LinkText></Td>
-                <Td className="text-muted-foreground">{r.parent}</Td>
                 <Td className="text-muted-foreground">{r.c}</Td>
                 <Td className="text-muted-foreground">{r.u}</Td>
                 <Td><UserCell email="rcarneiro@..." /></Td>
@@ -129,7 +125,6 @@ function TagsPage() {
           const newRow: Row = {
             name: (values["Name"] as string) || "Untitled",
             client: values["Client"] as string,
-            parent: (values["Parent tag"] as string) || "-",
             c: now,
             u: now,
           };
@@ -151,7 +146,6 @@ function TagsPage() {
                     ...r,
                     name: values["Name"] as string,
                     client: values["Client"] as string,
-                    parent: values["Parent tag"] as string,
                   }
                 : r,
             ),

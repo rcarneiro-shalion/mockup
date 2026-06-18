@@ -38,6 +38,7 @@ export function SelectBox({
   className,
   threshold = 10,
   clearable,
+  searchable: forceSearchable,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -47,10 +48,12 @@ export function SelectBox({
   className?: string;
   threshold?: number;
   clearable?: boolean;
+  /** Force the searchable combobox even below `threshold` options. */
+  searchable?: boolean;
 }) {
   const opts = options.map(norm);
   const ph = placeholder ?? "Select a value";
-  const searchable = opts.length > threshold;
+  const searchable = forceSearchable || opts.length > threshold;
 
   if (!searchable && !clearable) {
     return (

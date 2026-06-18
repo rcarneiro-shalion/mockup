@@ -16,20 +16,22 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectBox } from "@/components/seeds/SelectBox";
 import { ScrappingOptionPicker } from "@/components/seeds/ScrappingOptionPicker";
-import type { ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import {
   FREQUENCY_OPTIONS,
   ROTATION_OPTIONS,
   LOCATION_SET_OPTIONS,
-  readPersistedList,
 } from "@/lib/seedOptions";
+import { getScrappingOptions } from "@/lib/scrappingOptions";
 import { getProjects } from "@/lib/projects";
 import { getStores } from "@/lib/retailers";
 import {
   SUBSCRIPTION_GEOLOC_OPTIONS,
+  SUBSCRIPTION_STATUS_OPTIONS,
+  BUSINESS_UNITS,
   emptySubscription,
   getSubscriptions,
   type Subscription,
+  type SubscriptionStatus,
 } from "@/lib/subscriptions";
 import { AssignedSeeds } from "@/components/seeds/AssignedSeeds";
 import { cn } from "@/lib/utils";
@@ -69,11 +71,10 @@ export function SubscriptionDialog({
 
   // Scrapping options drive the searchable picker plus the extraction-type logic:
   // the Destination option field (PLP / MEDIA) and the Virtual Seed tab (PDP).
-  const scrappingOptions = readPersistedList<ScrappingOptionValues>("seeds-api:scrapping-options");
+  const scrappingOptions = getScrappingOptions();
   const extractionByOption = new Map(scrappingOptions.map((s) => [s.name, s.extractionType]));
   const selectedExtraction = extractionByOption.get(v.scrappingOption) ?? "";
   const showDestination = selectedExtraction === "DIGITAL_SHELF_PLP" || selectedExtraction === "MEDIA";
-  const enableVirtualSeed = selectedExtraction === "DIGITAL_SHELF_PDP";
   // Destination option choices: sibling subscriptions whose scrapping option is a PDP one.
   const pdpSubscriptionNames = getSubscriptions()
     .filter((s) => s.id !== v.id && extractionByOption.get(s.scrappingOption) === "DIGITAL_SHELF_PDP")
@@ -127,9 +128,28 @@ export function SubscriptionDialog({
 
           <div className="flex-1 overflow-auto px-6 py-5">
             <section className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
-              <Field label="Name" required className="sm:col-span-2">
-                <Input value={v.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. ME_KW_WATER — Amazon US" />
-              </Field>
+              {/* Name + a narrow Business Unit (single-select) + Status, on one row. */}
+              <div className="flex flex-col gap-x-6 gap-y-5 sm:col-span-2 sm:flex-row sm:items-start">
+                <Field label="Name" required className="flex-1">
+                  <Input value={v.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. ME_KW_WATER — Amazon US" />
+                </Field>
+                <Field label="Business Unit" className="sm:w-36">
+                  <SelectBox
+                    value={v.businessUnit ?? ""}
+                    onChange={(x) => set("businessUnit", x)}
+                    options={BUSINESS_UNITS}
+                    clearable
+                    placeholder="Select"
+                  />
+                </Field>
+                <Field label="Status" className="sm:w-36">
+                  <SelectBox
+                    value={v.status ?? "Active"}
+                    onChange={(x) => set("status", x as SubscriptionStatus)}
+                    options={SUBSCRIPTION_STATUS_OPTIONS}
+                  />
+                </Field>
+              </div>
 
               <Field label="Project" required>
                 <SelectBox value={v.project} onChange={(x) => set("project", x)} options={projectNames} />
@@ -176,7 +196,7 @@ export function SubscriptionDialog({
             </section>
 
             <section className="mt-6 border-t border-border pt-5">
-              <AssignedSeeds seeds={v.seeds} onChange={(next) => set("seeds", next)} enableVirtualSeed={enableVirtualSeed} />
+              <AssignedSeeds seeds={v.seeds} onChange={(next) => set("seeds", next)} />
             </section>
           </div>
 

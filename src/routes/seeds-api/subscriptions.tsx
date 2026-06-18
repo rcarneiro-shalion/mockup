@@ -25,6 +25,8 @@ import { Calendar, Store, Sprout } from "lucide-react";
 import {
   SUBSCRIPTIONS_KEY,
   INITIAL_SUBSCRIPTIONS,
+  BUSINESS_UNITS,
+  SUBSCRIPTION_GEOLOC_OPTIONS,
   type Subscription,
 } from "@/lib/subscriptions";
 import { getClientNames, getClientsForProject } from "@/lib/clients";
@@ -46,6 +48,7 @@ function SubscriptionsPage() {
   const [fSeed, setFSeed] = useState<string[]>([]);
   const [fScrap, setFScrap] = useState<string[]>([]);
   const [fGeo, setFGeo] = useState<string[]>([]);
+  const [fBu, setFBu] = useState<string[]>([]);
   const sort = useSort("subscriptions");
   const navigate = useNavigate();
 
@@ -61,7 +64,8 @@ function SubscriptionsPage() {
     (!fStore.length || fStore.includes(r.store)) &&
     (!fSeed.length || (r.seeds ?? []).some((s) => fSeed.includes(s))) &&
     (!fScrap.length || fScrap.includes(r.scrappingOption)) &&
-    (!fGeo.length || fGeo.includes(r.geo)),
+    (!fGeo.length || fGeo.includes(r.geo)) &&
+    (!fBu.length || fBu.includes(r.businessUnit ?? "")),
   );
   const sorted = sortRows(filtered, sort, {
     seeds: (r) => (r.seeds ?? []).length,
@@ -78,11 +82,12 @@ function SubscriptionsPage() {
         />
         <FilterBar search="Search by name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Clients" options={getClientNames()} value={fClient} onChange={setFClient} searchable />
-          <FilterChip label="Projects" options={distinct(rows, (r) => r.project)} value={fProject} onChange={setFProject} />
+          <FilterChip label="Projects" options={distinct(rows, (r) => r.project)} value={fProject} onChange={setFProject} searchable />
           <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
-          <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} />
-          <FilterChip label="Scrapping options" options={distinct(rows, (r) => r.scrappingOption)} value={fScrap} onChange={setFScrap} />
-          <FilterChip label="Geoloc modes" options={distinct(rows, (r) => r.geo)} value={fGeo} onChange={setFGeo} />
+          <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} searchable />
+          <FilterChip label="Scrapping options" options={distinct(rows, (r) => r.scrappingOption)} value={fScrap} onChange={setFScrap} searchable />
+          <FilterChip label="Geoloc modes" options={SUBSCRIPTION_GEOLOC_OPTIONS} value={fGeo} onChange={setFGeo} />
+          <FilterChip label="Business units" options={BUSINESS_UNITS} value={fBu} onChange={setFBu} />
           <FilterChip label="Created at" icon={Calendar} />
         </FilterBar>
         <TableShell>
@@ -94,6 +99,7 @@ function SubscriptionsPage() {
               <SortTh label="Seeds" sortKey="seeds" sort={sort} />
               <SortTh label="Scrapping option" sortKey="scrappingOption" sort={sort} />
               <SortTh label="Geoloc" sortKey="geo" sort={sort} />
+              <SortTh label="Business unit" sortKey="businessUnit" sort={sort} />
               <SortTh label="Frequency" sortKey="frequency" sort={sort} />
               <SortTh label="Rotation" sortKey="rotation" sort={sort} />
               <Th>Active</Th>
@@ -134,6 +140,7 @@ function SubscriptionsPage() {
                 </Td>
                 <Td><LinkText>{r.scrappingOption}</LinkText></Td>
                 <Td><Pill tone="violet">{r.geo}</Pill></Td>
+                <Td>{r.businessUnit ? <Pill tone="blue">{r.businessUnit}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td>{r.frequency ? <Pill tone="slate">{r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td>{r.rotation ? <Pill tone="slate">{r.rotation}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td><Switch defaultChecked /></Td>

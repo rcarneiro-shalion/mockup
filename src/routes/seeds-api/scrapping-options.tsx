@@ -5,9 +5,9 @@ import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import {
   ScrappingOptionDialog,
-  EMPTY_SCRAPPING_OPTION,
   type ScrappingOptionValues,
 } from "@/components/seeds/ScrappingOptionDialog";
+import { SCRAPPING_OPTIONS_KEY, INITIAL_SCRAPPING_OPTIONS } from "@/lib/scrappingOptions";
 import {
   PageHeader,
   FilterBar,
@@ -32,24 +32,6 @@ export const Route = createFileRoute("/seeds-api/scrapping-options")({
   component: ScrappingOptionsPage,
 });
 
-const INITIAL_ROWS: ScrappingOptionValues[] = [
-  {
-    ...EMPTY_SCRAPPING_OPTION,
-    name: "ME_KW_WATER — Amazon US",
-    extractionType: "MEDIA",
-    multivariants: true,
-  },
-  {
-    ...EMPTY_SCRAPPING_OPTION,
-    name: "PDP_BEAM_US — Amazon US",
-    extractionType: "DIGITAL_SHELF_PDP",
-    pagination: true,
-    maxPage: "10",
-    sorting: true,
-    sort: "best_seller",
-  },
-];
-
 function summaryPills(r: ScrappingOptionValues) {
   const pills: { label: string; tone: "blue" | "amber" }[] = [];
   if (r.multivariants) pills.push({ label: "Multivariants", tone: "blue" });
@@ -62,14 +44,16 @@ function summaryPills(r: ScrappingOptionValues) {
 
 function ScrappingOptionsPage() {
   const [rows, setRows] = usePersistentState<ScrappingOptionValues[]>(
-    "seeds-api:scrapping-options",
-    INITIAL_ROWS,
+    SCRAPPING_OPTIONS_KEY,
+    INITIAL_SCRAPPING_OPTIONS,
   );
   const [selected, setSelected] = useState<ScrappingOptionValues | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [fExtraction, setFExtraction] = useState<string[]>([]);
   const [fSub, setFSub] = useState<string[]>([]);
+  const [fJoints, setFJoints] = useState<string[]>([]);
+  const [fDisjoints, setFDisjoints] = useState<string[]>([]);
   const sort = useSort("scrapping-options");
 
   // Indirect relationship: a subscription references its scrapping option by name
@@ -87,11 +71,25 @@ function ScrappingOptionsPage() {
     allSubs.filter((s) => fSub.includes(s.name)).map((s) => s.scrappingOption),
   );
 
+  // Joints (conjuntos) and Disjoints (disjuntos) are each a theme with sub-items;
+  // the filters select sub-items and a row matches if it has any selected one on.
+  const jointFlags = (r: ScrappingOptionValues): Record<string, boolean> => ({
+    Multivariants: r.multivariants,
+    Pagination: r.pagination,
+    "Limited discovery": r.limitedDiscovery,
+  });
+  const disjointFlags = (r: ScrappingOptionValues): Record<string, boolean> => ({
+    Modalities: r.modalities,
+    Sorting: r.sorting,
+  });
+
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&
     (!fExtraction.length || fExtraction.includes(r.extractionType)) &&
-    (!fSub.length || optionNamesForSelectedSubs.has(r.name)),
+    (!fSub.length || optionNamesForSelectedSubs.has(r.name)) &&
+    (!fJoints.length || fJoints.some((j) => jointFlags(r)[j])) &&
+    (!fDisjoints.length || fDisjoints.some((d) => disjointFlags(r)[d])),
   );
   const sorted = sortRows(filtered, sort, {
     options: (r) => summaryPills(r).length,
@@ -108,8 +106,8 @@ function ScrappingOptionsPage() {
         <FilterBar search="Search by Scrapping option name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Extraction types" icon={PlayCircle} options={distinct(rows, (r) => r.extractionType)} value={fExtraction} onChange={setFExtraction} />
           <FilterChip label="Subscriptions" icon={Layers} options={allSubs.map((s) => s.name)} value={fSub} onChange={setFSub} searchable />
-          <FilterChip label="Joints" />
-          <FilterChip label="Disjoints" />
+          <FilterChip label="Joints" options={["Multivariants", "Pagination", "Limited discovery"]} value={fJoints} onChange={setFJoints} />
+          <FilterChip label="Disjoints" options={["Modalities", "Sorting"]} value={fDisjoints} onChange={setFDisjoints} />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />
         </FilterBar>

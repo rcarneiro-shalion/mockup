@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectBox } from "@/components/seeds/SelectBox";
 import { Trash2, ChevronDown, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ export type FieldDef =
       span?: 1 | 2;
       options?: string[];
       placeholder?: string;
+      searchable?: boolean;
     }
   | {
       kind: "text";
@@ -229,6 +231,20 @@ function FieldBody({
 
   if (field.kind === "select") {
     if (field.options && field.options.length > 0) {
+      if (field.searchable) {
+        return (
+          <>
+            {labelNode}
+            <SelectBox
+              value={typeof value === "string" ? value : ""}
+              onChange={(v) => onChange(v)}
+              options={field.options}
+              placeholder={field.placeholder ?? "Select a value"}
+              searchable
+            />
+          </>
+        );
+      }
       return (
         <>
           {labelNode}

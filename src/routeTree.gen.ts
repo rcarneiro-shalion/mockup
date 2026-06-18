@@ -21,6 +21,7 @@ import { Route as StoresNewRouteImport } from './routes/stores/new'
 import { Route as StoresStoreIdRouteImport } from './routes/stores/$storeId'
 import { Route as SettingsTimeframesRouteImport } from './routes/settings/timeframes'
 import { Route as SettingsTargetsRouteImport } from './routes/settings/targets'
+import { Route as SettingsSubscriptionTypesRouteImport } from './routes/settings/subscription-types'
 import { Route as SettingsRulesRouteImport } from './routes/settings/rules'
 import { Route as SettingsDashboardApplicationsRouteImport } from './routes/settings/dashboard-applications'
 import { Route as SettingsCountryGroupsRouteImport } from './routes/settings/country-groups'
@@ -250,6 +251,12 @@ const SettingsTargetsRoute = SettingsTargetsRouteImport.update({
   path: '/settings/targets',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsSubscriptionTypesRoute =
+  SettingsSubscriptionTypesRouteImport.update({
+    id: '/settings/subscription-types',
+    path: '/settings/subscription-types',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SettingsRulesRoute = SettingsRulesRouteImport.update({
   id: '/settings/rules',
   path: '/settings/rules',
@@ -1204,6 +1211,7 @@ export interface FileRoutesByFullPath {
   '/settings/country-groups': typeof SettingsCountryGroupsRouteWithChildren
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRouteWithChildren
   '/settings/rules': typeof SettingsRulesRouteWithChildren
+  '/settings/subscription-types': typeof SettingsSubscriptionTypesRoute
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
@@ -1380,6 +1388,7 @@ export interface FileRoutesByTo {
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
+  '/settings/subscription-types': typeof SettingsSubscriptionTypesRoute
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
@@ -1561,6 +1570,7 @@ export interface FileRoutesById {
   '/settings/country-groups': typeof SettingsCountryGroupsRouteWithChildren
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRouteWithChildren
   '/settings/rules': typeof SettingsRulesRouteWithChildren
+  '/settings/subscription-types': typeof SettingsSubscriptionTypesRoute
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
@@ -1745,6 +1755,7 @@ export interface FileRouteTypes {
     | '/settings/country-groups'
     | '/settings/dashboard-applications'
     | '/settings/rules'
+    | '/settings/subscription-types'
     | '/settings/targets'
     | '/settings/timeframes'
     | '/stores/$storeId'
@@ -1921,6 +1932,7 @@ export interface FileRouteTypes {
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/seeds-api/timeframes'
+    | '/settings/subscription-types'
     | '/settings/targets'
     | '/settings/timeframes'
     | '/stores/$storeId'
@@ -2101,6 +2113,7 @@ export interface FileRouteTypes {
     | '/settings/country-groups'
     | '/settings/dashboard-applications'
     | '/settings/rules'
+    | '/settings/subscription-types'
     | '/settings/targets'
     | '/settings/timeframes'
     | '/stores/$storeId'
@@ -2284,6 +2297,7 @@ export interface RootRouteChildren {
   SettingsCountryGroupsRoute: typeof SettingsCountryGroupsRouteWithChildren
   SettingsDashboardApplicationsRoute: typeof SettingsDashboardApplicationsRouteWithChildren
   SettingsRulesRoute: typeof SettingsRulesRouteWithChildren
+  SettingsSubscriptionTypesRoute: typeof SettingsSubscriptionTypesRoute
   SettingsTargetsRoute: typeof SettingsTargetsRoute
   SettingsTimeframesRoute: typeof SettingsTimeframesRoute
   StoresStoreIdRoute: typeof StoresStoreIdRoute
@@ -2508,6 +2522,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/targets'
       fullPath: '/settings/targets'
       preLoaderRoute: typeof SettingsTargetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/subscription-types': {
+      id: '/settings/subscription-types'
+      path: '/settings/subscription-types'
+      fullPath: '/settings/subscription-types'
+      preLoaderRoute: typeof SettingsSubscriptionTypesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/rules': {
@@ -3852,6 +3873,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsDashboardApplicationsRoute:
     SettingsDashboardApplicationsRouteWithChildren,
   SettingsRulesRoute: SettingsRulesRouteWithChildren,
+  SettingsSubscriptionTypesRoute: SettingsSubscriptionTypesRoute,
   SettingsTargetsRoute: SettingsTargetsRoute,
   SettingsTimeframesRoute: SettingsTimeframesRoute,
   StoresStoreIdRoute: StoresStoreIdRoute,

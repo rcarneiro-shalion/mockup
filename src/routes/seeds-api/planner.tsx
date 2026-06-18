@@ -7,7 +7,7 @@ import { Pill } from "@/components/seeds/ListPrimitives";
 import { getClients } from "@/lib/clients";
 import { getProjects } from "@/lib/projects";
 import { getSubscriptions } from "@/lib/subscriptions";
-import { readPersistedList } from "@/lib/seedOptions";
+import { getScrappingOptions } from "@/lib/scrappingOptions";
 import type { ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import { cn } from "@/lib/utils";
 import { Users, FolderKanban, Layers, PlayCircle, RotateCcw, Sprout, Repeat, CalendarClock, Calculator, ZoomIn, ZoomOut, Maximize2, Minimize2, Store } from "lucide-react";
@@ -52,7 +52,7 @@ function PlannerPage() {
   const clients = useMemo(() => getClients(), []);
   const projects = useMemo(() => getProjects(), []);
   const subs = useMemo(() => getSubscriptions(), []);
-  const scraps = useMemo(() => readPersistedList<ScrappingOptionValues>("seeds-api:scrapping-options"), []);
+  const scraps = useMemo(() => getScrappingOptions(), []);
 
   // The planner is anchored on configured pipelines: a subscription ties a project
   // to a scrapping option, so the base view = everything reachable from a subscription.

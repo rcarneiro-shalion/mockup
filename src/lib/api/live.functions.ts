@@ -13,7 +13,7 @@ const jsonValue: z.ZodType = z.lazy(() =>
 // never reach the browser (and CORS is irrelevant — it's a server-to-server
 // call). Read-only GET against an allow-listed service.
 export const fetchLive = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       service: z.string().min(1),
       path: z.string().startsWith("/"),
@@ -29,7 +29,7 @@ export const fetchLive = createServerFn({ method: "POST" })
 // Allow-listed write (POST/DELETE) to a Shalion assignment endpoint. The proxy
 // (mutateShalion) enforces the method + path allow-list server-side.
 export const mutateLive = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       service: z.string().min(1),
       path: z.string().startsWith("/"),
@@ -47,7 +47,7 @@ export const mutateLive = createServerFn({ method: "POST" })
 // Paginate a large section-assignment list server-side and return only compact
 // {id, sectionId, targetId} triples (for the relationship map). One round-trip.
 export const fetchAssignments = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       kind: z.enum(["brand", "agency"]),
       token: z.string().optional(),
@@ -64,7 +64,7 @@ export const fetchAssignments = createServerFn({ method: "POST" })
 // app + group + path), and each section's `position` within each target. One
 // round-trip; pagination happens server-side.
 export const fetchSectionPositions = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     z.object({
       kind: z.enum(["brand", "agency"]),
       token: z.string().optional(),

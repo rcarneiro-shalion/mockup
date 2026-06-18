@@ -39,7 +39,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
-import { Calendar, Store, Layers, FolderKanban, Users, Shapes, Plus } from "lucide-react";
+import { Calendar, Store, Layers, FolderKanban, Users, Shapes, Tag, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/seeds/")({
   head: () => ({ meta: [{ title: "Seeds — Shalion" }] }),
@@ -67,7 +67,9 @@ function SeedsPage() {
   const [fStore, setFStore] = useState<string[]>([]);
   const [fCat, setFCat] = useState<string[]>([]);
   const [fPageType, setFPageType] = useState<string[]>([]);
+  const [fDiscoveryKey, setFDiscoveryKey] = useState<string[]>([]);
   const [fKwType, setFKwType] = useState<string[]>([]);
+  const [fBrand, setFBrand] = useState<string[]>([]);
   const [fStatus, setFStatus] = useState<string[]>([]);
   const [fSub, setFSub] = useState<string[]>([]);
   const [fProject, setFProject] = useState<string[]>([]);
@@ -120,7 +122,7 @@ function SeedsPage() {
 
   const goEdit = (r: Seed) => navigate({ to: "/seeds-api/seeds/$seedId", params: { seedId: r.id } });
   // Add seed: the type is picked from the button's menu first, then the form opens.
-  const addSeed = (type: "URL" | "API" | "KEYWORD") =>
+  const addSeed = (type: "URL" | "API" | "KEYWORD" | "PDP") =>
     navigate({ to: "/seeds-api/seeds/new", search: { type } });
 
   const q = query.trim().toLowerCase();
@@ -131,20 +133,30 @@ function SeedsPage() {
     (!fStore.length || fStore.includes(r.store)) &&
     (!fCat.length || fCat.includes(r.cat)) &&
     (!fPageType.length || fPageType.includes(r.pageType ?? "")) &&
+    (!fDiscoveryKey.length || fDiscoveryKey.includes(r.discoveryKey ?? "")) &&
     (!fKwType.length || fKwType.includes(r.keywordType ?? "")) &&
+    (!fBrand.length || fBrand.includes(r.brand ?? "")) &&
     (!fStatus.length || fStatus.includes(r.status ?? "Active")) &&
     (!fSub.length || subSeedSet.has(r.d)) &&
     (!fProject.length || projectSeedSet.has(r.d)) &&
     (!fClient.length || clientSeedSet.has(r.d)),
   );
 
-  // Searchable value filter across all seed types.
-  const valueOptions = distinct(rows, (r) => r.value ?? "").filter(Boolean);
+  // Searchable value filter across all seed types — KEYWORD-seed values are
+  // surfaced first (the common pick), then the rest; each group stays alphabetical.
+  const keywordValues = new Set(rows.filter((r) => r.type === "KEYWORD" && r.value).map((r) => r.value as string));
+  const allValues = distinct(rows, (r) => r.value ?? "").filter(Boolean);
+  const valueOptions = [
+    ...allValues.filter((v) => keywordValues.has(v)),
+    ...allValues.filter((v) => !keywordValues.has(v)),
+  ];
   const visible = sortRows(filtered, sort, {
     description: (r) => r.d,
     value: (r) => r.value ?? "",
     keywordType: (r) => r.keywordType ?? "",
+    brand: (r) => r.brand ?? "",
     pageType: (r) => r.pageType ?? "",
+    discoveryKey: (r) => r.discoveryKey ?? "",
     type: (r) => r.type ?? "",
     store: (r) => r.store,
     category: (r) => r.cat,
@@ -167,7 +179,8 @@ function SeedsPage() {
     // to "KW" with the full word on hover (title).
     cell: (r) => {
       if (!r.type) return dash;
-      const tone = r.type === "API" ? "orange" : r.type === "URL" ? "blue" : "violetOutline";
+      const tone =
+        r.type === "API" ? "orange" : r.type === "URL" ? "blue" : r.type === "PDP" ? "green" : "violetOutline";
       const isKw = r.type === "KEYWORD";
       return <Pill tone={tone} title={isKw ? "Keyword" : undefined}>{isKw ? "KW" : r.type}</Pill>;
     },
@@ -190,10 +203,28 @@ function SeedsPage() {
     cell: (r) => (r.keywordType ? <Pill tone={r.keywordType === "BRANDED" ? "violet" : "slate"}>{r.keywordType}</Pill> : dash),
   });
   cols.push({
+    key: "brand",
+    label: "Brand",
+    sortKey: "brand",
+    // Brand bonds live only on BRANDED keyword seeds; everything else shows "—".
+    cell: (r) => (r.brand ? <LinkText>{r.brand}</LinkText> : dash),
+  });
+  cols.push({
     key: "pt",
     label: "Page type",
     sortKey: "pageType",
     cell: (r) => (r.pageType ? <Pill tone="slate">{r.pageType}</Pill> : dash),
+  });
+  cols.push({
+    key: "dk",
+    label: "Discovery key",
+    sortKey: "discoveryKey",
+    cell: (r) =>
+      r.discoveryKey ? (
+        <span className="block max-w-[180px] truncate font-mono text-xs text-foreground/80" title={r.discoveryKey}>{r.discoveryKey}</span>
+      ) : (
+        dash
+      ),
   });
   cols.push({ key: "store", label: "Store", sortKey: "store", cell: (r) => <LinkText>{r.store}</LinkText> });
   cols.push({ key: "cat", label: "Category", sortKey: "category", cell: (r) => <span className="text-foreground/80">{r.cat}</span> });
@@ -242,6 +273,9 @@ function SeedsPage() {
                 <DropdownMenuItem onClick={() => addSeed("KEYWORD")}>
                   <Pill tone="violetOutline">Keyword</Pill>
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => addSeed("PDP")}>
+                  <Pill tone="green">PDP</Pill>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           }
@@ -250,7 +284,7 @@ function SeedsPage() {
           <FilterChip
             label="Seed type"
             icon={Shapes}
-            options={["URL", "API", "KEYWORD"]}
+            options={["URL", "API", "KEYWORD", "PDP"]}
             value={fSeedType}
             onChange={setFSeedType}
           />
@@ -289,7 +323,22 @@ function SeedsPage() {
           <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
           <FilterChip label="Categories" options={distinct(rows, (r) => r.cat)} value={fCat} onChange={setFCat} />
           <FilterChip label="Page types" options={PAGE_TYPE_OPTIONS} value={fPageType} onChange={setFPageType} />
+          <FilterChip
+            label="Discovery key"
+            options={distinct(rows, (r) => r.discoveryKey ?? "").filter(Boolean)}
+            value={fDiscoveryKey}
+            onChange={setFDiscoveryKey}
+            searchable
+          />
           <FilterChip label="Keyword type" options={KEYWORD_TYPE_OPTIONS} value={fKwType} onChange={setFKwType} />
+          <FilterChip
+            label="Brand"
+            icon={Tag}
+            options={distinct(rows, (r) => r.brand ?? "").filter(Boolean)}
+            value={fBrand}
+            onChange={setFBrand}
+            searchable
+          />
           <FilterChip label="Status" options={SEED_STATUS_OPTIONS} value={fStatus} onChange={setFStatus} />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />

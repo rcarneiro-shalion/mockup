@@ -3,7 +3,7 @@ import { SeedForm } from "@/components/seeds/SeedForm";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { SEEDS_KEY, INITIAL_SEEDS, type Seed, type SeedType } from "@/lib/seeds";
 
-const VALID_TYPES: SeedType[] = ["URL", "API", "KEYWORD"];
+const VALID_TYPES: SeedType[] = ["URL", "API", "KEYWORD", "PDP"];
 
 export const Route = createFileRoute("/seeds-api/seeds/new")({
   validateSearch: (search: Record<string, unknown>): { type: SeedType } => {

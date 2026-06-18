@@ -1,24 +1,18 @@
-import { useEffect, useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Pill } from "@/components/seeds/ListPrimitives";
+import { AssignSeedsDialog } from "@/components/seeds/AssignSeedsDialog";
 import { readPersistedList } from "@/lib/seedOptions";
 import { SEEDS_KEY, INITIAL_SEEDS, type Seed, type SeedType } from "@/lib/seeds";
 import { cn } from "@/lib/utils";
 import { Plus, Search, Sparkles, Sprout, X } from "lucide-react";
 
-const TABS: { key: SeedType; label: string }[] = [
+const TABS: { key: SeedType; label: string; icon?: typeof Sparkles }[] = [
   { key: "KEYWORD", label: "Keyword" },
   { key: "URL", label: "URL" },
   { key: "API", label: "API" },
+  // PDP seeds are the discovery-generated Virtual Seeds.
+  { key: "PDP", label: "Virtual Seed (PDP)", icon: Sparkles },
 ];
 
 function StatusDot({ status }: { status?: Seed["status"] }) {
@@ -32,29 +26,21 @@ function StatusDot({ status }: { status?: Seed["status"] }) {
 }
 
 /**
- * Assigned seeds for a subscription — a 3-tab (Keyword / URL / API) searchable grid.
- * `seeds` holds the assigned seed descriptions; each is resolved against the seeds
- * store to render type-specific columns.
+ * Assigned seeds for a subscription — a tabbed (Keyword / URL / API / Virtual Seed)
+ * searchable grid. PDP seeds are the Virtual Seeds produced by Discovery over a PLP
+ * extraction. `seeds` holds the assigned seed descriptions; each is resolved against
+ * the seeds store to render type-specific columns.
  */
 export function AssignedSeeds({
   seeds,
   onChange,
-  enableVirtualSeed = false,
 }: {
   seeds: string[];
   onChange: (next: string[]) => void;
-  /** Enables the Virtual Seed tab — only for Digital Shelf PDP scrapping options. */
-  enableVirtualSeed?: boolean;
 }) {
-  const [tab, setTab] = useState<SeedType | "VIRTUAL">("KEYWORD");
+  const [tab, setTab] = useState<SeedType>("KEYWORD");
   const [search, setSearch] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
-
-  // Fall back to a seed tab if Virtual Seed gets disabled while it's selected
-  // (e.g. the scrapping option is switched away from Digital Shelf PDP).
-  useEffect(() => {
-    if (!enableVirtualSeed && tab === "VIRTUAL") setTab("KEYWORD");
-  }, [enableVirtualSeed, tab]);
 
   const store = readPersistedList<Seed>(SEEDS_KEY);
   const all = store.length ? store : INITIAL_SEEDS;
@@ -73,10 +59,14 @@ export function AssignedSeeds({
   );
 
   const remove = (name: string) => onChange(seeds.filter((x) => x !== name));
-  const add = (name: string) => { if (!seeds.includes(name)) onChange([...seeds, name]); };
   const available = all.filter((s) => !seeds.includes(s.d));
+  // Merge a batch of newly-picked seed descriptions, skipping any already assigned.
+  const assignMany = (names: string[]) => {
+    const fresh = names.filter((n) => !seeds.includes(n));
+    if (fresh.length) onChange([...seeds, ...fresh]);
+  };
 
-  const valueHeader = tab === "URL" ? "URL" : tab === "API" ? "API origin" : "Keyword";
+  const valueHeader = tab === "URL" || tab === "PDP" ? "URL" : tab === "API" ? "API origin" : "Keyword";
   const extraHeader = tab === "KEYWORD" ? "Keyword type" : "Page type";
   const tabLabel = TABS.find((t) => t.key === tab)?.label.toLowerCase() ?? "";
 
@@ -87,37 +77,19 @@ export function AssignedSeeds({
           <Sprout className="h-4 w-4 text-muted-foreground" />
           Assigned seeds
         </span>
-        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground/80 hover:bg-secondary"
-            >
-              <Plus className="h-3.5 w-3.5" /> Assign seeds
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-80 p-0">
-            <Command>
-              <CommandInput placeholder="Search seeds to assign" />
-              <CommandList>
-                <CommandEmpty>No seeds found.</CommandEmpty>
-                <CommandGroup>
-                  {available.map((s) => (
-                    <CommandItem
-                      key={s.id}
-                      value={`${s.d} ${s.value ?? ""} ${s.type ?? ""}`}
-                      onSelect={() => { add(s.d); setTab(typeOf(s)); }}
-                      className="flex items-center gap-2"
-                    >
-                      <span className="flex-1 truncate">{s.d}</span>
-                      <Pill tone="blue">{s.type ?? "KEYWORD"}</Pill>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground/80 hover:bg-secondary"
+        >
+          <Plus className="h-3.5 w-3.5" /> Assign seeds
+        </button>
+        <AssignSeedsDialog
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          available={available}
+          onAssign={assignMany}
+        />
       </div>
 
       {/* Tabs */}
@@ -134,38 +106,13 @@ export function AssignedSeeds({
                 : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
+            {t.icon && <t.icon className="h-3.5 w-3.5" />}
             {t.label}
             <span className="rounded-full bg-secondary px-1.5 text-[11px] text-muted-foreground">{countByType(t.key)}</span>
           </button>
         ))}
-        <button
-          type="button"
-          disabled={!enableVirtualSeed}
-          onClick={() => setTab("VIRTUAL")}
-          title={enableVirtualSeed ? undefined : "Available when the scrapping option's extraction type is Digital Shelf PDP"}
-          className={cn(
-            "flex items-center gap-1.5 border-b-2 px-0.5 pb-2 text-sm transition-colors",
-            tab === "VIRTUAL"
-              ? "border-primary font-medium text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground",
-            !enableVirtualSeed && "cursor-not-allowed opacity-40 hover:text-muted-foreground",
-          )}
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-          Virtual Seed
-        </button>
       </div>
 
-      {tab === "VIRTUAL" ? (
-        <div className="mt-3 rounded-md border border-dashed border-border bg-secondary/20 px-6 py-8 text-center">
-          <Sparkles className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-          <p className="text-sm font-medium text-foreground">Virtual seeds</p>
-          <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-            Virtual seeds are derived automatically for Digital Shelf PDP subscriptions.
-          </p>
-        </div>
-      ) : (
-        <>
       {/* Search within tab */}
       <div className="relative mt-3">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -228,8 +175,6 @@ export function AssignedSeeds({
           </tbody>
         </table>
       </div>
-        </>
-      )}
     </div>
   );
 }

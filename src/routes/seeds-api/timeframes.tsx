@@ -5,7 +5,6 @@ import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { EditRecordDialog, type FieldDef } from "@/components/seeds/EditRecordDialog";
 import { AddRecordDialog, type AddFieldDef } from "@/components/seeds/AddRecordDialog";
-import { SEED_FREQUENCY_OPTIONS, LOCATION_FREQUENCY_OPTIONS } from "@/lib/seedOptions";
 import {
   PageHeader,
   FilterBar,
@@ -15,7 +14,6 @@ import {
   Pagination,
   LinkText,
   UserCell,
-  Pill,
   SortTh,
   useSort,
   sortRows,
@@ -32,8 +30,6 @@ export const Route = createFileRoute("/seeds-api/timeframes")({
 
 type Row = {
   name: string;
-  locFreq: string;
-  seedFreq: string;
   group: string;
   product: string;
 };
@@ -41,8 +37,6 @@ type Row = {
 const INITIAL_ROWS: Row[] = [
   {
     name: "Dummy task group bc425bf...",
-    locFreq: "NO_ROTATE_DAILY",
-    seedFreq: "ROTATE_WEEKLY",
     group: "group-123",
     product: "product-123",
   },
@@ -53,26 +47,20 @@ function TimeframesPage() {
   const [selected, setSelected] = useState<Row | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [fLocFreq, setFLocFreq] = useState<string[]>([]);
-  const [fSeedFreq, setFSeedFreq] = useState<string[]>([]);
   const [fGroup, setFGroup] = useState<string[]>([]);
   const [fProduct, setFProduct] = useState<string[]>([]);
   const sort = useSort("timeframes");
   const q = query.trim().toLowerCase();
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&
-    (!fLocFreq.length || fLocFreq.includes(r.locFreq)) &&
-    (!fSeedFreq.length || fSeedFreq.includes(r.seedFreq)) &&
     (!fGroup.length || fGroup.includes(r.group)) &&
     (!fProduct.length || fProduct.includes(r.product)),
   );
-  const sorted = sortRows(filtered, sort, { locationFrequency: (r) => r.locFreq, seedFrequency: (r) => r.seedFreq });
+  const sorted = sortRows(filtered, sort, {});
 
   const editFields: FieldDef[] = selected
     ? [
         { kind: "text", label: "Name", value: selected.name, required: true, span: 2 },
-        { kind: "select", label: "Location frequency", value: selected.locFreq, required: true, options: LOCATION_FREQUENCY_OPTIONS },
-        { kind: "select", label: "Seed frequency", value: selected.seedFreq, required: true, options: SEED_FREQUENCY_OPTIONS },
         { kind: "text", label: "Group", value: selected.group },
         { kind: "text", label: "Product", value: selected.product },
       ]
@@ -80,8 +68,6 @@ function TimeframesPage() {
 
   const addFields: AddFieldDef[] = [
     { kind: "text", label: "Name", required: true, span: 2 },
-    { kind: "select", label: "Location frequency", required: true, options: LOCATION_FREQUENCY_OPTIONS },
-    { kind: "select", label: "Seed frequency", required: true, options: SEED_FREQUENCY_OPTIONS },
     { kind: "text", label: "Group" },
     { kind: "text", label: "Product" },
   ];
@@ -94,21 +80,13 @@ function TimeframesPage() {
           action={{ label: "Add task group", onClick: () => setAddOpen(true) }}
         />
         <FilterBar search="Search by TaskGroup name" searchValue={query} onSearchChange={setQuery}>
-          <FilterChip label="Location frequency" options={distinct(rows, (r) => r.locFreq)} value={fLocFreq} onChange={setFLocFreq} />
-          <FilterChip label="Seed frequency" options={distinct(rows, (r) => r.seedFreq)} value={fSeedFreq} onChange={setFSeedFreq} />
-          <FilterChip label="Jobs" icon={PlayCircle} />
           <FilterChip label="Group" options={distinct(rows, (r) => r.group)} value={fGroup} onChange={setFGroup} />
-          <FilterChip label="Product" options={distinct(rows, (r) => r.product)} value={fProduct} onChange={setFProduct} />
-          <FilterChip label="Status" />
-          <FilterChip label="Created at" icon={Calendar} />
-          <FilterChip label="Updated at" icon={Calendar} />
+          <FilterChip label="Products" options={distinct(rows, (r) => r.product)} value={fProduct} onChange={setFProduct} />
         </FilterBar>
         <TableShell>
           <thead className="bg-secondary/60">
             <tr>
               <SortTh label="Name" sortKey="name" sort={sort} />
-              <SortTh label="Location frequency" sortKey="locationFrequency" sort={sort} />
-              <SortTh label="Seed frequency" sortKey="seedFrequency" sort={sort} />
               <SortTh label="Group" sortKey="group" sort={sort} />
               <SortTh label="Product" sortKey="product" sort={sort} />
               <Th>Created by</Th>
@@ -122,8 +100,6 @@ function TimeframesPage() {
             {sorted.map((r) => (
               <tr key={r.name} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
-                <Td><Pill tone="slate">{r.locFreq}</Pill></Td>
-                <Td><Pill tone="slate">{r.seedFreq}</Pill></Td>
                 <Td className="text-foreground/80">{r.group}</Td>
                 <Td className="text-foreground/80">{r.product}</Td>
                 <Td><UserCell email="btrainor@s..." /></Td>
@@ -153,8 +129,6 @@ function TimeframesPage() {
         onSave={(values) => {
           const newRow: Row = {
             name: (values["Name"] as string) || "Untitled",
-            locFreq: values["Location frequency"] as string,
-            seedFreq: values["Seed frequency"] as string,
             group: values["Group"] as string,
             product: values["Product"] as string,
           };
@@ -175,8 +149,6 @@ function TimeframesPage() {
                 ? {
                     ...r,
                     name: values["Name"] as string,
-                    locFreq: values["Location frequency"] as string,
-                    seedFreq: values["Seed frequency"] as string,
                     group: values["Group"] as string,
                     product: values["Product"] as string,
                   }

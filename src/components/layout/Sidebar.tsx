@@ -121,6 +121,7 @@ const ecometryNav: NavItem[] = [
       { label: "Cubes", to: "/settings/cubes" },
       { label: "Scopes", to: "/settings/scopes" },
       { label: "Rules", to: "/settings/rules" },
+      { label: "Subscription type", to: "/settings/subscription-types" },
     ],
   },
 ];

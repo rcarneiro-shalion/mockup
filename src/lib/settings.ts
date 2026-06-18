@@ -123,6 +123,18 @@ export const INITIAL_RULES: SettingRule[] = [
   RL("r7", "RMM/CMI/ASM/DSM Insights Extra Context", "+ Never mix products (SKUs, titles, ...) with placements.", "", "", "Thu, May 21, 2026 9:00 AM", "Thu, May 21, 2026 9:00 AM"),
 ];
 
+// ---------- Subscription types ----------
+// The catalog of subscription types (e.g. BASE, ADDON) referenced when editing a
+// subscription. Maintained from Settings › Subscription type.
+export type SettingSubscriptionType = { id: string; name: string; description: string; createdAt: string; updatedAt: string };
+export const SUBSCRIPTION_TYPES_KEY = "settings:subscription-types";
+const ST = (id: string, name: string, description: string, createdAt: string, updatedAt: string): SettingSubscriptionType =>
+  ({ id, name, description, createdAt, updatedAt });
+export const INITIAL_SUBSCRIPTION_TYPES: SettingSubscriptionType[] = [
+  ST("sub-base", "BASE", "Base subscription — the primary data plan.", "Thu, Oct 26, 2023 3:30 PM", "Thu, Oct 26, 2023 3:30 PM"),
+  ST("sub-addon", "ADDON", "Add-on subscription layered on top of a base.", "Mon, Nov 18, 2024 11:58 AM", "Mon, Dec 29, 2025 4:21 PM"),
+];
+
 function read<T>(key: string, initial: T[]): T[] {
   const list = readPersistedList<T>(key);
   return list.length ? list : initial;
@@ -132,3 +144,4 @@ export const getSettingsTimeframes = () => read(SETTINGS_TIMEFRAMES_KEY, INITIAL
 export const getCategories = () => read(CATEGORIES_KEY, INITIAL_CATEGORIES);
 export const getCountryGroups = () => read(COUNTRY_GROUPS_KEY, INITIAL_COUNTRY_GROUPS);
 export const getRules = () => read(RULES_KEY, INITIAL_RULES);
+export const getSubscriptionTypes = () => read(SUBSCRIPTION_TYPES_KEY, INITIAL_SUBSCRIPTION_TYPES);
