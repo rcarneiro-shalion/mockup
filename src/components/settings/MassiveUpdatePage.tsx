@@ -426,6 +426,15 @@ export function MassiveUpdatePage() {
     toggle(selSections, id, setSelSections);
   };
 
+  // Fresh start after a successful Apply: drop the section + target picks so the
+  // next massive update is deliberate (no accidental re-apply of stale selections).
+  const clearSelections = () => {
+    setSelSections(new Set());
+    setSelDgs(new Set());
+    setSelRetailers([]);
+    autoSections.current = new Set();
+  };
+
   // Switching application auto-fills ALL of its dashboard groups, resets the
   // section picks (sections belong to the previous app's groups), then re-loads
   // the current setup for any already-selected target(s) in the NEW app. The
@@ -674,6 +683,7 @@ export function MassiveUpdatePage() {
       }
       setAssigned(next);
       setStaged(new Map());
+      clearSelections();
       setApplying(false);
       toast.success(`Simulated ${staged.size} change(s) (no live connection).`);
       return;
@@ -764,6 +774,8 @@ export function MassiveUpdatePage() {
     setRecordIds(nextIds);
     setColMaxPos(nextMaxPos);
     setStaged(new Map());
+    // Fresh start on full success; keep the picks if anything failed so they can retry.
+    if (!failN) clearSelections();
     setApplying(false);
     setApplyLog(errs.slice(0, 10).join("\n"));
     const parts = [
