@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build a double-clickable macOS app icon for the Visionary Mockup Builder.
 #
-#   ▶ Double-click THIS file once. It creates "Massive Update.app" on your Desktop
+#   ▶ Double-click THIS file once. It creates "Shalion App.app" on your Desktop
 #     with the Shalion icon. From then on, double-click that app (or drag it to the
 #     Dock) to start the mockup — no Terminal needed to launch it.
 #
@@ -14,10 +14,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$SCRIPT_DIR/.." && pwd)"
 LAUNCHER="$REPO/start-app.command"
-APP="$HOME/Desktop/Massive Update.app"
+APP="$HOME/Desktop/Shalion App.app"
 
 echo "============================================"
-echo "  Building the Massive Update app icon"
+echo "  Building the Shalion App app icon"
 echo "============================================"
 echo "Repo:     $REPO"
 echo "Launcher: $LAUNCHER"
@@ -76,14 +76,14 @@ else
 fi
 
 echo
-echo "✅ Done. On your Desktop: \"Massive Update.app\""
+echo "✅ Done. On your Desktop: \"Shalion App.app\""
 echo "   • Double-click it to start the mockup (opens a small Terminal window that"
 echo "     keeps the server running — close that window to stop)."
 echo "   • Drag it onto the Dock to pin it."
 echo "   • First launch may warn it's from an unidentified developer →"
 echo "     right-click the app ▸ Open ▸ Open (only needed once)."
 echo
-echo "Note: the Shalion icon shows on \"Massive Update.app\" — launching"
+echo "Note: the Shalion icon shows on \"Shalion App.app\" — launching"
 echo "start-app.command directly always shows Terminal's icon instead."
 echo "If it still looks generic, drag a fresh copy to the Dock, or log out/in once."
 echo
