@@ -1,13 +1,5 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#000000" flood-opacity="0.16"/>
-    </filter>
-  </defs>
-  <!-- Rounded macOS squircle tile: 832x832 inset in 1024 (96px margin), r=196.
-       Corners outside the tile stay transparent. -->
-  <rect x="96" y="96" width="832" height="832" rx="196" ry="196" fill="#FFFFFF" filter="url(#sh)"/>
-  <!-- Shalion pinwheel (24x24) -> 470px, centered at 512,512 -->
+  <rect x="96" y="96" width="832" height="832" rx="196" ry="196" fill="#FFFFFF"/>
   <g transform="translate(277,277) scale(19.58)">
     <path d="M0 11.435a11.02 11.02 0 0 0 7.807-3.252C9.806 6.18 11.045 3.413 11.05.357a11.77 11.77 0 0 0-7.614 3.445A11.825 11.825 0 0 0 0 11.435Z" fill="#B47CFF"/>
     <path d="M23.584 11.435a11.825 11.825 0 0 0-3.437-7.633A11.766 11.766 0 0 0 12.534.357a11.08 11.08 0 0 0 3.243 7.826 11.026 11.026 0 0 0 7.807 3.252Z" fill="#A1E335"/>
