@@ -49,8 +49,11 @@ if command -v sips >/dev/null 2>&1 && command -v iconutil >/dev/null 2>&1 && [ -
     sips -s format png -z "$px" "$px" "$ICON_SRC" --out "$ISET/icon_${name}.png" >/dev/null 2>&1 || true
   done
   if iconutil -c icns "$ISET" -o "$APP/Contents/Resources/applet.icns" >/dev/null 2>&1; then
-    touch "$APP"                      # nudge Finder/Dock to pick up the new icon
-    echo "✓ Icon applied (Shalion favicon)."
+    touch "$APP"                      # bump mtime so Finder re-reads the bundle
+    # macOS caches app icons aggressively; a rebuilt bundle at the same path can
+    # keep showing the old/generic icon. Restarting the Dock forces a re-read.
+    /usr/bin/killall Dock 2>/dev/null || true
+    echo "✓ Icon applied (Shalion favicon) — Dock refreshed."
   else
     echo "⚠ Couldn't build the .icns — the app will use the generic icon (still works)."
   fi
@@ -67,6 +70,8 @@ echo "   • Drag it onto the Dock to pin it."
 echo "   • First launch may warn it's from an unidentified developer →"
 echo "     right-click the app ▸ Open ▸ Open (only needed once)."
 echo
-echo "If the icon still looks generic, give Finder a moment or log out/in once."
+echo "Note: the Shalion icon shows on \"Massive Update.app\" — launching"
+echo "start-app.command directly always shows Terminal's icon instead."
+echo "If it still looks generic, drag a fresh copy to the Dock, or log out/in once."
 echo
 echo "Press any key to close…"; read -r -n1
