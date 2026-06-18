@@ -1626,7 +1626,7 @@ function SearchInput({ value, onChange, placeholder }: { value: string; onChange
 
 function SelectAllRow({ label, onAll, onClear }: { label: string; onAll: () => void; onClear: () => void }) {
   return (
-    <div className="flex items-center justify-between text-xs">
+    <div className="flex items-center gap-3 text-xs">
       <button onClick={onAll} className="font-medium text-[var(--sidebar-active-fg)] hover:underline">
         {label}
       </button>
