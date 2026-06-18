@@ -62,6 +62,7 @@ const ecometryNav: NavItem[] = [
       { label: "Tags", to: "/seeds-api/tags" },
       { label: "TaskGroup", to: "/seeds-api/timeframes" },
       { label: "Value Stream Map", to: "/seeds-api/planner" },
+      { label: "Scenario simulator", to: "/seeds-api/scenario-generator" },
     ],
   },
   {

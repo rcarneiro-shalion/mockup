@@ -30,6 +30,7 @@ import { Route as SeedsApiTimeframesRouteImport } from './routes/seeds-api/timef
 import { Route as SeedsApiTagsRouteImport } from './routes/seeds-api/tags'
 import { Route as SeedsApiSubscriptionsRouteImport } from './routes/seeds-api/subscriptions'
 import { Route as SeedsApiScrappingOptionsRouteImport } from './routes/seeds-api/scrapping-options'
+import { Route as SeedsApiScenarioGeneratorRouteImport } from './routes/seeds-api/scenario-generator'
 import { Route as SeedsApiPlannerRouteImport } from './routes/seeds-api/planner'
 import { Route as RetailersNewRouteImport } from './routes/retailers/new'
 import { Route as RetailersRetailerIdRouteImport } from './routes/retailers/$retailerId'
@@ -297,6 +298,12 @@ const SeedsApiScrappingOptionsRoute =
   SeedsApiScrappingOptionsRouteImport.update({
     id: '/seeds-api/scrapping-options',
     path: '/seeds-api/scrapping-options',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SeedsApiScenarioGeneratorRoute =
+  SeedsApiScenarioGeneratorRouteImport.update({
+    id: '/seeds-api/scenario-generator',
+    path: '/seeds-api/scenario-generator',
     getParentRoute: () => rootRouteImport,
   } as any)
 const SeedsApiPlannerRoute = SeedsApiPlannerRouteImport.update({
@@ -1203,6 +1210,7 @@ export interface FileRoutesByFullPath {
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
+  '/seeds-api/scenario-generator': typeof SeedsApiScenarioGeneratorRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
@@ -1384,6 +1392,7 @@ export interface FileRoutesByTo {
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
+  '/seeds-api/scenario-generator': typeof SeedsApiScenarioGeneratorRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
@@ -1562,6 +1571,7 @@ export interface FileRoutesById {
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
+  '/seeds-api/scenario-generator': typeof SeedsApiScenarioGeneratorRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
@@ -1747,6 +1757,7 @@ export interface FileRouteTypes {
     | '/retailers/$retailerId'
     | '/retailers/new'
     | '/seeds-api/planner'
+    | '/seeds-api/scenario-generator'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
@@ -1928,6 +1939,7 @@ export interface FileRouteTypes {
     | '/retailers/$retailerId'
     | '/retailers/new'
     | '/seeds-api/planner'
+    | '/seeds-api/scenario-generator'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
@@ -2105,6 +2117,7 @@ export interface FileRouteTypes {
     | '/retailers/$retailerId'
     | '/retailers/new'
     | '/seeds-api/planner'
+    | '/seeds-api/scenario-generator'
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
@@ -2289,6 +2302,7 @@ export interface RootRouteChildren {
   RetailersRetailerIdRoute: typeof RetailersRetailerIdRoute
   RetailersNewRoute: typeof RetailersNewRoute
   SeedsApiPlannerRoute: typeof SeedsApiPlannerRoute
+  SeedsApiScenarioGeneratorRoute: typeof SeedsApiScenarioGeneratorRoute
   SeedsApiScrappingOptionsRoute: typeof SeedsApiScrappingOptionsRoute
   SeedsApiSubscriptionsRoute: typeof SeedsApiSubscriptionsRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
@@ -2585,6 +2599,13 @@ declare module '@tanstack/react-router' {
       path: '/seeds-api/scrapping-options'
       fullPath: '/seeds-api/scrapping-options'
       preLoaderRoute: typeof SeedsApiScrappingOptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seeds-api/scenario-generator': {
+      id: '/seeds-api/scenario-generator'
+      path: '/seeds-api/scenario-generator'
+      fullPath: '/seeds-api/scenario-generator'
+      preLoaderRoute: typeof SeedsApiScenarioGeneratorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seeds-api/planner': {
@@ -3864,6 +3885,7 @@ const rootRouteChildren: RootRouteChildren = {
   RetailersRetailerIdRoute: RetailersRetailerIdRoute,
   RetailersNewRoute: RetailersNewRoute,
   SeedsApiPlannerRoute: SeedsApiPlannerRoute,
+  SeedsApiScenarioGeneratorRoute: SeedsApiScenarioGeneratorRoute,
   SeedsApiScrappingOptionsRoute: SeedsApiScrappingOptionsRoute,
   SeedsApiSubscriptionsRoute: SeedsApiSubscriptionsRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
