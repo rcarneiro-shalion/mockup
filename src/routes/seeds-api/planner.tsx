@@ -159,32 +159,48 @@ function PlannerPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clients, projects, subs, scraps]);
 
-  // Visible subgraph: with no filter, everything; otherwise the connected component(s)
-  // of the explicitly-selected nodes (undirected BFS over the relationship edges).
+  // Visible subgraph. With no filter, everything. With filters, AND semantics: a
+  // subscription must satisfy EVERY active filter (client/project/store/seed/scrap/
+  // extraction/subscription). We then show the matching subscriptions plus their
+  // lineage (project → client) and their scrapping option — no flood to sibling
+  // subscriptions, so each added filter genuinely narrows the result.
   const visible = useMemo(() => {
     const all = new Set(nodes.keys());
     if (!hasFilter) return all;
-    const adj = new Map<string, string[]>();
-    for (const e of edges) {
-      (adj.get(e.source) ?? adj.set(e.source, []).get(e.source)!).push(e.target);
-      (adj.get(e.target) ?? adj.set(e.target, []).get(e.target)!).push(e.source);
-    }
-    const seeds: string[] = [];
-    for (const c of clients) if (fClient.includes(c.name) && nodes.has(`c:${c.id}`)) seeds.push(`c:${c.id}`);
-    for (const p of projects) if (fProject.includes(p.name) && nodes.has(`p:${p.id}`)) seeds.push(`p:${p.id}`);
-    for (const s of subs) if (fSub.includes(s.name) && nodes.has(`s:${s.id}`)) seeds.push(`s:${s.id}`);
-    // Store filter → the subscriptions on the selected store(s).
-    if (fStore.length) for (const s of subs) if (fStore.includes(s.store) && nodes.has(`s:${s.id}`)) seeds.push(`s:${s.id}`);
-    // Seeds filter → the subscriptions that contain any selected seed.
-    if (fSeed.length) for (const s of subs) if ((s.seeds ?? []).some((d) => fSeed.includes(d)) && nodes.has(`s:${s.id}`)) seeds.push(`s:${s.id}`);
-    for (const o of baseScraps) if (fScrap.includes(o.name)) seeds.push(`o:${o.name}`);
-    // Extraction type filter → scrapping options of the selected type(s).
-    if (fExtraction.length) for (const o of baseScraps) if (fExtraction.includes(o.extractionType)) seeds.push(`o:${o.name}`);
-    const vis = new Set(seeds);
-    const queue = [...seeds];
-    while (queue.length) {
-      const k = queue.shift()!;
-      for (const n of adj.get(k) ?? []) if (!vis.has(n)) { vis.add(n); queue.push(n); }
+
+    const clientsByProjectId = new Map<string, typeof clients>();
+    for (const c of clients)
+      for (const ap of c.assignedProjects ?? [])
+        (clientsByProjectId.get(ap.projectId) ?? clientsByProjectId.set(ap.projectId, []).get(ap.projectId)!).push(c);
+
+    const matches = (s: (typeof subs)[number]) => {
+      if (fSub.length && !fSub.includes(s.name)) return false;
+      if (fProject.length && !fProject.includes(s.project)) return false;
+      if (fStore.length && !fStore.includes(s.store)) return false;
+      if (fSeed.length && !(s.seeds ?? []).some((d) => fSeed.includes(d))) return false;
+      if (fScrap.length && !fScrap.includes(s.scrappingOption)) return false;
+      if (fExtraction.length) {
+        const o = scrapByName.get(s.scrappingOption);
+        if (!o || !fExtraction.includes(o.extractionType)) return false;
+      }
+      if (fClient.length) {
+        const p = projectByName.get(s.project);
+        const cs = p ? clientsByProjectId.get(p.id) ?? [] : [];
+        if (!cs.some((c) => fClient.includes(c.name))) return false;
+      }
+      return true;
+    };
+
+    const vis = new Set<string>();
+    for (const s of subs) {
+      if (!nodes.has(`s:${s.id}`) || !matches(s)) continue;
+      vis.add(`s:${s.id}`);
+      if (nodes.has(`o:${s.scrappingOption}`)) vis.add(`o:${s.scrappingOption}`);
+      const p = projectByName.get(s.project);
+      if (p && nodes.has(`p:${p.id}`)) {
+        vis.add(`p:${p.id}`);
+        for (const c of clientsByProjectId.get(p.id) ?? []) if (nodes.has(`c:${c.id}`)) vis.add(`c:${c.id}`);
+      }
     }
     return vis;
     // eslint-disable-next-line react-hooks/exhaustive-deps

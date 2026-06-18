@@ -185,7 +185,7 @@ function ScenarioGeneratorPage() {
             <input
               value={jobQuery}
               onChange={(e) => setJobQuery(e.target.value)}
-              placeholder="Search job / subscription (% wildcard)"
+              placeholder="Search subscription (% wildcard)"
               className="h-8 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
