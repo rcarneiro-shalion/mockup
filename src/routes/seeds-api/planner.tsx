@@ -8,6 +8,7 @@ import { getClients } from "@/lib/clients";
 import { getProjects } from "@/lib/projects";
 import { getSubscriptions } from "@/lib/subscriptions";
 import { getScrappingOptions } from "@/lib/scrappingOptions";
+import { STORE_LOCATIONS } from "@/lib/scenarioSeedData";
 import type { ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import { cn } from "@/lib/utils";
 import { Users, FolderKanban, Layers, PlayCircle, RotateCcw, Sprout, Repeat, CalendarClock, Calculator, ZoomIn, ZoomOut, Maximize2, Minimize2, Store } from "lucide-react";
@@ -211,9 +212,11 @@ function PlannerPage() {
   const visibleSubs = subs.filter((s) => visible.has(`s:${s.id}`));
   const estRows = visibleSubs.map((s) => {
     const seedCount = (s.seeds ?? []).length;
-    const usesLoc = s.geo === "MANUAL" && !!s.locationSet;
-    const locMatch = usesLoc ? /—\s*([\d,]+)\s*locations/i.exec(s.locationSet || "") : null;
-    const locations = usesLoc ? (locMatch ? parseInt(locMatch[1].replace(/,/g, ""), 10) : LOC_VOLUME_TBD) : 1;
+    const usesLoc = s.geo === "MANUAL";
+    // Location volume = the real active-location count of the store the subscription
+    // belongs to (STORE_LOCATIONS, from the prod store entity); fallback when unknown.
+    const knownStore = s.store in STORE_LOCATIONS;
+    const locations = usesLoc ? (knownStore ? Math.max(1, STORE_LOCATIONS[s.store]) : LOC_VOLUME_TBD) : 1;
     return { id: s.id, name: s.name, seeds: seedCount, locations, usesLoc, tasks: seedCount * locations };
   });
   const totalTasks = estRows.reduce((a, r) => a + r.tasks, 0);
@@ -444,7 +447,7 @@ function PlannerPage() {
                     <span className="text-base font-semibold text-rose-600">{totalTasks.toLocaleString()} tasks</span>
                   </div>
                   {anyTbd && (
-                    <p className="mt-2 text-[11px] text-muted-foreground">* location volume read from the assigned set (fallback {LOC_VOLUME_TBD})</p>
+                    <p className="mt-2 text-[11px] text-muted-foreground">* location volume = the store's active locations (fallback {LOC_VOLUME_TBD} when the store is unknown)</p>
                   )}
                 </div>
               </div>

@@ -14,7 +14,7 @@ import { getSubscriptions, SUBSCRIPTIONS_KEY, emptySubscription, type Subscripti
 import { getSeeds, INITIAL_SEEDS, SEEDS_KEY, type Seed, type SeedType } from "./seeds";
 import { getScrappingOptions, SCRAPPING_OPTIONS_KEY } from "./scrappingOptions";
 import { EMPTY_SCRAPPING_OPTION, type ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
-import { REAL_JOBS, CLIENT_LABELS, REAL_LOCATION_SETS, CLIENT_KEYWORDS, CLIENT_CATEGORY, type RealJob } from "./scenarioSeedData";
+import { REAL_JOBS, CLIENT_LABELS, STORE_LOCATIONS, CLIENT_KEYWORDS, CLIENT_CATEGORY, type RealJob } from "./scenarioSeedData";
 
 const SIM_KEY = "seeds-api:sim:index";
 const LOC_VOLUME_TBD = 10;
@@ -85,20 +85,14 @@ const clientKeywordSeeds = (slug: string, store: string, seed: number, n: number
   }));
 };
 
-// Assign a realistic location set to a geolocated subscription: prefer a set whose
-// store matches the job's store, else one in the same country, else any — so the
-// task estimate uses a REAL location volume (6–200+) instead of a flat placeholder.
-const pickLocationSet = (job: RealJob): string => {
-  const sets = REAL_LOCATION_SETS;
-  if (!sets.length) return "Amazon US — All locations";
-  const js = job.store.toLowerCase();
-  const exact = sets.find((s) => { const ss = s.store.toLowerCase(); return ss.includes(js) || js.includes(ss.split(" -")[0]); });
-  if (exact) return exact.name;
-  const sameCountry = sets.filter((s) => s.country === (job.country || "").toUpperCase());
-  const pool = sameCountry.length ? sameCountry : sets;
-  return pool[job.name.length % pool.length].name;
+// A geolocated (MANUAL) subscription scrapes every location of its store, so the
+// location volume = the store's real activeLocationsCount (STORE_LOCATIONS, pulled
+// from the prod store entity). The locationSet label reflects that store + count.
+const storeLocations = (store: string): number => STORE_LOCATIONS[store] ?? 0;
+const locationSetLabel = (store: string): string => {
+  const n = storeLocations(store);
+  return n > 0 ? `${store} — ${n.toLocaleString()} locations` : "";
 };
-const locationCount = (name?: string): number => { const m = /—\s*([\d,]+)\s*locations/i.exec(name || ""); return m ? parseInt(m[1].replace(/,/g, ""), 10) : 0; };
 
 // One built scenario = the records to persist for a single client (one project).
 export type BuiltScenario = {
@@ -131,7 +125,7 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
   jobs.forEach((job, ji) => {
     const seedType = extractionToSeedType(job.extractionType);
     const geo = geoToSub(job.geolocMode);
-    const locationSet = geo === "MANUAL" ? pickLocationSet(job) : "";
+    const locationSet = geo === "MANUAL" ? locationSetLabel(job.store) : "";
 
     // --- the seeds for this subscription. KEYWORD seeds are brand-accurate per
     // client + store; URL/PDP seeds are cloned from the real corpus.
@@ -239,7 +233,8 @@ export const hasSimulated = (): boolean => {
 // ---- task estimation (mirrors planner + extends with disjoint fan-out) ----------
 export function estimateTasks(sub: Subscription, opt?: ScrappingOptionValues): number {
   const seeds = sub.seeds.length || 1;
-  const locations = sub.geo === "MANUAL" && sub.locationSet ? (locationCount(sub.locationSet) || LOC_VOLUME_TBD) : 1;
+  const known = sub.store in STORE_LOCATIONS;
+  const locations = sub.geo === "MANUAL" ? (known ? Math.max(1, STORE_LOCATIONS[sub.store]) : LOC_VOLUME_TBD) : 1;
   const modalities = opt?.modalities && opt.modalityValues?.length ? opt.modalityValues.length : 1;
   const timeframes = opt?.timeframes?.length || 1;
   return seeds * locations * modalities * timeframes;

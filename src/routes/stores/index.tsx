@@ -71,6 +71,7 @@ function StoresListPage() {
               <SortTh label="Type" sortKey="type" sort={sort} />
               <SortTh label="Class" sortKey="klass" sort={sort} />
               <SortTh label="Device" sortKey="device" sort={sort} />
+              <SortTh label="Locations" sortKey="activeLocationsCount" sort={sort} />
               <SortTh label="Status" sortKey="status" sort={sort} />
               <Th className="w-10" />
             </tr>
@@ -93,6 +94,7 @@ function StoresListPage() {
                 <Td><Pill tone={s.type === "GEOLOC" ? "amber" : "blue"}>{s.type}</Pill></Td>
                 <Td><Pill tone="slate">{s.klass}</Pill></Td>
                 <Td><Pill tone="slate">{s.device}</Pill></Td>
+                <Td className="tabular-nums text-foreground/80">{(s.activeLocationsCount ?? 0).toLocaleString()}</Td>
                 <Td><StatusPill status={s.status} /></Td>
                 <Td><RowActionsMenu id={s.id} onDelete={() => setRows((prev) => prev.filter((y) => y.id !== s.id))} entityLabel="store" /></Td>
               </tr>

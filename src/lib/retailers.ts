@@ -1,4 +1,5 @@
 import { nowStamp } from "./clients";
+import { STORE_LOCATIONS } from "./scenarioSeedData";
 
 // ---------- shared options ----------
 
@@ -184,6 +185,8 @@ export type Store = {
   logoUrl?: string;
   meta?: string; // JSON string
   locations?: StoreLocation[];
+  /** Real total active locations for this store (from the prod store entity). */
+  activeLocationsCount?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -197,6 +200,7 @@ const S = (
 ): Store => ({
   id, name, domain, retailer, type, klass, device, country, status,
   ecometryId: "", timezone: "", locale: "", logoUrl: "", meta: "{}", locations: [],
+  activeLocationsCount: STORE_LOCATIONS[name] ?? 0,
   createdAt: "Mon, Jan 9, 2023 8:05 AM", updatedAt: "Mon, Dec 11, 2023 11:24 AM",
 });
 
@@ -207,7 +211,7 @@ export const INITIAL_STORES: Store[] = [
     { id: "loc3", name: "Navarte - Superama - Navarte", locator: "{\"cookie\":\"...\"}", address: "Superama - Calzada de Tlalpan", city: "Ciudad de Mexico", postal: "03650", status: "Active" },
     { id: "loc4", name: "WE BOSQUES DE MINAS", locator: "{\"isExplicitInterc\":true}", address: "BOSQUES DE MINAS A XX HUIXQUILUC", city: "Estado de Mexico", postal: "52785", status: "Active" },
     { id: "loc5", name: "Cd Jardin - Walmart - Av. Bord...", locator: "{\"cookie\":\"...\"}", address: "Walmart - Av. Bordo de Xochiaca 3", city: "Estado de Mexico", postal: "50000", status: "Active" },
-  ], createdAt: "Mon, Jan 9, 2023 8:05 AM", updatedAt: "Mon, Jan 9, 2023 8:05 AM" },
+  ], activeLocationsCount: STORE_LOCATIONS["Walmart Mismo Dia MX"] ?? 0, createdAt: "Mon, Jan 9, 2023 8:05 AM", updatedAt: "Mon, Jan 9, 2023 8:05 AM" },
   // Sourced from the Stores export (Ecometry / Shalion Console, Jun 2026). Representative
   // subset (~1,811 total). Created/Updated were truncated in the export → plausible dates.
   S("st2", "Magazine Luiza BR - The Bar", "magazineluiza.com.br/thebar", "Magazine Luiza BR", "GEOLOC", "MARKETPLACE", "WEB", "BR"),
@@ -374,7 +378,10 @@ export function deriveStoreRetailers(existing: Retailer[]): Retailer[] {
 
 export function getStores(): Store[] {
   const list = readList<Store>(STORES_KEY);
-  return list.length ? list : INITIAL_STORES;
+  const base = list.length ? list : INITIAL_STORES;
+  // Attach the real active-location count from the prod store entity (matched by
+  // name) so the mockup store catalog reflects production location volumes.
+  return base.map((s) => ({ ...s, activeLocationsCount: s.activeLocationsCount ?? STORE_LOCATIONS[s.name] ?? 0 }));
 }
 
 export function emptyStore(): Store {
