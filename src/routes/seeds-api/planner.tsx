@@ -118,6 +118,7 @@ function PlannerPage() {
         go: () => navigate({ to: "/seeds-api/subscriptions", search: { edit: s.id } }),
         body: (
           <div className="space-y-1">
+            {s.store && <InfoLine icon={Store}>{s.store}</InfoLine>}
             <InfoLine icon={Sprout}>{(s.seeds ?? []).length} seed{(s.seeds ?? []).length === 1 ? "" : "s"}</InfoLine>
             <div className="flex flex-wrap gap-1">
               {s.frequency && <Pill tone="slate"><CalendarClock className="mr-1 h-3 w-3" />{s.frequency}</Pill>}
