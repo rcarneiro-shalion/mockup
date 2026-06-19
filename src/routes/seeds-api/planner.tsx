@@ -9,6 +9,7 @@ import { getProjects } from "@/lib/projects";
 import { getSubscriptions } from "@/lib/subscriptions";
 import { getScrappingOptions } from "@/lib/scrappingOptions";
 import { STORE_LOCATIONS } from "@/lib/scenarioSeedData";
+import { useSessionState } from "@/hooks/usePersistentState";
 import type { ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import { cn } from "@/lib/utils";
 import { Users, FolderKanban, Layers, PlayCircle, RotateCcw, Sprout, Repeat, CalendarClock, Calculator, ZoomIn, ZoomOut, Maximize2, Minimize2, Store } from "lucide-react";
@@ -69,13 +70,14 @@ function PlannerPage() {
   const baseScraps = scraps.filter((o) => usedScrapNames.has(o.name));
 
   // Filters
-  const [fClient, setFClient] = useState<string[]>([]);
-  const [fProject, setFProject] = useState<string[]>([]);
-  const [fSub, setFSub] = useState<string[]>([]);
-  const [fStore, setFStore] = useState<string[]>([]);
-  const [fSeed, setFSeed] = useState<string[]>([]);
-  const [fScrap, setFScrap] = useState<string[]>([]);
-  const [fExtraction, setFExtraction] = useState<string[]>([]);
+  // Filters persist for the browser session (survive navigation + reloads, cleared on tab close).
+  const [fClient, setFClient] = useSessionState<string[]>("vsm:filter:clients", []);
+  const [fProject, setFProject] = useSessionState<string[]>("vsm:filter:projects", []);
+  const [fSub, setFSub] = useSessionState<string[]>("vsm:filter:subs", []);
+  const [fStore, setFStore] = useSessionState<string[]>("vsm:filter:stores", []);
+  const [fSeed, setFSeed] = useSessionState<string[]>("vsm:filter:seeds", []);
+  const [fScrap, setFScrap] = useSessionState<string[]>("vsm:filter:scraps", []);
+  const [fExtraction, setFExtraction] = useSessionState<string[]>("vsm:filter:extraction", []);
   const hasFilter = fClient.length + fProject.length + fSub.length + fStore.length + fSeed.length + fScrap.length + fExtraction.length > 0;
   const resetFilters = () => { setFClient([]); setFProject([]); setFSub([]); setFStore([]); setFSeed([]); setFScrap([]); setFExtraction([]); };
 
