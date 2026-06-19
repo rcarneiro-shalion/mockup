@@ -18,6 +18,11 @@ export const Route = createFileRoute("/seeds-api/scenario-generator")({
   component: ScenarioGeneratorPage,
 });
 
+// Persisted per-use-case checkbox state: { [clientSlug]: jobName[] }. Kept in sync
+// with the simulation so a generated client's ticks survive reloads and clearing
+// unticks them.
+const SEL_KEY = "seeds-api:sim:checked";
+
 const extTone = (ext: string) =>
   ext === "MEDIA" ? "orange" : ext === "DIGITAL_SHELF_PDP" ? "blue" : ext === "DIGITAL_SHELF_PLP" ? "violet" : ext === "AD" ? "green" : "slate";
 
@@ -78,7 +83,28 @@ function ScenarioGeneratorPage() {
   const [results, setResults] = useState<BuiltScenario[]>([]);
   const [simLive, setSimLive] = useState(false);
   const [simSlugs, setSimSlugs] = useState<Set<string>>(new Set()); // clients with a live simulated scenario
-  useEffect(() => { setMounted(true); setSimLive(hasSimulated()); setSimSlugs(new Set(simulatedSlugs())); }, []);
+  useEffect(() => {
+    setMounted(true);
+    setSimLive(hasSimulated());
+    setSimSlugs(new Set(simulatedSlugs()));
+    // Restore the per-use-case checkbox state persisted from the last generation.
+    try {
+      const raw = localStorage.getItem(SEL_KEY);
+      if (raw) {
+        const obj = JSON.parse(raw) as Record<string, string[]>;
+        setSel(Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, new Set(v)])));
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Persist the checkbox selection (Sets → arrays) so generated use cases stay
+  // ticked across reloads; clearing writes the emptied state back.
+  useEffect(() => {
+    if (!mounted) return;
+    try {
+      localStorage.setItem(SEL_KEY, JSON.stringify(Object.fromEntries(Object.entries(sel).map(([k, v]) => [k, [...v]]))));
+    } catch { /* ignore */ }
+  }, [sel, mounted]);
 
   // ---- filters
   const [clientFilter, setClientFilter] = useState<Set<string>>(new Set());
@@ -159,6 +185,7 @@ function ScenarioGeneratorPage() {
     setResults((r) => r.filter((x) => x.slug !== slug));
     setSimSlugs((s) => { const n = new Set(s); n.delete(slug); return n; });
     setSimLive(hasSimulated());
+    setSel((p) => { const n = { ...p }; delete n[slug]; return n; }); // untick this client's use cases
     toast.success(`Cleared ${CLIENT_LABELS[slug] ?? slug}: ${c.subscriptions} subscriptions · ${c.scrappingOptions} options · ${c.seeds} seeds`);
   };
 
