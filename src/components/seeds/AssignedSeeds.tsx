@@ -5,14 +5,14 @@ import { AssignSeedsDialog } from "@/components/seeds/AssignSeedsDialog";
 import { readPersistedList } from "@/lib/seedOptions";
 import { SEEDS_KEY, INITIAL_SEEDS, type Seed, type SeedType } from "@/lib/seeds";
 import { cn } from "@/lib/utils";
-import { Plus, Search, Sparkles, Sprout, X } from "lucide-react";
+import { Plus, Search, Sprout, X } from "lucide-react";
 
-const TABS: { key: SeedType; label: string; icon?: typeof Sparkles }[] = [
+const TABS: { key: SeedType; label: string }[] = [
   { key: "KEYWORD", label: "Keyword" },
   { key: "URL", label: "URL" },
   { key: "API", label: "API" },
-  // PDP seeds are the discovery-generated Virtual Seeds.
-  { key: "PDP", label: "Virtual Seed (PDP)", icon: Sparkles },
+  // PDP seeds — physical (added here) or virtual (discovery-generated); see Origin.
+  { key: "PDP", label: "PDP" },
 ];
 
 function StatusDot({ status }: { status?: Seed["status"] }) {
@@ -67,7 +67,7 @@ export function AssignedSeeds({
   };
 
   const valueHeader = tab === "URL" || tab === "PDP" ? "URL" : tab === "API" ? "API origin" : "Keyword";
-  const extraHeader = tab === "KEYWORD" ? "Keyword type" : "Page type";
+  const extraHeader = tab === "KEYWORD" ? "Keyword type" : tab === "PDP" ? "Discovery key" : "Page type";
   const tabLabel = TABS.find((t) => t.key === tab)?.label.toLowerCase() ?? "";
 
   return (
@@ -106,7 +106,6 @@ export function AssignedSeeds({
                 : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
-            {t.icon && <t.icon className="h-3.5 w-3.5" />}
             {t.label}
             <span className="rounded-full bg-secondary px-1.5 text-[11px] text-muted-foreground">{countByType(t.key)}</span>
           </button>
@@ -132,6 +131,7 @@ export function AssignedSeeds({
               <th className="px-3 py-2 font-medium">Description</th>
               <th className="px-3 py-2 font-medium">{valueHeader}</th>
               <th className="px-3 py-2 font-medium">{extraHeader}</th>
+              {tab === "PDP" && <th className="px-3 py-2 font-medium">Origin</th>}
               <th className="px-3 py-2 font-medium">Status</th>
               <th className="w-8 px-3 py-2" />
             </tr>
@@ -139,7 +139,7 @@ export function AssignedSeeds({
           <tbody>
             {rowsForTab.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-5 text-center text-muted-foreground">
+                <td colSpan={tab === "PDP" ? 6 : 5} className="px-3 py-5 text-center text-muted-foreground">
                   No {tabLabel} seeds assigned.
                 </td>
               </tr>
@@ -151,14 +151,27 @@ export function AssignedSeeds({
                   <span className="block max-w-[220px] truncate" title={s.value}>{s.value || "—"}</span>
                 </td>
                 <td className="px-3 py-2">
-                  {tab === "KEYWORD"
-                    ? s.keywordType
+                  {tab === "KEYWORD" ? (
+                    s.keywordType
                       ? <Pill tone={s.keywordType === "BRANDED" ? "violet" : "slate"}>{s.keywordType}</Pill>
                       : <span className="text-muted-foreground">—</span>
-                    : s.pageType
+                  ) : tab === "PDP" ? (
+                    s.discoveryKey
+                      ? <span className="block max-w-[200px] truncate font-mono text-xs text-foreground/80" title={s.discoveryKey}>{s.discoveryKey}</span>
+                      : <span className="text-muted-foreground">—</span>
+                  ) : (
+                    s.pageType
                       ? <Pill tone="slate">{s.pageType}</Pill>
-                      : <span className="text-muted-foreground">—</span>}
+                      : <span className="text-muted-foreground">—</span>
+                  )}
                 </td>
+                {tab === "PDP" && (
+                  <td className="px-3 py-2">
+                    {s.isFromDiscovery
+                      ? <Pill tone="violet">Virtual</Pill>
+                      : <Pill tone="slate">Physical</Pill>}
+                  </td>
+                )}
                 <td className="px-3 py-2"><StatusDot status={s.status} /></td>
                 <td className="px-3 py-2">
                   <button
