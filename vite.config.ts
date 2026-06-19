@@ -15,5 +15,8 @@ export default defineConfig({
   // Force Nitro on with the Vercel preset so `vite build` emits Vercel's
   // Build Output API (.vercel/output), which Vercel deploys automatically.
   // (Inside a Lovable build the preset is forced to Cloudflare.)
-  nitro: { preset: "vercel" },
+  // NITRO_PRESET overrides it — the desktop (Electron) build sets
+  // NITRO_PRESET=node-server to emit a standalone Node server (.output/server)
+  // that Electron spawns and loads. Vercel/Lovable leave the env unset.
+  nitro: { preset: process.env.NITRO_PRESET || "vercel" },
 });

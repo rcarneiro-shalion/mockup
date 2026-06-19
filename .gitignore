@@ -21,6 +21,7 @@ memory/*.secret.md
 .vercel
 dist
 dist-ssr
+dist-desktop
 .output
 .vinxi
 .tanstack/**

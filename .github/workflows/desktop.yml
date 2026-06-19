@@ -1,0 +1,66 @@
+name: Desktop installers
+
+# Builds the macOS (.dmg) and Windows (.exe) installers on their native runners.
+# Run manually (Actions ▸ Desktop installers ▸ Run workflow) to get downloadable
+# artifacts, or push a tag like `v1.0.0` to also attach them to a GitHub Release.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            flag: --mac
+            artifact: macos-dmg
+          - os: windows-latest
+            flag: --win
+            artifact: windows-exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build web app (standalone Nitro server)
+        run: npm run build
+        env:
+          NITRO_PRESET: node-server
+
+      - name: Build desktop installer
+        run: npx electron-builder ${{ matrix.flag }} --publish never
+        env:
+          # Internal/unsigned build — don't attempt macOS code signing in CI.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            dist-desktop/*.dmg
+            dist-desktop/*.exe
+          if-no-files-found: warn
+
+      - name: Attach to release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist-desktop/*.dmg
+            dist-desktop/*.exe
+          fail_on_unmatched_files: false

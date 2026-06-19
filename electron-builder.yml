@@ -1,0 +1,50 @@
+appId: com.shalion.mockup
+productName: Shalion Mockup
+copyright: © Shalion
+
+directories:
+  output: dist-desktop
+  buildResources: build
+
+# Files baked into the app (asar). The web build itself ships as an unpacked
+# extraResource so Electron's Node can spawn the Nitro server from a real path.
+files:
+  - electron/**/*
+  - package.json
+
+extraResources:
+  - from: .output
+    to: .output
+
+asar: true
+
+# Unsigned builds (internal mockup). Skip macOS signing/notarization so CI runs
+# without certificates; users approve it via Gatekeeper / SmartScreen on first run.
+mac:
+  target:
+    - target: dmg
+      arch: universal
+  category: public.app-category.developer-tools
+  icon: build/icon.png
+  identity: null
+
+dmg:
+  title: Shalion Mockup
+
+win:
+  target:
+    - nsis
+  icon: build/icon.png
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: Shalion Mockup
+
+linux:
+  target:
+    - AppImage
+  category: Development
+  icon: build/icon.png

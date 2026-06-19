@@ -1,6 +1,10 @@
 {
   "name": "tanstack_start_ts",
   "private": true,
+  "version": "1.0.0",
+  "description": "Shalion Mockup — Seeds API & Dashboard requirements mockup",
+  "author": "Shalion",
+  "main": "electron/main.cjs",
   "sideEffects": false,
   "type": "module",
   "engines": {
@@ -12,7 +16,11 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "desktop:web": "NITRO_PRESET=node-server vite build",
+    "desktop": "NITRO_PRESET=node-server vite build && electron-builder",
+    "desktop:dir": "NITRO_PRESET=node-server vite build && electron-builder --dir",
+    "electron:start": "electron ."
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -75,6 +83,8 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
