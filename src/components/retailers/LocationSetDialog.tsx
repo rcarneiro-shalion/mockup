@@ -7,50 +7,50 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Th, Td, Pagination, LinkText } from "@/components/seeds/ListPrimitives";
-import { emptyRegion, ASSIGNABLE_LOCATIONS, type Region, type RegionLocation } from "@/lib/retailers";
+import { emptyLocationSet, ASSIGNABLE_LOCATIONS, type LocationSet, type SetLocation } from "@/lib/retailers";
 import { toast } from "sonner";
 import { Plus, Trash2, FileSpreadsheet, X, ChevronDown } from "lucide-react";
 
-export function RegionDetailDialog({
+export function LocationSetDialog({
   open,
   onOpenChange,
-  region,
+  set: locationSet,
   onSave,
   onDelete,
-  entityLabel = "region",
+  entityLabel = "location set",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  region: Region | null;
-  onSave: (r: Region) => void;
+  set: LocationSet | null;
+  onSave: (s: LocationSet) => void;
   onDelete: () => void;
-  /** Label for the edited entity ("region" or "location set"). */
+  /** Label for the edited entity (default "location set"). */
   entityLabel?: string;
 }) {
   const cap = entityLabel.charAt(0).toUpperCase() + entityLabel.slice(1);
-  const [r, setR] = useState<Region>(emptyRegion());
+  const [r, setR] = useState<LocationSet>(emptyLocationSet());
   const [assignOpen, setAssignOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [locFilter, setLocFilter] = useState("");
 
   useEffect(() => {
-    if (open && region) { setR({ ...region, locations: region.locations ?? [] }); setAssignOpen(false); setLocFilter(""); }
-  }, [open, region]);
+    if (open && locationSet) { setR({ ...locationSet, locations: locationSet.locations ?? [] }); setAssignOpen(false); setLocFilter(""); }
+  }, [open, locationSet]);
 
-  const set = <K extends keyof Region>(k: K, v: Region[K]) => setR((p) => ({ ...p, [k]: v }));
+  const upd = <K extends keyof LocationSet>(k: K, v: LocationSet[K]) => setR((p) => ({ ...p, [k]: v }));
   const allLocations = r.locations ?? [];
   const locations = locFilter
     ? allLocations.filter((l) => l.name.toLowerCase().includes(locFilter.toLowerCase()))
     : allLocations;
 
   const assignLocation = (name: string) => {
-    const loc: RegionLocation = {
+    const loc: SetLocation = {
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
       name, city: "", address: "", postal: "", store: "",
     };
-    set("locations", [...locations, loc]);
+    upd("locations", [...locations, loc]);
   };
-  const removeLocation = (id: string) => set("locations", locations.filter((l) => l.id !== id));
+  const removeLocation = (id: string) => upd("locations", locations.filter((l) => l.id !== id));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -70,7 +70,7 @@ export function RegionDetailDialog({
         <div className="flex-1 space-y-5 overflow-auto px-6 py-5">
           <div className="flex flex-col gap-1.5">
             <Label className="text-sm font-medium text-foreground/80">Name <span className="text-destructive">*</span></Label>
-            <Input value={r.name} onChange={(e) => set("name", e.target.value)} />
+            <Input value={r.name} onChange={(e) => upd("name", e.target.value)} />
           </div>
 
           <div>

@@ -14,7 +14,7 @@ import { Plus, X, LayoutGrid, Globe, Factory, Crosshair, Tag, Store, Sprout, Cal
 
 const TABS = [
   { key: "data-groups", label: "Data groups", icon: LayoutGrid },
-  { key: "region-systems", label: "Region systems", icon: Globe },
+  { key: "location-catalogs", label: "Location catalogs", icon: Globe },
   { key: "manufacturers", label: "Manufacturers", icon: Factory },
   { key: "competitors", label: "Competitors", icon: Crosshair },
   { key: "seed-tags", label: "Seed tags", icon: Tag },
@@ -40,7 +40,7 @@ export function ClientBottomTabs({
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("data-groups");
 
   const dataGroups = client.dataGroups ?? [];
-  const regionSystems = client.regionSystems ?? [];
+  const locationCatalogs = client.locationCatalogs ?? [];
   const manufacturers = client.manufacturers ?? [];
   const competitors = client.competitors ?? [];
 
@@ -93,23 +93,30 @@ export function ClientBottomTabs({
             />
           )}
 
-          {tab === "region-systems" && (
+          {tab === "location-catalogs" && (
             <CardTable
-              title="Region systems"
-              addLabel="Assign region system"
-              headers={["Name", "Country"]}
-              rows={regionSystems}
-              empty="No region systems yet."
-              renderRow={(rs) => (
+              title="Location catalogs"
+              addLabel="Enable location catalog"
+              headers={["Name", "Country", "Use cases"]}
+              rows={locationCatalogs}
+              empty="No location catalogs enabled yet."
+              renderRow={(lc) => (
                 <>
-                  <Td><LinkText>{rs.name}</LinkText></Td>
+                  <Td><LinkText>{lc.name}</LinkText></Td>
                   <Td>
                     <span className="inline-flex items-center gap-2">
-                      <span>{flag(rs.country)}</span>
-                      <span className="text-foreground/80">{rs.country}</span>
+                      <span>{flag(lc.country)}</span>
+                      <span className="text-foreground/80">{lc.country}</span>
                     </span>
                   </Td>
-                  <Td><RemoveBtn label={rs.name} onClick={() => set("regionSystems", regionSystems.filter((x) => x.id !== rs.id))} /></Td>
+                  <Td>
+                    <div className="flex flex-wrap gap-1">
+                      {(lc.useCases ?? []).length
+                        ? lc.useCases.map((u) => <Pill key={u} tone="blue">{u}</Pill>)
+                        : <span className="text-muted-foreground">—</span>}
+                    </div>
+                  </Td>
+                  <Td><RemoveBtn label={lc.name} onClick={() => set("locationCatalogs", locationCatalogs.filter((x) => x.id !== lc.id))} /></Td>
                 </>
               )}
             />

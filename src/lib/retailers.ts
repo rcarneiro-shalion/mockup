@@ -388,9 +388,12 @@ export function emptyStore(): Store {
   return { id: genId(), name: "", domain: "", retailer: "", type: "GEOLOC", klass: "BRICK_AND_CLICK", device: "WEB", country: "", status: "Active", ecometryId: "", timezone: "", locale: "", logoUrl: "", meta: "{}", locations: [], createdAt: nowStamp(), updatedAt: nowStamp() };
 }
 
-// ---------- Region system ----------
+// ---------- Location Catalog (ex Region System) ----------
+// Region System → Location Catalog generalization (RFC TECH-15730 area). A catalog
+// groups location SETS (ex "Region"); each set holds locations (ex RegionLocation).
+// Store / Location base entities are unchanged. Client enablement carries `useCases`.
 
-export type RegionLocation = {
+export type SetLocation = {
   id: string;
   name: string;
   city: string;
@@ -399,19 +402,22 @@ export type RegionLocation = {
   store: string;
 };
 
-export type Region = {
+export type LocationSet = {
   id: string;
   name: string;
-  locations: RegionLocation[];
+  locations: SetLocation[];
 };
 
-export type RegionSystem = {
+// Use cases a client enables a catalog for (replaces the never-shipped `type` tag).
+export const USE_CASE_OPTIONS = ["DASHBOARD", "MSRP", "ASSORTMENT", "SCRAPING"] as const;
+export type UseCase = (typeof USE_CASE_OPTIONS)[number];
+
+export type LocationCatalog = {
   id: string;
   name: string;
   country: string;
-  regions?: Region[];
-  /** Location sets — same shape as a region; the dataset behind the "Location set" option. */
-  locationSets?: Region[];
+  /** Location sets (buckets) — ex Region. */
+  sets?: LocationSet[];
   createdAt: string;
   updatedAt: string;
 };
@@ -423,7 +429,7 @@ const BR_STATE_NAMES = [
   "Rio Grande do Norte", "Piauí", "Distrito Federal", "Sergipe", "Tocantins", "Acre",
 ];
 
-const BR_STATES: Region[] = BR_STATE_NAMES.map((name, i) => ({
+const BR_STATES: LocationSet[] = BR_STATE_NAMES.map((name, i) => ({
   id: `br-${i}`,
   name,
   locations: i === 0
@@ -434,15 +440,11 @@ const BR_STATES: Region[] = BR_STATE_NAMES.map((name, i) => ({
     : [],
 }));
 
-export function emptyRegion(): Region {
-  return { id: genId(), name: "New region", locations: [] };
-}
-
-export function emptyLocationSet(): Region {
+export function emptyLocationSet(): LocationSet {
   return { id: genId(), name: "New location set", locations: [] };
 }
 
-// Pool of locations that can be assigned to a region (mock).
+// Pool of locations that can be assigned to a set (mock).
 export const ASSIGNABLE_LOCATIONS = [
   "2041619 Mobile County Health Department Newburn Clinic",
   "208418 Dukuhan",
@@ -458,13 +460,13 @@ export const ASSIGNABLE_LOCATIONS = [
   "77120 Riverside Market",
 ];
 
-export const REGION_SYSTEMS_KEY = "retailers:region-systems";
+export const LOCATION_CATALOGS_KEY = "retailers:location-catalogs";
 
-export const INITIAL_REGION_SYSTEMS: RegionSystem[] = [
+export const INITIAL_LOCATION_CATALOGS: LocationCatalog[] = [
   { id: "rs1", name: "LT - Administrative Region", country: "LT", createdAt: "Tue, Apr 8, 2025 2:49", updatedAt: "Tue, Apr 8, 2025 2:49" },
   { id: "rs2", name: "ZA - Provinces", country: "ZA", createdAt: "Mon, Aug 12, 2024 8:00", updatedAt: "Mon, Aug 12, 2024 8:00" },
   { id: "rs3", name: "CO - Coke Bottlers", country: "CO", createdAt: "Mon, May 19, 2025 8:00", updatedAt: "Mon, May 19, 2025 8:00" },
-  { id: "rs4", name: "BR - Unidades Federativas do Brasil", country: "BR", regions: BR_STATES, createdAt: "Thu, Jun 20, 2024 11:10", updatedAt: "Sun, Jul 21, 2024 9:30" },
+  { id: "rs4", name: "BR - Unidades Federativas do Brasil", country: "BR", sets: BR_STATES, createdAt: "Thu, Jun 20, 2024 11:10", updatedAt: "Sun, Jul 21, 2024 9:30" },
   { id: "rs5", name: "UY - Coke Bottlers", country: "UY", createdAt: "Mon, May 19, 2025 8:00", updatedAt: "Mon, May 19, 2025 8:00" },
   { id: "rs6", name: "PA - Coke Bottlers", country: "PA", createdAt: "Mon, May 19, 2025 8:00", updatedAt: "Mon, May 19, 2025 8:00" },
   { id: "rs7", name: "QA - Municipality", country: "QA", createdAt: "Tue, Dec 24, 2024 6:30", updatedAt: "Thu, Dec 26, 2024 6:00" },
@@ -476,13 +478,13 @@ export const INITIAL_REGION_SYSTEMS: RegionSystem[] = [
   { id: "rs13", name: "EC - Coke Bottlers", country: "EC", createdAt: "Mon, May 19, 2025 8:00", updatedAt: "Mon, May 19, 2025 8:00" },
 ];
 
-export function getRegionSystems(): RegionSystem[] {
-  const list = readList<RegionSystem>(REGION_SYSTEMS_KEY);
-  return list.length ? list : INITIAL_REGION_SYSTEMS;
+export function getLocationCatalogs(): LocationCatalog[] {
+  const list = readList<LocationCatalog>(LOCATION_CATALOGS_KEY);
+  return list.length ? list : INITIAL_LOCATION_CATALOGS;
 }
 
-export function emptyRegionSystem(): RegionSystem {
-  return { id: genId(), name: "", country: "", regions: [], locationSets: [], createdAt: nowStamp(), updatedAt: nowStamp() };
+export function emptyLocationCatalog(): LocationCatalog {
+  return { id: genId(), name: "", country: "", sets: [], createdAt: nowStamp(), updatedAt: nowStamp() };
 }
 
 // ---------- shared persistence read (SSR-safe) ----------

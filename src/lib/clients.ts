@@ -1,4 +1,5 @@
 import { readPersistedList } from "./seedOptions";
+import type { UseCase } from "./retailers";
 
 // client-project relationship: a project assigned to a client for a date range.
 export type AssignedProject = {
@@ -19,7 +20,9 @@ export type DataGroup = {
 };
 
 // Bottom-tab sub-resources of a client.
-export type ClientRegionSystem = { id: string; name: string; country: string };
+// Client enablement of a Location Catalog (ex ClientRegionSystem) — carries the
+// use cases the catalog's location sets may be used for, and allows multiple per country.
+export type ClientLocationCatalog = { id: string; name: string; country: string; useCases: UseCase[] };
 export type Manufacturer = { id: string; name: string };
 export type Competitor = { id: string; name: string; isMain?: boolean };
 
@@ -34,7 +37,7 @@ export type Client = {
   updatedAt: string;
   assignedProjects?: AssignedProject[];
   dataGroups?: DataGroup[];
-  regionSystems?: ClientRegionSystem[];
+  locationCatalogs?: ClientLocationCatalog[];
   manufacturers?: Manufacturer[];
   competitors?: Competitor[];
 };
@@ -85,9 +88,9 @@ const COCA_DATA_GROUPS: DataGroup[] = [
   DG("dg9", "dummy-con", "Fri, Nov 28, 2025 5:35 PM", "Fri, Nov 28, 2025 5:35 PM"),
 ];
 
-const RS = (id: string, name: string, country: string): ClientRegionSystem => ({ id, name, country });
-const COCA_REGION_SYSTEMS: ClientRegionSystem[] = [
-  RS("crs1", "FR - Région Administrative", "FR"),
+const RS = (id: string, name: string, country: string, useCases: UseCase[] = ["DASHBOARD"]): ClientLocationCatalog => ({ id, name, country, useCases });
+const COCA_LOCATION_CATALOGS: ClientLocationCatalog[] = [
+  RS("crs1", "FR - Région Administrative", "FR", ["DASHBOARD", "MSRP"]),
   RS("crs2", "CO - Coke Bottlers", "CO"),
   RS("crs3", "US - Coke Bottlers", "US"),
   RS("crs4", "UY - Coke Bottlers", "UY"),
@@ -141,7 +144,7 @@ export const INITIAL_CLIENTS: Client[] = [
   C("baye", "Bayer", "BAYE", false, "Thu, Dec 19, 2024 4:37 PM", "Thu, Dec 19, 2024 4:53 PM"),
   C("beam", "Beam Suntory", "BEAM", false, "Mon, Jul 10, 2023 7:58 AM", "Tue, Aug 6, 2024 10:30 AM"),
   C("bimb", "Bimbo", "BIMB", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:28 AM"),
-  { ...C("coca", "Coca Cola", "COCA", false, "Thu, Mar 7, 2024 11:15 AM", "Fri, Jul 19, 2024 12:41 PM"), account: "Coca Cola", assignedProjects: COCA_PROJECTS, dataGroups: COCA_DATA_GROUPS, regionSystems: COCA_REGION_SYSTEMS, manufacturers: COCA_MANUFACTURERS, competitors: COCA_COMPETITORS },
+  { ...C("coca", "Coca Cola", "COCA", false, "Thu, Mar 7, 2024 11:15 AM", "Fri, Jul 19, 2024 12:41 PM"), account: "Coca Cola", assignedProjects: COCA_PROJECTS, dataGroups: COCA_DATA_GROUPS, locationCatalogs: COCA_LOCATION_CATALOGS, manufacturers: COCA_MANUFACTURERS, competitors: COCA_COMPETITORS },
   C("cosn", "Cosnova", "COSN", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:30 AM"),
   C("dano", "Danone", "DANO", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:28 AM"),
   C("long", "De Longhi", "LONG", false, "Mon, Jul 14, 2025 9:17 AM", "Mon, Jul 14, 2025 2:41 PM"),
@@ -297,7 +300,7 @@ export function emptyClient(): Client {
     updatedAt: nowStamp(),
     assignedProjects: [],
     dataGroups: [],
-    regionSystems: [],
+    locationCatalogs: [],
     manufacturers: [],
     competitors: [],
   };

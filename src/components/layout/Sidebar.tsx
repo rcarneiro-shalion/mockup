@@ -47,7 +47,7 @@ const ecometryNav: NavItem[] = [
     children: [
       { label: "Retailers", to: "/retailers" },
       { label: "Stores", to: "/stores" },
-      { label: "Region systems", to: "/region-systems" },
+      { label: "Location Catalog", to: "/location-catalogs" },
     ],
   },
   {

@@ -150,8 +150,8 @@ const stores: RulePage = {
 
 const regionSystems: RulePage = {
   key: "regionSystems",
-  label: "Region systems",
-  match: "/region-systems",
+  label: "Location Catalog",
+  match: "/location-catalogs",
   groups: [
     {
       category: "Creating & editing",

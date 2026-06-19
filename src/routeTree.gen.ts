@@ -12,7 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoresIndexRouteImport } from './routes/stores/index'
 import { Route as RetailersIndexRouteImport } from './routes/retailers/index'
-import { Route as RegionSystemsIndexRouteImport } from './routes/region-systems/index'
+import { Route as LocationCatalogsIndexRouteImport } from './routes/location-catalogs/index'
 import { Route as IamIndexRouteImport } from './routes/iam/index'
 import { Route as DataCollectorIndexRouteImport } from './routes/data-collector/index'
 import { Route as ClientsIndexRouteImport } from './routes/clients/index'
@@ -34,9 +34,9 @@ import { Route as SeedsApiScenarioGeneratorRouteImport } from './routes/seeds-ap
 import { Route as SeedsApiPlannerRouteImport } from './routes/seeds-api/planner'
 import { Route as RetailersNewRouteImport } from './routes/retailers/new'
 import { Route as RetailersRetailerIdRouteImport } from './routes/retailers/$retailerId'
-import { Route as RegionSystemsNewRouteImport } from './routes/region-systems/new'
-import { Route as RegionSystemsRegionIdRouteImport } from './routes/region-systems/$regionId'
 import { Route as ProductClientSkusRouteImport } from './routes/product/client-skus'
+import { Route as LocationCatalogsNewRouteImport } from './routes/location-catalogs/new'
+import { Route as LocationCatalogsCatalogIdRouteImport } from './routes/location-catalogs/$catalogId'
 import { Route as ClientsNewRouteImport } from './routes/clients/new'
 import { Route as ClientsClientIdRouteImport } from './routes/clients/$clientId'
 import { Route as BulkNewRouteImport } from './routes/bulk/new'
@@ -207,9 +207,9 @@ const RetailersIndexRoute = RetailersIndexRouteImport.update({
   path: '/retailers/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegionSystemsIndexRoute = RegionSystemsIndexRouteImport.update({
-  id: '/region-systems/',
-  path: '/region-systems/',
+const LocationCatalogsIndexRoute = LocationCatalogsIndexRouteImport.update({
+  id: '/location-catalogs/',
+  path: '/location-catalogs/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IamIndexRoute = IamIndexRouteImport.update({
@@ -321,21 +321,22 @@ const RetailersRetailerIdRoute = RetailersRetailerIdRouteImport.update({
   path: '/retailers/$retailerId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegionSystemsNewRoute = RegionSystemsNewRouteImport.update({
-  id: '/region-systems/new',
-  path: '/region-systems/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegionSystemsRegionIdRoute = RegionSystemsRegionIdRouteImport.update({
-  id: '/region-systems/$regionId',
-  path: '/region-systems/$regionId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProductClientSkusRoute = ProductClientSkusRouteImport.update({
   id: '/product/client-skus',
   path: '/product/client-skus',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LocationCatalogsNewRoute = LocationCatalogsNewRouteImport.update({
+  id: '/location-catalogs/new',
+  path: '/location-catalogs/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LocationCatalogsCatalogIdRoute =
+  LocationCatalogsCatalogIdRouteImport.update({
+    id: '/location-catalogs/$catalogId',
+    path: '/location-catalogs/$catalogId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ClientsNewRoute = ClientsNewRouteImport.update({
   id: '/clients/new',
   path: '/clients/new',
@@ -1204,9 +1205,9 @@ export interface FileRoutesByFullPath {
   '/bulk/new': typeof BulkNewRoute
   '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
   '/clients/new': typeof ClientsNewRoute
+  '/location-catalogs/$catalogId': typeof LocationCatalogsCatalogIdRoute
+  '/location-catalogs/new': typeof LocationCatalogsNewRoute
   '/product/client-skus': typeof ProductClientSkusRouteWithChildren
-  '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
-  '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
@@ -1228,7 +1229,7 @@ export interface FileRoutesByFullPath {
   '/clients/': typeof ClientsIndexRoute
   '/data-collector/': typeof DataCollectorIndexRoute
   '/iam/': typeof IamIndexRoute
-  '/region-systems/': typeof RegionSystemsIndexRoute
+  '/location-catalogs/': typeof LocationCatalogsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
   '/codification/ads/$id': typeof CodificationAdsIdRoute
@@ -1387,8 +1388,8 @@ export interface FileRoutesByTo {
   '/bulk/$id': typeof BulkIdRoute
   '/bulk/new': typeof BulkNewRoute
   '/clients/new': typeof ClientsNewRoute
-  '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
-  '/region-systems/new': typeof RegionSystemsNewRoute
+  '/location-catalogs/$catalogId': typeof LocationCatalogsCatalogIdRoute
+  '/location-catalogs/new': typeof LocationCatalogsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
@@ -1406,7 +1407,7 @@ export interface FileRoutesByTo {
   '/clients': typeof ClientsIndexRoute
   '/data-collector': typeof DataCollectorIndexRoute
   '/iam': typeof IamIndexRoute
-  '/region-systems': typeof RegionSystemsIndexRoute
+  '/location-catalogs': typeof LocationCatalogsIndexRoute
   '/retailers': typeof RetailersIndexRoute
   '/stores': typeof StoresIndexRoute
   '/codification/ads/$id': typeof CodificationAdsIdRoute
@@ -1565,9 +1566,9 @@ export interface FileRoutesById {
   '/bulk/new': typeof BulkNewRoute
   '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
   '/clients/new': typeof ClientsNewRoute
+  '/location-catalogs/$catalogId': typeof LocationCatalogsCatalogIdRoute
+  '/location-catalogs/new': typeof LocationCatalogsNewRoute
   '/product/client-skus': typeof ProductClientSkusRouteWithChildren
-  '/region-systems/$regionId': typeof RegionSystemsRegionIdRoute
-  '/region-systems/new': typeof RegionSystemsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
@@ -1589,7 +1590,7 @@ export interface FileRoutesById {
   '/clients/': typeof ClientsIndexRoute
   '/data-collector/': typeof DataCollectorIndexRoute
   '/iam/': typeof IamIndexRoute
-  '/region-systems/': typeof RegionSystemsIndexRoute
+  '/location-catalogs/': typeof LocationCatalogsIndexRoute
   '/retailers/': typeof RetailersIndexRoute
   '/stores/': typeof StoresIndexRoute
   '/codification/ads/$id': typeof CodificationAdsIdRoute
@@ -1751,9 +1752,9 @@ export interface FileRouteTypes {
     | '/bulk/new'
     | '/clients/$clientId'
     | '/clients/new'
+    | '/location-catalogs/$catalogId'
+    | '/location-catalogs/new'
     | '/product/client-skus'
-    | '/region-systems/$regionId'
-    | '/region-systems/new'
     | '/retailers/$retailerId'
     | '/retailers/new'
     | '/seeds-api/planner'
@@ -1775,7 +1776,7 @@ export interface FileRouteTypes {
     | '/clients/'
     | '/data-collector/'
     | '/iam/'
-    | '/region-systems/'
+    | '/location-catalogs/'
     | '/retailers/'
     | '/stores/'
     | '/codification/ads/$id'
@@ -1934,8 +1935,8 @@ export interface FileRouteTypes {
     | '/bulk/$id'
     | '/bulk/new'
     | '/clients/new'
-    | '/region-systems/$regionId'
-    | '/region-systems/new'
+    | '/location-catalogs/$catalogId'
+    | '/location-catalogs/new'
     | '/retailers/$retailerId'
     | '/retailers/new'
     | '/seeds-api/planner'
@@ -1953,7 +1954,7 @@ export interface FileRouteTypes {
     | '/clients'
     | '/data-collector'
     | '/iam'
-    | '/region-systems'
+    | '/location-catalogs'
     | '/retailers'
     | '/stores'
     | '/codification/ads/$id'
@@ -2111,9 +2112,9 @@ export interface FileRouteTypes {
     | '/bulk/new'
     | '/clients/$clientId'
     | '/clients/new'
+    | '/location-catalogs/$catalogId'
+    | '/location-catalogs/new'
     | '/product/client-skus'
-    | '/region-systems/$regionId'
-    | '/region-systems/new'
     | '/retailers/$retailerId'
     | '/retailers/new'
     | '/seeds-api/planner'
@@ -2135,7 +2136,7 @@ export interface FileRouteTypes {
     | '/clients/'
     | '/data-collector/'
     | '/iam/'
-    | '/region-systems/'
+    | '/location-catalogs/'
     | '/retailers/'
     | '/stores/'
     | '/codification/ads/$id'
@@ -2296,9 +2297,9 @@ export interface RootRouteChildren {
   BulkNewRoute: typeof BulkNewRoute
   ClientsClientIdRoute: typeof ClientsClientIdRouteWithChildren
   ClientsNewRoute: typeof ClientsNewRoute
+  LocationCatalogsCatalogIdRoute: typeof LocationCatalogsCatalogIdRoute
+  LocationCatalogsNewRoute: typeof LocationCatalogsNewRoute
   ProductClientSkusRoute: typeof ProductClientSkusRouteWithChildren
-  RegionSystemsRegionIdRoute: typeof RegionSystemsRegionIdRoute
-  RegionSystemsNewRoute: typeof RegionSystemsNewRoute
   RetailersRetailerIdRoute: typeof RetailersRetailerIdRoute
   RetailersNewRoute: typeof RetailersNewRoute
   SeedsApiPlannerRoute: typeof SeedsApiPlannerRoute
@@ -2320,7 +2321,7 @@ export interface RootRouteChildren {
   ClientsIndexRoute: typeof ClientsIndexRoute
   DataCollectorIndexRoute: typeof DataCollectorIndexRoute
   IamIndexRoute: typeof IamIndexRoute
-  RegionSystemsIndexRoute: typeof RegionSystemsIndexRoute
+  LocationCatalogsIndexRoute: typeof LocationCatalogsIndexRoute
   RetailersIndexRoute: typeof RetailersIndexRoute
   StoresIndexRoute: typeof StoresIndexRoute
   CodificationAdsIdRoute: typeof CodificationAdsIdRoute
@@ -2475,11 +2476,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RetailersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/region-systems/': {
-      id: '/region-systems/'
-      path: '/region-systems'
-      fullPath: '/region-systems/'
-      preLoaderRoute: typeof RegionSystemsIndexRouteImport
+    '/location-catalogs/': {
+      id: '/location-catalogs/'
+      path: '/location-catalogs'
+      fullPath: '/location-catalogs/'
+      preLoaderRoute: typeof LocationCatalogsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/iam/': {
@@ -2629,25 +2630,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RetailersRetailerIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/region-systems/new': {
-      id: '/region-systems/new'
-      path: '/region-systems/new'
-      fullPath: '/region-systems/new'
-      preLoaderRoute: typeof RegionSystemsNewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/region-systems/$regionId': {
-      id: '/region-systems/$regionId'
-      path: '/region-systems/$regionId'
-      fullPath: '/region-systems/$regionId'
-      preLoaderRoute: typeof RegionSystemsRegionIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/product/client-skus': {
       id: '/product/client-skus'
       path: '/product/client-skus'
       fullPath: '/product/client-skus'
       preLoaderRoute: typeof ProductClientSkusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/location-catalogs/new': {
+      id: '/location-catalogs/new'
+      path: '/location-catalogs/new'
+      fullPath: '/location-catalogs/new'
+      preLoaderRoute: typeof LocationCatalogsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/location-catalogs/$catalogId': {
+      id: '/location-catalogs/$catalogId'
+      path: '/location-catalogs/$catalogId'
+      fullPath: '/location-catalogs/$catalogId'
+      preLoaderRoute: typeof LocationCatalogsCatalogIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients/new': {
@@ -3879,9 +3880,9 @@ const rootRouteChildren: RootRouteChildren = {
   BulkNewRoute: BulkNewRoute,
   ClientsClientIdRoute: ClientsClientIdRouteWithChildren,
   ClientsNewRoute: ClientsNewRoute,
+  LocationCatalogsCatalogIdRoute: LocationCatalogsCatalogIdRoute,
+  LocationCatalogsNewRoute: LocationCatalogsNewRoute,
   ProductClientSkusRoute: ProductClientSkusRouteWithChildren,
-  RegionSystemsRegionIdRoute: RegionSystemsRegionIdRoute,
-  RegionSystemsNewRoute: RegionSystemsNewRoute,
   RetailersRetailerIdRoute: RetailersRetailerIdRoute,
   RetailersNewRoute: RetailersNewRoute,
   SeedsApiPlannerRoute: SeedsApiPlannerRoute,
@@ -3904,7 +3905,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClientsIndexRoute: ClientsIndexRoute,
   DataCollectorIndexRoute: DataCollectorIndexRoute,
   IamIndexRoute: IamIndexRoute,
-  RegionSystemsIndexRoute: RegionSystemsIndexRoute,
+  LocationCatalogsIndexRoute: LocationCatalogsIndexRoute,
   RetailersIndexRoute: RetailersIndexRoute,
   StoresIndexRoute: StoresIndexRoute,
   CodificationAdsIdRoute: CodificationAdsIdRoute,
