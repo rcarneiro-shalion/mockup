@@ -214,7 +214,12 @@ function PlannerPage() {
       const p = projectByName.get(s.project);
       if (p && nodes.has(`p:${p.id}`)) {
         vis.add(`p:${p.id}`);
-        for (const c of clientsByProjectId.get(p.id) ?? []) if (nodes.has(`c:${c.id}`)) vis.add(`c:${c.id}`);
+        // Add the project's clients, but honor the client filter — a project shared by
+        // several clients must NOT pull in the unselected ones (keeps the AND consistent).
+        for (const c of clientsByProjectId.get(p.id) ?? []) {
+          if (fClient.length && !fClient.includes(c.name)) continue;
+          if (nodes.has(`c:${c.id}`)) vis.add(`c:${c.id}`);
+        }
       }
     }
     return vis;
