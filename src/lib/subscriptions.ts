@@ -19,6 +19,8 @@ export type Subscription = {
   // Set only when the scrapping option's extraction type is DIGITAL_SHELF_PLP or
   // MEDIA — points to a sibling subscription whose scrapping option is a PDP one.
   destinationOption?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 // Business Units — exactly one may be assigned to a subscription.
@@ -45,6 +47,8 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
     rotation: "Locations",
     status: "Active",
     businessUnit: "CMI",
+    createdAt: "Thu, May 2, 2024 3:21",
+    updatedAt: "Mon, Oct 27, 2025 1:30",
   },
   {
     id: "sub2",
@@ -59,6 +63,8 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
     rotation: "Seeds",
     status: "Active",
     businessUnit: "FSA",
+    createdAt: "Fri, May 3, 2024 8:27",
+    updatedAt: "Mon, Oct 27, 2025 2:00",
   },
 ];
 
@@ -82,5 +88,7 @@ export function emptySubscription(): Subscription {
     status: "Active",
     businessUnit: "",
     destinationOption: "",
+    createdAt: "",
+    updatedAt: "",
   };
 }

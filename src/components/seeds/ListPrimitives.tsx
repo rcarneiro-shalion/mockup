@@ -29,7 +29,10 @@ export function useSort(persistKey?: string, initialKey: string | null = null, i
         const raw = window.localStorage.getItem(storageKey);
         if (raw) {
           const p = JSON.parse(raw) as { key: string | null; dir: "asc" | "desc" };
-          if (p && (p.key === null || typeof p.key === "string") && (p.dir === "asc" || p.dir === "desc")) return p;
+          // Only restore a real, user-picked column. A persisted null key is just the
+          // stale initial default from a first render — it must not override a newly
+          // introduced initialKey/initialDir default (e.g. "updated desc").
+          if (p && typeof p.key === "string" && (p.dir === "asc" || p.dir === "desc")) return p;
         }
       } catch { /* ignore */ }
     }
@@ -49,6 +52,25 @@ function sortValue(v: unknown): string | number {
   if (typeof v === "boolean") return v ? 1 : 0;
   if (typeof v === "number") return v;
   return (v ?? "") as string;
+}
+
+/** Parse the app's date strings into a sortable epoch-ms. Handles both the ISO-ish
+ *  stamp from nowStamp() ("2026-06-19, 14:30:05") and the human format seeded in the
+ *  data ("Mon, Oct 27, 2025 2:00"). Returns 0 for blank/"-"/unparseable values so
+ *  they sort last under a desc sort. Use as a sortRows accessor for date columns —
+ *  the default lexical compare would order weekday-prefixed strings wrongly. */
+export function parseListDate(s: unknown): number {
+  if (typeof s !== "string") return 0;
+  const str = s.trim();
+  if (!str || str === "-") return 0;
+  const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ ,T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (iso) {
+    const [, y, mo, d, h = "0", mi = "0", se = "0"] = iso;
+    return new Date(+y, +mo - 1, +d, +h, +mi, +se).getTime();
+  }
+  // Human format — drop a leading weekday ("Mon, ") so Date.parse is reliable.
+  const t = Date.parse(str.replace(/^[A-Za-z]{3,}\.?,\s*/, ""));
+  return Number.isNaN(t) ? 0 : t;
 }
 
 /** Returns a sorted copy of rows per the sort state. `accessors` overrides the

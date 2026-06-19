@@ -56,6 +56,8 @@ export type ScrappingOptionValues = {
   sort: string;
   // Free-form JSON meta properties (mirrors the Clients form)
   meta: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export const EMPTY_SCRAPPING_OPTION: ScrappingOptionValues = {
@@ -73,6 +75,8 @@ export const EMPTY_SCRAPPING_OPTION: ScrappingOptionValues = {
   sorting: false,
   sort: "best_seller",
   meta: "{}",
+  createdAt: "",
+  updatedAt: "",
 };
 
 export function ScrappingOptionDialog({

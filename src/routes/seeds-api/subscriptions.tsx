@@ -16,6 +16,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  parseListDate,
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
@@ -29,6 +30,7 @@ import {
   SUBSCRIPTION_GEOLOC_OPTIONS,
   type Subscription,
 } from "@/lib/subscriptions";
+import { nowStamp } from "@/lib/clients";
 import { getClientNames, getClientsForProject } from "@/lib/clients";
 import { getProjects } from "@/lib/projects";
 
@@ -54,7 +56,7 @@ function SubscriptionsPage() {
   const [fScrap, setFScrap] = useState<string[]>([]);
   const [fGeo, setFGeo] = useState<string[]>([]);
   const [fBu, setFBu] = useState<string[]>([]);
-  const sort = useSort("subscriptions");
+  const sort = useSort("subscriptions", "updatedAt", "desc");
   const navigate = useNavigate();
 
   // Open the edit dialog when arriving with ?edit=<id>, then strip the param so
@@ -85,6 +87,8 @@ function SubscriptionsPage() {
   const sorted = sortRows(filtered, sort, {
     seeds: (r) => (r.seeds ?? []).length,
     clients: (r) => clientsForSub(r).join(", "),
+    createdAt: (r) => parseListDate(r.createdAt),
+    updatedAt: (r) => parseListDate(r.updatedAt),
   });
   const selected = rows.find((r) => r.id === selectedId) ?? null;
 
@@ -117,6 +121,8 @@ function SubscriptionsPage() {
               <SortTh label="Business unit" sortKey="businessUnit" sort={sort} />
               <SortTh label="Frequency" sortKey="frequency" sort={sort} />
               <SortTh label="Rotation" sortKey="rotation" sort={sort} />
+              <SortTh label="Created at" sortKey="createdAt" sort={sort} />
+              <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <Th>Active</Th>
               <Th className="w-10" />
             </tr>
@@ -158,6 +164,8 @@ function SubscriptionsPage() {
                 <Td>{r.businessUnit ? <Pill tone="blue">{r.businessUnit}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td>{r.frequency ? <Pill tone="slate">{r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td>{r.rotation ? <Pill tone="slate">{r.rotation}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
+                <Td className="whitespace-nowrap text-muted-foreground">{r.createdAt || "—"}</Td>
+                <Td className="whitespace-nowrap text-muted-foreground">{r.updatedAt || "—"}</Td>
                 <Td><Switch defaultChecked /></Td>
                 <Td>
                   <RowActionsMenu
@@ -178,7 +186,7 @@ function SubscriptionsPage() {
         onOpenChange={setAddOpen}
         mode="add"
         initial={null}
-        onSave={(values) => setRows((prev) => [...prev, values])}
+        onSave={(values) => setRows((prev) => [...prev, { ...values, createdAt: nowStamp(), updatedAt: nowStamp() }])}
       />
 
       <SubscriptionDialog
@@ -187,7 +195,7 @@ function SubscriptionsPage() {
         mode="edit"
         initial={selected}
         onSave={(values) => {
-          setRows((prev) => prev.map((r) => (r.id === selectedId ? values : r)));
+          setRows((prev) => prev.map((r) => (r.id === selectedId ? { ...values, updatedAt: nowStamp() } : r)));
           setSelectedId(null);
         }}
         onDelete={() => {

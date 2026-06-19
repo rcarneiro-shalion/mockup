@@ -14,6 +14,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  parseListDate,
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,7 @@ function ProjectsListPage() {
   const [fBom, setFBom] = useState<string[]>([]);
   const [fClient, setFClient] = useState<string[]>([]);
   const [fSubscription, setFSubscription] = useState<string[]>([]);
-  const sort = useSort("projects");
+  const sort = useSort("projects", "updatedAt", "desc");
   const navigate = useNavigate();
 
   const clientOptions = getClientNames();
@@ -69,6 +70,8 @@ function ProjectsListPage() {
   const sorted = sortRows(filtered, sort, {
     clients: (p) => getClientsForProject(p.id).length,
     subscriptions: (p) => (p.assignedSubscriptions ?? []).length,
+    createdAt: (p) => parseListDate(p.createdAt),
+    updatedAt: (p) => parseListDate(p.updatedAt),
   });
 
   return (

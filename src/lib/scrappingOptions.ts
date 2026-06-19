@@ -12,6 +12,8 @@ export const INITIAL_SCRAPPING_OPTIONS: ScrappingOptionValues[] = [
     name: "ME_KW_WATER — Amazon US",
     extractionType: "MEDIA",
     multivariants: true,
+    createdAt: "Thu, May 2, 2024 3:21",
+    updatedAt: "Mon, Oct 27, 2025 1:30",
   },
   {
     ...EMPTY_SCRAPPING_OPTION,
@@ -21,6 +23,8 @@ export const INITIAL_SCRAPPING_OPTIONS: ScrappingOptionValues[] = [
     maxPage: "10",
     sorting: true,
     sort: "best_seller",
+    createdAt: "Fri, May 3, 2024 8:27",
+    updatedAt: "Mon, Oct 27, 2025 2:00",
   },
 ];
 

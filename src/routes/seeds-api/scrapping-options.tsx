@@ -20,11 +20,13 @@ import {
   SortTh,
   useSort,
   sortRows,
+  parseListDate,
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { getSubscriptions } from "@/lib/subscriptions";
+import { nowStamp } from "@/lib/clients";
 import { Calendar, Layers, PlayCircle } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/scrapping-options")({
@@ -59,7 +61,7 @@ function ScrappingOptionsPage() {
   const [fSub, setFSub] = useState<string[]>([]);
   const [fJoints, setFJoints] = useState<string[]>([]);
   const [fDisjoints, setFDisjoints] = useState<string[]>([]);
-  const sort = useSort("scrapping-options");
+  const sort = useSort("scrapping-options", "updatedAt", "desc");
   const navigate = useNavigate();
 
   // Open the edit dialog when arriving with ?edit=<name>, then strip the param.
@@ -110,6 +112,8 @@ function ScrappingOptionsPage() {
   const sorted = sortRows(filtered, sort, {
     options: (r) => summaryPills(r).length,
     subscriptions: (r) => (subsByOption.get(r.name) ?? []).join(", "),
+    createdAt: (r) => parseListDate(r.createdAt),
+    updatedAt: (r) => parseListDate(r.updatedAt),
   });
 
   return (
@@ -134,6 +138,8 @@ function ScrappingOptionsPage() {
               <SortTh label="Extraction type" sortKey="extractionType" sort={sort} />
               <SortTh label="Options" sortKey="options" sort={sort} />
               <SortTh label="Subscriptions" sortKey="subscriptions" sort={sort} />
+              <SortTh label="Created at" sortKey="createdAt" sort={sort} />
+              <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <Th>Active</Th>
               <Th className="w-10" />
             </tr>
@@ -165,6 +171,8 @@ function ScrappingOptionsPage() {
                     <span className="text-muted-foreground">—</span>
                   )}
                 </Td>
+                <Td className="whitespace-nowrap text-muted-foreground">{r.createdAt || "—"}</Td>
+                <Td className="whitespace-nowrap text-muted-foreground">{r.updatedAt || "—"}</Td>
                 <Td><Switch defaultChecked={r.status === "Active"} /></Td>
                 <Td>
                   <RowActionsMenu
@@ -186,7 +194,7 @@ function ScrappingOptionsPage() {
         onOpenChange={setAddOpen}
         mode="add"
         initial={null}
-        onSave={(values) => setRows((prev) => [...prev, values])}
+        onSave={(values) => setRows((prev) => [...prev, { ...values, createdAt: nowStamp(), updatedAt: nowStamp() }])}
       />
 
       <ScrappingOptionDialog
@@ -195,7 +203,7 @@ function ScrappingOptionsPage() {
         mode="edit"
         initial={selected}
         onSave={(values) => {
-          setRows((prev) => prev.map((r) => (r === selected ? values : r)));
+          setRows((prev) => prev.map((r) => (r === selected ? { ...values, updatedAt: nowStamp() } : r)));
           setSelected(null);
         }}
         onDelete={() => {
