@@ -89,11 +89,12 @@ export function ProjectForm({
     setProjectClients(projectRef, next);
     toast.success(`${c.name} updated`);
   };
-  const assignSubscription = (sp: AssignedSubscription) => {
-    const next = [...assignedSubscriptions, sp];
+  const assignSubscriptions = (list: AssignedSubscription[]) => {
+    if (!list.length) return;
+    const next = [...assignedSubscriptions, ...list];
     set("assignedSubscriptions", next);
     onSubscriptionsChange?.(next); // → Projects store, via the route's setter
-    toast.success(`${sp.name} assigned`);
+    toast.success(`${list.length} subscription${list.length === 1 ? "" : "s"} assigned`);
   };
   const removeSubscription = (sp: AssignedSubscription) => {
     const next = assignedSubscriptions.filter((x) => x.id !== sp.id);
@@ -354,7 +355,8 @@ export function ProjectForm({
         onOpenChange={(v) => { if (!v) { setAssignOpen(false); setEditSub(null); } }}
         assignedNames={assignedSubscriptions.map((sp) => sp.name)}
         editing={editSub}
-        onAssign={(sp) => (editSub ? updateSubscription(sp) : assignSubscription(sp))}
+        onAssign={updateSubscription}
+        onAssignMany={assignSubscriptions}
       />
 
       <AssignClientDialog
