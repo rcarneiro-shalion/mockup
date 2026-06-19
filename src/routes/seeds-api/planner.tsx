@@ -260,8 +260,11 @@ function PlannerPage() {
       // divide back to the wrap's unscaled coordinate space (the SVG scales with it).
       const pos = (key: string) => {
         const el = cardEls.current.get(key);
-        if (!el) return null;
+        // Skip cards that are missing or detached (filtered out) — a stale ref would
+        // otherwise draw a connector to a phantom/old position.
+        if (!el || !el.isConnected) return null;
         const r = el.getBoundingClientRect();
+        if (r.width === 0 && r.height === 0) return null;
         return {
           lx: (r.left - wr.left) / zoom,
           rx: (r.right - wr.left) / zoom,
@@ -296,11 +299,15 @@ function PlannerPage() {
       setPaths(next);
     };
     measure();
+    // Re-measure after the browser has laid out + painted the new (filtered) DOM.
+    // A single synchronous pass can capture transitional positions mid-collapse and
+    // leave stray curves; the double-rAF pass corrects them once layout settles.
+    let raf1 = 0, raf2 = 0;
+    raf1 = requestAnimationFrame(() => { raf2 = requestAnimationFrame(measure); });
     const ro = new ResizeObserver(measure);
     ro.observe(wrap);
     window.addEventListener("resize", measure);
-    const t = setTimeout(measure, 60);
-    return () => { ro.disconnect(); window.removeEventListener("resize", measure); clearTimeout(t); };
+    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2); ro.disconnect(); window.removeEventListener("resize", measure); };
   }, [edges, visible, visKey, zoom]);
 
   return (
