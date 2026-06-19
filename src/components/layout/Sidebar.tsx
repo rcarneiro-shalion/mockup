@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   Home,
@@ -181,9 +181,22 @@ export function Sidebar() {
   const { pathname } = useLocation();
   const nav = navForPath(pathname);
   const [collapsed, setCollapsed] = useState(false);
-  // Groups open automatically when one of their items is the active route;
-  // otherwise closed by default. A manual toggle overrides the auto behavior.
-  const [open, setOpen] = useState<Record<string, boolean>>({});
+
+  // Accordion behaviour: only one group is expanded at a time, so a long group
+  // (Seeds API, Settings…) can't push the others off the bottom of the menu.
+  // The group that contains the active route, if any:
+  const activeGroupLabel =
+    nav.find((i) => i.children?.some((c) => pathname.startsWith(c.to)))?.label ?? null;
+  // Open the active group by default (or the first defaultOpen group when no
+  // section is active, e.g. on Home). Clicking a header opens it exclusively.
+  const [openGroup, setOpenGroup] = useState<string | null>(
+    activeGroupLabel ?? nav.find((i) => i.children && i.defaultOpen)?.label ?? null,
+  );
+  // Follow cross-section navigation: landing in a section opens it and collapses
+  // the rest. Navigating within the same section keeps the manual choice.
+  useEffect(() => {
+    if (activeGroupLabel) setOpenGroup(activeGroupLabel);
+  }, [activeGroupLabel]);
 
   if (collapsed) {
     return (
@@ -222,7 +235,7 @@ export function Sidebar() {
       >
         <ChevronLeft className="h-3.5 w-3.5" />
       </button>
-      <nav className="flex flex-col gap-0.5 px-2">
+      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2">
         {nav.map((item) => {
           const Icon = item.icon;
           const hasChildren = !!item.children;
@@ -230,13 +243,13 @@ export function Sidebar() {
             item.children?.some((c) => pathname.startsWith(c.to)) ||
             (item.to && pathname === item.to)
           );
-          const isOpen = open[item.label] ?? groupActive;
+          const isOpen = openGroup === item.label;
 
           if (hasChildren) {
             return (
               <div key={item.label}>
                 <button
-                  onClick={() => setOpen((o) => ({ ...o, [item.label]: !(o[item.label] ?? groupActive) }))}
+                  onClick={() => setOpenGroup((cur) => (cur === item.label ? null : item.label))}
                   className={cn(
                     "flex w-full items-center justify-between rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
                     groupActive
