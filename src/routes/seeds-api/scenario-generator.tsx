@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FlaskConical, PlayCircle, Trash2, Network, TriangleAlert, Sprout, Calculator, Search, Check, ChevronsUpDown, Users, Layers, ListFilter, X, Info } from "lucide-react";
 import { REAL_JOBS, CLIENT_LABELS, SCENARIO_CLIENTS, type RealJob } from "@/lib/scenarioSeedData";
-import { generateForClient, clearSimulated, hasSimulated, estimateTasks, validateScenario, extractionToSeedType, type BuiltScenario } from "@/lib/scenarioGenerator";
+import { generateForClient, clearSimulated, clearSimulatedForClient, hasSimulated, simulatedSlugs, estimateTasks, validateScenario, extractionToSeedType, type BuiltScenario } from "@/lib/scenarioGenerator";
 import { buildQueryMatch } from "@/lib/textMatch";
 
 export const Route = createFileRoute("/seeds-api/scenario-generator")({
@@ -77,7 +77,8 @@ function ScenarioGeneratorPage() {
   const [sel, setSel] = useState<Record<string, Set<string>>>({});
   const [results, setResults] = useState<BuiltScenario[]>([]);
   const [simLive, setSimLive] = useState(false);
-  useEffect(() => { setMounted(true); setSimLive(hasSimulated()); }, []);
+  const [simSlugs, setSimSlugs] = useState<Set<string>>(new Set()); // clients with a live simulated scenario
+  useEffect(() => { setMounted(true); setSimLive(hasSimulated()); setSimSlugs(new Set(simulatedSlugs())); }, []);
 
   // ---- filters
   const [clientFilter, setClientFilter] = useState<Set<string>>(new Set());
@@ -128,6 +129,7 @@ function ScenarioGeneratorPage() {
     setResults((r) => [built, ...r.filter((x) => x.project.id !== built.project.id)].slice(0, 18));
     setSel((p) => ({ ...p, [slug]: new Set(use.map((j) => j.name)) }));
     setSimLive(true);
+    setSimSlugs((s) => { const n = new Set(s); n.add(slug); return n; });
     toast.success(`Generated ${CLIENT_LABELS[slug]}: ${built.subscriptions.length} subscriptions · ${built.scrappingOptions.length} options · ${built.seeds.length} seeds`);
   };
 
@@ -137,6 +139,7 @@ function ScenarioGeneratorPage() {
     setResults(built);
     setSel(Object.fromEntries(visibleClients.map((c) => [c.slug, new Set(c.jobs.map((j) => j.name))])));
     setSimLive(true);
+    setSimSlugs(new Set(simulatedSlugs()));
     const subs = built.reduce((a, b) => a + b.subscriptions.length, 0);
     toast.success(`Generated ${built.length} client(s) · ${subs} subscriptions`);
   };
@@ -145,8 +148,18 @@ function ScenarioGeneratorPage() {
     const c = clearSimulated();
     setResults([]);
     setSimLive(false);
+    setSimSlugs(new Set());
     setSel({});
     toast.success(`Cleared ${c.subscriptions} subscriptions · ${c.scrappingOptions} options · ${c.seeds} seeds · ${c.projects} projects${c.clients ? ` · ${c.clients} test clients` : ""}`);
+  };
+
+  // Clear only one client's simulated scenario (per-card).
+  const clearOne = (slug: string) => {
+    const c = clearSimulatedForClient(slug);
+    setResults((r) => r.filter((x) => x.slug !== slug));
+    setSimSlugs((s) => { const n = new Set(s); n.delete(slug); return n; });
+    setSimLive(hasSimulated());
+    toast.success(`Cleared ${CLIENT_LABELS[slug] ?? slug}: ${c.subscriptions} subscriptions · ${c.scrappingOptions} options · ${c.seeds} seeds`);
   };
 
   return (
@@ -218,11 +231,18 @@ function ScenarioGeneratorPage() {
               const pickedVisible = jobs.filter((j) => picked.has(j.name)).length;
               return (
                 <div key={slug} className="rounded-lg border border-border bg-card p-4 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">{CLIENT_LABELS[slug]} <span className="text-xs font-normal text-muted-foreground">· {jobs.length} jobs</span></span>
-                    <Button size="sm" variant="outline" className="h-7 gap-1.5 text-xs" onClick={() => runClient(slug, jobs)}>
-                      <PlayCircle className="h-3.5 w-3.5" /> Generate {pickedVisible ? `(${pickedVisible})` : "all"}
-                    </Button>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate text-sm font-semibold text-foreground">{CLIENT_LABELS[slug]} <span className="text-xs font-normal text-muted-foreground">· {jobs.length} jobs</span></span>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {mounted && simSlugs.has(slug) && (
+                        <Button size="sm" variant="ghost" className="h-7 gap-1.5 text-xs text-destructive" onClick={() => clearOne(slug)}>
+                          <Trash2 className="h-3.5 w-3.5" /> Clear simulated
+                        </Button>
+                      )}
+                      <Button size="sm" variant="outline" className="h-7 gap-1.5 text-xs" onClick={() => runClient(slug, jobs)}>
+                        <PlayCircle className="h-3.5 w-3.5" /> Generate {pickedVisible ? `(${pickedVisible})` : "all"}
+                      </Button>
+                    </div>
                   </div>
                   <div className="mt-2 space-y-1">
                     {jobs.map((j: RealJob) => (

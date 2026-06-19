@@ -20,19 +20,29 @@ const SIM_KEY = "seeds-api:sim:index";
 const LOC_VOLUME_TBD = 10;
 const uid = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `sim-${Date.now()}-${Math.round(performance.now())}`);
 
-type SimIndex = {
+// One generated scenario per client = one batch, so it can be cleared individually.
+type SimBatch = {
+  slug: string;
   projectIds: string[];
   subIds: string[];
   seedIds: string[];
   scrapNames: string[];
-  createdClientIds: string[]; // clients the simulator itself created (test clients)
-  linkedClientProjects: { clientId: string; projectId: string }[]; // links to unwind
+  createdClientIds: string[]; // test clients this batch created (dropped on clear)
 };
-const emptyIndex = (): SimIndex => ({ projectIds: [], subIds: [], seedIds: [], scrapNames: [], createdClientIds: [], linkedClientProjects: [] });
+type SimIndex = { batches: SimBatch[] };
+const emptyIndex = (): SimIndex => ({ batches: [] });
 
 const readIndex = (): SimIndex => {
   if (typeof window === "undefined") return emptyIndex();
-  try { return { ...emptyIndex(), ...JSON.parse(window.localStorage.getItem(SIM_KEY) || "{}") }; } catch { return emptyIndex(); }
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(SIM_KEY) || "{}");
+    if (Array.isArray(raw.batches)) return { batches: raw.batches };
+    // migrate the legacy flat shape into a single (slug-less) batch
+    if (raw.projectIds || raw.subIds || raw.seedIds) {
+      return { batches: [{ slug: "", projectIds: raw.projectIds ?? [], subIds: raw.subIds ?? [], seedIds: raw.seedIds ?? [], scrapNames: raw.scrapNames ?? [], createdClientIds: raw.createdClientIds ?? [] }] };
+    }
+    return emptyIndex();
+  } catch { return emptyIndex(); }
 };
 const writeIndex = (ix: SimIndex) => { if (typeof window !== "undefined") window.localStorage.setItem(SIM_KEY, JSON.stringify(ix)); };
 const write = (key: string, list: unknown) => { if (typeof window !== "undefined") window.localStorage.setItem(key, JSON.stringify(list)); };
@@ -96,6 +106,7 @@ const locationSetLabel = (store: string): string => {
 
 // One built scenario = the records to persist for a single client (one project).
 export type BuiltScenario = {
+  slug: string;
   client: Client;
   clientIsNew: boolean;
   project: Project;
@@ -169,7 +180,7 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
   });
 
   project.assignedSubscriptions = assigned;
-  return { client, clientIsNew, project, scrappingOptions, subscriptions, seeds };
+  return { slug: clientSlug, client, clientIsNew, project, scrappingOptions, subscriptions, seeds };
 }
 
 /** Persist a built scenario to the 5 stores + the client↔project link, tracking it for clean removal. */
@@ -190,12 +201,14 @@ export function persistScenario(b: BuiltScenario): void {
   ]);
 
   const ix = readIndex();
-  ix.projectIds.push(b.project.id);
-  ix.subIds.push(...b.subscriptions.map((s) => s.id));
-  ix.seedIds.push(...b.seeds.map((s) => s.id));
-  ix.scrapNames.push(...b.scrappingOptions.map((o) => o.name));
-  if (b.clientIsNew) ix.createdClientIds.push(b.client.id);
-  ix.linkedClientProjects.push({ clientId: b.client.id, projectId: b.project.id });
+  ix.batches.push({
+    slug: b.slug,
+    projectIds: [b.project.id],
+    subIds: b.subscriptions.map((s) => s.id),
+    seedIds: b.seeds.map((s) => s.id),
+    scrapNames: b.scrappingOptions.map((o) => o.name),
+    createdClientIds: b.clientIsNew ? [b.client.id] : [],
+  });
   writeIndex(ix);
 }
 
@@ -206,29 +219,48 @@ export function generateForClient(clientSlug: string, jobs: RealJob[]): BuiltSce
   return built;
 }
 
-/** Remove EXACTLY what the simulator created (by the sim registry); leaves seeded/real data intact. */
-export function clearSimulated(): { projects: number; subscriptions: number; scrappingOptions: number; seeds: number; clients: number } {
-  if (typeof window === "undefined") return { projects: 0, subscriptions: 0, scrappingOptions: 0, seeds: 0, clients: 0 };
-  const ix = readIndex();
-  const projIds = new Set(ix.projectIds), subIds = new Set(ix.subIds), seedIds = new Set(ix.seedIds), scrapNames = new Set(ix.scrapNames), createdClients = new Set(ix.createdClientIds);
+type ClearCounts = { projects: number; subscriptions: number; scrappingOptions: number; seeds: number; clients: number };
+
+/** Remove the records belonging to the given batches from the 5 stores + client links. */
+function removeBatches(batches: SimBatch[]): ClearCounts {
+  const projIds = new Set(batches.flatMap((b) => b.projectIds));
+  const subIds = new Set(batches.flatMap((b) => b.subIds));
+  const seedIds = new Set(batches.flatMap((b) => b.seedIds));
+  const scrapNames = new Set(batches.flatMap((b) => b.scrapNames));
+  const createdClients = new Set(batches.flatMap((b) => b.createdClientIds));
   write(PROJECTS_KEY, getProjects().filter((p) => !projIds.has(p.id)));
   write(SUBSCRIPTIONS_KEY, getSubscriptions().filter((s) => !subIds.has(s.id)));
   write(SCRAPPING_OPTIONS_KEY, getScrappingOptions().filter((o) => !scrapNames.has(o.name)));
   write(SEEDS_KEY, getSeeds().filter((s) => !seedIds.has(s.id)));
-  // unlink sim projects from clients; drop sim-created clients entirely
+  // unlink these projects from clients; drop the test clients these batches created
   const clients = getClients()
     .filter((c) => !createdClients.has(c.id))
     .map((c) => ({ ...c, assignedProjects: (c.assignedProjects ?? []).filter((ap) => !projIds.has(ap.projectId)) }));
   write(CLIENTS_KEY, clients);
-  const counts = { projects: ix.projectIds.length, subscriptions: ix.subIds.length, scrappingOptions: ix.scrapNames.length, seeds: ix.seedIds.length, clients: ix.createdClientIds.length };
+  return { projects: projIds.size, subscriptions: subIds.size, scrappingOptions: scrapNames.size, seeds: seedIds.size, clients: createdClients.size };
+}
+
+/** Remove EVERYTHING the simulator created; leaves seeded/real data intact. */
+export function clearSimulated(): ClearCounts {
+  if (typeof window === "undefined") return { projects: 0, subscriptions: 0, scrappingOptions: 0, seeds: 0, clients: 0 };
+  const counts = removeBatches(readIndex().batches);
   writeIndex(emptyIndex());
   return counts;
 }
 
-export const hasSimulated = (): boolean => {
+/** Remove only the scenario generated for one client (slug). */
+export function clearSimulatedForClient(slug: string): ClearCounts {
+  if (typeof window === "undefined") return { projects: 0, subscriptions: 0, scrappingOptions: 0, seeds: 0, clients: 0 };
   const ix = readIndex();
-  return ix.projectIds.length > 0 || ix.subIds.length > 0;
-};
+  const counts = removeBatches(ix.batches.filter((b) => b.slug === slug));
+  writeIndex({ batches: ix.batches.filter((b) => b.slug !== slug) });
+  return counts;
+}
+
+export const hasSimulated = (): boolean => readIndex().batches.length > 0;
+
+/** Client slugs that currently have a simulated scenario in the registry. */
+export const simulatedSlugs = (): string[] => [...new Set(readIndex().batches.map((b) => b.slug).filter(Boolean))];
 
 // ---- task estimation (mirrors planner + extends with disjoint fan-out) ----------
 export function estimateTasks(sub: Subscription, opt?: ScrappingOptionValues): number {
