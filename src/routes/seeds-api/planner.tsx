@@ -1,6 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+
+// Measure connectors BEFORE the browser paints, so a filter change never shows a
+// frame of stale curves drawn over the freshly-collapsed layout. Falls back to a
+// passive effect during SSR (no DOM, and useLayoutEffect warns on the server).
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { Pill } from "@/components/seeds/ListPrimitives";
@@ -254,8 +259,8 @@ function PlannerPage() {
   const [paths, setPaths] = useState<{ id: string; d: string }[]>([]);
   const visKey = [...visible].sort().join("|");
 
-  // Zoom + full-screen
-  const [zoom, setZoom] = useState(1);
+  // Zoom + full-screen. Zoom persists for the session like the filters.
+  const [zoom, setZoom] = useSessionState<number>("vsm:zoom", 1);
   const [isFull, setIsFull] = useState(false);
   const [natSize, setNatSize] = useState({ w: 0, h: 0 });
   const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
@@ -267,7 +272,7 @@ function PlannerPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [isFull]);
 
-  useEffect(() => {
+  useIsoLayoutEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
     const measure = () => {
