@@ -62,11 +62,22 @@ function PlannerPage() {
   const projectById = new Map(projects.map((p) => [p.id, p]));
   const scrapByName = new Map(scraps.map((s) => [s.name, s]));
 
-  const subProjectNames = new Set(subs.map((s) => s.project));
-  const baseProjects = projects.filter((p) => subProjectNames.has(p.name));
+  // Only COMPLETE chains render: client → project → subscription → scrapping option.
+  // A subscription is "in the flow" only when its project resolves AND that project is
+  // linked to a client AND its scrapping option resolves. Clients/projects/scraps all
+  // derive from those, so orphans (e.g. a project with no client) never appear.
+  const projectIdsWithClient = new Set<string>();
+  for (const c of clients) for (const ap of c.assignedProjects ?? []) projectIdsWithClient.add(ap.projectId);
+
+  const baseSubs = subs.filter((s) => {
+    const p = projectByName.get(s.project);
+    return !!p && projectIdsWithClient.has(p.id) && scrapByName.has(s.scrappingOption);
+  });
+  const baseProjectNames = new Set(baseSubs.map((s) => s.project));
+  const baseProjects = projects.filter((p) => baseProjectNames.has(p.name));
   const baseProjectIds = new Set(baseProjects.map((p) => p.id));
   const baseClients = clients.filter((c) => (c.assignedProjects ?? []).some((ap) => baseProjectIds.has(ap.projectId)));
-  const usedScrapNames = new Set(subs.map((s) => s.scrappingOption));
+  const usedScrapNames = new Set(baseSubs.map((s) => s.scrappingOption));
   const baseScraps = scraps.filter((o) => usedScrapNames.has(o.name));
 
   // Filters
@@ -82,15 +93,15 @@ function PlannerPage() {
   const resetFilters = () => { setFClient([]); setFProject([]); setFSub([]); setFStore([]); setFSeed([]); setFScrap([]); setFExtraction([]); };
 
   // Filter option lists
-  const storeOptions = [...new Set(subs.map((s) => s.store).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  const seedOptions = [...new Set(subs.flatMap((s) => s.seeds ?? []))].sort((a, b) => a.localeCompare(b));
+  const storeOptions = [...new Set(baseSubs.map((s) => s.store).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const seedOptions = [...new Set(baseSubs.flatMap((s) => s.seeds ?? []))].sort((a, b) => a.localeCompare(b));
   const extractionOptions = [...new Set(baseScraps.map((o) => o.extractionType))].sort();
 
   // Build nodes + edges over the base set.
   const { nodes, edges, byKind } = useMemo(() => {
     const nodes = new Map<string, GNode>();
     const subsCountByProject = new Map<string, number>();
-    for (const s of subs) subsCountByProject.set(s.project, (subsCountByProject.get(s.project) ?? 0) + 1);
+    for (const s of baseSubs) subsCountByProject.set(s.project, (subsCountByProject.get(s.project) ?? 0) + 1);
 
     for (const c of baseClients) {
       const n = (c.assignedProjects ?? []).filter((ap) => baseProjectIds.has(ap.projectId)).length;
@@ -113,7 +124,7 @@ function PlannerPage() {
         ),
       });
     }
-    for (const s of subs) {
+    for (const s of baseSubs) {
       const o = scrapByName.get(s.scrappingOption);
       nodes.set(`s:${s.id}`, {
         key: `s:${s.id}`, kind: "subscription", title: s.name,
@@ -152,7 +163,7 @@ function PlannerPage() {
     for (const c of baseClients)
       for (const ap of c.assignedProjects ?? [])
         if (nodes.has(`p:${ap.projectId}`)) edges.push({ source: `c:${c.id}`, target: `p:${ap.projectId}` });
-    for (const s of subs) {
+    for (const s of baseSubs) {
       const p = projectByName.get(s.project);
       if (p && nodes.has(`p:${p.id}`)) edges.push({ source: `p:${p.id}`, target: `s:${s.id}` });
       if (scrapByName.has(s.scrappingOption)) edges.push({ source: `s:${s.id}`, target: `o:${s.scrappingOption}` });
