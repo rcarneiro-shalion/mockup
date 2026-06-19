@@ -114,7 +114,7 @@ function PlannerPage() {
       const o = scrapByName.get(s.scrappingOption);
       nodes.set(`s:${s.id}`, {
         key: `s:${s.id}`, kind: "subscription", title: s.name,
-        go: () => navigate({ to: "/seeds-api/subscriptions" }),
+        go: () => navigate({ to: "/seeds-api/subscriptions", search: { edit: s.id } }),
         body: (
           <div className="space-y-1">
             <InfoLine icon={Sprout}>{(s.seeds ?? []).length} seed{(s.seeds ?? []).length === 1 ? "" : "s"}</InfoLine>
@@ -133,7 +133,7 @@ function PlannerPage() {
       const sum = scrapSummary(o);
       nodes.set(`o:${o.name}`, {
         key: `o:${o.name}`, kind: "scrap", title: o.name,
-        go: () => navigate({ to: "/seeds-api/scrapping-options" }),
+        go: () => navigate({ to: "/seeds-api/scrapping-options", search: { edit: o.name } }),
         body: (
           <div className="space-y-1">
             <Pill tone="amber">{o.extractionType}</Pill>

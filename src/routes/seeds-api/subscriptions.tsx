@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
@@ -33,6 +33,11 @@ import { getClientNames, getClientsForProject } from "@/lib/clients";
 import { getProjects } from "@/lib/projects";
 
 export const Route = createFileRoute("/seeds-api/subscriptions")({
+  // `?edit=<id>` deep-links straight into a subscription's edit dialog (used by
+  // the Value Stream Map cards).
+  validateSearch: (search: Record<string, unknown>): { edit?: string } => ({
+    edit: typeof search.edit === "string" ? search.edit : undefined,
+  }),
   head: () => ({ meta: [{ title: "Subscriptions — Shalion" }] }),
   component: SubscriptionsPage,
 });
@@ -51,6 +56,16 @@ function SubscriptionsPage() {
   const [fBu, setFBu] = useState<string[]>([]);
   const sort = useSort("subscriptions");
   const navigate = useNavigate();
+
+  // Open the edit dialog when arriving with ?edit=<id>, then strip the param so
+  // closing the dialog doesn't immediately reopen it.
+  const { edit } = Route.useSearch();
+  useEffect(() => {
+    if (!edit) return;
+    if (rows.some((r) => r.id === edit)) setSelectedId(edit);
+    navigate({ to: "/seeds-api/subscriptions", search: {}, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [edit]);
 
   const q = query.trim().toLowerCase();
   const seedOptions = [...new Set(rows.flatMap((r) => r.seeds ?? []))].sort();

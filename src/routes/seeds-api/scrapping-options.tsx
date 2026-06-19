@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
@@ -28,6 +28,11 @@ import { getSubscriptions } from "@/lib/subscriptions";
 import { Calendar, Layers, PlayCircle } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/scrapping-options")({
+  // `?edit=<name>` deep-links straight into a scrapping option's edit dialog
+  // (options are keyed by name). Used by the Value Stream Map cards.
+  validateSearch: (search: Record<string, unknown>): { edit?: string } => ({
+    edit: typeof search.edit === "string" ? search.edit : undefined,
+  }),
   head: () => ({ meta: [{ title: "Scrapping options — Shalion" }] }),
   component: ScrappingOptionsPage,
 });
@@ -55,6 +60,17 @@ function ScrappingOptionsPage() {
   const [fJoints, setFJoints] = useState<string[]>([]);
   const [fDisjoints, setFDisjoints] = useState<string[]>([]);
   const sort = useSort("scrapping-options");
+  const navigate = useNavigate();
+
+  // Open the edit dialog when arriving with ?edit=<name>, then strip the param.
+  const { edit } = Route.useSearch();
+  useEffect(() => {
+    if (!edit) return;
+    const match = rows.find((r) => r.name === edit);
+    if (match) setSelected(match);
+    navigate({ to: "/seeds-api/scrapping-options", search: {}, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [edit]);
 
   // Indirect relationship: a subscription references its scrapping option by name
   // (Subscription.scrappingOption). Build the inverse — option name → subscription
