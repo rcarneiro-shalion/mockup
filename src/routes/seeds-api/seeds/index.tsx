@@ -12,7 +12,7 @@ import {
   type Seed,
 } from "@/lib/seeds";
 import { PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
-import { getSubscriptions } from "@/lib/subscriptions";
+import { getSubscriptions, subProjects } from "@/lib/subscriptions";
 import { getProjects } from "@/lib/projects";
 import { getClientsForProject } from "@/lib/clients";
 import {
@@ -111,16 +111,16 @@ function SeedsPage() {
   // Seed descriptions reachable through the subscriptions matching the picked
   // projects / clients — a seed row matches if its description is in the set.
   const projectSeedSet = new Set(
-    allSubs.filter((s) => fProject.includes(s.project)).flatMap((s) => s.seeds ?? []),
+    allSubs.filter((s) => subProjects(s).some((p) => fProject.includes(p))).flatMap((s) => s.seeds ?? []),
   );
   const clientSeedSet = new Set(
     allSubs
-      .filter((s) => clientsOf(s.project).some((c) => fClient.includes(c)))
+      .filter((s) => subProjects(s).some((p) => clientsOf(p).some((c) => fClient.includes(c))))
       .flatMap((s) => s.seeds ?? []),
   );
   // Only projects / clients reachable through a subscription can ever match.
-  const projectFilterOptions = [...new Set(allSubs.map((s) => s.project).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  const clientFilterOptions = [...new Set(allSubs.flatMap((s) => clientsOf(s.project)))].sort((a, b) => a.localeCompare(b));
+  const projectFilterOptions = [...new Set(allSubs.flatMap(subProjects).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const clientFilterOptions = [...new Set(allSubs.flatMap((s) => subProjects(s).flatMap(clientsOf)))].sort((a, b) => a.localeCompare(b));
 
   const goEdit = (r: Seed) => navigate({ to: "/seeds-api/seeds/$seedId", params: { seedId: r.id } });
   // Add seed: the type is picked from the button's menu first, then the form opens.

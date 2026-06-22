@@ -1,12 +1,32 @@
 import { readPersistedList } from "./seedOptions";
 
-// "Subscription" is the renamed job-like hub entity (formerly "Stuff"): it ties a
-// Project to a list of Seeds, exactly ONE Scrapping option (1:1), and (when geoloc
-// is MANUAL) a Location SET, and carries the client-oriented options.
+// "Subscription" is the renamed job-like hub entity (formerly "Stuff"): it ties one
+// or MORE Projects to a list of Seeds, exactly ONE Scrapping option (1:1), and (when
+// geoloc is MANUAL) a Location SET, and carries the client-oriented options.
+
+/** Rich recurrence config used when `frequency = "Custom"` (Daily or Weekly base). */
+export type CustomSchedule = {
+  unit: "Daily" | "Weekly";
+  // Daily: run every N days, or several times within a day.
+  dailyMode?: "everyNDays" | "timesPerDay";
+  everyNDays?: string;   // >= 1
+  timesPerDay?: string;  // 1..24
+  // Weekly:
+  timesPerWeek?: string; // 1..7
+  everyNWeeks?: string;  // 1..4 (repeat every N weeks)
+  weekdays?: string[];   // which days it runs (Sun..Sat short labels)
+  // Ends (both bases):
+  ends?: "Never" | "On" | "After";
+  endsOn?: string;       // date, when ends = On
+  endsAfter?: string;    // occurrences, when ends = After
+};
+
 export type Subscription = {
   id: string;
   name: string;
-  project: string;
+  projects: string[]; // a subscription may belong to one OR MANY projects
+  /** @deprecated legacy single project — migrated into `projects` on read. */
+  project?: string;
   store: string;
   seeds: string[];
   // A subscription runs exactly ONE scrapping option (1:1). Scrapping options stay
@@ -15,7 +35,8 @@ export type Subscription = {
   geo: string; // NONE | AUTOMATIC | MANUAL | VIRTUAL_STORE
   locationSet: string;
   frequency: string; // Daily | Weekly | Monthly | Custom
-  frequencyDays?: string; // mandatory "every N days" when frequency = Custom
+  frequencyDays?: string; // legacy simple "every N days" (superseded by customSchedule)
+  customSchedule?: CustomSchedule; // rich recurrence when frequency = Custom
   rotation: string[]; // multi-select: Locations and/or Seeds ("both" = both selected)
   status?: SubscriptionStatus; // Active | Inactive
   businessUnit?: string; // single Business Unit (CMI / FSA / DSM / RMM / MSH / GEN)
@@ -42,7 +63,7 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
   {
     id: "sub1",
     name: "ME_KW_WATER — Amazon US",
-    project: "BEA>SHA_Amazon US",
+    projects: ["BEA>SHA_Amazon US"],
     store: "Amazon US",
     seeds: ["water"],
     scrappingOption: "ME_KW_WATER — Amazon US",
@@ -58,7 +79,7 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
   {
     id: "sub2",
     name: "PDP_BEAM_US — Amazon US",
-    project: "Ab Inbev MX",
+    projects: ["Ab Inbev MX"],
     store: "Amazon US",
     seeds: ["coffee"],
     scrappingOption: "PDP_BEAM_US — Amazon US",
@@ -98,11 +119,18 @@ export function subRotation(s: Subscription): string[] {
   return [];
 }
 
+/** A subscription's projects as a list, tolerating legacy records that only carry
+ *  the singular `project`. One or many. */
+export function subProjects(s: Subscription): string[] {
+  if (s.projects?.length) return s.projects;
+  return s.project ? [s.project] : [];
+}
+
 export function emptySubscription(): Subscription {
   return {
     id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     name: "",
-    project: "",
+    projects: [],
     store: "",
     seeds: [],
     scrappingOption: "",

@@ -11,7 +11,7 @@ import { FilterChip } from "@/components/seeds/FilterChip";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import { getClients } from "@/lib/clients";
 import { getProjects } from "@/lib/projects";
-import { getSubscriptions, subDestinationOptions, subRotation } from "@/lib/subscriptions";
+import { getSubscriptions, subDestinationOptions, subRotation, subProjects } from "@/lib/subscriptions";
 import { getScrappingOptions } from "@/lib/scrappingOptions";
 import { STORE_LOCATIONS } from "@/lib/scenarioSeedData";
 import { useSessionState } from "@/hooks/usePersistentState";
@@ -75,10 +75,10 @@ function PlannerPage() {
   for (const c of clients) for (const ap of c.assignedProjects ?? []) projectIdsWithClient.add(ap.projectId);
 
   const baseSubs = subs.filter((s) => {
-    const p = projectByName.get(s.project);
+    const p = projectByName.get(subProjects(s)[0] ?? "");
     return !!p && projectIdsWithClient.has(p.id) && scrapByName.has(s.scrappingOption);
   });
-  const baseProjectNames = new Set(baseSubs.map((s) => s.project));
+  const baseProjectNames = new Set(baseSubs.map((s) => subProjects(s)[0] ?? ""));
   const baseProjects = projects.filter((p) => baseProjectNames.has(p.name));
   const baseProjectIds = new Set(baseProjects.map((p) => p.id));
   const baseClients = clients.filter((c) => (c.assignedProjects ?? []).some((ap) => baseProjectIds.has(ap.projectId)));
@@ -106,7 +106,7 @@ function PlannerPage() {
   const { nodes, edges, byKind } = useMemo(() => {
     const nodes = new Map<string, GNode>();
     const subsCountByProject = new Map<string, number>();
-    for (const s of baseSubs) subsCountByProject.set(s.project, (subsCountByProject.get(s.project) ?? 0) + 1);
+    for (const s of baseSubs) { const pn = subProjects(s)[0] ?? ""; subsCountByProject.set(pn, (subsCountByProject.get(pn) ?? 0) + 1); }
 
     for (const c of baseClients) {
       const n = (c.assignedProjects ?? []).filter((ap) => baseProjectIds.has(ap.projectId)).length;
@@ -169,7 +169,7 @@ function PlannerPage() {
       for (const ap of c.assignedProjects ?? [])
         if (nodes.has(`p:${ap.projectId}`)) edges.push({ source: `c:${c.id}`, target: `p:${ap.projectId}` });
     for (const s of baseSubs) {
-      const p = projectByName.get(s.project);
+      const p = projectByName.get(subProjects(s)[0] ?? "");
       if (p && nodes.has(`p:${p.id}`)) edges.push({ source: `p:${p.id}`, target: `s:${s.id}` });
       if (scrapByName.has(s.scrappingOption)) edges.push({ source: `s:${s.id}`, target: `o:${s.scrappingOption}` });
     }
@@ -195,7 +195,7 @@ function PlannerPage() {
 
     const matches = (s: (typeof subs)[number]) => {
       if (fSub.length && !fSub.includes(s.name)) return false;
-      if (fProject.length && !fProject.includes(s.project)) return false;
+      if (fProject.length && !subProjects(s).some((p) => fProject.includes(p))) return false;
       if (fStore.length && !fStore.includes(s.store)) return false;
       if (fSeed.length && !(s.seeds ?? []).some((d) => fSeed.includes(d))) return false;
       if (fScrap.length && !fScrap.includes(s.scrappingOption)) return false;
@@ -204,7 +204,7 @@ function PlannerPage() {
         if (!o || !fExtraction.includes(o.extractionType)) return false;
       }
       if (fClient.length) {
-        const p = projectByName.get(s.project);
+        const p = projectByName.get(subProjects(s)[0] ?? "");
         const cs = p ? clientsByProjectId.get(p.id) ?? [] : [];
         if (!cs.some((c) => fClient.includes(c.name))) return false;
       }
@@ -216,7 +216,7 @@ function PlannerPage() {
       if (!nodes.has(`s:${s.id}`) || !matches(s)) continue;
       vis.add(`s:${s.id}`);
       if (nodes.has(`o:${s.scrappingOption}`)) vis.add(`o:${s.scrappingOption}`);
-      const p = projectByName.get(s.project);
+      const p = projectByName.get(subProjects(s)[0] ?? "");
       if (p && nodes.has(`p:${p.id}`)) {
         vis.add(`p:${p.id}`);
         // Add the project's clients, but honor the client filter — a project shared by

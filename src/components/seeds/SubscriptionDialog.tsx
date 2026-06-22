@@ -18,6 +18,7 @@ import { SelectBox } from "@/components/seeds/SelectBox";
 import { ScrappingOptionPicker } from "@/components/seeds/ScrappingOptionPicker";
 import { MultiSelectPopover } from "@/components/seeds/MultiSelectPopover";
 import { ChipMultiSelect } from "@/components/seeds/ChipMultiSelect";
+import { CustomScheduleEditor, DEFAULT_CUSTOM_SCHEDULE } from "@/components/seeds/CustomScheduleEditor";
 import {
   FREQUENCY_OPTIONS,
   ROTATION_OPTIONS,
@@ -33,10 +34,12 @@ import {
   emptySubscription,
   getSubscriptions,
   subRotation,
+  subProjects,
   type Subscription,
   type SubscriptionStatus,
 } from "@/lib/subscriptions";
 import { AssignedSeeds } from "@/components/seeds/AssignedSeeds";
+import type { SeedType } from "@/lib/seeds";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
@@ -67,6 +70,7 @@ export function SubscriptionDialog({
       // Migrate legacy data: rotation single-string ("Both"/"Zipcode"/…) → array;
       // a single destinationOption → the destinationOptions array.
       merged.rotation = subRotation(merged);
+      merged.projects = subProjects(merged);
       if (!merged.destinationOptions?.length && merged.destinationOption) {
         merged.destinationOptions = [merged.destinationOption];
       }
@@ -96,30 +100,58 @@ export function SubscriptionDialog({
   const storeOptions = [...new Set(getStores().map((s) => s.name))].sort((a, b) => a.localeCompare(b));
 
   const locationEnabled = v.geo === "MANUAL";
-  // Business rule: MEDIA extraction is incompatible with VIRTUAL_STORE geolocation,
-  // so that option is removed from the Geolocation picker (and clamped) for MEDIA.
-  const isMedia = selectedExtraction === "MEDIA";
-  const geoOptions = isMedia
-    ? SUBSCRIPTION_GEOLOC_OPTIONS.filter((g) => g !== "VIRTUAL_STORE")
-    : SUBSCRIPTION_GEOLOC_OPTIONS;
+  // Business rule: VIRTUAL_STORE geolocation is ONLY available for a PDP scrapping
+  // option; for every other extraction type it stays visible but disabled.
+  const isPdp = selectedExtraction === "DIGITAL_SHELF_PDP";
+  const geoOptions = SUBSCRIPTION_GEOLOC_OPTIONS.map((g) =>
+    g === "VIRTUAL_STORE" ? { value: g, label: g, disabled: !isPdp } : g,
+  );
+  // Seed tabs are restricted to the types valid for the chosen extraction type
+  // (Seed ↔ Extraction matrix); all four until an option is picked.
+  const allowedSeedTypes: SeedType[] = !selectedExtraction
+    ? ["KEYWORD", "URL", "API", "PDP"]
+    : selectedExtraction === "DIGITAL_SHELF_PDP"
+    ? ["PDP"]
+    : selectedExtraction === "SHELF"
+    ? ["URL", "API"]
+    : selectedExtraction === "SEARCH"
+    ? ["KEYWORD"]
+    : ["KEYWORD", "URL", "API"];
 
   const handleSave = async () => {
-    // A Custom frequency requires the "every N days" value.
-    if (v.frequency === "Custom" && !(v.frequencyDays ?? "").trim()) {
-      toast.error("Enter the number of days for a Custom frequency");
+    if (!(v.projects ?? []).length) {
+      toast.error("Select at least one project");
       return;
+    }
+    if (!v.frequency) {
+      toast.error("Frequency is required");
+      return;
+    }
+    // Validate the Custom recurrence.
+    if (v.frequency === "Custom") {
+      const cs = v.customSchedule;
+      if (!cs) { toast.error("Configure the custom frequency"); return; }
+      if (cs.unit === "Daily" && cs.dailyMode !== "timesPerDay" && !(cs.everyNDays ?? "").trim()) {
+        toast.error("Enter the number of days for the custom frequency"); return;
+      }
+      if (cs.unit === "Weekly" && !(cs.weekdays ?? []).length) {
+        toast.error("Pick at least one weekday for the weekly custom frequency"); return;
+      }
+      if (cs.ends === "On" && !(cs.endsOn ?? "").trim()) { toast.error("Pick the end date"); return; }
+      if (cs.ends === "After" && !(cs.endsAfter ?? "").trim()) { toast.error("Enter the number of occurrences"); return; }
     }
     setIsSaving(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 350));
-      // Normalise conditional fields on save: Location set only when geoloc = MANUAL;
-      // frequencyDays only for Custom; destinationOptions only for PLP / MEDIA; and
-      // drop the legacy single destinationOption.
+      // Normalise conditional fields on save: VIRTUAL_STORE only for PDP; Location set
+      // only when MANUAL; customSchedule only for Custom; destinations only for PLP/MEDIA.
       onSave({
         ...v,
-        geo: isMedia && v.geo === "VIRTUAL_STORE" ? "NONE" : v.geo,
+        project: undefined, // drop the legacy single field
+        geo: v.geo === "VIRTUAL_STORE" && !isPdp ? "NONE" : v.geo,
         locationSet: locationEnabled ? v.locationSet : "",
-        frequencyDays: v.frequency === "Custom" ? v.frequencyDays : "",
+        frequencyDays: "",
+        customSchedule: v.frequency === "Custom" ? v.customSchedule : undefined,
         destinationOptions: showDestination ? (v.destinationOptions ?? []) : [],
         destinationOption: undefined,
       });
@@ -183,8 +215,14 @@ export function SubscriptionDialog({
                 </Field>
               </div>
 
-              <Field label="Project" required>
-                <SelectBox value={v.project} onChange={(x) => set("project", x)} options={projectNames} />
+              <Field label="Projects" required>
+                <ChipMultiSelect
+                  value={v.projects ?? []}
+                  onChange={(arr) => set("projects", arr)}
+                  options={projectNames}
+                  addLabel="Add project"
+                  emptyLabel="No project selected"
+                />
               </Field>
               <Field label="Store" required>
                 <SelectBox value={v.store} onChange={(x) => set("store", x)} options={storeOptions} />
@@ -195,9 +233,9 @@ export function SubscriptionDialog({
                   value={v.scrappingOption}
                   onChange={(name) =>
                     setV((prev) => {
-                      // Clear an incompatible VIRTUAL_STORE geo when switching to MEDIA.
+                      // VIRTUAL_STORE is only valid for a PDP option — clear it otherwise.
                       const geo =
-                        extractionByOption.get(name) === "MEDIA" && prev.geo === "VIRTUAL_STORE"
+                        prev.geo === "VIRTUAL_STORE" && extractionByOption.get(name) !== "DIGITAL_SHELF_PDP"
                           ? "NONE"
                           : prev.geo;
                       return { ...prev, scrappingOption: name, geo };
@@ -223,8 +261,8 @@ export function SubscriptionDialog({
 
               <Field label="Geolocation mode" required>
                 <SelectBox value={v.geo} onChange={(x) => set("geo", x)} options={geoOptions} />
-                {isMedia && (
-                  <p className="mt-1 text-xs text-muted-foreground">Virtual store is not available for MEDIA extraction.</p>
+                {!isPdp && (
+                  <p className="mt-1 text-xs text-muted-foreground">Virtual store is only available for a PDP scrapping option.</p>
                 )}
               </Field>
               <Field label="Location set">
@@ -237,21 +275,24 @@ export function SubscriptionDialog({
                 />
               </Field>
 
-              <Field label="Frequency">
-                <SelectBox value={v.frequency} onChange={(x) => set("frequency", x)} options={FREQUENCY_OPTIONS} clearable />
+              <Field label="Frequency" required className="sm:col-span-2">
+                <SelectBox
+                  value={v.frequency}
+                  onChange={(x) =>
+                    setV((prev) => ({
+                      ...prev,
+                      frequency: x,
+                      customSchedule: x === "Custom" ? (prev.customSchedule ?? DEFAULT_CUSTOM_SCHEDULE) : prev.customSchedule,
+                    }))
+                  }
+                  options={FREQUENCY_OPTIONS}
+                  className="sm:w-48"
+                />
                 {v.frequency === "Custom" && (
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Every</span>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={v.frequencyDays ?? ""}
-                      onChange={(e) => set("frequencyDays", e.target.value)}
-                      placeholder="N"
-                      className="w-20"
-                    />
-                    <span className="text-sm text-muted-foreground">days<span className="ml-0.5 text-destructive">*</span></span>
-                  </div>
+                  <CustomScheduleEditor
+                    value={v.customSchedule ?? DEFAULT_CUSTOM_SCHEDULE}
+                    onChange={(cs) => set("customSchedule", cs)}
+                  />
                 )}
               </Field>
               <Field label="Rotation">
@@ -266,7 +307,7 @@ export function SubscriptionDialog({
             </section>
 
             <section className="mt-6 border-t border-border pt-5">
-              <AssignedSeeds seeds={v.seeds} onChange={(next) => set("seeds", next)} />
+              <AssignedSeeds seeds={v.seeds} onChange={(next) => set("seeds", next)} allowedTypes={allowedSeedTypes} />
             </section>
           </div>
 

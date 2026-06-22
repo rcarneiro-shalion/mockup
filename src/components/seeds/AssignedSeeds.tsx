@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import { AssignSeedsDialog } from "@/components/seeds/AssignSeedsDialog";
@@ -34,13 +34,24 @@ function StatusDot({ status }: { status?: Seed["status"] }) {
 export function AssignedSeeds({
   seeds,
   onChange,
+  allowedTypes,
 }: {
   seeds: string[];
   onChange: (next: string[]) => void;
+  /** Seed types valid for the subscription's extraction type; others are disabled. */
+  allowedTypes?: SeedType[];
 }) {
-  const [tab, setTab] = useState<SeedType>("KEYWORD");
+  const allowed = allowedTypes && allowedTypes.length ? allowedTypes : (["KEYWORD", "URL", "API", "PDP"] as SeedType[]);
+  const isAllowed = (t: SeedType) => allowed.includes(t);
+  const [tab, setTab] = useState<SeedType>(allowed[0]);
   const [search, setSearch] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
+
+  // Keep the active tab valid when the allowed set changes (e.g. option → PDP).
+  useEffect(() => {
+    if (!isAllowed(tab)) setTab(allowed[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allowed.join(",")]);
 
   const store = readPersistedList<Seed>(SEEDS_KEY);
   const all = store.length ? store : INITIAL_SEEDS;
@@ -89,27 +100,35 @@ export function AssignedSeeds({
           onOpenChange={setPickerOpen}
           available={available}
           onAssign={assignMany}
+          allowedTypes={allowed}
         />
       </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-5 border-b border-border">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={cn(
-              "flex items-center gap-1.5 border-b-2 px-0.5 pb-2 text-sm transition-colors",
-              tab === t.key
-                ? "border-primary font-medium text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t.label}
-            <span className="rounded-full bg-secondary px-1.5 text-[11px] text-muted-foreground">{countByType(t.key)}</span>
-          </button>
-        ))}
+        {TABS.map((t) => {
+          const enabled = isAllowed(t.key);
+          return (
+            <button
+              key={t.key}
+              type="button"
+              disabled={!enabled}
+              title={enabled ? undefined : "Not available for this scrapping option's extraction type"}
+              onClick={() => enabled && setTab(t.key)}
+              className={cn(
+                "flex items-center gap-1.5 border-b-2 px-0.5 pb-2 text-sm transition-colors",
+                !enabled
+                  ? "cursor-not-allowed border-transparent text-muted-foreground/40"
+                  : tab === t.key
+                  ? "border-primary font-medium text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t.label}
+              <span className="rounded-full bg-secondary px-1.5 text-[11px] text-muted-foreground">{countByType(t.key)}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Search within tab */}

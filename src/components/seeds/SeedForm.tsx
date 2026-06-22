@@ -24,7 +24,7 @@ import { Pill, Th, Td, LinkText } from "@/components/seeds/ListPrimitives";
 import { PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
 import { emptySeed, seedValueLabel, getSeeds, discoveryKeyRequired, KEYWORD_TYPE_OPTIONS, SEED_STATUS_OPTIONS, type Seed, type SeedType, type KeywordType, type SeedStatus } from "@/lib/seeds";
 import { nowStamp, getClientsForProject } from "@/lib/clients";
-import { getSubscriptions } from "@/lib/subscriptions";
+import { getSubscriptions, subProjects } from "@/lib/subscriptions";
 import { getProjects } from "@/lib/projects";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -68,7 +68,7 @@ export function SeedForm({
     setInSubs(
       getSubscriptions()
         .filter((s) => (s.seeds ?? []).includes(initial.d))
-        .map((s) => ({ id: s.id, name: s.name, project: s.project, clients: getClientsForProject(projectIdByName.get(s.project) ?? "") })),
+        .map((s) => ({ id: s.id, name: s.name, project: subProjects(s).join(", "), clients: [...new Set(subProjects(s).flatMap((pn) => getClientsForProject(projectIdByName.get(pn) ?? "")))] })),
     );
   }, [initial]);
 

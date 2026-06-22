@@ -31,6 +31,7 @@ import {
   SUBSCRIPTION_GEOLOC_OPTIONS,
   subRotation,
   subDestinationOptions,
+  subProjects,
   type Subscription,
 } from "@/lib/subscriptions";
 import { nowStamp } from "@/lib/clients";
@@ -77,11 +78,12 @@ function SubscriptionsPage() {
   const scrapOptions = [...new Set(rows.map((r) => r.scrappingOption).filter(Boolean))].sort();
   // subscription → project → client(s)
   const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
-  const clientsForSub = (sub: Subscription) => getClientsForProject(projectIdByName.get(sub.project) ?? "");
+  const clientsForSub = (sub: Subscription) =>
+    [...new Set(subProjects(sub).flatMap((pn) => getClientsForProject(projectIdByName.get(pn) ?? "")))];
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&
     (!fClient.length || fClient.some((c) => clientsForSub(r).includes(c))) &&
-    (!fProject.length || fProject.includes(r.project)) &&
+    (!fProject.length || subProjects(r).some((p) => fProject.includes(p))) &&
     (!fStore.length || fStore.includes(r.store)) &&
     (!fSeed.length || (r.seeds ?? []).some((s) => fSeed.includes(s))) &&
     (!fScrap.length || fScrap.includes(r.scrappingOption)) &&
@@ -92,6 +94,7 @@ function SubscriptionsPage() {
     seeds: (r) => (r.seeds ?? []).length,
     clients: (r) => clientsForSub(r).join(", "),
     scrappingOption: (r) => r.scrappingOption,
+    project: (r) => subProjects(r).join(", "),
     destinations: (r) => subDestinationOptions(r).length,
     rotation: (r) => subRotation(r).join(", "),
     createdAt: (r) => parseListDate(r.createdAt),
@@ -109,7 +112,7 @@ function SubscriptionsPage() {
         />
         <FilterBar search="Search by name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Clients" options={getClientNames()} value={fClient} onChange={setFClient} searchable />
-          <FilterChip label="Projects" options={distinct(rows, (r) => r.project)} value={fProject} onChange={setFProject} searchable />
+          <FilterChip label="Projects" options={[...new Set(rows.flatMap(subProjects))].sort()} value={fProject} onChange={setFProject} searchable />
           <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
           <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} searchable />
           <FilterChip label="Scrapping options" options={scrapOptions} value={fScrap} onChange={setFScrap} searchable />
@@ -121,7 +124,7 @@ function SubscriptionsPage() {
           <thead className="bg-secondary/60">
             <tr>
               <SortTh label="Name" sortKey="name" sort={sort} />
-              <SortTh label="Project" sortKey="project" sort={sort} />
+              <SortTh label="Projects" sortKey="project" sort={sort} />
               <SortTh label="Clients" sortKey="clients" sort={sort} />
               <SortTh label="Seeds" sortKey="seeds" sort={sort} />
               <SortTh label="Scrapping option" sortKey="scrappingOption" sort={sort} />
@@ -140,22 +143,7 @@ function SubscriptionsPage() {
             {pg.slice(sorted).map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelectedId(r.id)}>{r.name}</LinkText></Td>
-                <Td>
-                  {projectIdByName.get(r.project) ? (
-                    <LinkText
-                      onClick={() =>
-                        navigate({
-                          to: "/seeds-api/projects/$projectId",
-                          params: { projectId: projectIdByName.get(r.project)! },
-                        })
-                      }
-                    >
-                      {r.project}
-                    </LinkText>
-                  ) : (
-                    <span className="text-foreground/80">{r.project}</span>
-                  )}
-                </Td>
+                <Td><GroupedPills items={subProjects(r)} noun="project" tone="blue" onSeeAll={() => setSelectedId(r.id)} /></Td>
                 <Td><GroupedPills items={clientsForSub(r)} noun="client" tone="green" /></Td>
                 <Td><GroupedPills items={r.seeds ?? []} noun="seed" tone="green" onSeeAll={() => setSelectedId(r.id)} /></Td>
                 <Td>{r.scrappingOption ? <Pill tone="slate">{r.scrappingOption}</Pill> : <span className="text-muted-foreground">—</span>}</Td>

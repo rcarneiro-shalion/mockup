@@ -30,7 +30,7 @@ import {
   MODALITY_OPTIONS,
   SORT_OPTIONS,
 } from "@/lib/seedOptions";
-import { getSubscriptions } from "@/lib/subscriptions";
+import { getSubscriptions, subProjects } from "@/lib/subscriptions";
 import { getProjects } from "@/lib/projects";
 import { getClientsForProject } from "@/lib/clients";
 import { cn } from "@/lib/utils";
@@ -128,8 +128,8 @@ export function ScrappingOptionDialog({
         .map((s) => ({
           id: s.id,
           name: s.name,
-          project: s.project,
-          clients: getClientsForProject(projectIdByName.get(s.project) ?? ""),
+          project: subProjects(s).join(", "),
+          clients: [...new Set(subProjects(s).flatMap((pn) => getClientsForProject(projectIdByName.get(pn) ?? "")))],
         })),
     );
   }, [open, initial, mode]);

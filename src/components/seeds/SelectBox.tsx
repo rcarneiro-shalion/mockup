@@ -18,9 +18,10 @@ import {
   CommandList,
 } from "@/components/ui/command";
 
-export type SelectOption = string | { value: string; label: string };
+export type SelectOption = string | { value: string; label: string; disabled?: boolean };
 
-const norm = (o: SelectOption) => (typeof o === "string" ? { value: o, label: o } : o);
+const norm = (o: SelectOption): { value: string; label: string; disabled?: boolean } =>
+  typeof o === "string" ? { value: o, label: o } : o;
 
 /**
  * A single-select dropdown that:
@@ -63,7 +64,7 @@ export function SelectBox({
         </SelectTrigger>
         <SelectContent>
           {opts.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
+            <SelectItem key={o.value} value={o.value} disabled={o.disabled}>
               {o.label}
             </SelectItem>
           ))}
@@ -87,7 +88,7 @@ function ComboSelect({
 }: {
   value: string;
   onChange: (v: string) => void;
-  opts: { value: string; label: string }[];
+  opts: { value: string; label: string; disabled?: boolean }[];
   disabled?: boolean;
   placeholder: string;
   className?: string;
@@ -142,6 +143,7 @@ function ComboSelect({
                 <CommandItem
                   key={o.value}
                   value={o.label}
+                  disabled={o.disabled}
                   onSelect={() => {
                     onChange(o.value);
                     setOpen(false);

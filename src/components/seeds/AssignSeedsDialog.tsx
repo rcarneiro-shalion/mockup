@@ -7,7 +7,7 @@ import { FilterChip } from "@/components/seeds/FilterChip";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import { distinct } from "@/components/seeds/ListPrimitives";
 import { SEED_STATUS_OPTIONS, type Seed, type SeedType } from "@/lib/seeds";
-import { getSubscriptions } from "@/lib/subscriptions";
+import { getSubscriptions, subProjects } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
 import { Search, Maximize2, Minimize2, Store, FolderKanban, Layers, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -47,12 +47,15 @@ export function AssignSeedsDialog({
   onOpenChange,
   available,
   onAssign,
+  allowedTypes,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Seeds available to assign (already excludes the ones on the subscription). */
   available: Seed[];
   onAssign: (descriptions: string[]) => void;
+  /** Restrict the picker's tabs to these seed types (extraction-type matrix). */
+  allowedTypes?: SeedType[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const [search, setSearch] = useState("");
@@ -67,9 +70,9 @@ export function AssignSeedsDialog({
 
   // Subscriptions (client-side) → which subscriptions/projects use each seed.
   // Loaded on open to avoid an SSR/hydration mismatch over localStorage.
-  const [subs, setSubs] = useState<{ name: string; project: string; seeds: string[] }[]>([]);
+  const [subs, setSubs] = useState<{ name: string; projects: string[]; seeds: string[] }[]>([]);
   useEffect(() => {
-    if (open) setSubs(getSubscriptions().map((s) => ({ name: s.name, project: s.project, seeds: s.seeds ?? [] })));
+    if (open) setSubs(getSubscriptions().map((s) => ({ name: s.name, projects: subProjects(s), seeds: s.seeds ?? [] })));
   }, [open]);
 
   // seed description → the subscriptions + projects that use it.
@@ -80,7 +83,7 @@ export function AssignSeedsDialog({
         let e = m.get(d);
         if (!e) { e = { subs: new Set(), projects: new Set() }; m.set(d, e); }
         e.subs.add(sub.name);
-        if (sub.project) e.projects.add(sub.project);
+        for (const p of sub.projects) e.projects.add(p);
       }
     }
     return m;
@@ -89,9 +92,10 @@ export function AssignSeedsDialog({
   // Tabs: the seed types actually present among available seeds (stable order).
   const types = useMemo(() => {
     const present = new Set(available.map((s) => s.type ?? "KEYWORD"));
-    const list = TYPE_ORDER.filter((t) => present.has(t));
-    return list.length ? list : (["KEYWORD"] as SeedType[]);
-  }, [available]);
+    const allow = allowedTypes && allowedTypes.length ? allowedTypes : TYPE_ORDER;
+    const list = TYPE_ORDER.filter((t) => present.has(t) && allow.includes(t));
+    return list.length ? list : ([allow[0] ?? "KEYWORD"] as SeedType[]);
+  }, [available, allowedTypes]);
   const [tab, setTab] = useState<SeedType>(types[0]);
   const isPdp = tab === "PDP";
 
@@ -126,7 +130,7 @@ export function AssignSeedsDialog({
   // Filter options. Store is direct; Projects/Subscriptions come from all subs
   // (so the chips are stable across tabs). Category/Discovery key are per-tab.
   const storeOptions = [...new Set(available.map((s) => s.store).filter(Boolean))].sort();
-  const projectOptions = [...new Set(subs.map((s) => s.project).filter(Boolean))].sort();
+  const projectOptions = [...new Set(subs.flatMap((s) => s.projects).filter(Boolean))].sort();
   const subOptions = [...new Set(subs.map((s) => s.name).filter(Boolean))].sort();
   const catOptions = distinct(inTab, (s) => s.cat);
   const dkOptions = distinct(inTab, (s) => s.discoveryKey ?? "").filter(Boolean);
