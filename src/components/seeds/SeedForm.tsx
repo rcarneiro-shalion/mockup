@@ -105,11 +105,16 @@ export function SeedForm({
 
   const valueLabel = seedValueLabel(effectiveType);
   const valuePlaceholder =
-    effectiveType === "URL" ? "https://www.example.com/dp/…" : effectiveType === "API" ? "API origin" : "e.g. water";
+    effectiveType === "URL" || effectiveType === "PDP" ? "https://www.example.com/dp/…" : effectiveType === "API" ? "API origin" : "e.g. water";
   const isBranded = effectiveType === "KEYWORD" && seed.keywordType === "BRANDED";
-  const dkRequired = discoveryKeyRequired(effectiveType);
+  // Per-type fields: Page type only for URL/API; Discovery key only for PDP;
+  // Keyword type only for KEYWORD. (Defined by the seed-type field spec.)
+  const showPageType = effectiveType === "URL" || effectiveType === "API";
+  const showDiscoveryKey = effectiveType === "PDP";
+  const dkRequired = discoveryKeyRequired(effectiveType); // true only for PDP
   const canSave =
-    seed.d.trim() && seed.store.trim() && seed.pageType?.trim() && seed.value?.trim() &&
+    seed.d.trim() && seed.store.trim() && seed.value?.trim() &&
+    (!showPageType || !!seed.pageType?.trim()) &&
     (!dkRequired || !!seed.discoveryKey?.trim()) &&
     !dupSeed &&
     (effectiveType !== "KEYWORD" || !!seed.keywordType) &&
@@ -231,19 +236,30 @@ export function SeedForm({
                   </Field>
                 </div>
 
-                <div className="grid grid-cols-1 items-start gap-x-6 gap-y-5 sm:grid-cols-2">
-                  <Field label="Discovery key" required={dkRequired} help={DISCOVERY_KEY_HELP}>
-                    <DiscoveryKeyField
-                      value={seed.discoveryKey ?? ""}
-                      onChange={(v) => set("discoveryKey", v)}
-                      seeds={allSeeds}
-                      currentId={seed.id}
-                    />
-                  </Field>
-                  <Field label="Page type" required>
-                    <SelectBox value={seed.pageType ?? ""} onChange={(v) => set("pageType", v)} options={PAGE_TYPE_OPTIONS} />
-                  </Field>
-                </div>
+                {/* Page type — only for URL / API seeds. */}
+                {showPageType && (
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+                    <Field label="Page type" required>
+                      <SelectBox value={seed.pageType ?? ""} onChange={(v) => set("pageType", v)} options={PAGE_TYPE_OPTIONS} />
+                    </Field>
+                    <div />
+                  </div>
+                )}
+
+                {/* Discovery key — only for PDP (Virtual Seed) seeds. */}
+                {showDiscoveryKey && (
+                  <div className="grid grid-cols-1 items-start gap-x-6 gap-y-5 sm:grid-cols-2">
+                    <Field label="Discovery key" required={dkRequired} help={DISCOVERY_KEY_HELP}>
+                      <DiscoveryKeyField
+                        value={seed.discoveryKey ?? ""}
+                        onChange={(v) => set("discoveryKey", v)}
+                        seeds={allSeeds}
+                        currentId={seed.id}
+                      />
+                    </Field>
+                    <div />
+                  </div>
+                )}
 
               </div>
             )}

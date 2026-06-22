@@ -276,9 +276,9 @@ export const INITIAL_SEEDS: Seed[] = [...BASE_SEEDS, ...KEYWORD_SEEDS, ...URL_SE
 export function seedValueLabel(type: SeedType): string {
   switch (type) {
     case "URL": return "URL";
-    case "API": return "API origin";
+    case "API": return "API";
     case "KEYWORD": return "Keyword";
-    case "PDP": return "Product URL";
+    case "PDP": return "URL";
   }
 }
 
