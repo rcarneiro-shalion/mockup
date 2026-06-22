@@ -22,12 +22,13 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
-import { Calendar, Store, Sprout } from "lucide-react";
+import { Calendar, Store, Sprout, PlayCircle } from "lucide-react";
 import {
   SUBSCRIPTIONS_KEY,
   INITIAL_SUBSCRIPTIONS,
   BUSINESS_UNITS,
   SUBSCRIPTION_GEOLOC_OPTIONS,
+  subScrappingOptions,
   type Subscription,
 } from "@/lib/subscriptions";
 import { nowStamp } from "@/lib/clients";
@@ -71,6 +72,7 @@ function SubscriptionsPage() {
 
   const q = query.trim().toLowerCase();
   const seedOptions = [...new Set(rows.flatMap((r) => r.seeds ?? []))].sort();
+  const scrapOptions = [...new Set(rows.flatMap(subScrappingOptions))].sort();
   // subscription → project → client(s)
   const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
   const clientsForSub = (sub: Subscription) => getClientsForProject(projectIdByName.get(sub.project) ?? "");
@@ -80,13 +82,14 @@ function SubscriptionsPage() {
     (!fProject.length || fProject.includes(r.project)) &&
     (!fStore.length || fStore.includes(r.store)) &&
     (!fSeed.length || (r.seeds ?? []).some((s) => fSeed.includes(s))) &&
-    (!fScrap.length || fScrap.includes(r.scrappingOption)) &&
+    (!fScrap.length || subScrappingOptions(r).some((o) => fScrap.includes(o))) &&
     (!fGeo.length || fGeo.includes(r.geo)) &&
     (!fBu.length || fBu.includes(r.businessUnit ?? "")),
   );
   const sorted = sortRows(filtered, sort, {
     seeds: (r) => (r.seeds ?? []).length,
     clients: (r) => clientsForSub(r).join(", "),
+    scrappingOption: (r) => subScrappingOptions(r).join(", "),
     createdAt: (r) => parseListDate(r.createdAt),
     updatedAt: (r) => parseListDate(r.updatedAt),
   });
@@ -104,7 +107,7 @@ function SubscriptionsPage() {
           <FilterChip label="Projects" options={distinct(rows, (r) => r.project)} value={fProject} onChange={setFProject} searchable />
           <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
           <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} searchable />
-          <FilterChip label="Scrapping options" options={distinct(rows, (r) => r.scrappingOption)} value={fScrap} onChange={setFScrap} searchable />
+          <FilterChip label="Scrapping options" options={scrapOptions} value={fScrap} onChange={setFScrap} searchable />
           <FilterChip label="Geoloc modes" options={SUBSCRIPTION_GEOLOC_OPTIONS} value={fGeo} onChange={setFGeo} />
           <FilterChip label="Business units" options={BUSINESS_UNITS} value={fBu} onChange={setFBu} />
           <FilterChip label="Created at" icon={Calendar} />
@@ -159,7 +162,7 @@ function SubscriptionsPage() {
                 <Td>
                   <SeedsCell seeds={r.seeds ?? []} onSeeAll={() => setSelectedId(r.id)} />
                 </Td>
-                <Td><LinkText>{r.scrappingOption}</LinkText></Td>
+                <Td><ScrapOptionsCell options={subScrappingOptions(r)} /></Td>
                 <Td><Pill tone="violet">{r.geo}</Pill></Td>
                 <Td>{r.businessUnit ? <Pill tone="blue">{r.businessUnit}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td>{r.frequency ? <Pill tone="slate">{r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
@@ -255,6 +258,35 @@ function SeedsCell({ seeds, onSeeAll }: { seeds: string[]; onSeeAll: () => void 
           >
             See all
           </button>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
+/**
+ * Scrapping options column: a single option shows inline; 2+ collapse into a
+ * "N scrapping options" chip with a hover card listing them all.
+ */
+function ScrapOptionsCell({ options }: { options: string[] }) {
+  if (!options.length) return <span className="text-muted-foreground">—</span>;
+  if (options.length === 1) return <LinkText>{options[0]}</LinkText>;
+  return (
+    <HoverCard openDelay={120} closeDelay={80}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 px-2 py-0.5 text-xs font-medium text-foreground/80 hover:bg-secondary"
+        >
+          <PlayCircle className="h-3 w-3" /> {options.length} scrapping options
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="w-80 p-3">
+        <div className="mb-2 text-xs font-semibold text-foreground">Scrapping options ({options.length})</div>
+        <div className="flex flex-col gap-1">
+          {options.map((o) => (
+            <span key={o} className="truncate text-sm text-foreground/90" title={o}>{o}</span>
+          ))}
         </div>
       </HoverCardContent>
     </HoverCard>

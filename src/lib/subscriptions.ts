@@ -9,7 +9,11 @@ export type Subscription = {
   project: string;
   store: string;
   seeds: string[];
+  // A subscription may run one OR MORE scrapping options. `scrappingOptions` is the
+  // source of truth; `scrappingOption` is kept as the primary (= scrappingOptions[0])
+  // for the VSM and legacy readers. Use subScrappingOptions() to read either shape.
   scrappingOption: string;
+  scrappingOptions?: string[];
   geo: string; // NONE | AUTOMATIC | MANUAL
   locationSet: string;
   frequency: string; // Daily | Weekly | Monthly
@@ -73,6 +77,13 @@ export function getSubscriptions(): Subscription[] {
   return list.length ? list : INITIAL_SUBSCRIPTIONS;
 }
 
+/** A subscription's scrapping options as a list, tolerating legacy records that
+ *  only carry the singular `scrappingOption`. */
+export function subScrappingOptions(s: Subscription): string[] {
+  if (s.scrappingOptions?.length) return s.scrappingOptions;
+  return s.scrappingOption ? [s.scrappingOption] : [];
+}
+
 export function emptySubscription(): Subscription {
   return {
     id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
@@ -81,6 +92,7 @@ export function emptySubscription(): Subscription {
     store: "",
     seeds: [],
     scrappingOption: "",
+    scrappingOptions: [],
     geo: "NONE",
     locationSet: "",
     frequency: "Daily",

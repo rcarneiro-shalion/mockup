@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectBox } from "@/components/seeds/SelectBox";
-import { ScrappingOptionPicker } from "@/components/seeds/ScrappingOptionPicker";
+import { ScrappingOptionMultiPicker } from "@/components/seeds/ScrappingOptionPicker";
 import {
   FREQUENCY_OPTIONS,
   ROTATION_OPTIONS,
@@ -30,6 +30,7 @@ import {
   BUSINESS_UNITS,
   emptySubscription,
   getSubscriptions,
+  subScrappingOptions,
   type Subscription,
   type SubscriptionStatus,
 } from "@/lib/subscriptions";
@@ -60,7 +61,12 @@ export function SubscriptionDialog({
   useEffect(() => {
     if (open) {
       // Merge over defaults so older saved records get safe defaults (e.g. seeds[]).
-      setV(initial ? { ...emptySubscription(), ...initial } : emptySubscription());
+      const merged = initial ? { ...emptySubscription(), ...initial } : emptySubscription();
+      // Migrate a legacy single `scrappingOption` into the array form.
+      if (!merged.scrappingOptions?.length) {
+        merged.scrappingOptions = merged.scrappingOption ? [merged.scrappingOption] : [];
+      }
+      setV(merged);
       setIsSaving(false);
       setShowDeleteConfirm(false);
     }
@@ -71,13 +77,16 @@ export function SubscriptionDialog({
 
   // Scrapping options drive the searchable picker plus the extraction-type logic:
   // the Destination option field (PLP / MEDIA) and the Virtual Seed tab (PDP).
-  const scrappingOptions = getScrappingOptions();
-  const extractionByOption = new Map(scrappingOptions.map((s) => [s.name, s.extractionType]));
-  const selectedExtraction = extractionByOption.get(v.scrappingOption) ?? "";
-  const showDestination = selectedExtraction === "DIGITAL_SHELF_PLP" || selectedExtraction === "MEDIA";
-  // Destination option choices: sibling subscriptions whose scrapping option is a PDP one.
+  const allOptions = getScrappingOptions();
+  const extractionByOption = new Map(allOptions.map((s) => [s.name, s.extractionType]));
+  const selectedNames = v.scrappingOptions ?? [];
+  // A subscription may run several options; show the destination field when ANY of
+  // them is a discovery (PLP / MEDIA) extraction.
+  const selectedExtractions = selectedNames.map((n) => extractionByOption.get(n)).filter(Boolean) as string[];
+  const showDestination = selectedExtractions.some((e) => e === "DIGITAL_SHELF_PLP" || e === "MEDIA");
+  // Destination option choices: sibling subscriptions that run a PDP scrapping option.
   const pdpSubscriptionNames = getSubscriptions()
-    .filter((s) => s.id !== v.id && extractionByOption.get(s.scrappingOption) === "DIGITAL_SHELF_PDP")
+    .filter((s) => s.id !== v.id && subScrappingOptions(s).some((o) => extractionByOption.get(o) === "DIGITAL_SHELF_PDP"))
     .map((s) => s.name);
   const projectNames = getProjects().map((p) => p.name);
   // Store options come from the Stores entity (Retailers › Stores), deduped by name.
@@ -89,8 +98,10 @@ export function SubscriptionDialog({
     setIsSaving(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 350));
-      // Location set only applies when geoloc is MANUAL.
-      onSave({ ...v, locationSet: locationEnabled ? v.locationSet : "" });
+      // Location set only applies when geoloc is MANUAL. Keep the primary
+      // `scrappingOption` (the VSM / legacy readers) in sync with the array.
+      const opts = v.scrappingOptions ?? [];
+      onSave({ ...v, scrappingOptions: opts, scrappingOption: opts[0] ?? "", locationSet: locationEnabled ? v.locationSet : "" });
       toast.success(`Subscription ${mode === "add" ? "created" : "saved"} successfully`);
       onOpenChange(false);
     } catch {
@@ -158,8 +169,12 @@ export function SubscriptionDialog({
                 <SelectBox value={v.store} onChange={(x) => set("store", x)} options={storeOptions} />
               </Field>
 
-              <Field label="Scrapping option" required className="sm:col-span-2">
-                <ScrappingOptionPicker value={v.scrappingOption} onChange={(x) => set("scrappingOption", x)} options={scrappingOptions} />
+              <Field label="Scrapping options" required className="sm:col-span-2">
+                <ScrappingOptionMultiPicker
+                  value={v.scrappingOptions ?? []}
+                  onChange={(arr) => setV((prev) => ({ ...prev, scrappingOptions: arr, scrappingOption: arr[0] ?? "" }))}
+                  options={allOptions}
+                />
               </Field>
 
               {showDestination && (
