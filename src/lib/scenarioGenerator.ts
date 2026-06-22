@@ -54,6 +54,19 @@ export const extractionToSeedType = (ext: string): SeedType => {
   return "KEYWORD"; // MEDIA, SEARCH, AD, DIGITAL_SHELF_PLP (the discovery keyword)
 };
 
+/** Seed types VALID for an extraction type — the Seed ↔ Extraction compatibility
+ *  matrix: MEDIA / DIGITAL_SHELF_PLP / AD → URL + KEYWORD + API; SEARCH → KEYWORD;
+ *  SHELF → URL + API; DIGITAL_SHELF_PDP → PDP. The generator fabricates seeds of
+ *  these types so each subscription's seeds are valid for its scrapping option. */
+export const seedTypesForExtraction = (ext: string): SeedType[] => {
+  switch (ext) {
+    case "DIGITAL_SHELF_PDP": return ["PDP"];
+    case "SHELF": return ["URL", "API"];
+    case "SEARCH": return ["KEYWORD"];
+    default: return ["KEYWORD", "URL", "API"]; // MEDIA, DIGITAL_SHELF_PLP, AD
+  }
+};
+
 /** Whether this extraction type discovers product URLs that feed a sibling PDP run. */
 export const isDiscovery = (ext: string) => ext === "DIGITAL_SHELF_PLP" || ext === "MEDIA";
 
@@ -70,29 +83,63 @@ const optionPreset = (ext: string): Partial<ScrappingOptionValues> => {
 
 const geoToSub = (mode: string) => (mode === "NO_GEOLOC" ? "NONE" : mode); // MANUAL/AUTOMATIC/VIRTUAL_STORE pass through
 const freqFromName = (name: string) => (/_1d_|_1d /i.test(name) ? "Daily" : /_1w_/i.test(name) ? "Weekly" : /_1m_/i.test(name) ? "Monthly" : "Daily");
-const pick = <T,>(arr: T[], n: number, seed: number) => arr.filter((_, i) => i % Math.max(1, Math.round(arr.length / n)) === seed % Math.max(1, Math.round(arr.length / n))).slice(0, n);
-
 // Real seed corpus (collected from tasks > seeds), bucketed by type. The generator
 // samples + clones these so fabricated subscriptions carry REAL seed descriptions,
-// values, categories, keyword types/brands, page types and discovery keys.
+// values, categories, keyword types, page types and discovery keys.
 const realByType = (t: SeedType): Seed[] => INITIAL_SEEDS.filter((s) => (s.type ?? "KEYWORD") === t);
 const REAL_KEYWORDS = realByType("KEYWORD");
 const REAL_URLS = realByType("URL");
+const REAL_API = realByType("API");
 const REAL_PDPS = realByType("PDP");
-const cloneSeed = (s: Seed, fromDiscovery = false): Seed => ({ ...s, id: uid(), c: nowStamp(), u: nowStamp(), status: "Active", isFromDiscovery: fromDiscovery });
 
-// Brand-accurate KEYWORD seeds for a client (the live job↔seed relation is
-// unavailable — seeds API times out). Tied to the subscription's store so a
-// Samsung job gets "samsung galaxy", a Danone job gets "activia", etc. Falls
-// back to the real keyword corpus for clients without a curated pool.
-const clientKeywordSeeds = (slug: string, store: string, seed: number, n: number): Seed[] => {
-  const kws = CLIENT_KEYWORDS[slug] ?? [];
-  if (!kws.length) return pick(REAL_KEYWORDS, n, seed).map((s) => cloneSeed(s));
+// Default seed volume per subscription↔seeds relation. The simulator fabricates this
+// many type-correct seeds per subscription (hundreds, for realistic desk-test scale).
+export const SEEDS_PER_SUB = 200;
+
+// KEYWORD template pool for a client: curated brand-accurate keywords first (so a
+// Samsung job leads with "samsung galaxy", a Danone job with "activia", …), then the
+// real keyword corpus to fill — plenty of on-brand keyword seeds.
+const keywordPool = (slug: string, store: string): Seed[] => {
   const cat = CLIENT_CATEGORY[slug] ?? "Other > Other > Other";
-  return pick(kws, n, seed).map((kw) => ({
-    id: uid(), d: kw, store, cat, c: nowStamp(), u: nowStamp(),
-    type: "KEYWORD" as SeedType, status: "Active" as const, value: kw, keywordType: "CATEGORY" as const,
+  const curated: Seed[] = (CLIENT_KEYWORDS[slug] ?? []).map((kw) => ({
+    id: "", d: kw, store, cat, c: "", u: "", type: "KEYWORD", status: "Active", value: kw, keywordType: "CATEGORY",
   }));
+  return [...curated, ...REAL_KEYWORDS];
+};
+const poolFor = (type: SeedType, slug: string, store: string): Seed[] =>
+  type === "KEYWORD" ? keywordPool(slug, store) : type === "URL" ? REAL_URLS : type === "API" ? REAL_API : REAL_PDPS;
+
+// Clone a template seed into a fresh, valid, globally-unique seed for `store`.
+// `dup` (the pool wrapped past its length) appends a counter so within-subscription
+// descriptions stay distinct; PDP always gets a unique discoveryKey (+ value).
+const cloneForSub = (tmpl: Seed, type: SeedType, store: string, slug: string, salt: number, ti: number, i: number, dup: boolean, fromDiscovery: boolean): Seed => {
+  const s: Seed = { ...tmpl, id: uid(), store, c: nowStamp(), u: nowStamp(), status: "Active", type, d: dup ? `${tmpl.d} (${i + 1})` : tmpl.d };
+  if (type === "PDP") {
+    s.discoveryKey = `${slug}-${salt}-${ti}-${i}`;
+    s.value = dup ? `${tmpl.value}?n=${i + 1}` : tmpl.value;
+    s.pageType = tmpl.pageType ?? "LEGACY";
+    s.isFromDiscovery = fromDiscovery;
+  } else if (dup && (type === "URL" || type === "API")) {
+    s.value = `${tmpl.value}#${i + 1}`;
+  }
+  return s;
+};
+
+// Build `count` seeds spread across the extraction-compatible `types`, drawn from the
+// real corpus and synthesised with unique handles when a pool runs dry — so each
+// subscription can carry hundreds of type-correct seeds.
+const buildSubSeeds = (types: SeedType[], count: number, store: string, slug: string, salt: number, fromDiscovery = false): Seed[] => {
+  const out: Seed[] = [];
+  types.forEach((type, ti) => {
+    const share = Math.floor(count / types.length) + (ti < count % types.length ? 1 : 0);
+    const pool = poolFor(type, slug, store);
+    if (!pool.length) return;
+    for (let i = 0; i < share; i++) {
+      const tmpl = pool[(salt * 7 + ti * 101 + i) % pool.length];
+      out.push(cloneForSub(tmpl, type, store, slug, salt, ti, i, i >= pool.length, fromDiscovery));
+    }
+  });
+  return out;
 };
 
 // A geolocated (MANUAL) subscription scrapes every location of its store, so the
@@ -116,7 +163,7 @@ export type BuiltScenario = {
 };
 
 /** Build (but do not persist) a consistent scenario for one client from chosen jobs. */
-export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenario {
+export function buildScenario(clientSlug: string, jobs: RealJob[], seedsPerSub: number = SEEDS_PER_SUB): BuiltScenario {
   const label = CLIENT_LABELS[clientSlug] ?? clientSlug;
   const existing = getClients().find((c) => c.name.toLowerCase() === label.toLowerCase());
   const client: Client = existing ?? { ...emptyClient(), name: label, acronym: label.replace(/[^A-Za-z]/g, "").slice(0, 3).toUpperCase(), isTest: true };
@@ -134,20 +181,13 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
   const assigned: AssignedSubscription[] = [];
 
   jobs.forEach((job, ji) => {
-    const seedType = extractionToSeedType(job.extractionType);
     const geo = geoToSub(job.geolocMode);
     const locationSet = geo === "MANUAL" ? locationSetLabel(job.store) : "";
 
-    // --- the seeds for this subscription. KEYWORD seeds are brand-accurate per
-    // client + store; URL/PDP seeds are cloned from the real corpus.
-    const subSeeds: Seed[] = [];
-    if (seedType === "KEYWORD") {
-      subSeeds.push(...clientKeywordSeeds(clientSlug, job.store, ji, 4));
-    } else if (seedType === "PDP") {
-      pick(REAL_PDPS, 3, ji).forEach((s) => subSeeds.push(cloneSeed(s)));
-    } else { // URL (SHELF)
-      pick(REAL_URLS, 3, ji).forEach((s) => subSeeds.push(cloneSeed(s)));
-    }
+    // --- the seeds for this subscription: hundreds of seeds whose TYPES are valid
+    // for the option's extraction type (the Seed ↔ Extraction compatibility matrix);
+    // KEYWORD seeds lead with the client's brand-accurate terms.
+    const subSeeds = buildSubSeeds(seedTypesForExtraction(job.extractionType), seedsPerSub, job.store, clientSlug, ji);
 
     const optName = `${job.name}`; // reuse the real job name as the option name
     const option: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: optName, status: "Active", extractionType: job.extractionType, ...optionPreset(job.extractionType), createdAt: nowStamp(), updatedAt: nowStamp() };
@@ -165,7 +205,7 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
       const pdpName = job.name.replace(/^(ME|PLP|MAG|MAT|GR|GC|GEO)[^_]*_/, "PDP_");
       const pdpOptName = `${pdpName} (PDP)`;
       const pdpOption: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: pdpOptName, status: "Active", extractionType: "DIGITAL_SHELF_PDP", ...optionPreset("DIGITAL_SHELF_PDP"), createdAt: nowStamp(), updatedAt: nowStamp() };
-      const pdpSeeds: Seed[] = pick(REAL_PDPS, 3, ji + 1).map((s) => cloneSeed(s, true));
+      const pdpSeeds: Seed[] = buildSubSeeds(["PDP"], seedsPerSub, job.store, clientSlug, ji + 1000, true);
       const pdpSub: Subscription = {
         ...emptySubscription(), id: uid(), name: `${pdpName} (PDP)`, project: project.name, store: job.store,
         seeds: pdpSeeds.map((s) => s.d), scrappingOption: pdpOptName, geo, locationSet,
@@ -215,8 +255,8 @@ export function persistScenario(b: BuiltScenario): void {
 }
 
 /** Build + persist for a client in one call. */
-export function generateForClient(clientSlug: string, jobs: RealJob[]): BuiltScenario {
-  const built = buildScenario(clientSlug, jobs);
+export function generateForClient(clientSlug: string, jobs: RealJob[], seedsPerSub?: number): BuiltScenario {
+  const built = buildScenario(clientSlug, jobs, seedsPerSub);
   persistScenario(built);
   return built;
 }
