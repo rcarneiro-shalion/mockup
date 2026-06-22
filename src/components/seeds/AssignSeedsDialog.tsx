@@ -7,15 +7,18 @@ import { FilterChip } from "@/components/seeds/FilterChip";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import { distinct } from "@/components/seeds/ListPrimitives";
 import { SEED_STATUS_OPTIONS, type Seed, type SeedType } from "@/lib/seeds";
+import { getSubscriptions } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
-import { Search, Maximize2, Minimize2, Calendar, Hash, Layers, Link2, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Maximize2, Minimize2, Store, FolderKanban, Layers, ChevronLeft, ChevronRight } from "lucide-react";
 
 // PDP seeds are the Virtual Seeds produced by Discovery over a PLP extraction.
-const TYPE_LABEL: Record<SeedType, string> = { KEYWORD: "Keyword", URL: "URL", API: "API", PDP: "Virtual Seed (PDP)" };
+const TYPE_LABEL: Record<SeedType, string> = { KEYWORD: "Keyword", URL: "URL", API: "API", PDP: "PDP" };
 const TYPE_ORDER: SeedType[] = ["KEYWORD", "URL", "API", "PDP"];
 
-function YesNo({ value }: { value?: boolean }) {
-  return <Pill tone={value ? "green" : "slate"}>{value ? "Yes" : "No"}</Pill>;
+/** Origin of a seed: Virtual = produced by Discovery (PLP→PDP); Physical = added
+ *  through the interface. Only PDP seeds can be Virtual. */
+function OriginPill({ value }: { value?: boolean }) {
+  return value ? <Pill tone="violet">Virtual</Pill> : <Pill tone="slate">Physical</Pill>;
 }
 
 function StatusDot({ status }: { status?: Seed["status"] }) {
@@ -32,6 +35,12 @@ function StatusDot({ status }: { status?: Seed["status"] }) {
  * Full "Assign seeds" modal — a tabbed (by seed type), filterable, multi-select
  * grid of the seeds NOT yet assigned to the subscription. Checking rows and
  * confirming with "Assign seeds" returns the chosen seed descriptions.
+ *
+ * Filters: Store (seed.store, direct) plus Projects / Subscriptions, resolved
+ * indirectly from which subscriptions already use each seed (Subscription.seeds
+ * holds seed descriptions; the subscription's project gives the project). The
+ * Discovery key and Origin (Physical / Virtual) columns/filters show only on the
+ * PDP tab, where they are meaningful.
  */
 export function AssignSeedsDialog({
   open,
@@ -47,11 +56,35 @@ export function AssignSeedsDialog({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [search, setSearch] = useState("");
+  const [fStore, setFStore] = useState<string[]>([]);
+  const [fProject, setFProject] = useState<string[]>([]);
+  const [fSub, setFSub] = useState<string[]>([]);
   const [fCat, setFCat] = useState<string[]>([]);
   const [fStatus, setFStatus] = useState<string[]>([]);
   const [fDk, setFDk] = useState<string[]>([]);
-  const [fFromDisc, setFFromDisc] = useState<string[]>([]);
+  const [fOrigin, setFOrigin] = useState<string[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Subscriptions (client-side) → which subscriptions/projects use each seed.
+  // Loaded on open to avoid an SSR/hydration mismatch over localStorage.
+  const [subs, setSubs] = useState<{ name: string; project: string; seeds: string[] }[]>([]);
+  useEffect(() => {
+    if (open) setSubs(getSubscriptions().map((s) => ({ name: s.name, project: s.project, seeds: s.seeds ?? [] })));
+  }, [open]);
+
+  // seed description → the subscriptions + projects that use it.
+  const seedUsage = useMemo(() => {
+    const m = new Map<string, { subs: Set<string>; projects: Set<string> }>();
+    for (const sub of subs) {
+      for (const d of sub.seeds) {
+        let e = m.get(d);
+        if (!e) { e = { subs: new Set(), projects: new Set() }; m.set(d, e); }
+        e.subs.add(sub.name);
+        if (sub.project) e.projects.add(sub.project);
+      }
+    }
+    return m;
+  }, [subs]);
 
   // Tabs: the seed types actually present among available seeds (stable order).
   const types = useMemo(() => {
@@ -60,13 +93,15 @@ export function AssignSeedsDialog({
     return list.length ? list : (["KEYWORD"] as SeedType[]);
   }, [available]);
   const [tab, setTab] = useState<SeedType>(types[0]);
+  const isPdp = tab === "PDP";
 
   // Reset transient state each time the modal opens or the tab list changes.
   useEffect(() => {
     if (open) {
       setSelected(new Set());
       setSearch("");
-      setFCat([]); setFStatus([]); setFDk([]); setFFromDisc([]);
+      setFStore([]); setFProject([]); setFSub([]);
+      setFCat([]); setFStatus([]); setFDk([]); setFOrigin([]);
       setTab(types[0]);
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -74,19 +109,30 @@ export function AssignSeedsDialog({
   const inTab = useMemo(() => available.filter((s) => (s.type ?? "KEYWORD") === tab), [available, tab]);
 
   const q = search.trim().toLowerCase();
-  const rows = inTab.filter(
-    (s) =>
+  const rows = inTab.filter((s) => {
+    const usage = seedUsage.get(s.d);
+    return (
       (!q || s.d.toLowerCase().includes(q) || (s.value ?? "").toLowerCase().includes(q) || (s.discoveryKey ?? "").toLowerCase().includes(q)) &&
+      (!fStore.length || fStore.includes(s.store)) &&
+      (!fProject.length || (!!usage && [...usage.projects].some((p) => fProject.includes(p)))) &&
+      (!fSub.length || (!!usage && [...usage.subs].some((n) => fSub.includes(n)))) &&
       (!fCat.length || fCat.includes(s.cat)) &&
       (!fStatus.length || fStatus.includes(s.status ?? "Active")) &&
-      (!fDk.length || fDk.includes(s.discoveryKey ?? "")) &&
-      (!fFromDisc.length || fFromDisc.includes(s.isFromDiscovery ? "Yes" : "No")),
-  );
+      (!isPdp || !fDk.length || fDk.includes(s.discoveryKey ?? "")) &&
+      (!isPdp || !fOrigin.length || fOrigin.includes(s.isFromDiscovery ? "Virtual" : "Physical"))
+    );
+  });
 
+  // Filter options. Store is direct; Projects/Subscriptions come from all subs
+  // (so the chips are stable across tabs). Category/Discovery key are per-tab.
+  const storeOptions = [...new Set(available.map((s) => s.store).filter(Boolean))].sort();
+  const projectOptions = [...new Set(subs.map((s) => s.project).filter(Boolean))].sort();
+  const subOptions = [...new Set(subs.map((s) => s.name).filter(Boolean))].sort();
   const catOptions = distinct(inTab, (s) => s.cat);
   const dkOptions = distinct(inTab, (s) => s.discoveryKey ?? "").filter(Boolean);
 
-  const valueHeader = tab === "URL" || tab === "PDP" ? "Url" : tab === "API" ? "API origin" : "Keyword";
+  const valueHeader = tab === "URL" || tab === "PDP" ? "URL" : tab === "API" ? "API origin" : "Keyword";
+  const colCount = 5 + (isPdp ? 2 : 0);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -161,16 +207,13 @@ export function AssignSeedsDialog({
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" className="h-8 pl-8 text-sm" />
           </div>
-          {/* Decorative chips mirror the production picker; data-backed ones below filter. */}
-          <FilterChip label="Ids" icon={Hash} />
-          <FilterChip label="Subscription" icon={Layers} />
+          <FilterChip label="Store" icon={Store} options={storeOptions} value={fStore} onChange={setFStore} searchable />
+          <FilterChip label="Projects" icon={FolderKanban} options={projectOptions} value={fProject} onChange={setFProject} searchable />
+          <FilterChip label="Subscriptions" icon={Layers} options={subOptions} value={fSub} onChange={setFSub} searchable />
           <FilterChip label="Category" options={catOptions} value={fCat} onChange={setFCat} searchable />
           <FilterChip label="Status" options={[...SEED_STATUS_OPTIONS]} value={fStatus} onChange={setFStatus} />
-          <FilterChip label="Discovery key" options={dkOptions} value={fDk} onChange={setFDk} searchable />
-          <FilterChip label={valueHeader} icon={Link2} />
-          <FilterChip label="Is from discovery" icon={Sparkles} options={["Yes", "No"]} value={fFromDisc} onChange={setFFromDisc} />
-          <FilterChip label="Created at" icon={Calendar} />
-          <FilterChip label="Updated at" icon={Calendar} />
+          {isPdp && <FilterChip label="Discovery key" options={dkOptions} value={fDk} onChange={setFDk} searchable />}
+          {isPdp && <FilterChip label="Origin" options={["Physical", "Virtual"]} value={fOrigin} onChange={setFOrigin} />}
         </div>
 
         {/* Grid */}
@@ -186,9 +229,9 @@ export function AssignSeedsDialog({
                   />
                 </th>
                 <th className="px-3 py-2.5 font-medium">Description</th>
-                <th className="px-3 py-2.5 font-medium">Discovery key</th>
+                {isPdp && <th className="px-3 py-2.5 font-medium">Discovery key</th>}
                 <th className="px-3 py-2.5 font-medium">{valueHeader}</th>
-                <th className="px-3 py-2.5 font-medium">Is from discovery</th>
+                {isPdp && <th className="px-3 py-2.5 font-medium">Origin</th>}
                 <th className="px-3 py-2.5 font-medium">Category</th>
                 <th className="px-3 py-2.5 font-medium">Status</th>
               </tr>
@@ -196,7 +239,7 @@ export function AssignSeedsDialog({
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-16 text-center text-muted-foreground">There are no data</td>
+                  <td colSpan={colCount} className="px-3 py-16 text-center text-muted-foreground">There are no data</td>
                 </tr>
               ) : (
                 rows.map((s) => {
@@ -211,17 +254,19 @@ export function AssignSeedsDialog({
                         <Checkbox checked={checked} onCheckedChange={() => toggle(s.id)} aria-label={`Select ${s.d}`} />
                       </td>
                       <td className="px-3 py-2.5 text-[var(--sidebar-active-fg)]">{s.d}</td>
-                      <td className="px-3 py-2.5">
-                        {s.discoveryKey ? (
-                          <span className="block max-w-[160px] truncate font-mono text-xs text-foreground/80" title={s.discoveryKey}>{s.discoveryKey}</span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
+                      {isPdp && (
+                        <td className="px-3 py-2.5">
+                          {s.discoveryKey ? (
+                            <span className="block max-w-[160px] truncate font-mono text-xs text-foreground/80" title={s.discoveryKey}>{s.discoveryKey}</span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-3 py-2.5 text-foreground/80">
                         <span className="block max-w-[220px] truncate" title={s.value}>{s.value || "—"}</span>
                       </td>
-                      <td className="px-3 py-2.5"><YesNo value={s.isFromDiscovery} /></td>
+                      {isPdp && <td className="px-3 py-2.5"><OriginPill value={s.isFromDiscovery} /></td>}
                       <td className="px-3 py-2.5 text-foreground/80">
                         <span className="block max-w-[200px] truncate" title={s.cat}>{s.cat || "—"}</span>
                       </td>
