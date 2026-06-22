@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import { AssignSeedsDialog } from "@/components/seeds/AssignSeedsDialog";
 import { readPersistedList } from "@/lib/seedOptions";
-import { SEEDS_KEY, INITIAL_SEEDS, type Seed, type SeedType } from "@/lib/seeds";
+import { getAllSeeds, type Seed, type SeedType } from "@/lib/seeds";
 import { cn } from "@/lib/utils";
 import { Plus, Search, Sprout, X } from "lucide-react";
 
@@ -53,8 +53,7 @@ export function AssignedSeeds({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allowed.join(",")]);
 
-  const store = readPersistedList<Seed>(SEEDS_KEY);
-  const all = store.length ? store : INITIAL_SEEDS;
+  const all = getAllSeeds();
   const byDesc = new Map<string, Seed>();
   for (const s of all) if (!byDesc.has(s.d)) byDesc.set(s.d, s);
 

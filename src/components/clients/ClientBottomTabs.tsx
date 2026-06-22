@@ -6,7 +6,7 @@ import { LinkText, Pagination, Th, Td, Pill, FilterBar } from "@/components/seed
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { flag } from "@/lib/retailers";
 import { readPersistedList } from "@/lib/seedOptions";
-import { SEEDS_KEY, INITIAL_SEEDS, type Seed, type SeedType } from "@/lib/seeds";
+import { getAllSeeds, type Seed, type SeedType } from "@/lib/seeds";
 import type { Client } from "@/lib/clients";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -233,8 +233,7 @@ function SeedTagsTab() {
   const [query, setQuery] = useState("");
   const seedType = SEED_TAG_TYPES.find((t) => t.label === typeLabel)?.type ?? "KEYWORD";
 
-  const persisted = readPersistedList<Seed>(SEEDS_KEY);
-  const allSeeds = persisted.length ? persisted : INITIAL_SEEDS;
+  const allSeeds = getAllSeeds();
   const q = query.trim().toLowerCase();
   const rows = allSeeds.filter(
     (s) => (s.type ?? "KEYWORD") === seedType && (!q || s.d.toLowerCase().includes(q) || (s.value ?? "").toLowerCase().includes(q)),

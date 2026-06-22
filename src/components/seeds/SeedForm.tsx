@@ -22,7 +22,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pill, Th, Td, LinkText } from "@/components/seeds/ListPrimitives";
 import { PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
-import { emptySeed, seedValueLabel, getSeeds, discoveryKeyRequired, KEYWORD_TYPE_OPTIONS, SEED_STATUS_OPTIONS, type Seed, type SeedType, type KeywordType, type SeedStatus } from "@/lib/seeds";
+import { emptySeed, seedValueLabel, getAllSeeds, discoveryKeyRequired, KEYWORD_TYPE_OPTIONS, SEED_STATUS_OPTIONS, type Seed, type SeedType, type KeywordType, type SeedStatus } from "@/lib/seeds";
 import { nowStamp, getClientsForProject } from "@/lib/clients";
 import { getSubscriptions, subProjects } from "@/lib/subscriptions";
 import { getProjects } from "@/lib/projects";
@@ -74,7 +74,7 @@ export function SeedForm({
 
   // All seeds (client-side) for Discovery-key uniqueness + search. Loaded once.
   const [allSeeds, setAllSeeds] = useState<Seed[]>([]);
-  useEffect(() => { setAllSeeds(getSeeds()); }, []);
+  useEffect(() => { setAllSeeds(getAllSeeds()); }, []);
 
   const set = <K extends keyof Seed>(k: K, v: Seed[K]) =>
     setSeed((prev) => ({ ...prev, [k]: v }));

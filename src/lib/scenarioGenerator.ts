@@ -11,7 +11,7 @@
 import { getClients, withProjectClients, nowStamp, emptyClient, CLIENTS_KEY, type Client } from "./clients";
 import { getProjects, PROJECTS_KEY, type Project, type AssignedSubscription } from "./projects";
 import { getSubscriptions, SUBSCRIPTIONS_KEY, emptySubscription, subProjects, type Subscription } from "./subscriptions";
-import { getSeeds, INITIAL_SEEDS, SEEDS_KEY, type Seed, type SeedType } from "./seeds";
+import { getSeeds, INITIAL_SEEDS, BULK_SEEDS_EXTRA, SEEDS_KEY, type Seed, type SeedType } from "./seeds";
 import { getScrappingOptions, SCRAPPING_OPTIONS_KEY } from "./scrappingOptions";
 import { EMPTY_SCRAPPING_OPTION, type ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import { REAL_JOBS, CLIENT_LABELS, STORE_LOCATIONS, CLIENT_KEYWORDS, CLIENT_CATEGORY, type RealJob } from "./scenarioSeedData";
@@ -86,7 +86,10 @@ const freqFromName = (name: string) => (/_1d_|_1d /i.test(name) ? "Daily" : /_1w
 // Real seed corpus (collected from tasks > seeds), bucketed by type. The generator
 // samples + clones these so fabricated subscriptions carry REAL seed descriptions,
 // values, categories, keyword types, page types and discovery keys.
-const realByType = (t: SeedType): Seed[] => INITIAL_SEEDS.filter((s) => (s.type ?? "KEYWORD") === t);
+// Clone from the FULL in-bundle catalog (curated + the read-only bulk overlay), not the
+// persisted/writable set — so generated seeds draw on the whole real corpus.
+const CATALOG_SEEDS: Seed[] = [...INITIAL_SEEDS, ...BULK_SEEDS_EXTRA];
+const realByType = (t: SeedType): Seed[] => CATALOG_SEEDS.filter((s) => (s.type ?? "KEYWORD") === t);
 const REAL_KEYWORDS = realByType("KEYWORD");
 const REAL_URLS = realByType("URL");
 const REAL_API = realByType("API");

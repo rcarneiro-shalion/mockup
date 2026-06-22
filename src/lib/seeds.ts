@@ -1,6 +1,7 @@
 import { nowStamp } from "./clients";
 import { readPersistedList } from "./seedOptions";
 import { BULK_KEYWORD_SEEDS, BULK_URL_SEEDS } from "./seedsBulk";
+import { BULK_KEYWORD_SEEDS_2, BULK_URL_SEEDS_2 } from "./seedsBulkExtra";
 
 export type SeedType = "URL" | "API" | "KEYWORD" | "PDP";
 export type KeywordType = "BRANDED" | "CATEGORY";
@@ -273,8 +274,13 @@ const PDP_SEEDS: Seed[] = PDP_ROWS.map(([d, url, store, cat, discoveryKey], i) =
 
 // Real seed corpus ingested from the tasks-api seed export (mapped to the current
 // model in ./seedsBulk). The curated demos above stay for the brand showcase + the
-// PDP seeds the scenario generator clones for Discovery.
-export const INITIAL_SEEDS: Seed[] = [...BASE_SEEDS, ...KEYWORD_SEEDS, ...URL_SEEDS, ...API_SEEDS, ...PDP_SEEDS, ...BULK_KEYWORD_SEEDS, ...BULK_URL_SEEDS];
+// Writable default = the small curated/demo seeds only. The full real corpus (~5.4k) is a
+// READ-ONLY overlay (BULK_SEEDS_EXTRA) merged in for display via getAllSeeds() and cloned by
+// the scenario generator, but NEVER persisted: persistScenario writes only getSeeds() (this
+// small set), so generation stays within the localStorage budget no matter how large the
+// corpus grows (see [[mockup-storage-architecture]] — same pattern as projects).
+export const INITIAL_SEEDS: Seed[] = [...BASE_SEEDS, ...KEYWORD_SEEDS, ...URL_SEEDS, ...API_SEEDS, ...PDP_SEEDS];
+export const BULK_SEEDS_EXTRA: Seed[] = [...BULK_KEYWORD_SEEDS, ...BULK_URL_SEEDS, ...BULK_KEYWORD_SEEDS_2, ...BULK_URL_SEEDS_2];
 
 // Label for the type-specific value field.
 export function seedValueLabel(type: SeedType): string {
@@ -298,6 +304,15 @@ export function discoveryKeyRequired(type: SeedType): boolean {
 export function getSeeds(): Seed[] {
   const list = readPersistedList<Seed>(SEEDS_KEY);
   return list.length ? list : INITIAL_SEEDS;
+}
+
+/** All seeds for DISPLAY / lookup / cloning: the writable set + the read-only bulk corpus
+ *  overlay (deduped by id). Use this for lists, pickers and discovery-key uniqueness;
+ *  use getSeeds() as the write base (so the corpus is never re-persisted). */
+export function getAllSeeds(): Seed[] {
+  const persisted = getSeeds();
+  const ids = new Set(persisted.map((s) => s.id));
+  return [...persisted, ...BULK_SEEDS_EXTRA.filter((s) => !ids.has(s.id))];
 }
 
 export function emptySeed(type: SeedType): Seed {

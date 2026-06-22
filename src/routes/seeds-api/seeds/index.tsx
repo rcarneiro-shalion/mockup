@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { AppShell } from "@/components/layout/AppShell";
@@ -7,6 +7,7 @@ import { FilterChip } from "@/components/seeds/FilterChip";
 import {
   SEEDS_KEY,
   INITIAL_SEEDS,
+  BULK_SEEDS_EXTRA,
   KEYWORD_TYPE_OPTIONS,
   SEED_STATUS_OPTIONS,
   type Seed,
@@ -64,6 +65,10 @@ type Col = { key: string; label: ReactNode; sortKey?: string; cell: (r: Seed) =>
 
 function SeedsPage() {
   const [rows, setRows] = usePersistentState<Seed[]>(SEEDS_KEY, INITIAL_SEEDS);
+  // Display = the small writable set + the read-only bulk seed corpus (deduped by id).
+  // Only writable rows are editable/deletable; the bulk corpus is reference data.
+  const writableIds = useMemo(() => new Set(rows.map((r) => r.id)), [rows]);
+  const allRows = useMemo(() => [...rows, ...BULK_SEEDS_EXTRA.filter((s) => !writableIds.has(s.id))], [rows, writableIds]);
   const [query, setQuery] = useState("");
   const [fValue, setFValue] = useState<string[]>([]);
   const [fStore, setFStore] = useState<string[]>([]);
@@ -128,7 +133,7 @@ function SeedsPage() {
     navigate({ to: "/seeds-api/seeds/new", search: { type } });
 
   const q = query.trim().toLowerCase();
-  const filtered = rows.filter((r) =>
+  const filtered = allRows.filter((r) =>
     (!fSeedType.length || fSeedType.includes(r.type ?? "")) &&
     (!q || r.d.toLowerCase().includes(q) || (r.value ?? "").toLowerCase().includes(q)) &&
     (!fValue.length || fValue.includes(r.value ?? "")) &&
@@ -146,8 +151,8 @@ function SeedsPage() {
 
   // Searchable value filter across all seed types — KEYWORD-seed values are
   // surfaced first (the common pick), then the rest; each group stays alphabetical.
-  const keywordValues = new Set(rows.filter((r) => r.type === "KEYWORD" && r.value).map((r) => r.value as string));
-  const allValues = distinct(rows, (r) => r.value ?? "").filter(Boolean);
+  const keywordValues = new Set(allRows.filter((r) => r.type === "KEYWORD" && r.value).map((r) => r.value as string));
+  const allValues = distinct(allRows, (r) => r.value ?? "").filter(Boolean);
   const valueOptions = [
     ...allValues.filter((v) => keywordValues.has(v)),
     ...allValues.filter((v) => !keywordValues.has(v)),
@@ -172,7 +177,7 @@ function SeedsPage() {
   // Every seed type is listed together, so each variant column is always shown and
   // each cell renders only the field relevant to that row's seed type ("—" otherwise).
   const cols: Col[] = [
-    { key: "d", label: "Description", sortKey: "description", cell: (r) => <LinkText onClick={() => goEdit(r)}>{r.d}</LinkText> },
+    { key: "d", label: "Description", sortKey: "description", cell: (r) => writableIds.has(r.id) ? <LinkText onClick={() => goEdit(r)}>{r.d}</LinkText> : <span className="text-foreground/90">{r.d}</span> },
   ];
   cols.push({
     key: "type",
@@ -312,12 +317,12 @@ function SeedsPage() {
             onChange={setFClient}
             searchable
           />
-          <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
-          <FilterChip label="Categories" options={distinct(rows, (r) => r.cat)} value={fCat} onChange={setFCat} />
+          <FilterChip label="Stores" icon={Store} options={distinct(allRows, (r) => r.store)} value={fStore} onChange={setFStore} />
+          <FilterChip label="Categories" options={distinct(allRows, (r) => r.cat)} value={fCat} onChange={setFCat} />
           <FilterChip label="Page types" options={PAGE_TYPE_OPTIONS} value={fPageType} onChange={setFPageType} />
           <FilterChip
             label="Discovery key"
-            options={distinct(rows, (r) => r.discoveryKey ?? "").filter(Boolean)}
+            options={distinct(allRows, (r) => r.discoveryKey ?? "").filter(Boolean)}
             value={fDiscoveryKey}
             onChange={setFDiscoveryKey}
             searchable
@@ -326,7 +331,7 @@ function SeedsPage() {
           <FilterChip
             label="Brand"
             icon={Tag}
-            options={distinct(rows, (r) => r.brand ?? "").filter(Boolean)}
+            options={distinct(allRows, (r) => r.brand ?? "").filter(Boolean)}
             value={fBrand}
             onChange={setFBrand}
             searchable
@@ -355,11 +360,13 @@ function SeedsPage() {
                   <Td key={c.key}>{c.cell(r)}</Td>
                 ))}
                 <Td>
-                  <RowActionsMenu
-                    id={r.id}
-                    onDelete={() => setRows((prev) => prev.filter((x) => x.id !== r.id))}
-                    entityLabel="seed"
-                  />
+                  {writableIds.has(r.id) && (
+                    <RowActionsMenu
+                      id={r.id}
+                      onDelete={() => setRows((prev) => prev.filter((x) => x.id !== r.id))}
+                      entityLabel="seed"
+                    />
+                  )}
                 </Td>
               </tr>
             ))}
