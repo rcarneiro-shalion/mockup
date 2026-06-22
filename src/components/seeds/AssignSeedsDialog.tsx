@@ -8,8 +8,10 @@ import { Pill } from "@/components/seeds/ListPrimitives";
 import { distinct } from "@/components/seeds/ListPrimitives";
 import { SEED_STATUS_OPTIONS, type Seed, type SeedType } from "@/lib/seeds";
 import { getSubscriptions, subProjects } from "@/lib/subscriptions";
+import { getClientsForProject } from "@/lib/clients";
+import { getProjects } from "@/lib/projects";
 import { cn } from "@/lib/utils";
-import { Search, Maximize2, Minimize2, Store, FolderKanban, Layers, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Maximize2, Minimize2, Store, FolderKanban, Layers, Users, ChevronLeft, ChevronRight } from "lucide-react";
 
 // PDP seeds are the Virtual Seeds produced by Discovery over a PLP extraction.
 const TYPE_LABEL: Record<SeedType, string> = { KEYWORD: "Keyword", URL: "URL", API: "API", PDP: "PDP" };
@@ -66,24 +68,37 @@ export function AssignSeedsDialog({
   const [fStatus, setFStatus] = useState<string[]>([]);
   const [fDk, setFDk] = useState<string[]>([]);
   const [fOrigin, setFOrigin] = useState<string[]>([]);
+  const [fClient, setFClient] = useState<string[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Subscriptions (client-side) → which subscriptions/projects use each seed.
   // Loaded on open to avoid an SSR/hydration mismatch over localStorage.
-  const [subs, setSubs] = useState<{ name: string; projects: string[]; seeds: string[] }[]>([]);
+  const [subs, setSubs] = useState<{ name: string; projects: string[]; clients: string[]; seeds: string[] }[]>([]);
   useEffect(() => {
-    if (open) setSubs(getSubscriptions().map((s) => ({ name: s.name, projects: subProjects(s), seeds: s.seeds ?? [] })));
+    if (!open) return;
+    // Resolve each subscription's clients (sub → projects → clients) once, client-side
+    // (localStorage reads happen after mount to avoid an SSR/hydration mismatch).
+    const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
+    const clientsForProjects = (projects: string[]) =>
+      [...new Set(projects.flatMap((pn) => getClientsForProject(projectIdByName.get(pn) ?? "")))];
+    setSubs(
+      getSubscriptions().map((s) => {
+        const projects = subProjects(s);
+        return { name: s.name, projects, clients: clientsForProjects(projects), seeds: s.seeds ?? [] };
+      }),
+    );
   }, [open]);
 
-  // seed description → the subscriptions + projects that use it.
+  // seed description → the subscriptions + projects + clients that use it.
   const seedUsage = useMemo(() => {
-    const m = new Map<string, { subs: Set<string>; projects: Set<string> }>();
+    const m = new Map<string, { subs: Set<string>; projects: Set<string>; clients: Set<string> }>();
     for (const sub of subs) {
       for (const d of sub.seeds) {
         let e = m.get(d);
-        if (!e) { e = { subs: new Set(), projects: new Set() }; m.set(d, e); }
+        if (!e) { e = { subs: new Set(), projects: new Set(), clients: new Set() }; m.set(d, e); }
         e.subs.add(sub.name);
         for (const p of sub.projects) e.projects.add(p);
+        for (const c of sub.clients) e.clients.add(c);
       }
     }
     return m;
@@ -105,7 +120,7 @@ export function AssignSeedsDialog({
       setSelected(new Set());
       setSearch("");
       setFStore([]); setFProject([]); setFSub([]);
-      setFCat([]); setFStatus([]); setFDk([]); setFOrigin([]);
+      setFCat([]); setFStatus([]); setFDk([]); setFOrigin([]); setFClient([]);
       setTab(types[0]);
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -120,6 +135,7 @@ export function AssignSeedsDialog({
       (!fStore.length || fStore.includes(s.store)) &&
       (!fProject.length || (!!usage && [...usage.projects].some((p) => fProject.includes(p)))) &&
       (!fSub.length || (!!usage && [...usage.subs].some((n) => fSub.includes(n)))) &&
+      (!fClient.length || (!!usage && [...usage.clients].some((c) => fClient.includes(c)))) &&
       (!fCat.length || fCat.includes(s.cat)) &&
       (!fStatus.length || fStatus.includes(s.status ?? "Active")) &&
       (!isPdp || !fDk.length || fDk.includes(s.discoveryKey ?? "")) &&
@@ -132,6 +148,7 @@ export function AssignSeedsDialog({
   const storeOptions = [...new Set(available.map((s) => s.store).filter(Boolean))].sort();
   const projectOptions = [...new Set(subs.flatMap((s) => s.projects).filter(Boolean))].sort();
   const subOptions = [...new Set(subs.map((s) => s.name).filter(Boolean))].sort();
+  const clientOptions = [...new Set(subs.flatMap((s) => s.clients).filter(Boolean))].sort();
   const catOptions = distinct(inTab, (s) => s.cat);
   const dkOptions = distinct(inTab, (s) => s.discoveryKey ?? "").filter(Boolean);
 
@@ -213,6 +230,7 @@ export function AssignSeedsDialog({
           </div>
           <FilterChip label="Store" icon={Store} options={storeOptions} value={fStore} onChange={setFStore} searchable />
           <FilterChip label="Projects" icon={FolderKanban} options={projectOptions} value={fProject} onChange={setFProject} searchable />
+          <FilterChip label="Clients" icon={Users} options={clientOptions} value={fClient} onChange={setFClient} searchable />
           <FilterChip label="Subscriptions" icon={Layers} options={subOptions} value={fSub} onChange={setFSub} searchable />
           <FilterChip label="Category" options={catOptions} value={fCat} onChange={setFCat} searchable />
           <FilterChip label="Status" options={[...SEED_STATUS_OPTIONS]} value={fStatus} onChange={setFStatus} />

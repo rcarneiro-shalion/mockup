@@ -159,15 +159,41 @@ function ScenarioGeneratorPage() {
     toast.success(`Generated ${CLIENT_LABELS[slug]}: ${built.subscriptions.length} subscriptions · ${built.scrappingOptions.length} options · ${built.seeds.length} seeds`);
   };
 
+  // "Generate all" spans every visible client, so it uses a lighter seed volume per
+  // subscription than a single-client run (which keeps the deep SEEDS_PER_SUB) — this
+  // keeps the whole batch well under the localStorage budget. It is also resilient:
+  // each client is generated independently so one failure (e.g. storage limit) can't
+  // abort the rest, and the use-case checkboxes tick for every client that succeeded.
+  const GEN_ALL_SEEDS_PER_SUB = 25;
   const generateAll = () => {
     if (!visibleClients.length) return;
-    const built = visibleClients.map((c) => generateForClient(c.slug, c.jobs));
-    setResults(built);
-    setSel(Object.fromEntries(visibleClients.map((c) => [c.slug, new Set(c.jobs.map((j) => j.name))])));
-    setSimLive(true);
-    setSimSlugs(new Set(simulatedSlugs()));
+    const built: BuiltScenario[] = [];
+    const failed: string[] = [];
+    for (const c of visibleClients) {
+      try {
+        built.push(generateForClient(c.slug, c.jobs, GEN_ALL_SEEDS_PER_SUB));
+      } catch {
+        failed.push(c.slug);
+      }
+    }
+    if (built.length) {
+      const okSlugs = new Set(built.map((b) => b.slug));
+      setResults(built.slice(0, 18));
+      // Tick the use-case checkboxes for every client that generated (merge, like runClient).
+      setSel((prev) => {
+        const next = { ...prev };
+        for (const c of visibleClients) if (okSlugs.has(c.slug)) next[c.slug] = new Set(c.jobs.map((j) => j.name));
+        return next;
+      });
+      setSimLive(true);
+      setSimSlugs(new Set(simulatedSlugs()));
+    }
     const subs = built.reduce((a, b) => a + b.subscriptions.length, 0);
-    toast.success(`Generated ${built.length} client(s) · ${subs} subscriptions`);
+    if (failed.length) {
+      toast.error(`Generated ${built.length} of ${visibleClients.length} client(s) · ${subs} subscriptions. ${failed.length} hit the storage limit — Clear simulated, or filter to fewer clients, then retry.`);
+    } else {
+      toast.success(`Generated ${built.length} client(s) · ${subs} subscriptions`);
+    }
   };
 
   const clear = () => {
