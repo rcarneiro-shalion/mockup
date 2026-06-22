@@ -169,7 +169,7 @@ function ScenarioGeneratorPage() {
   // keeps the whole batch well under the localStorage budget. It is also resilient:
   // each client is generated independently so one failure (e.g. storage limit) can't
   // abort the rest, and the use-case checkboxes tick for every client that succeeded.
-  const GEN_ALL_SEEDS_PER_SUB = 25;
+  const GEN_ALL_SEEDS_PER_SUB = 30;
   const generateAll = () => {
     if (!visibleClients.length) return;
     const built: BuiltScenario[] = [];
