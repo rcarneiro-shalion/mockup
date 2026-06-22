@@ -73,9 +73,10 @@ export const SORT_OPTIONS = [
 // Subscription: how often it re-runs. "Custom" unlocks a free "every N days" field.
 export const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly", "Custom"];
 
-// Subscription: what the rotation cycles through. "Both" = Locations + Seeds.
+// Subscription: what the rotation cycles through — a MULTI-select. Picking both
+// Locations + Seeds is the intrinsic "both" condition (no separate value).
 // (Zipcode was dropped — it was equivalent to Locations.)
-export const ROTATION_OPTIONS = ["Locations", "Seeds", "Both"];
+export const ROTATION_OPTIONS = ["Locations", "Seeds"];
 
 // Location SET — a named group of locations referenced by a Stuff.
 export const LOCATION_SET_OPTIONS = [

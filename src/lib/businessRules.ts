@@ -238,7 +238,7 @@ const subscriptions: RulePage = {
       category: "Fields & options",
       rules: [
         "Frequency is Daily, Weekly, Monthly, or Custom — Custom requires an “every N days” value.",
-        "Rotation cycles through Locations, Seeds, or Both (Locations + Seeds).",
+        "Rotation is a multi-select of Locations and/or Seeds — picking both is the intrinsic \"both\" condition (there is no separate Both value).",
         "A subscription runs exactly one scrapping option (1:1); the same option may be reused by other subscriptions.",
         "When the scrapping option is a discovery (PLP / MEDIA) extraction, it can point to zero, one or many PDP sibling subscriptions (Destination options).",
         "A subscription can hold many seeds across the four types (Keyword, URL, API, PDP), added or removed from a searchable, tabbed picker.",

@@ -31,6 +31,7 @@ import {
   BUSINESS_UNITS,
   emptySubscription,
   getSubscriptions,
+  subRotation,
   type Subscription,
   type SubscriptionStatus,
 } from "@/lib/subscriptions";
@@ -62,9 +63,9 @@ export function SubscriptionDialog({
     if (open) {
       // Merge over defaults so older saved records get safe defaults (e.g. seeds[]).
       const merged = initial ? { ...emptySubscription(), ...initial } : emptySubscription();
-      // Migrate legacy data: Zipcode rotation → Locations; a single destinationOption
-      // → the destinationOptions array.
-      if (merged.rotation === "Zipcode") merged.rotation = "Locations";
+      // Migrate legacy data: rotation single-string ("Both"/"Zipcode"/…) → array;
+      // a single destinationOption → the destinationOptions array.
+      merged.rotation = subRotation(merged);
       if (!merged.destinationOptions?.length && merged.destinationOption) {
         merged.destinationOptions = [merged.destinationOption];
       }
@@ -253,7 +254,15 @@ export function SubscriptionDialog({
                 )}
               </Field>
               <Field label="Rotation">
-                <SelectBox value={v.rotation} onChange={(x) => set("rotation", x)} options={ROTATION_OPTIONS} clearable />
+                <MultiSelectPopover
+                  value={v.rotation ?? []}
+                  onChange={(arr) => set("rotation", arr)}
+                  options={ROTATION_OPTIONS}
+                  noun="rotation"
+                  placeholder="Select rotation(s)"
+                  searchPlaceholder="Locations / Seeds…"
+                  emptyText="No options."
+                />
               </Field>
             </section>
 

@@ -155,7 +155,7 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
     const sub: Subscription = {
       ...emptySubscription(), id: uid(), name: job.name, project: project.name, store: job.store,
       seeds: subSeeds.map((s) => s.d), scrappingOption: optName, geo, locationSet,
-      frequency: freqFromName(job.name), rotation: geo === "MANUAL" ? "Locations" : "Seeds",
+      frequency: freqFromName(job.name), rotation: geo === "MANUAL" ? ["Locations"] : ["Seeds"],
       status: "Active", businessUnit: job.businessUnit || "GEN",
       createdAt: nowStamp(), updatedAt: nowStamp(),
     };
@@ -169,7 +169,7 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
       const pdpSub: Subscription = {
         ...emptySubscription(), id: uid(), name: `${pdpName} (PDP)`, project: project.name, store: job.store,
         seeds: pdpSeeds.map((s) => s.d), scrappingOption: pdpOptName, geo, locationSet,
-        frequency: "Weekly", rotation: "Seeds", status: "Active", businessUnit: job.businessUnit || "GEN",
+        frequency: "Weekly", rotation: ["Seeds"], status: "Active", businessUnit: job.businessUnit || "GEN",
         createdAt: nowStamp(), updatedAt: nowStamp(),
       };
       scrappingOptions.push(pdpOption); subscriptions.push(pdpSub); seeds.push(...pdpSeeds);

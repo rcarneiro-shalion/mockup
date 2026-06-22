@@ -16,7 +16,7 @@ export type Subscription = {
   locationSet: string;
   frequency: string; // Daily | Weekly | Monthly | Custom
   frequencyDays?: string; // mandatory "every N days" when frequency = Custom
-  rotation: string; // Locations | Seeds | Both
+  rotation: string[]; // multi-select: Locations and/or Seeds ("both" = both selected)
   status?: SubscriptionStatus; // Active | Inactive
   businessUnit?: string; // single Business Unit (CMI / FSA / DSM / RMM / MSH / GEN)
   // Shown only when the scrapping option's extraction type is DIGITAL_SHELF_PLP or
@@ -49,7 +49,7 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
     geo: "MANUAL",
     locationSet: "Amazon US — All locations",
     frequency: "Daily",
-    rotation: "Locations",
+    rotation: ["Locations"],
     status: "Active",
     businessUnit: "CMI",
     createdAt: "Thu, May 2, 2024 3:21",
@@ -65,7 +65,7 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
     geo: "AUTOMATIC",
     locationSet: "",
     frequency: "Weekly",
-    rotation: "Seeds",
+    rotation: ["Seeds"],
     status: "Active",
     businessUnit: "FSA",
     createdAt: "Fri, May 3, 2024 8:27",
@@ -85,6 +85,19 @@ export function subDestinationOptions(s: Subscription): string[] {
   return s.destinationOption ? [s.destinationOption] : [];
 }
 
+/** A subscription's rotation as a list, tolerating legacy single-string records:
+ *  "Both" → Locations + Seeds; "Zipcode" → Locations; "" → none. */
+export function subRotation(s: Subscription): string[] {
+  const r = s.rotation as unknown;
+  if (Array.isArray(r)) return r as string[];
+  if (typeof r === "string" && r) {
+    if (r === "Both") return ["Locations", "Seeds"];
+    if (r === "Zipcode") return ["Locations"];
+    return [r];
+  }
+  return [];
+}
+
 export function emptySubscription(): Subscription {
   return {
     id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
@@ -97,7 +110,7 @@ export function emptySubscription(): Subscription {
     locationSet: "",
     frequency: "Daily",
     frequencyDays: "",
-    rotation: "",
+    rotation: [],
     status: "Active",
     businessUnit: "",
     destinationOptions: [],

@@ -29,6 +29,7 @@ import {
   INITIAL_SUBSCRIPTIONS,
   BUSINESS_UNITS,
   SUBSCRIPTION_GEOLOC_OPTIONS,
+  subRotation,
   type Subscription,
 } from "@/lib/subscriptions";
 import { nowStamp } from "@/lib/clients";
@@ -90,6 +91,7 @@ function SubscriptionsPage() {
     seeds: (r) => (r.seeds ?? []).length,
     clients: (r) => clientsForSub(r).join(", "),
     scrappingOption: (r) => r.scrappingOption,
+    rotation: (r) => subRotation(r).join(", "),
     createdAt: (r) => parseListDate(r.createdAt),
     updatedAt: (r) => parseListDate(r.updatedAt),
   });
@@ -157,7 +159,15 @@ function SubscriptionsPage() {
                 <Td><Pill tone="violet">{r.geo}</Pill></Td>
                 <Td>{r.businessUnit ? <Pill tone="blue">{r.businessUnit}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td>{r.frequency ? <Pill tone="slate">{r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
-                <Td>{r.rotation ? <Pill tone="slate">{r.rotation}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
+                <Td>
+                  {subRotation(r).length ? (
+                    <div className="flex flex-wrap gap-1">
+                      {subRotation(r).map((x) => <Pill key={x} tone="slate">{x}</Pill>)}
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </Td>
                 <Td className="whitespace-nowrap text-muted-foreground">{r.createdAt || "—"}</Td>
                 <Td className="whitespace-nowrap text-muted-foreground">{r.updatedAt || "—"}</Td>
                 <Td><Switch defaultChecked /></Td>
