@@ -94,6 +94,12 @@ export function SubscriptionDialog({
   const storeOptions = [...new Set(getStores().map((s) => s.name))].sort((a, b) => a.localeCompare(b));
 
   const locationEnabled = v.geo === "MANUAL";
+  // Business rule: MEDIA extraction is incompatible with VIRTUAL_STORE geolocation,
+  // so that option is removed from the Geolocation picker (and clamped) for MEDIA.
+  const isMedia = selectedExtraction === "MEDIA";
+  const geoOptions = isMedia
+    ? SUBSCRIPTION_GEOLOC_OPTIONS.filter((g) => g !== "VIRTUAL_STORE")
+    : SUBSCRIPTION_GEOLOC_OPTIONS;
 
   const handleSave = async () => {
     // A Custom frequency requires the "every N days" value.
@@ -109,6 +115,7 @@ export function SubscriptionDialog({
       // drop the legacy single destinationOption.
       onSave({
         ...v,
+        geo: isMedia && v.geo === "VIRTUAL_STORE" ? "NONE" : v.geo,
         locationSet: locationEnabled ? v.locationSet : "",
         frequencyDays: v.frequency === "Custom" ? v.frequencyDays : "",
         destinationOptions: showDestination ? (v.destinationOptions ?? []) : [],
@@ -184,7 +191,16 @@ export function SubscriptionDialog({
               <Field label="Scrapping option" required className="sm:col-span-2">
                 <ScrappingOptionPicker
                   value={v.scrappingOption}
-                  onChange={(name) => set("scrappingOption", name)}
+                  onChange={(name) =>
+                    setV((prev) => {
+                      // Clear an incompatible VIRTUAL_STORE geo when switching to MEDIA.
+                      const geo =
+                        extractionByOption.get(name) === "MEDIA" && prev.geo === "VIRTUAL_STORE"
+                          ? "NONE"
+                          : prev.geo;
+                      return { ...prev, scrappingOption: name, geo };
+                    })
+                  }
                   options={allOptions}
                 />
               </Field>
@@ -204,7 +220,10 @@ export function SubscriptionDialog({
               )}
 
               <Field label="Geolocation mode" required>
-                <SelectBox value={v.geo} onChange={(x) => set("geo", x)} options={SUBSCRIPTION_GEOLOC_OPTIONS} />
+                <SelectBox value={v.geo} onChange={(x) => set("geo", x)} options={geoOptions} />
+                {isMedia && (
+                  <p className="mt-1 text-xs text-muted-foreground">Virtual store is not available for MEDIA extraction.</p>
+                )}
               </Field>
               <Field label="Location set">
                 <SelectBox
