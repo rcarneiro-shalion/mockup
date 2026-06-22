@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
+import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows, usePagination } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { LOCATION_CATALOGS_KEY, INITIAL_LOCATION_CATALOGS, flag, COUNTRY_OPTIONS, countryLabel, type LocationCatalog } from "@/lib/retailers";
@@ -25,6 +25,7 @@ function LocationCatalogsListPage() {
     (!fCountry.length || fCountry.includes(r.country)),
   );
   const sorted = sortRows(filtered, sort, { sets: (r) => (r.sets ?? []).length });
+  const pg = usePagination(sorted.length, query);
   const navigate = useNavigate();
 
   return (
@@ -53,7 +54,7 @@ function LocationCatalogsListPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((r) => (
+            {pg.slice(sorted).map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => navigate({ to: "/location-catalogs/$catalogId", params: { catalogId: r.id } })}>{r.name}</LinkText></Td>
                 <Td className="text-foreground/80"><span className="mr-1.5">{flag(r.country)}</span>{r.country}</Td>
@@ -65,7 +66,7 @@ function LocationCatalogsListPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={sorted.length} />
+        <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
     </AppShell>
   );

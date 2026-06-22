@@ -21,6 +21,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  usePagination,
   parseListDate,
   distinct,
 } from "@/components/seeds/ListPrimitives";
@@ -118,6 +119,7 @@ function ScrappingOptionsPage() {
     createdAt: (r) => parseListDate(r.createdAt),
     updatedAt: (r) => parseListDate(r.updatedAt),
   });
+  const pg = usePagination(sorted.length, query);
 
   return (
     <AppShell>
@@ -148,7 +150,7 @@ function ScrappingOptionsPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((r, i) => {
+            {pg.slice(sorted).map((r, i) => {
               const subNames = subsByOption.get(r.name) ?? [];
               return (
               <tr key={i} className="border-t border-border hover:bg-secondary/40">
@@ -181,7 +183,7 @@ function ScrappingOptionsPage() {
             })}
           </tbody>
         </TableShell>
-        <Pagination total={sorted.length} />
+        <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
 
       <ScrappingOptionDialog

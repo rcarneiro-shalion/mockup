@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
-import { FilterBar, TableShell, Th, Td, Pagination, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
+import { FilterBar, TableShell, Th, Td, Pagination, SortTh, useSort, sortRows, usePagination } from "@/components/seeds/ListPrimitives";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { toast } from "sonner";
 import { Plus, Calendar } from "lucide-react";
@@ -50,6 +50,7 @@ export function SettingsList<T extends { id: string }>({
   const accessors: Record<string, (r: T) => unknown> = {};
   for (const c of columns) if (c.sortValue) accessors[c.key] = c.sortValue;
   const visible = sortRows(filtered, sort, accessors);
+  const pg = usePagination(visible.length, query);
 
   return (
     <AppShell>
@@ -89,7 +90,7 @@ export function SettingsList<T extends { id: string }>({
                 <Td />
               </tr>
             )}
-            {visible.map((r) => (
+            {pg.slice(visible).map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 {columns.map((c) => <Td key={c.key}>{c.cell(r)}</Td>)}
                 <Td>
@@ -99,7 +100,7 @@ export function SettingsList<T extends { id: string }>({
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={visible.length} />
+        <Pagination total={visible.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
       {extra}
     </AppShell>

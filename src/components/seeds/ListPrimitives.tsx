@@ -208,19 +208,84 @@ export function Td({ children, className }: { children?: ReactNode; className?: 
   return <td className={cn("px-4 py-3 align-middle", className)}>{children}</td>;
 }
 
-export function Pagination({ total, page = 1 }: { total: number; page?: number }) {
+export const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
+
+/** Client-side pagination state for a data table. Pass the current total and an
+ *  optional `resetKey` (e.g. the search + filter signature) that snaps back to
+ *  page 1 when it changes. `slice(rows)` returns just the current page's rows. */
+export function usePagination(total: number, resetKey?: string) {
+  const [pageSize, setPageSize] = useState(50);
+  const [page, setPage] = useState(1);
+  // A new filter/search or a page-size change returns to the first page.
+  useEffect(() => { setPage(1); }, [resetKey, pageSize]);
+  const maxPage = Math.max(1, Math.ceil(total / pageSize));
+  const current = Math.min(page, maxPage); // clamp when the set shrinks
+  const start = (current - 1) * pageSize;
+  const end = Math.min(start + pageSize, total);
+  function slice<T>(rows: T[]): T[] {
+    return rows.slice(start, end);
+  }
+  return { page: current, setPage, pageSize, setPageSize, maxPage, start, end, total, slice };
+}
+
+/** Table footer. Interactive (working rows-per-page select + prev/next) when
+ *  given `onPageChange`; otherwise a static display (legacy embedded sub-tables). */
+export function Pagination({
+  total,
+  page = 1,
+  pageSize = 100,
+  onPageChange,
+  onPageSizeChange,
+  pageSizeOptions = PAGE_SIZE_OPTIONS,
+}: {
+  total: number;
+  page?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
+  pageSizeOptions?: number[];
+}) {
+  const interactive = !!onPageChange;
+  const maxPage = Math.max(1, Math.ceil(total / pageSize));
+  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, total);
   return (
     <div className="flex items-center justify-end gap-4 border-t border-border px-6 py-3 text-sm text-muted-foreground">
-      <span>Rows per page: 100</span>
-      <span>1–{total} of {total}</span>
-      <span className="grid h-6 w-6 place-items-center rounded border border-border bg-secondary text-xs font-medium text-foreground">
-        {page}
-      </span>
+      <div className="flex items-center gap-2">
+        <span>Rows per page:</span>
+        {interactive ? (
+          <select
+            value={pageSize}
+            onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
+            className="rounded border border-border bg-background px-1.5 py-0.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            {pageSizeOptions.map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+        ) : (
+          <span>{pageSize}</span>
+        )}
+      </div>
+      <span className="tabular-nums">{start}–{end} of {total.toLocaleString()}</span>
       <div className="flex items-center gap-1">
-        <button className="rounded p-1 hover:bg-secondary" aria-label="Previous">
+        <button
+          className="rounded p-1 hover:bg-secondary disabled:pointer-events-none disabled:opacity-40"
+          aria-label="Previous"
+          disabled={!interactive || page <= 1}
+          onClick={() => onPageChange?.(page - 1)}
+        >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <button className="rounded p-1 hover:bg-secondary" aria-label="Next">
+        <span className="grid h-6 min-w-6 place-items-center rounded border border-border bg-secondary px-1 text-xs font-medium text-foreground">
+          {page}{interactive && <span className="font-normal text-muted-foreground"> / {maxPage}</span>}
+        </span>
+        <button
+          className="rounded p-1 hover:bg-secondary disabled:pointer-events-none disabled:opacity-40"
+          aria-label="Next"
+          disabled={!interactive || page >= maxPage}
+          onClick={() => onPageChange?.(page + 1)}
+        >
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>

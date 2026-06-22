@@ -28,6 +28,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  usePagination,
 } from "@/components/seeds/ListPrimitives";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { BulkMethodsModal } from "./BulkMethodsModal";
@@ -82,6 +83,7 @@ export function BulkPage() {
       )
     : rows;
   const sorted = sortRows(filtered, sort);
+  const pg = usePagination(sorted.length, q);
 
   const startProcess = (m: BulkMethod, fileName: string) => {
     const proc: BulkProcess = {
@@ -152,7 +154,7 @@ export function BulkPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((r) => (
+            {pg.slice(sorted).map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 <Td className="font-medium text-foreground">{r.fileName}</Td>
                 <Td className="text-foreground/80">{r.entity}</Td>
@@ -183,7 +185,7 @@ export function BulkPage() {
           </tbody>
         </TableShell>
 
-        <Pagination total={sorted.length} />
+        <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
 
       <NewProcessDialog open={newOpen} onOpenChange={setNewOpen} onStart={startProcess} />

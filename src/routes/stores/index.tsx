@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { FilterBar, TableShell, Th, Td, Pagination, LinkText, Pill, SortTh, useSort, sortRows, distinct } from "@/components/seeds/ListPrimitives";
+import { FilterBar, TableShell, Th, Td, Pagination, LinkText, Pill, SortTh, useSort, sortRows, usePagination, distinct } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePersistentState } from "@/hooks/usePersistentState";
@@ -42,6 +42,7 @@ function StoresListPage() {
     (!fStatus.length || fStatus.includes(s.status)),
   );
   const sorted = sortRows(filtered, sort);
+  const pg = usePagination(sorted.length, query);
   const navigate = useNavigate();
   const retailerIdByName = new Map(getRetailers().map((r) => [r.name, r.id]));
 
@@ -77,7 +78,7 @@ function StoresListPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((s) => (
+            {pg.slice(sorted).map((s) => (
               <tr key={s.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => navigate({ to: "/stores/$storeId", params: { storeId: s.id } })}>{s.name}</LinkText></Td>
                 <Td><LinkText>{s.domain}</LinkText></Td>
@@ -101,7 +102,7 @@ function StoresListPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={sorted.length} />
+        <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
     </AppShell>
   );

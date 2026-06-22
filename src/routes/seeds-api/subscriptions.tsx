@@ -17,6 +17,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  usePagination,
   parseListDate,
   distinct,
 } from "@/components/seeds/ListPrimitives";
@@ -93,6 +94,7 @@ function SubscriptionsPage() {
     createdAt: (r) => parseListDate(r.createdAt),
     updatedAt: (r) => parseListDate(r.updatedAt),
   });
+  const pg = usePagination(sorted.length, query);
   const selected = rows.find((r) => r.id === selectedId) ?? null;
 
   return (
@@ -131,7 +133,7 @@ function SubscriptionsPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((r) => (
+            {pg.slice(sorted).map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelectedId(r.id)}>{r.name}</LinkText></Td>
                 <Td>
@@ -171,7 +173,7 @@ function SubscriptionsPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={sorted.length} />
+        <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
 
       <SubscriptionDialog

@@ -18,6 +18,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  usePagination,
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
@@ -52,6 +53,7 @@ function TagsPage() {
     (!fClient.length || fClient.includes(r.client)),
   );
   const sorted = sortRows(filtered, sort, { createdAt: (r) => r.c, updatedAt: (r) => r.u });
+  const pg = usePagination(sorted.length, query);
 
   const editFields: FieldDef[] = selected
     ? [
@@ -92,7 +94,7 @@ function TagsPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((r) => (
+            {pg.slice(sorted).map((r) => (
               <tr key={r.name} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
                 <Td><LinkText>{r.client}</LinkText></Td>
@@ -111,7 +113,7 @@ function TagsPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={sorted.length} />
+        <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
 
       <AddRecordDialog

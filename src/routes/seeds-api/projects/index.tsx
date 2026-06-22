@@ -15,6 +15,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  usePagination,
   parseListDate,
   distinct,
 } from "@/components/seeds/ListPrimitives";
@@ -74,6 +75,7 @@ function ProjectsListPage() {
     createdAt: (p) => parseListDate(p.createdAt),
     updatedAt: (p) => parseListDate(p.updatedAt),
   });
+  const pg = usePagination(sorted.length, query);
 
   return (
     <AppShell>
@@ -126,7 +128,7 @@ function ProjectsListPage() {
                 <Td /><Td /><Td /><Td /><Td /><Td /><Td /><Td /><Td />
               </tr>
             )}
-            {sorted.map((p) => (
+            {pg.slice(sorted).map((p) => (
               <tr key={p.id} className="border-t border-border hover:bg-secondary/40">
                 <Td>
                   <LinkText onClick={() => navigate({ to: "/seeds-api/projects/$projectId", params: { projectId: p.id } })}>
@@ -162,7 +164,7 @@ function ProjectsListPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={filtered.length} />
+        <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
     </AppShell>
   );

@@ -17,6 +17,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  usePagination,
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
@@ -57,6 +58,7 @@ function TimeframesPage() {
     (!fProduct.length || fProduct.includes(r.product)),
   );
   const sorted = sortRows(filtered, sort, {});
+  const pg = usePagination(sorted.length, query);
 
   const editFields: FieldDef[] = selected
     ? [
@@ -97,7 +99,7 @@ function TimeframesPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((r) => (
+            {pg.slice(sorted).map((r) => (
               <tr key={r.name} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
                 <Td className="text-foreground/80">{r.group}</Td>
@@ -117,7 +119,7 @@ function TimeframesPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={sorted.length} />
+        <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
 
       <AddRecordDialog

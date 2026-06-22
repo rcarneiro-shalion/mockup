@@ -13,6 +13,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  usePagination,
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ function ClientsListPage() {
     (!fIsTest.length || fIsTest.includes(c.isTest ? "TRUE" : "FALSE")),
   );
   const sorted = sortRows(filtered, sort);
+  const pg = usePagination(sorted.length, query);
 
   return (
     <AppShell>
@@ -74,7 +76,7 @@ function ClientsListPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((c) => (
+            {pg.slice(sorted).map((c) => (
               <tr key={c.id} className="border-t border-border hover:bg-secondary/40">
                 <Td>
                   <LinkText onClick={() => navigate({ to: "/clients/$clientId", params: { clientId: c.id } })}>
@@ -94,7 +96,7 @@ function ClientsListPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={sorted.length} />
+        <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
     </AppShell>
   );

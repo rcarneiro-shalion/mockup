@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows } from "@/components/seeds/ListPrimitives";
+import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, sortRows, usePagination } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { RETAILERS_KEY, INITIAL_RETAILERS, deriveStoreRetailers, type Retailer } from "@/lib/retailers";
@@ -22,6 +22,7 @@ function RetailersListPage() {
   const q = query.trim().toLowerCase();
   const filtered = q ? rows.filter((r) => r.name.toLowerCase().includes(q)) : rows;
   const sorted = sortRows(filtered, sort);
+  const pg = usePagination(sorted.length, query);
   const navigate = useNavigate();
 
   return (
@@ -47,7 +48,7 @@ function RetailersListPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((r) => (
+            {pg.slice(sorted).map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => navigate({ to: "/retailers/$retailerId", params: { retailerId: r.id } })}>{r.name}</LinkText></Td>
                 <Td className="text-muted-foreground">{r.createdAt}</Td>
@@ -57,7 +58,7 @@ function RetailersListPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={sorted.length} />
+        <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
     </AppShell>
   );

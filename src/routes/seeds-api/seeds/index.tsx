@@ -28,6 +28,7 @@ import {
   SortTh,
   useSort,
   sortRows,
+  usePagination,
   distinct,
 } from "@/components/seeds/ListPrimitives";
 import {
@@ -166,6 +167,7 @@ function SeedsPage() {
     updatedAt: (r) => r.u,
     subscriptions: (r) => (subsBySeedDesc.get(r.d) ?? []).join(", "),
   });
+  const pg = usePagination(visible.length, query);
 
   // Every seed type is listed together, so each variant column is always shown and
   // each cell renders only the field relevant to that row's seed type ("—" otherwise).
@@ -347,7 +349,7 @@ function SeedsPage() {
             </tr>
           </thead>
           <tbody>
-            {visible.map((r) => (
+            {pg.slice(visible).map((r) => (
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 {cols.map((c) => (
                   <Td key={c.key}>{c.cell(r)}</Td>
@@ -363,7 +365,7 @@ function SeedsPage() {
             ))}
           </tbody>
         </TableShell>
-        <Pagination total={visible.length} />
+        <Pagination total={visible.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
     </AppShell>
   );
