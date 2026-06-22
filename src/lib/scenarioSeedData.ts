@@ -565,6 +565,15 @@ export const REAL_JOBS: Record<string, RealJob[]> = {
       "extractionType": "DIGITAL_SHELF_PDP",
       "geolocMode": "VIRTUAL_STORE",
       "businessUnit": "DSM"
+    },
+    {
+      "name": "ME_FERR_MX_Sams Club MX",
+      "store": "Sams Club MX",
+      "country": "mx",
+      "storeType": "GEOLOC",
+      "extractionType": "MEDIA",
+      "geolocMode": "MANUAL",
+      "businessUnit": "DSM"
     }
   ],
   "perfetti": [

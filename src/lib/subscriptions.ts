@@ -37,6 +37,8 @@ export type Subscription = {
   frequency: string; // Daily | Weekly | Monthly | Custom
   frequencyDays?: string; // legacy simple "every N days" (superseded by customSchedule)
   customSchedule?: CustomSchedule; // rich recurrence when frequency = Custom
+  startWeekday?: string; // Weekly: day of week the run starts on (Sun..Sat)
+  startMonthDay?: string; // Monthly: day of month (1..31) the run starts on
   rotation: string[]; // multi-select: Locations and/or Seeds ("both" = both selected)
   status?: SubscriptionStatus; // Active | Inactive
   businessUnit?: string; // single Business Unit (CMI / FSA / DSM / RMM / MSH / GEN)
@@ -138,6 +140,8 @@ export function emptySubscription(): Subscription {
     locationSet: "",
     frequency: "Daily",
     frequencyDays: "",
+    startWeekday: "Mon",
+    startMonthDay: "1",
     rotation: [],
     status: "Active",
     businessUnit: "",

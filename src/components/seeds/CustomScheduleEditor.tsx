@@ -1,19 +1,10 @@
 import type { ReactNode } from "react";
 import { Input } from "@/components/ui/input";
 import { SelectBox } from "@/components/seeds/SelectBox";
+import { WeekdayPicker, WEEKDAYS } from "@/components/seeds/WeekdayPicker";
 import { cn } from "@/lib/utils";
 import type { CustomSchedule } from "@/lib/subscriptions";
 
-// Sun..Sat in canonical order; `letter` is the compact S M T W T F S label.
-const WEEKDAYS = [
-  { key: "Sun", letter: "S" },
-  { key: "Mon", letter: "M" },
-  { key: "Tue", letter: "T" },
-  { key: "Wed", letter: "W" },
-  { key: "Thu", letter: "T" },
-  { key: "Fri", letter: "F" },
-  { key: "Sat", letter: "S" },
-];
 const range = (n: number, from = 1) => Array.from({ length: n }, (_, i) => String(i + from));
 
 export const DEFAULT_CUSTOM_SCHEDULE: CustomSchedule = {
@@ -95,26 +86,7 @@ export function CustomScheduleEditor({
             <span className="text-muted-foreground">week(s)</span>
           </Row>
           <Row label="Repeat on">
-            <div className="flex gap-1">
-              {WEEKDAYS.map((w, i) => {
-                const on = (v.weekdays ?? []).includes(w.key);
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => toggleDay(w.key)}
-                    title={w.key}
-                    aria-pressed={on}
-                    className={cn(
-                      "h-7 w-7 rounded-full text-xs font-medium transition-colors",
-                      on ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/70",
-                    )}
-                  >
-                    {w.letter}
-                  </button>
-                );
-              })}
-            </div>
+            <WeekdayPicker selected={v.weekdays ?? []} onToggle={toggleDay} />
           </Row>
         </div>
       )}

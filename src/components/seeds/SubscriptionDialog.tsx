@@ -19,6 +19,7 @@ import { ScrappingOptionPicker } from "@/components/seeds/ScrappingOptionPicker"
 import { MultiSelectPopover } from "@/components/seeds/MultiSelectPopover";
 import { ChipMultiSelect } from "@/components/seeds/ChipMultiSelect";
 import { CustomScheduleEditor, DEFAULT_CUSTOM_SCHEDULE } from "@/components/seeds/CustomScheduleEditor";
+import { WeekdayPicker } from "@/components/seeds/WeekdayPicker";
 import {
   FREQUENCY_OPTIONS,
   ROTATION_OPTIONS,
@@ -43,6 +44,8 @@ import type { SeedType } from "@/lib/seeds";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+
+const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
 export function SubscriptionDialog({
   open,
@@ -151,6 +154,8 @@ export function SubscriptionDialog({
         geo: v.geo === "VIRTUAL_STORE" && !isPdp ? "NONE" : v.geo,
         locationSet: locationEnabled ? v.locationSet : "",
         frequencyDays: "",
+        startWeekday: v.frequency === "Weekly" ? (v.startWeekday || "Mon") : "",
+        startMonthDay: v.frequency === "Monthly" ? (v.startMonthDay || "1") : "",
         customSchedule: v.frequency === "Custom" ? v.customSchedule : undefined,
         destinationOptions: showDestination ? (v.destinationOptions ?? []) : [],
         destinationOption: undefined,
@@ -276,18 +281,32 @@ export function SubscriptionDialog({
               </Field>
 
               <Field label="Frequency" required className="sm:col-span-2">
-                <SelectBox
-                  value={v.frequency}
-                  onChange={(x) =>
-                    setV((prev) => ({
-                      ...prev,
-                      frequency: x,
-                      customSchedule: x === "Custom" ? (prev.customSchedule ?? DEFAULT_CUSTOM_SCHEDULE) : prev.customSchedule,
-                    }))
-                  }
-                  options={FREQUENCY_OPTIONS}
-                  className="sm:w-48"
-                />
+                <div className="flex flex-wrap items-start gap-x-10 gap-y-3">
+                  <SelectBox
+                    value={v.frequency}
+                    onChange={(x) =>
+                      setV((prev) => ({
+                        ...prev,
+                        frequency: x,
+                        customSchedule: x === "Custom" ? (prev.customSchedule ?? DEFAULT_CUSTOM_SCHEDULE) : prev.customSchedule,
+                      }))
+                    }
+                    options={FREQUENCY_OPTIONS}
+                    className="sm:w-48"
+                  />
+                  {v.frequency === "Weekly" && (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-medium text-foreground/70">Starts on</span>
+                      <WeekdayPicker selected={v.startWeekday ? [v.startWeekday] : []} onToggle={(d) => set("startWeekday", d)} />
+                    </div>
+                  )}
+                  {v.frequency === "Monthly" && (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-medium text-foreground/70">Starts on day</span>
+                      <SelectBox value={v.startMonthDay ?? "1"} onChange={(x) => set("startMonthDay", x)} options={MONTH_DAYS} threshold={40} className="w-24" />
+                    </div>
+                  )}
+                </div>
                 {v.frequency === "Custom" && (
                   <CustomScheduleEditor
                     value={v.customSchedule ?? DEFAULT_CUSTOM_SCHEDULE}
