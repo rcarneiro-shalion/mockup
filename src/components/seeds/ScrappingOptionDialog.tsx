@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SelectBox } from "@/components/seeds/SelectBox";
+import { ChipMultiSelect } from "@/components/seeds/ChipMultiSelect";
 import { Pill, Th, Td, LinkText } from "@/components/seeds/ListPrimitives";
 import {
   EXTRACTION_TYPE_OPTIONS,
@@ -136,13 +137,6 @@ export function ScrappingOptionDialog({
   const set = <K extends keyof ScrappingOptionValues>(k: K, val: ScrappingOptionValues[K]) =>
     setV((prev) => ({ ...prev, [k]: val }));
 
-  const addTimeframe = (t: string) => {
-    if (!v.timeframes.includes(t)) set("timeframes", [...v.timeframes, t]);
-  };
-  const removeTimeframe = (t: string) =>
-    set("timeframes", v.timeframes.filter((x) => x !== t));
-  const availableTimeframes = TIMEFRAME_OPTIONS.filter((t) => !v.timeframes.includes(t));
-
   const addModality = (m: string) => {
     if (!v.modalityValues.includes(m)) set("modalityValues", [...v.modalityValues, m]);
   };
@@ -205,42 +199,15 @@ export function ScrappingOptionDialog({
               <Field label="Extraction type" required className="sm:col-span-2">
                 <SelectBox value={v.extractionType} onChange={(x) => set("extractionType", x)} options={EXTRACTION_TYPE_OPTIONS} />
               </Field>
-              {/* TaskGroup — 1:N multi-select */}
+              {/* TaskGroup — 1:N multi-select (shared ChipMultiSelect) */}
               <Field label="TaskGroup" required className="sm:col-span-2">
-                <div className="flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-2 py-1.5">
-                  {v.timeframes.length === 0 && (
-                    <span className="px-1 text-sm text-muted-foreground">No task groups selected</span>
-                  )}
-                  {v.timeframes.map((t) => (
-                    <span
-                      key={t}
-                      className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-foreground"
-                    >
-                      {t}
-                      <button
-                        type="button"
-                        onClick={() => removeTimeframe(t)}
-                        className="text-muted-foreground hover:text-destructive"
-                        aria-label={`Remove ${t}`}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                  {availableTimeframes.length > 0 && (
-                    <Select value="" onValueChange={addTimeframe}>
-                      <SelectTrigger className="h-6 w-auto gap-1 border-dashed px-2 text-xs text-muted-foreground">
-                        <Plus className="h-3 w-3" />
-                        <span>Add task group</span>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableTimeframes.map((t) => (
-                          <SelectItem key={t} value={t}>{t}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
+                <ChipMultiSelect
+                  value={v.timeframes}
+                  onChange={(arr) => set("timeframes", arr)}
+                  options={TIMEFRAME_OPTIONS}
+                  addLabel="Add task group"
+                  emptyLabel="No task groups selected"
+                />
               </Field>
             </section>
 

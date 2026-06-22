@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { SelectBox } from "@/components/seeds/SelectBox";
 import { ScrappingOptionPicker } from "@/components/seeds/ScrappingOptionPicker";
 import { MultiSelectPopover } from "@/components/seeds/MultiSelectPopover";
+import { ChipMultiSelect } from "@/components/seeds/ChipMultiSelect";
 import {
   FREQUENCY_OPTIONS,
   ROTATION_OPTIONS,
@@ -254,14 +255,12 @@ export function SubscriptionDialog({
                 )}
               </Field>
               <Field label="Rotation">
-                <MultiSelectPopover
+                <ChipMultiSelect
                   value={v.rotation ?? []}
                   onChange={(arr) => set("rotation", arr)}
                   options={ROTATION_OPTIONS}
-                  noun="rotation"
-                  placeholder="Select rotation(s)"
-                  searchPlaceholder="Locations / Seeds…"
-                  emptyText="No options."
+                  addLabel="Add rotation"
+                  emptyLabel="No rotation selected"
                 />
               </Field>
             </section>
