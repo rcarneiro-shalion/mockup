@@ -277,8 +277,8 @@ export function Pagination({
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <span className="grid h-6 min-w-6 place-items-center rounded border border-border bg-secondary px-1 text-xs font-medium text-foreground">
-          {page}{interactive && <span className="font-normal text-muted-foreground"> / {maxPage}</span>}
+        <span className="inline-flex h-6 min-w-6 items-center justify-center gap-1 rounded border border-border bg-secondary px-2 text-xs font-medium text-foreground">
+          {page}{interactive && <span className="font-normal text-muted-foreground">/ {maxPage}</span>}
         </span>
         <button
           className="rounded p-1 hover:bg-secondary disabled:pointer-events-none disabled:opacity-40"
