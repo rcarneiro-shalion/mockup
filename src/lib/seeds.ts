@@ -1,5 +1,6 @@
 import { nowStamp } from "./clients";
 import { readPersistedList } from "./seedOptions";
+import { BULK_KEYWORD_SEEDS, BULK_URL_SEEDS } from "./seedsBulk";
 
 export type SeedType = "URL" | "API" | "KEYWORD" | "PDP";
 export type KeywordType = "BRANDED" | "CATEGORY";
@@ -270,7 +271,10 @@ const PDP_SEEDS: Seed[] = PDP_ROWS.map(([d, url, store, cat, discoveryKey], i) =
   return { id: `p${i + 1}`, d, store, cat, c: stamp, u: stamp, type: "PDP", value: url, pageType: "LEGACY", discoveryKey, status: "Active" as SeedStatus };
 });
 
-export const INITIAL_SEEDS: Seed[] = [...BASE_SEEDS, ...KEYWORD_SEEDS, ...URL_SEEDS, ...API_SEEDS, ...PDP_SEEDS];
+// Real seed corpus ingested from the tasks-api seed export (mapped to the current
+// model in ./seedsBulk). The curated demos above stay for the brand showcase + the
+// PDP seeds the scenario generator clones for Discovery.
+export const INITIAL_SEEDS: Seed[] = [...BASE_SEEDS, ...KEYWORD_SEEDS, ...URL_SEEDS, ...API_SEEDS, ...PDP_SEEDS, ...BULK_KEYWORD_SEEDS, ...BULK_URL_SEEDS];
 
 // Label for the type-specific value field.
 export function seedValueLabel(type: SeedType): string {
