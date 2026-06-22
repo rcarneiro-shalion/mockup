@@ -24,6 +24,7 @@ import {
   Pagination,
   LinkText,
   Pill,
+  GroupedPills,
   SortTh,
   useSort,
   sortRows,
@@ -232,18 +233,7 @@ function SeedsPage() {
     key: "subs",
     label: "Subscriptions",
     sortKey: "subscriptions",
-    cell: (r) => {
-      const names = subsBySeedDesc.get(r.d) ?? [];
-      return names.length ? (
-        <div className="flex max-w-[260px] flex-wrap gap-1">
-          {names.map((n) => (
-            <Pill key={n} tone="violet">{n}</Pill>
-          ))}
-        </div>
-      ) : (
-        dash
-      );
-    },
+    cell: (r) => <GroupedPills items={subsBySeedDesc.get(r.d) ?? []} noun="subscription" tone="slate" />,
   });
   cols.push({ key: "c", label: "Created at", sortKey: "createdAt", cell: (r) => <span className="text-muted-foreground">{r.c}</span> });
   cols.push({ key: "u", label: "Updated at", sortKey: "updatedAt", cell: (r) => <span className="text-muted-foreground">{r.u}</span> });

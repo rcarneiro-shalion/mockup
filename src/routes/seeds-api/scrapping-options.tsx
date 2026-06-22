@@ -17,6 +17,7 @@ import {
   Pagination,
   LinkText,
   Pill,
+  GroupedPills,
   SortTh,
   useSort,
   sortRows,
@@ -164,15 +165,7 @@ function ScrappingOptionsPage() {
                     )}
                   </div>
                 </Td>
-                <Td>
-                  {subNames.length ? (
-                    <div className="flex max-w-[260px] flex-wrap gap-1">
-                      {subNames.map((n) => (<Pill key={n} tone="violet">{n}</Pill>))}
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </Td>
+                <Td><GroupedPills items={subNames} noun="subscription" tone="slate" /></Td>
                 <Td className="whitespace-nowrap text-muted-foreground">{r.createdAt || "—"}</Td>
                 <Td className="whitespace-nowrap text-muted-foreground">{r.updatedAt || "—"}</Td>
                 <Td><Switch defaultChecked={r.status === "Active"} /></Td>

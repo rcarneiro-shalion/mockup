@@ -11,6 +11,7 @@ import {
   LinkText,
   UserCell,
   Pill,
+  GroupedPills,
   SortTh,
   useSort,
   sortRows,
@@ -133,22 +134,20 @@ function ProjectsListPage() {
                   </LinkText>
                 </Td>
                 <Td>
-                  <div className="flex flex-wrap gap-1">
-                    {getClientsForProject(p.id).length ? (
-                      getClientsForProject(p.id).map((c) => <Pill key={c} tone="green">{c}</Pill>)
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </div>
+                  <GroupedPills
+                    items={getClientsForProject(p.id)}
+                    noun="client"
+                    tone="green"
+                    onSeeAll={() => navigate({ to: "/seeds-api/projects/$projectId", params: { projectId: p.id } })}
+                  />
                 </Td>
                 <Td>
-                  <div className="flex flex-wrap gap-1">
-                    {(p.assignedSubscriptions ?? []).length ? (
-                      (p.assignedSubscriptions ?? []).map((s) => <Pill key={s.id} tone="slate">{s.name}</Pill>)
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </div>
+                  <GroupedPills
+                    items={(p.assignedSubscriptions ?? []).map((s) => s.name)}
+                    noun="subscription"
+                    tone="slate"
+                    onSeeAll={() => navigate({ to: "/seeds-api/projects/$projectId", params: { projectId: p.id } })}
+                  />
                 </Td>
                 <Td className="text-foreground/80">{p.bom || "-"}</Td>
                 <Td className="text-muted-foreground">{p.createdAt}</Td>

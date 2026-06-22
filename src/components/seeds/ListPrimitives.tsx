@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
 
 /** Distinct, sorted, non-empty values for a column — used to populate filter dropdowns. */
@@ -291,6 +292,63 @@ export function Pill({
     >
       {children}
     </span>
+  );
+}
+
+// Shared "grouped" multi-value cell — the canonical rule from the Subscriptions →
+// Seeds column, reused everywhere a cell lists several values: up to GROUP_INLINE_MAX
+// values render as inline pills; beyond that they collapse into one "N nouns" chip
+// with a hover card listing them (capped, "…+N more") and an optional "See all".
+const GROUP_INLINE_MAX = 3;
+const GROUP_TOOLTIP_MAX = 20;
+
+export function GroupedPills({
+  items,
+  noun,
+  tone = "slate",
+  onSeeAll,
+}: {
+  items: string[];
+  /** singular noun, e.g. "client" / "subscription" / "seed" / "scrapping option" */
+  noun: string;
+  tone?: PillTone;
+  onSeeAll?: () => void;
+}) {
+  if (!items.length) return <span className="text-muted-foreground">—</span>;
+  const pills = (list: string[]) => list.map((x, i) => <Pill key={`${i}-${x}`} tone={tone}>{x}</Pill>);
+  if (items.length <= GROUP_INLINE_MAX) {
+    return <div className="flex flex-wrap gap-1">{pills(items)}</div>;
+  }
+  const shown = items.slice(0, GROUP_TOOLTIP_MAX);
+  const hidden = items.length - shown.length;
+  const plural = `${noun}s`;
+  const header = `${plural.charAt(0).toUpperCase()}${plural.slice(1)} (${items.length})`;
+  return (
+    <HoverCard openDelay={120} closeDelay={80}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          onClick={onSeeAll}
+          className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium", toneClass[tone])}
+        >
+          {items.length} {plural}
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="w-72 p-3">
+        <div className="mb-2 text-xs font-semibold text-foreground">{header}</div>
+        <div className="flex flex-wrap gap-1">{pills(shown)}</div>
+        {(hidden > 0 || onSeeAll) && (
+          <div className="mt-2 flex items-center gap-1 text-xs">
+            {hidden > 0 && <span className="text-muted-foreground">…+{hidden} more</span>}
+            {onSeeAll && (
+              <button type="button" onClick={onSeeAll} className="ml-auto font-medium text-[var(--sidebar-active-fg)] hover:underline">
+                See all
+              </button>
+            )}
+          </div>
+        )}
+      </HoverCardContent>
+    </HoverCard>
   );
 }
 
