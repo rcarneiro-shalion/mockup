@@ -4889,6 +4889,15 @@ export const REAL_JOBS_BULK: Record<string, RealJob[]> = {
       "extractionType": "DIGITAL_SHELF_PDP",
       "geolocMode": "VIRTUAL_STORE",
       "businessUnit": "DSM"
+    },
+    {
+      "name": "PLP_WALM_US_Walmart US - All",
+      "store": "Walmart US - All",
+      "country": "US",
+      "storeType": "GEOLOC",
+      "extractionType": "DIGITAL_SHELF_PLP",
+      "geolocMode": "MANUAL",
+      "businessUnit": "DSM"
     }
   ]
 };
