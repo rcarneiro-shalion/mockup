@@ -27,47 +27,47 @@ export const REAL_JOBS: Record<string, RealJob[]> = {
       "businessUnit": "CMI"
     },
     {
-      "name": "ME_GRPM_1w_X00_UK - Zooplus UK",
+      "name": "PLP_GRPM_1w_X00_UK - Zooplus UK",
       "store": "Zooplus UK",
       "country": "GB",
       "storeType": "FLAGSHIP",
-      "extractionType": "MEDIA",
+      "extractionType": "DIGITAL_SHELF_PLP",
       "geolocMode": "NO_GEOLOC",
       "businessUnit": "CMI"
     },
     {
-      "name": "ME_GRPM_1w_X00_IT - Coop IT",
+      "name": "SH_GRPM_1w_X00_IT - Coop IT",
       "store": "Coop IT",
       "country": "IT",
       "storeType": "FLAGSHIP",
-      "extractionType": "MEDIA",
+      "extractionType": "SHELF",
       "geolocMode": "NO_GEOLOC",
       "businessUnit": "CMI"
     },
     {
-      "name": "ME_GRPM_1d_X00_US - Instacart US - Publix",
+      "name": "SE_GRPM_1d_X00_US - Instacart US - Publix",
       "store": "Instacart US - Publix",
       "country": "US",
       "storeType": "GEOLOC",
-      "extractionType": "MEDIA",
-      "geolocMode": "AUTOMATIC",
+      "extractionType": "SEARCH",
+      "geolocMode": "MANUAL",
       "businessUnit": "CMI"
     },
     {
-      "name": "ME_GRPM_1m_X00_VN - Shopee VN_vn",
+      "name": "AD_GRPM_1m_X00_VN - Shopee VN_vn",
       "store": "Shopee VN_vn",
       "country": "VN",
       "storeType": "FLAGSHIP",
-      "extractionType": "MEDIA",
+      "extractionType": "AD",
       "geolocMode": "NO_GEOLOC",
       "businessUnit": "CMI"
     },
     {
-      "name": "ME_GRPM_XX_X00_US - Instacart US - Walmart - SHUT DOWN",
+      "name": "SA_GRPM_XX_X00_US - Instacart US - Walmart",
       "store": "Instacart US - Walmart",
       "country": "US",
       "storeType": "GEOLOC",
-      "extractionType": "MEDIA",
+      "extractionType": "DIGITAL_SHELF_PDP",
       "geolocMode": "MANUAL",
       "businessUnit": "CMI"
     }
@@ -714,6 +714,24 @@ export const REAL_JOBS: Record<string, RealJob[]> = {
       "storeType": "GEOLOC",
       "extractionType": "DIGITAL_SHELF_PDP",
       "geolocMode": "VIRTUAL_STORE",
+      "businessUnit": "DSM"
+    },
+    {
+      "name": "ME_WALM_US_Walmart US",
+      "store": "Walmart US",
+      "country": "us",
+      "storeType": "GEOLOC",
+      "extractionType": "MEDIA",
+      "geolocMode": "MANUAL",
+      "businessUnit": "DSM"
+    },
+    {
+      "name": "SE_WALM_US_Walmart US",
+      "store": "Walmart US",
+      "country": "us",
+      "storeType": "GEOLOC",
+      "extractionType": "SEARCH",
+      "geolocMode": "MANUAL",
       "businessUnit": "DSM"
     }
   ],
