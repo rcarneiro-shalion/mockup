@@ -30,6 +30,7 @@ import {
   BUSINESS_UNITS,
   SUBSCRIPTION_GEOLOC_OPTIONS,
   subRotation,
+  subDestinationOptions,
   type Subscription,
 } from "@/lib/subscriptions";
 import { nowStamp } from "@/lib/clients";
@@ -91,6 +92,7 @@ function SubscriptionsPage() {
     seeds: (r) => (r.seeds ?? []).length,
     clients: (r) => clientsForSub(r).join(", "),
     scrappingOption: (r) => r.scrappingOption,
+    destinations: (r) => subDestinationOptions(r).length,
     rotation: (r) => subRotation(r).join(", "),
     createdAt: (r) => parseListDate(r.createdAt),
     updatedAt: (r) => parseListDate(r.updatedAt),
@@ -123,6 +125,7 @@ function SubscriptionsPage() {
               <SortTh label="Clients" sortKey="clients" sort={sort} />
               <SortTh label="Seeds" sortKey="seeds" sort={sort} />
               <SortTh label="Scrapping option" sortKey="scrappingOption" sort={sort} />
+              <SortTh label="Destination" sortKey="destinations" sort={sort} />
               <SortTh label="Geoloc" sortKey="geo" sort={sort} />
               <SortTh label="Business unit" sortKey="businessUnit" sort={sort} />
               <SortTh label="Frequency" sortKey="frequency" sort={sort} />
@@ -156,6 +159,7 @@ function SubscriptionsPage() {
                 <Td><GroupedPills items={clientsForSub(r)} noun="client" tone="green" /></Td>
                 <Td><GroupedPills items={r.seeds ?? []} noun="seed" tone="green" onSeeAll={() => setSelectedId(r.id)} /></Td>
                 <Td>{r.scrappingOption ? <Pill tone="slate">{r.scrappingOption}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
+                <Td><GroupedPills items={subDestinationOptions(r)} noun="destination" tone="blue" onSeeAll={() => setSelectedId(r.id)} /></Td>
                 <Td><Pill tone="violet">{r.geo}</Pill></Td>
                 <Td>{r.businessUnit ? <Pill tone="blue">{r.businessUnit}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td>{r.frequency ? <Pill tone="slate">{r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
