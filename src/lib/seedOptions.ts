@@ -70,11 +70,12 @@ export const SORT_OPTIONS = [
   "newest",
 ];
 
-// Subscription: how often it re-runs.
-export const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly"];
+// Subscription: how often it re-runs. "Custom" unlocks a free "every N days" field.
+export const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly", "Custom"];
 
-// Subscription: what the rotation cycles through.
-export const ROTATION_OPTIONS = ["Zipcode", "Locations", "Seeds"];
+// Subscription: what the rotation cycles through. "Both" = Locations + Seeds.
+// (Zipcode was dropped — it was equivalent to Locations.)
+export const ROTATION_OPTIONS = ["Locations", "Seeds", "Both"];
 
 // Location SET — a named group of locations referenced by a Stuff.
 export const LOCATION_SET_OPTIONS = [

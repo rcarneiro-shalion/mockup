@@ -29,7 +29,7 @@ import {
   MODALITY_OPTIONS,
   SORT_OPTIONS,
 } from "@/lib/seedOptions";
-import { getSubscriptions, subScrappingOptions } from "@/lib/subscriptions";
+import { getSubscriptions } from "@/lib/subscriptions";
 import { getProjects } from "@/lib/projects";
 import { getClientsForProject } from "@/lib/clients";
 import { cn } from "@/lib/utils";
@@ -123,7 +123,7 @@ export function ScrappingOptionDialog({
     const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
     setInSubs(
       getSubscriptions()
-        .filter((s) => subScrappingOptions(s).includes(initial.name))
+        .filter((s) => s.scrappingOption === initial.name)
         .map((s) => ({
           id: s.id,
           name: s.name,

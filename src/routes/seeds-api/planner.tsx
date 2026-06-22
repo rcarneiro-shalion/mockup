@@ -11,7 +11,7 @@ import { FilterChip } from "@/components/seeds/FilterChip";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import { getClients } from "@/lib/clients";
 import { getProjects } from "@/lib/projects";
-import { getSubscriptions } from "@/lib/subscriptions";
+import { getSubscriptions, subDestinationOptions } from "@/lib/subscriptions";
 import { getScrappingOptions } from "@/lib/scrappingOptions";
 import { STORE_LOCATIONS } from "@/lib/scenarioSeedData";
 import { useSessionState } from "@/hooks/usePersistentState";
@@ -139,12 +139,12 @@ function PlannerPage() {
             {s.store && <InfoLine icon={Store}>{s.store}</InfoLine>}
             <InfoLine icon={Sprout}>{(s.seeds ?? []).length} seed{(s.seeds ?? []).length === 1 ? "" : "s"}</InfoLine>
             <div className="flex flex-wrap gap-1">
-              {s.frequency && <Pill tone="slate"><CalendarClock className="mr-1 h-3 w-3" />{s.frequency}</Pill>}
+              {s.frequency && <Pill tone="slate"><CalendarClock className="mr-1 h-3 w-3" />{s.frequency === "Custom" && s.frequencyDays ? `Custom (${s.frequencyDays}d)` : s.frequency}</Pill>}
               {s.rotation && <Pill tone="slate"><Repeat className="mr-1 h-3 w-3" />{s.rotation}</Pill>}
               {s.geo && s.geo !== "NONE" && <Pill tone="blue">{s.geo}</Pill>}
             </div>
             {o && <InfoLine icon={PlayCircle}>{o.extractionType}</InfoLine>}
-            {s.destinationOption && <InfoLine>→ dest: {s.destinationOption}</InfoLine>}
+            {subDestinationOptions(s).length > 0 && <InfoLine>→ dest: {subDestinationOptions(s).join(", ")}</InfoLine>}
           </div>
         ),
       });

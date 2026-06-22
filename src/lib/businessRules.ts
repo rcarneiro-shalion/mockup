@@ -231,14 +231,17 @@ const subscriptions: RulePage = {
       rules: [
         "A subscription needs a name, a project, a store and a scrapping option; everything else is optional.",
         "Geolocation can be None, Automatic or Manual — and a location set is only required (and only editable) when Manual is chosen.",
-        "A new subscription defaults to no geolocation, daily-without-rotation frequency, and no seeds.",
+        "A new subscription defaults to no geolocation, Daily frequency, and no seeds.",
       ],
     },
     {
       category: "Fields & options",
       rules: [
-        "Frequency controls how often it re-runs: daily without rotation, or rotating weekly or monthly.",
-        "A subscription can hold many seeds across the three types (Keyword, URL, API), added or removed from a searchable, tabbed picker.",
+        "Frequency is Daily, Weekly, Monthly, or Custom — Custom requires an “every N days” value.",
+        "Rotation cycles through Locations, Seeds, or Both (Locations + Seeds).",
+        "A subscription runs exactly one scrapping option (1:1); the same option may be reused by other subscriptions.",
+        "When the scrapping option is a discovery (PLP / MEDIA) extraction, it can point to zero, one or many PDP sibling subscriptions (Destination options).",
+        "A subscription can hold many seeds across the four types (Keyword, URL, API, PDP), added or removed from a searchable, tabbed picker.",
       ],
     },
     {

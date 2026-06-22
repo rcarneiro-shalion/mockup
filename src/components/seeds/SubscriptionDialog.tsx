@@ -15,7 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SelectBox } from "@/components/seeds/SelectBox";
-import { ScrappingOptionMultiPicker } from "@/components/seeds/ScrappingOptionPicker";
+import { ScrappingOptionPicker } from "@/components/seeds/ScrappingOptionPicker";
+import { MultiSelectPopover } from "@/components/seeds/MultiSelectPopover";
 import {
   FREQUENCY_OPTIONS,
   ROTATION_OPTIONS,
@@ -30,7 +31,6 @@ import {
   BUSINESS_UNITS,
   emptySubscription,
   getSubscriptions,
-  subScrappingOptions,
   type Subscription,
   type SubscriptionStatus,
 } from "@/lib/subscriptions";
@@ -62,9 +62,11 @@ export function SubscriptionDialog({
     if (open) {
       // Merge over defaults so older saved records get safe defaults (e.g. seeds[]).
       const merged = initial ? { ...emptySubscription(), ...initial } : emptySubscription();
-      // Migrate a legacy single `scrappingOption` into the array form.
-      if (!merged.scrappingOptions?.length) {
-        merged.scrappingOptions = merged.scrappingOption ? [merged.scrappingOption] : [];
+      // Migrate legacy data: Zipcode rotation → Locations; a single destinationOption
+      // → the destinationOptions array.
+      if (merged.rotation === "Zipcode") merged.rotation = "Locations";
+      if (!merged.destinationOptions?.length && merged.destinationOption) {
+        merged.destinationOptions = [merged.destinationOption];
       }
       setV(merged);
       setIsSaving(false);
@@ -79,14 +81,13 @@ export function SubscriptionDialog({
   // the Destination option field (PLP / MEDIA) and the Virtual Seed tab (PDP).
   const allOptions = getScrappingOptions();
   const extractionByOption = new Map(allOptions.map((s) => [s.name, s.extractionType]));
-  const selectedNames = v.scrappingOptions ?? [];
-  // A subscription may run several options; show the destination field when ANY of
-  // them is a discovery (PLP / MEDIA) extraction.
-  const selectedExtractions = selectedNames.map((n) => extractionByOption.get(n)).filter(Boolean) as string[];
-  const showDestination = selectedExtractions.some((e) => e === "DIGITAL_SHELF_PLP" || e === "MEDIA");
-  // Destination option choices: sibling subscriptions that run a PDP scrapping option.
+  // Show the destination field when the subscription's single scrapping option is a
+  // discovery (PLP / MEDIA) extraction.
+  const selectedExtraction = extractionByOption.get(v.scrappingOption);
+  const showDestination = selectedExtraction === "DIGITAL_SHELF_PLP" || selectedExtraction === "MEDIA";
+  // Destination choices: sibling subscriptions that run a PDP scrapping option.
   const pdpSubscriptionNames = getSubscriptions()
-    .filter((s) => s.id !== v.id && subScrappingOptions(s).some((o) => extractionByOption.get(o) === "DIGITAL_SHELF_PDP"))
+    .filter((s) => s.id !== v.id && extractionByOption.get(s.scrappingOption) === "DIGITAL_SHELF_PDP")
     .map((s) => s.name);
   const projectNames = getProjects().map((p) => p.name);
   // Store options come from the Stores entity (Retailers › Stores), deduped by name.
@@ -95,13 +96,24 @@ export function SubscriptionDialog({
   const locationEnabled = v.geo === "MANUAL";
 
   const handleSave = async () => {
+    // A Custom frequency requires the "every N days" value.
+    if (v.frequency === "Custom" && !(v.frequencyDays ?? "").trim()) {
+      toast.error("Enter the number of days for a Custom frequency");
+      return;
+    }
     setIsSaving(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 350));
-      // Location set only applies when geoloc is MANUAL. Keep the primary
-      // `scrappingOption` (the VSM / legacy readers) in sync with the array.
-      const opts = v.scrappingOptions ?? [];
-      onSave({ ...v, scrappingOptions: opts, scrappingOption: opts[0] ?? "", locationSet: locationEnabled ? v.locationSet : "" });
+      // Normalise conditional fields on save: Location set only when geoloc = MANUAL;
+      // frequencyDays only for Custom; destinationOptions only for PLP / MEDIA; and
+      // drop the legacy single destinationOption.
+      onSave({
+        ...v,
+        locationSet: locationEnabled ? v.locationSet : "",
+        frequencyDays: v.frequency === "Custom" ? v.frequencyDays : "",
+        destinationOptions: showDestination ? (v.destinationOptions ?? []) : [],
+        destinationOption: undefined,
+      });
       toast.success(`Subscription ${mode === "add" ? "created" : "saved"} successfully`);
       onOpenChange(false);
     } catch {
@@ -169,22 +181,24 @@ export function SubscriptionDialog({
                 <SelectBox value={v.store} onChange={(x) => set("store", x)} options={storeOptions} />
               </Field>
 
-              <Field label="Scrapping options" required className="sm:col-span-2">
-                <ScrappingOptionMultiPicker
-                  value={v.scrappingOptions ?? []}
-                  onChange={(arr) => setV((prev) => ({ ...prev, scrappingOptions: arr, scrappingOption: arr[0] ?? "" }))}
+              <Field label="Scrapping option" required className="sm:col-span-2">
+                <ScrappingOptionPicker
+                  value={v.scrappingOption}
+                  onChange={(name) => set("scrappingOption", name)}
                   options={allOptions}
                 />
               </Field>
 
               {showDestination && (
-                <Field label="Destination option" className="sm:col-span-2">
-                  <SelectBox
-                    value={v.destinationOption ?? ""}
-                    onChange={(x) => set("destinationOption", x)}
+                <Field label="Destination options" className="sm:col-span-2">
+                  <MultiSelectPopover
+                    value={v.destinationOptions ?? []}
+                    onChange={(arr) => set("destinationOptions", arr)}
                     options={pdpSubscriptionNames}
-                    clearable
-                    placeholder="Select a Digital Shelf PDP subscription"
+                    noun="destination"
+                    placeholder="Select PDP subscription(s) — optional"
+                    searchPlaceholder="Search Digital Shelf PDP subscriptions…"
+                    emptyText="No PDP subscriptions found."
                   />
                 </Field>
               )}
@@ -204,6 +218,20 @@ export function SubscriptionDialog({
 
               <Field label="Frequency">
                 <SelectBox value={v.frequency} onChange={(x) => set("frequency", x)} options={FREQUENCY_OPTIONS} clearable />
+                {v.frequency === "Custom" && (
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Every</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={v.frequencyDays ?? ""}
+                      onChange={(e) => set("frequencyDays", e.target.value)}
+                      placeholder="N"
+                      className="w-20"
+                    />
+                    <span className="text-sm text-muted-foreground">days<span className="ml-0.5 text-destructive">*</span></span>
+                  </div>
+                )}
               </Field>
               <Field label="Rotation">
                 <SelectBox value={v.rotation} onChange={(x) => set("rotation", x)} options={ROTATION_OPTIONS} clearable />

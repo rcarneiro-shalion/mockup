@@ -27,7 +27,7 @@ import {
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
-import { getSubscriptions, subScrappingOptions } from "@/lib/subscriptions";
+import { getSubscriptions } from "@/lib/subscriptions";
 import { nowStamp } from "@/lib/clients";
 import { Calendar, Layers, PlayCircle } from "lucide-react";
 
@@ -83,14 +83,14 @@ function ScrappingOptionsPage() {
   const allSubs = getSubscriptions();
   const subsByOption = new Map<string, string[]>();
   for (const s of allSubs) {
-    for (const opt of subScrappingOptions(s)) {
-      const arr = subsByOption.get(opt);
-      if (arr) arr.push(s.name);
-      else subsByOption.set(opt, [s.name]);
-    }
+    const opt = s.scrappingOption;
+    if (!opt) continue;
+    const arr = subsByOption.get(opt);
+    if (arr) arr.push(s.name);
+    else subsByOption.set(opt, [s.name]);
   }
   const optionNamesForSelectedSubs = new Set(
-    allSubs.filter((s) => fSub.includes(s.name)).flatMap(subScrappingOptions),
+    allSubs.filter((s) => fSub.includes(s.name)).map((s) => s.scrappingOption).filter(Boolean),
   );
 
   // Joints (conjuntos) and Disjoints (disjuntos) are each a theme with sub-items;

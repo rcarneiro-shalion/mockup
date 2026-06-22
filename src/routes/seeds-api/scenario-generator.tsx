@@ -320,7 +320,7 @@ function ScenarioGeneratorPage() {
                         <div key={s.id} className="flex items-center gap-2 text-[11px]">
                           <span className="min-w-0 flex-1 truncate font-mono text-foreground/75">{s.name}</span>
                           {s.locationSet && <span className="shrink-0 text-muted-foreground" title={s.locationSet}>📍 {s.locationSet.replace(/ — .*/, "")}</span>}
-                          {s.destinationOption && <span className="shrink-0 text-violet-600" title={`→ ${s.destinationOption}`}>→ PDP</span>}
+                          {(s.destinationOptions?.length ?? 0) > 0 && <span className="shrink-0 text-violet-600" title={`→ ${s.destinationOptions!.join(", ")}`}>→ PDP</span>}
                           <span className="shrink-0 tabular-nums text-muted-foreground">{estimateTasks(s, optByName.get(s.scrappingOption))} tasks</span>
                         </div>
                       ))}

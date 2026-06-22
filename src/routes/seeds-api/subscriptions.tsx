@@ -29,7 +29,6 @@ import {
   INITIAL_SUBSCRIPTIONS,
   BUSINESS_UNITS,
   SUBSCRIPTION_GEOLOC_OPTIONS,
-  subScrappingOptions,
   type Subscription,
 } from "@/lib/subscriptions";
 import { nowStamp } from "@/lib/clients";
@@ -73,7 +72,7 @@ function SubscriptionsPage() {
 
   const q = query.trim().toLowerCase();
   const seedOptions = [...new Set(rows.flatMap((r) => r.seeds ?? []))].sort();
-  const scrapOptions = [...new Set(rows.flatMap(subScrappingOptions))].sort();
+  const scrapOptions = [...new Set(rows.map((r) => r.scrappingOption).filter(Boolean))].sort();
   // subscription → project → client(s)
   const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
   const clientsForSub = (sub: Subscription) => getClientsForProject(projectIdByName.get(sub.project) ?? "");
@@ -83,14 +82,14 @@ function SubscriptionsPage() {
     (!fProject.length || fProject.includes(r.project)) &&
     (!fStore.length || fStore.includes(r.store)) &&
     (!fSeed.length || (r.seeds ?? []).some((s) => fSeed.includes(s))) &&
-    (!fScrap.length || subScrappingOptions(r).some((o) => fScrap.includes(o))) &&
+    (!fScrap.length || fScrap.includes(r.scrappingOption)) &&
     (!fGeo.length || fGeo.includes(r.geo)) &&
     (!fBu.length || fBu.includes(r.businessUnit ?? "")),
   );
   const sorted = sortRows(filtered, sort, {
     seeds: (r) => (r.seeds ?? []).length,
     clients: (r) => clientsForSub(r).join(", "),
-    scrappingOption: (r) => subScrappingOptions(r).join(", "),
+    scrappingOption: (r) => r.scrappingOption,
     createdAt: (r) => parseListDate(r.createdAt),
     updatedAt: (r) => parseListDate(r.updatedAt),
   });
@@ -154,7 +153,7 @@ function SubscriptionsPage() {
                 </Td>
                 <Td><GroupedPills items={clientsForSub(r)} noun="client" tone="green" /></Td>
                 <Td><GroupedPills items={r.seeds ?? []} noun="seed" tone="green" onSeeAll={() => setSelectedId(r.id)} /></Td>
-                <Td><GroupedPills items={subScrappingOptions(r)} noun="scrapping option" tone="slate" onSeeAll={() => setSelectedId(r.id)} /></Td>
+                <Td>{r.scrappingOption ? <Pill tone="slate">{r.scrappingOption}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td><Pill tone="violet">{r.geo}</Pill></Td>
                 <Td>{r.businessUnit ? <Pill tone="blue">{r.businessUnit}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td>{r.frequency ? <Pill tone="slate">{r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>

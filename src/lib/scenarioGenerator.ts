@@ -154,7 +154,7 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
 
     const sub: Subscription = {
       ...emptySubscription(), id: uid(), name: job.name, project: project.name, store: job.store,
-      seeds: subSeeds.map((s) => s.d), scrappingOption: optName, scrappingOptions: [optName], geo, locationSet,
+      seeds: subSeeds.map((s) => s.d), scrappingOption: optName, geo, locationSet,
       frequency: freqFromName(job.name), rotation: geo === "MANUAL" ? "Locations" : "Seeds",
       status: "Active", businessUnit: job.businessUnit || "GEN",
       createdAt: nowStamp(), updatedAt: nowStamp(),
@@ -168,13 +168,13 @@ export function buildScenario(clientSlug: string, jobs: RealJob[]): BuiltScenari
       const pdpSeeds: Seed[] = pick(REAL_PDPS, 3, ji + 1).map((s) => cloneSeed(s, true));
       const pdpSub: Subscription = {
         ...emptySubscription(), id: uid(), name: `${pdpName} (PDP)`, project: project.name, store: job.store,
-        seeds: pdpSeeds.map((s) => s.d), scrappingOption: pdpOptName, scrappingOptions: [pdpOptName], geo, locationSet,
+        seeds: pdpSeeds.map((s) => s.d), scrappingOption: pdpOptName, geo, locationSet,
         frequency: "Weekly", rotation: "Seeds", status: "Active", businessUnit: job.businessUnit || "GEN",
         createdAt: nowStamp(), updatedAt: nowStamp(),
       };
       scrappingOptions.push(pdpOption); subscriptions.push(pdpSub); seeds.push(...pdpSeeds);
       assigned.push({ id: pdpSub.id, name: pdpSub.name, store: pdpSub.store, geo: pdpSub.geo, type: "ADDON", expiration: "-" });
-      sub.destinationOption = pdpSub.name; // discovery feeds the PDP sibling
+      sub.destinationOptions = [pdpSub.name]; // discovery feeds the PDP sibling
     }
 
     scrappingOptions.push(option); subscriptions.push(sub); seeds.push(...subSeeds);
@@ -280,7 +280,7 @@ export function validateScenario(b: BuiltScenario): string[] {
   const optByName = new Map(b.scrappingOptions.map((o) => [o.name, o]));
   for (const s of b.subscriptions) {
     const o = optByName.get(s.scrappingOption);
-    if (o && isDiscovery(o.extractionType) && !s.destinationOption) warns.push(`${s.name}: ${o.extractionType} without a destination (PDP sibling)`);
+    if (o && isDiscovery(o.extractionType) && !s.destinationOptions?.length) warns.push(`${s.name}: ${o.extractionType} without a destination (PDP sibling)`);
     if (s.geo === "MANUAL" && !s.locationSet) warns.push(`${s.name}: geo MANUAL but no locationSet (task estimate silently uses 1 location)`);
     if (o?.pagination && !o.maxPage) warns.push(`${s.name}: pagination on but maxPage empty`);
   }

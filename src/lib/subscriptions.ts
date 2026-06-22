@@ -1,27 +1,28 @@
 import { readPersistedList } from "./seedOptions";
 
 // "Subscription" is the renamed job-like hub entity (formerly "Stuff"): it ties a
-// Project to a list of Seeds, a Scrapping option, and (when geoloc is MANUAL) a
-// Location SET, and carries the client-oriented options.
+// Project to a list of Seeds, exactly ONE Scrapping option (1:1), and (when geoloc
+// is MANUAL) a Location SET, and carries the client-oriented options.
 export type Subscription = {
   id: string;
   name: string;
   project: string;
   store: string;
   seeds: string[];
-  // A subscription may run one OR MORE scrapping options. `scrappingOptions` is the
-  // source of truth; `scrappingOption` is kept as the primary (= scrappingOptions[0])
-  // for the VSM and legacy readers. Use subScrappingOptions() to read either shape.
+  // A subscription runs exactly ONE scrapping option (1:1). Scrapping options stay
+  // reusable — several subscriptions may reference the same option by name.
   scrappingOption: string;
-  scrappingOptions?: string[];
-  geo: string; // NONE | AUTOMATIC | MANUAL
+  geo: string; // NONE | AUTOMATIC | MANUAL | VIRTUAL_STORE
   locationSet: string;
-  frequency: string; // Daily | Weekly | Monthly
-  rotation: string; // Zipcode | Locations | Seeds
+  frequency: string; // Daily | Weekly | Monthly | Custom
+  frequencyDays?: string; // mandatory "every N days" when frequency = Custom
+  rotation: string; // Locations | Seeds | Both
   status?: SubscriptionStatus; // Active | Inactive
   businessUnit?: string; // single Business Unit (CMI / FSA / DSM / RMM / MSH / GEN)
-  // Set only when the scrapping option's extraction type is DIGITAL_SHELF_PLP or
-  // MEDIA — points to a sibling subscription whose scrapping option is a PDP one.
+  // Shown only when the scrapping option's extraction type is DIGITAL_SHELF_PLP or
+  // MEDIA — points to zero, one or many sibling subscriptions running a PDP option.
+  destinationOptions?: string[];
+  /** @deprecated legacy single value — migrated into destinationOptions on read. */
   destinationOption?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -77,11 +78,11 @@ export function getSubscriptions(): Subscription[] {
   return list.length ? list : INITIAL_SUBSCRIPTIONS;
 }
 
-/** A subscription's scrapping options as a list, tolerating legacy records that
- *  only carry the singular `scrappingOption`. */
-export function subScrappingOptions(s: Subscription): string[] {
-  if (s.scrappingOptions?.length) return s.scrappingOptions;
-  return s.scrappingOption ? [s.scrappingOption] : [];
+/** A subscription's destination options as a list, tolerating legacy records that
+ *  only carry the singular `destinationOption`. Zero, one or many PDP siblings. */
+export function subDestinationOptions(s: Subscription): string[] {
+  if (s.destinationOptions?.length) return s.destinationOptions;
+  return s.destinationOption ? [s.destinationOption] : [];
 }
 
 export function emptySubscription(): Subscription {
@@ -92,14 +93,14 @@ export function emptySubscription(): Subscription {
     store: "",
     seeds: [],
     scrappingOption: "",
-    scrappingOptions: [],
     geo: "NONE",
     locationSet: "",
     frequency: "Daily",
+    frequencyDays: "",
     rotation: "",
     status: "Active",
     businessUnit: "",
-    destinationOption: "",
+    destinationOptions: [],
     createdAt: "",
     updatedAt: "",
   };
