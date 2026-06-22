@@ -8,9 +8,9 @@
 // (subscription.project = project.name, subscription.scrappingOption = option.name).
 // The generator wires those consistently so the planner resolves every edge.
 
-import { getClients, setProjectClients, nowStamp, emptyClient, CLIENTS_KEY, type Client } from "./clients";
+import { getClients, withProjectClients, nowStamp, emptyClient, CLIENTS_KEY, type Client } from "./clients";
 import { getProjects, PROJECTS_KEY, type Project, type AssignedSubscription } from "./projects";
-import { getSubscriptions, SUBSCRIPTIONS_KEY, emptySubscription, type Subscription } from "./subscriptions";
+import { getSubscriptions, SUBSCRIPTIONS_KEY, emptySubscription, subProjects, type Subscription } from "./subscriptions";
 import { getSeeds, INITIAL_SEEDS, SEEDS_KEY, type Seed, type SeedType } from "./seeds";
 import { getScrappingOptions, SCRAPPING_OPTIONS_KEY } from "./scrappingOptions";
 import { EMPTY_SCRAPPING_OPTION, type ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
@@ -228,30 +228,82 @@ export function buildScenario(clientSlug: string, jobs: RealJob[], seedsPerSub: 
 /** Persist a built scenario to the 5 stores + the client↔project link, tracking it for clean removal. */
 export function persistScenario(b: BuiltScenario): void {
   if (typeof window === "undefined") return;
-  // client (upsert) FIRST so setProjectClients sees it
-  if (b.clientIsNew) write(CLIENTS_KEY, [...getClients(), b.client]);
-  write(PROJECTS_KEY, [...getProjects(), b.project]);
-  write(SUBSCRIPTIONS_KEY, [...getSubscriptions(), ...b.subscriptions]);
-  write(SCRAPPING_OPTIONS_KEY, [...getScrappingOptions(), ...b.scrappingOptions]);
-  write(SEEDS_KEY, [...getSeeds(), ...b.seeds]);
-  // canonical client↔project link (so the Value Stream Map shows the client column)
-  const existingLinks = getClients()
-    .flatMap((c) => (c.assignedProjects ?? []).some((ap) => ap.projectId === b.project.id) ? [{ clientId: c.id, name: c.name, acronym: c.acronym, activeFrom: nowStamp(), activeTo: "-" }] : []);
-  setProjectClients({ id: b.project.id, name: b.project.name, bom: b.project.bom }, [
-    ...existingLinks.filter((l) => l.clientId !== b.client.id),
-    { clientId: b.client.id, name: b.client.name, acronym: b.client.acronym, activeFrom: nowStamp(), activeTo: "-" },
-  ]);
+  // A valid scenario is client → project → at least ONE subscription (each with its
+  // 1:1 scrapping option). Never persist a project that has no subscription — that is
+  // exactly the invalid use case we guard against.
+  if (!b.subscriptions.length) return;
 
+  // Persist ATOMICALLY: snapshot every key we touch and restore it on any failure
+  // (e.g. a localStorage quota error mid-write) so a partial write can never leave an
+  // orphaned project without its subscriptions. On failure we rethrow so the caller
+  // (Generate / Generate-all) records it and warns — with no half-written scenario.
+  const KEYS = [CLIENTS_KEY, PROJECTS_KEY, SUBSCRIPTIONS_KEY, SCRAPPING_OPTIONS_KEY, SEEDS_KEY, SIM_KEY];
+  const snapshot = KEYS.map((k) => [k, window.localStorage.getItem(k)] as const);
+  try {
+    // client (upsert) FIRST so setProjectClients sees it
+    if (b.clientIsNew) write(CLIENTS_KEY, [...getClients(), b.client]);
+    write(PROJECTS_KEY, [...getProjects(), b.project]);
+    write(SUBSCRIPTIONS_KEY, [...getSubscriptions(), ...b.subscriptions]);
+    write(SCRAPPING_OPTIONS_KEY, [...getScrappingOptions(), ...b.scrappingOptions]);
+    write(SEEDS_KEY, [...getSeeds(), ...b.seeds]);
+    // canonical client↔project link (so the Value Stream Map shows the client column).
+    // Write it through the throwing `write()` helper — NOT setProjectClients, which
+    // swallows quota errors — so a failure here also triggers the rollback below.
+    const existingLinks = getClients()
+      .flatMap((c) => (c.assignedProjects ?? []).some((ap) => ap.projectId === b.project.id) ? [{ clientId: c.id, name: c.name, acronym: c.acronym, activeFrom: nowStamp(), activeTo: "-" }] : []);
+    write(CLIENTS_KEY, withProjectClients(getClients(), { id: b.project.id, name: b.project.name, bom: b.project.bom }, [
+      ...existingLinks.filter((l) => l.clientId !== b.client.id),
+      { clientId: b.client.id, name: b.client.name, acronym: b.client.acronym, activeFrom: nowStamp(), activeTo: "-" },
+    ]));
+
+    const ix = readIndex();
+    ix.batches.push({
+      slug: b.slug,
+      projectIds: [b.project.id],
+      subIds: b.subscriptions.map((s) => s.id),
+      seedIds: b.seeds.map((s) => s.id),
+      scrapNames: b.scrappingOptions.map((o) => o.name),
+      createdClientIds: b.clientIsNew ? [b.client.id] : [],
+    });
+    writeIndex(ix);
+  } catch (e) {
+    for (const [k, v] of snapshot) {
+      if (v === null) window.localStorage.removeItem(k);
+      else window.localStorage.setItem(k, v);
+    }
+    throw e;
+  }
+}
+
+/** Remove desk-test projects (`bom = "SIMUL"`) that have NO subscription referencing
+ *  them — the invalid "project without a subscription" use case, whether left behind
+ *  by an interrupted/partial generation or an older build. Also unlinks them from
+ *  clients, drops any now-project-less client the SIMULATOR created (tracked in the
+ *  registry — NEVER a seeded `isTest` client), and prunes those ids out of the sim
+ *  registry. Returns the number of orphaned projects removed. */
+export function pruneInvalidSimProjects(): number {
+  if (typeof window === "undefined") return 0;
+  const usedProjectNames = new Set(getSubscriptions().flatMap(subProjects));
+  const projects = getProjects();
+  const orphans = projects.filter((p) => p.bom === "SIMUL" && !usedProjectNames.has(p.name));
+  if (!orphans.length) return 0;
+  const orphanIds = new Set(orphans.map((p) => p.id));
+
+  write(PROJECTS_KEY, projects.filter((p) => !orphanIds.has(p.id)));
+  // Scope the client drop to clients the simulator FABRICATED (their ids live in the
+  // registry's createdClientIds) — exactly like removeBatches. A blanket `isTest`
+  // filter would wipe the ~15 seeded isTest reference clients, which is real data loss.
   const ix = readIndex();
-  ix.batches.push({
-    slug: b.slug,
-    projectIds: [b.project.id],
-    subIds: b.subscriptions.map((s) => s.id),
-    seedIds: b.seeds.map((s) => s.id),
-    scrapNames: b.scrappingOptions.map((o) => o.name),
-    createdClientIds: b.clientIsNew ? [b.client.id] : [],
+  const simCreated = new Set(ix.batches.flatMap((b) => b.createdClientIds));
+  const clients = getClients().map((c) => ({ ...c, assignedProjects: (c.assignedProjects ?? []).filter((ap) => !orphanIds.has(ap.projectId)) }));
+  write(CLIENTS_KEY, clients.filter((c) => !(simCreated.has(c.id) && (c.assignedProjects ?? []).length === 0)));
+  // prune the orphan ids out of the sim registry; drop any now-empty batch
+  writeIndex({
+    batches: ix.batches
+      .map((b) => ({ ...b, projectIds: b.projectIds.filter((id) => !orphanIds.has(id)) }))
+      .filter((b) => b.projectIds.length || b.subIds.length || b.seedIds.length || b.scrapNames.length),
   });
-  writeIndex(ix);
+  return orphans.length;
 }
 
 /** Build + persist for a client in one call. */

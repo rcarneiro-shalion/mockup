@@ -265,13 +265,16 @@ export function getAssignedClientsForProject(projectId: string): ProjectClient[]
  * updates / removes this project on each client and persists — so the Client page
  * stays in sync with edits made from the Project page. No-op on the server.
  */
-export function setProjectClients(
+/** Pure: return `clients` with `project` reconciled so exactly `links` carry it.
+ *  Callers that need failures to propagate (e.g. an atomic multi-key write) can
+ *  persist the result through a throwing writer instead of {@link setProjectClients}. */
+export function withProjectClients(
+  clients: Client[],
   project: { id: string; name: string; bom: string },
   links: ProjectClient[],
-): void {
-  if (typeof window === "undefined") return;
+): Client[] {
   const want = new Map(links.map((l) => [l.clientId, l]));
-  const next = getClients().map((c) => {
+  return clients.map((c) => {
     const existing = c.assignedProjects ?? [];
     const others = existing.filter((p) => p.projectId !== project.id);
     const link = want.get(c.id);
@@ -281,6 +284,14 @@ export function setProjectClients(
     }
     return others.length !== existing.length ? { ...c, assignedProjects: others } : c;
   });
+}
+
+export function setProjectClients(
+  project: { id: string; name: string; bom: string },
+  links: ProjectClient[],
+): void {
+  if (typeof window === "undefined") return;
+  const next = withProjectClients(getClients(), project, links);
   try {
     window.localStorage.setItem(CLIENTS_KEY, JSON.stringify(next));
   } catch {

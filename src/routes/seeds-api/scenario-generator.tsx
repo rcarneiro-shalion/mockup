@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FlaskConical, PlayCircle, Trash2, Network, TriangleAlert, Sprout, Calculator, Search, Check, ChevronsUpDown, Users, Layers, ListFilter, X, Info } from "lucide-react";
 import { REAL_JOBS, CLIENT_LABELS, SCENARIO_CLIENTS, type RealJob } from "@/lib/scenarioSeedData";
-import { generateForClient, clearSimulated, clearSimulatedForClient, hasSimulated, simulatedSlugs, estimateTasks, validateScenario, extractionToSeedType, type BuiltScenario } from "@/lib/scenarioGenerator";
+import { generateForClient, clearSimulated, clearSimulatedForClient, hasSimulated, simulatedSlugs, estimateTasks, validateScenario, extractionToSeedType, pruneInvalidSimProjects, type BuiltScenario } from "@/lib/scenarioGenerator";
 import { buildQueryMatch } from "@/lib/textMatch";
 
 export const Route = createFileRoute("/seeds-api/scenario-generator")({
@@ -85,6 +85,11 @@ function ScenarioGeneratorPage() {
   const [simSlugs, setSimSlugs] = useState<Set<string>>(new Set()); // clients with a live simulated scenario
   useEffect(() => {
     setMounted(true);
+    // Sweep any invalid scenario left behind (a desk-test project with no subscription,
+    // e.g. from an interrupted generation) so the simulator only ever shows valid
+    // client → project → subscription scenarios.
+    const pruned = pruneInvalidSimProjects();
+    if (pruned) toast.message(`Cleaned ${pruned} incomplete test project${pruned > 1 ? "s" : ""} (no subscription).`);
     setSimLive(hasSimulated());
     setSimSlugs(new Set(simulatedSlugs()));
     // Restore the per-use-case checkbox state persisted from the last generation.
