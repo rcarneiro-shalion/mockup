@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import {
@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
-import { PROJECTS_KEY, INITIAL_PROJECTS, type Project } from "@/lib/projects";
+import { PROJECTS_KEY, INITIAL_PROJECTS, BULK_PROJECTS_EXTRA, type Project } from "@/lib/projects";
 import { getClientsForProject, getClientNames } from "@/lib/clients";
 import { getSubscriptions } from "@/lib/subscriptions";
 import { cn } from "@/lib/utils";
@@ -45,6 +45,14 @@ function StatusPill({ status }: { status: Project["status"] }) {
 
 function ProjectsListPage() {
   const [projects, setProjects] = usePersistentState<Project[]>(PROJECTS_KEY, INITIAL_PROJECTS);
+  // Display = the writable set + the read-only live bulk overlay (deduped by name). The
+  // bulk projects are reference-only (never persisted), so only writable rows get a row
+  // menu — otherwise deleting a non-persisted bulk row would no-op confusingly.
+  const allProjects = useMemo(() => {
+    const names = new Set(projects.map((p) => p.name));
+    return [...projects, ...BULK_PROJECTS_EXTRA.filter((p) => !names.has(p.name))];
+  }, [projects]);
+  const writableIds = useMemo(() => new Set(projects.map((p) => p.id)), [projects]);
   const [query, setQuery] = useState("");
   const [fStatus, setFStatus] = useState<string[]>([]);
   const [fBom, setFBom] = useState<string[]>([]);
@@ -62,7 +70,7 @@ function ProjectsListPage() {
   ].sort();
 
   const q = query.trim().toLowerCase();
-  const filtered = projects.filter((p) =>
+  const filtered = allProjects.filter((p) =>
     (!q || p.name.toLowerCase().includes(q)) &&
     (!fStatus.length || fStatus.includes(p.status)) &&
     (!fBom.length || fBom.includes(p.bom)) &&
@@ -99,7 +107,7 @@ function ProjectsListPage() {
           <FilterChip label="Clients" options={clientOptions} value={fClient} onChange={setFClient} searchable />
           <FilterChip label="Subscriptions" options={subscriptionOptions} value={fSubscription} onChange={setFSubscription} searchable />
           <FilterChip label="Status" options={["Active", "Inactive"]} value={fStatus} onChange={setFStatus} />
-          <FilterChip label="BoM" options={distinct(projects, (p) => p.bom)} value={fBom} onChange={setFBom} />
+          <FilterChip label="BoM" options={distinct(allProjects, (p) => p.bom)} value={fBom} onChange={setFBom} />
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />
         </FilterBar>
@@ -158,7 +166,9 @@ function ProjectsListPage() {
                 <Td><UserCell email={p.updatedBy} /></Td>
                 <Td><StatusPill status={p.status} /></Td>
                 <Td>
-                  <RowActionsMenu id={p.id} onDelete={() => setProjects((prev) => prev.filter((x) => x.id !== p.id))} entityLabel="project" />
+                  {writableIds.has(p.id) && (
+                    <RowActionsMenu id={p.id} onDelete={() => setProjects((prev) => prev.filter((x) => x.id !== p.id))} entityLabel="project" />
+                  )}
                 </Td>
               </tr>
             ))}

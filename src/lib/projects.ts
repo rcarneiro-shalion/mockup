@@ -1,5 +1,6 @@
 import { nowStamp } from "./clients";
 import { readPersistedList } from "./seedOptions";
+import { BULK_PROJECTS } from "./projectsBulk";
 
 // project-subscription relationship: a subscription assigned to a project.
 export type AssignedSubscription = {
@@ -35,7 +36,7 @@ const CC = (id: string, name: string, bom: string, from: string, status: Project
 });
 
 // Seeded from the production mockup.
-export const INITIAL_PROJECTS: Project[] = [
+const CURATED_PROJECTS: Project[] = [
   { id: "p1", name: "PHA > HEA_Tokopedia ID_en", bom: "GRPM_02", status: "Active", createdAt: "Mon, Sep 23, 2024 10:14", updatedAt: "Mon, Oct 27, 2025 2:00", createdBy: EC, updatedBy: EC },
   { id: "p2", name: "Diageo MK", bom: "SHL0024", status: "Inactive", createdAt: "Thu, Dec 14, 2023 2:13", updatedAt: "Mon, Oct 27, 2025 9:42", createdBy: EC, updatedBy: "sulloa@shalion.com" },
   { id: "p3", name: "BEV>SDR_Instacart US - CVS", bom: "GRPM_02", status: "Active", createdAt: "Fri, May 3, 2024 8:27", updatedAt: "Mon, Oct 27, 2025 1:30", createdBy: EC, updatedBy: EC },
@@ -79,10 +80,31 @@ export const INITIAL_PROJECTS: Project[] = [
   CC("cc20", "DSO - Coca Cola US", "demo_coca_watik_us", "Sat, Mar 1, 2025"),
 ];
 
-/** Projects list, sourced from the persisted store (SSR-safe fallback to seed). */
+// The persisted/writable default stays SMALL (curated demo projects only). The 8,138
+// real projects pulled from the live tasks-api are a READ-ONLY overlay (BULK_PROJECTS_EXTRA)
+// merged in only for DISPLAY via getAllProjects — never persisted, because persisting an
+// ~4MB catalog blows the localStorage quota and breaks scenario generation (which
+// re-persists getProjects()). /clients is dead, so a real project carries its client only
+// via `bom`.
+const curatedNames = new Set(CURATED_PROJECTS.map((p) => p.name));
+export const INITIAL_PROJECTS: Project[] = CURATED_PROJECTS;
+
+/** Read-only overlay: every real live project not already covered by a curated one. */
+export const BULK_PROJECTS_EXTRA: Project[] = BULK_PROJECTS.filter((p) => !curatedNames.has(p.name));
+
+/** Projects list (WRITABLE set), sourced from the persisted store (SSR-safe fallback to
+ *  the small curated seed). Use for writes (scenario persist, edits). */
 export function getProjects(): Project[] {
   const list = readPersistedList<Project>(PROJECTS_KEY);
   return list.length ? list : INITIAL_PROJECTS;
+}
+
+/** All projects for DISPLAY/lookup: the writable set + the read-only live bulk overlay
+ *  (deduped by name). Never persist this — use getProjects() as the write base. */
+export function getAllProjects(): Project[] {
+  const persisted = getProjects();
+  const names = new Set(persisted.map((p) => p.name));
+  return [...persisted, ...BULK_PROJECTS_EXTRA.filter((p) => !names.has(p.name))];
 }
 
 export function emptyProject(): Project {

@@ -92,9 +92,13 @@ const REAL_URLS = realByType("URL");
 const REAL_API = realByType("API");
 const REAL_PDPS = realByType("PDP");
 
-// Default seed volume per subscription↔seeds relation. The simulator fabricates this
-// many type-correct seeds per subscription (hundreds, for realistic desk-test scale).
-export const SEEDS_PER_SUB = 200;
+// Seed volume per subscription↔seeds relation for a single-client deep generate. Kept
+// modest because clients now carry up to 30 real jobs (~42 subs incl. PDP siblings): at
+// the old 200/sub a deep generate wrote ~8k seeds (~4MB) and could blow the ~5MB
+// localStorage budget. 40/sub keeps a deep client ≈ the prior 6-jobs×200 footprint, well
+// within budget, while the seeds list still shows a full, realistic page. Generate-all
+// uses an even smaller per-sub count (GEN_ALL_SEEDS_PER_SUB).
+export const SEEDS_PER_SUB = 40;
 
 // KEYWORD template pool for a client: curated brand-accurate keywords first (so a
 // Samsung job leads with "samsung galaxy", a Danone job with "activia", …), then the
@@ -202,7 +206,7 @@ export function buildScenario(clientSlug: string, jobs: RealJob[], seedsPerSub: 
 
     // --- discovery (PLP/MEDIA) → create a sibling PDP subscription + destinationOption
     if (isDiscovery(job.extractionType)) {
-      const pdpName = job.name.replace(/^(ME|PLP|MAG|MAT|GR|GC|GEO)[^_]*_/, "PDP_");
+      const pdpName = job.name.replace(/^[A-Z][A-Z0-9]*_/, "PDP_"); // normalize any extraction prefix (ME/PLP/GSB/BSL/…) → PDP_
       const pdpOptName = `${pdpName} (PDP)`;
       const pdpOption: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: pdpOptName, status: "Active", extractionType: "DIGITAL_SHELF_PDP", ...optionPreset("DIGITAL_SHELF_PDP"), createdAt: nowStamp(), updatedAt: nowStamp() };
       const pdpSeeds: Seed[] = buildSubSeeds(["PDP"], seedsPerSub, job.store, clientSlug, ji + 1000, true);
