@@ -157,6 +157,7 @@ export function LocationCatalogForm({
         open={selectedSetId !== null}
         onOpenChange={(v) => { if (!v) setSelectedSetId(null); }}
         set={selectedSet}
+        country={c.country}
         onSave={saveSet}
         onDelete={() => { if (selectedSetId) removeSet(selectedSetId); setSelectedSetId(null); }}
       />

@@ -335,6 +335,37 @@ export const ASSIGNABLE_LOCATIONS: string[] = [
   ...new Set(REAL_LOCATION_SETS.flatMap((s) => s.locations.map((l) => l.name))),
 ].slice(0, 100);
 
+/**
+ * Assignable-location pool scoped to a catalog's country — a real sample of locations
+ * from `REAL_LOCATION_SETS` whose store is in that country, deduped by name and capped.
+ * Each entry carries its real city / address / postal / store so an assigned location
+ * shows real data. Returns `[]` when the country has no real sample (caller may fall back
+ * to {@link ASSIGNABLE_LOCATIONS}). Match by ISO country code (e.g. `ES`, `BR`).
+ */
+export function assignableLocationsForCountry(country: string, cap = 150): SetLocation[] {
+  const cc = (country || "").toUpperCase();
+  if (!cc) return [];
+  const sets = REAL_LOCATION_SETS.filter((s) => s.country === cc);
+  if (!sets.length) return [];
+  const seen = new Set<string>();
+  const out: SetLocation[] = [];
+  // Round-robin across the country's stores so the sample is diverse (a few per store)
+  // rather than dominated by one huge store (e.g. a 40k-location delivery app).
+  for (let i = 0, more = true; more && out.length < cap; i++) {
+    more = false;
+    for (const set of sets) {
+      const l = set.locations[i];
+      if (!l) continue;
+      more = true;
+      if (seen.has(l.name)) continue;
+      seen.add(l.name);
+      out.push({ id: `pool-${cc}-${out.length}`, name: l.name, city: l.city, address: l.address, postal: l.postal, store: set.store });
+      if (out.length >= cap) break;
+    }
+  }
+  return out;
+}
+
 export const LOCATION_CATALOGS_KEY = "retailers:location-catalogs";
 
 export const INITIAL_LOCATION_CATALOGS: LocationCatalog[] = [

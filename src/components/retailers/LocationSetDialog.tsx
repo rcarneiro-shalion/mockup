@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Th, Td, Pagination, LinkText } from "@/components/seeds/ListPrimitives";
 import { ChipMultiSelect } from "@/components/seeds/ChipMultiSelect";
-import { emptyLocationSet, ASSIGNABLE_LOCATIONS, PURPOSE_OPTIONS, type LocationSet, type SetLocation, type Purpose } from "@/lib/retailers";
+import { emptyLocationSet, ASSIGNABLE_LOCATIONS, assignableLocationsForCountry, PURPOSE_OPTIONS, countryLabel, type LocationSet, type SetLocation, type Purpose } from "@/lib/retailers";
 import { toast } from "sonner";
 import { Plus, Trash2, FileSpreadsheet, X, ChevronDown } from "lucide-react";
 
@@ -16,6 +16,7 @@ export function LocationSetDialog({
   open,
   onOpenChange,
   set: locationSet,
+  country,
   onSave,
   onDelete,
   entityLabel = "location set",
@@ -23,6 +24,8 @@ export function LocationSetDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   set: LocationSet | null;
+  /** Catalog country (ISO code) — scopes the assignable-location pool to a real sample. */
+  country?: string;
   onSave: (s: LocationSet) => void;
   onDelete: () => void;
   /** Label for the edited entity (default "location set"). */
@@ -33,6 +36,16 @@ export function LocationSetDialog({
   const [assignOpen, setAssignOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [locFilter, setLocFilter] = useState("");
+
+  // Assignable-location pool, scoped to the catalog's country (a real sample with real
+  // city / address / postal / store). Falls back to the generic name pool for countries
+  // with no real sample (e.g. LT, QA) so assignment still works.
+  const { pool, scoped } = useMemo(() => {
+    const s = assignableLocationsForCountry(country ?? "");
+    if (s.length) return { pool: s, scoped: true };
+    const generic: SetLocation[] = ASSIGNABLE_LOCATIONS.map((name, i) => ({ id: `gen-${i}`, name, city: "", address: "", postal: "", store: "" }));
+    return { pool: generic, scoped: false };
+  }, [country]);
 
   useEffect(() => {
     if (open && locationSet) { setR({ ...locationSet, locations: locationSet.locations ?? [] }); setAssignOpen(false); setLocFilter(""); }
@@ -45,9 +58,14 @@ export function LocationSetDialog({
     : allLocations;
 
   const assignLocation = (name: string) => {
+    const src = pool.find((p) => p.name === name);
     const loc: SetLocation = {
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-      name, city: "", address: "", postal: "", store: "",
+      name,
+      city: src?.city ?? "",
+      address: src?.address ?? "",
+      postal: src?.postal ?? "",
+      store: src?.store ?? "",
     };
     upd("locations", [...locations, loc]);
   };
@@ -115,9 +133,9 @@ export function LocationSetDialog({
                     <CommandList>
                       <CommandEmpty>No results.</CommandEmpty>
                       <CommandGroup>
-                        {ASSIGNABLE_LOCATIONS.map((n) => (
-                          <CommandItem key={n} value={n} onSelect={() => { setLocFilter(n); setFilterOpen(false); }}>
-                            {n}
+                        {pool.map((p) => (
+                          <CommandItem key={p.id} value={p.name} onSelect={() => { setLocFilter(p.name); setFilterOpen(false); }}>
+                            {p.name}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -188,12 +206,17 @@ export function LocationSetDialog({
                 >
                   <SelectTrigger><SelectValue placeholder=" " /></SelectTrigger>
                   <SelectContent>
-                    {ASSIGNABLE_LOCATIONS.filter((n) => !locations.some((l) => l.name === n)).map((n) => (
-                      <SelectItem key={n} value={n}>{n}</SelectItem>
+                    {pool.filter((p) => !locations.some((l) => l.name === p.name)).map((p) => (
+                      <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {scoped
+                  ? <>Real sample of locations in <span className="font-medium text-foreground">{country ? countryLabel(country) : "this country"}</span> (the catalog's country).</>
+                  : <>No country-specific sample available — showing a general pool.</>}
+              </p>
             </div>
           </DialogContent>
         </Dialog>
