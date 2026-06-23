@@ -15,13 +15,15 @@ import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, FileSpreadsheet } from "lucide-react";
 
 export function LocationCatalogForm({
-  mode, initial, onSave, onCancel, onDelete,
+  mode, initial, onSave, onCancel, onDelete, onAutoSave,
 }: {
   mode: "add" | "edit";
   initial: LocationCatalog;
   onSave: (c: LocationCatalog) => void;
   onCancel: () => void;
   onDelete?: () => void;
+  /** Persist set-grid edits immediately (edit mode) so they aren't lost on navigate-away. */
+  onAutoSave?: (c: LocationCatalog) => void;
 }) {
   const [c, setC] = useState<LocationCatalog>(initial);
   const [isSaving, setIsSaving] = useState(false);
@@ -33,14 +35,22 @@ export function LocationCatalogForm({
   const sets = c.sets ?? [];
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
   const selectedSet = sets.find((x) => x.id === selectedSetId) ?? null;
+  // Set-grid mutations auto-persist immediately (edit mode) — flushing the whole current
+  // catalog — so add/edit/delete-set and location changes survive leaving the page without
+  // clicking the outer "Save location catalog" (mirrors the Projects assignment grids).
+  const commitSets = (next: LocationSet[]) => {
+    const updated = { ...c, sets: next };
+    setC(updated);
+    onAutoSave?.(updated);
+  };
   const addSet = () => {
     const ls = emptyLocationSet();
-    set("sets", [...sets, ls]);
+    commitSets([...sets, ls]);
     setSelectedSetId(ls.id);
   };
-  const removeSet = (id: string) => set("sets", sets.filter((x) => x.id !== id));
+  const removeSet = (id: string) => commitSets(sets.filter((x) => x.id !== id));
   const saveSet = (updated: LocationSet) =>
-    set("sets", sets.map((x) => (x.id === updated.id ? updated : x)));
+    commitSets(sets.map((x) => (x.id === updated.id ? updated : x)));
 
   const handleSave = async () => {
     if (!canSave) { toast.error("Name and Country are required"); return; }

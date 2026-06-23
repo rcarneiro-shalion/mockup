@@ -29,12 +29,18 @@ function EditLocationCatalogPage() {
     );
   }
 
+  // Persist a catalog update in place (no navigation). Used by the outer Save AND by the
+  // set-grid auto-save, so set/location edits survive leaving the page any way.
+  const persist = (updated: LocationCatalog) =>
+    setRows((p) => p.map((x) => (x.id === catalogId ? { ...updated, updatedAt: nowStamp() } : x)));
+
   return (
     <LocationCatalogForm
       mode="edit"
       initial={c}
       onCancel={goBack}
-      onSave={(updated) => { setRows((p) => p.map((x) => (x.id === catalogId ? { ...updated, updatedAt: nowStamp() } : x))); goBack(); }}
+      onSave={(updated) => { persist(updated); goBack(); }}
+      onAutoSave={persist}
       onDelete={() => { setRows((p) => p.filter((x) => x.id !== catalogId)); goBack(); }}
     />
   );
