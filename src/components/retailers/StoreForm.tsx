@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,7 @@ import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimi
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import {
   getRetailers, STORE_CLASS_OPTIONS, DEVICE_OPTIONS, COUNTRY_OPTIONS, countryLabel,
-  TIMEZONE_OPTIONS, LOCALE_OPTIONS, emptyStore, type Store, type StoreLocation,
+  TIMEZONE_OPTIONS, LOCALE_OPTIONS, emptyStore, sampleStoreLocations, type Store, type StoreLocation,
 } from "@/lib/retailers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -47,7 +47,12 @@ export function StoreForm({
   const set = <K extends keyof Store>(k: K, v: Store[K]) => setS((p) => ({ ...p, [k]: v }));
   const canSave = s.name.trim() && s.domain.trim() && s.retailer.trim();
   const retailerNames = getRetailers().map((r) => r.name);
-  const locations = s.locations ?? [];
+  // Show the store's own locations; if none are saved yet, fall back to a real SAMPLE
+  // pulled from the live backoffice /admin/locations (display-only until edited + saved).
+  const ownLocations = s.locations ?? [];
+  const sampleLocations = useMemo(() => (ownLocations.length ? [] : sampleStoreLocations(s.name)), [ownLocations.length, s.name]);
+  const isSample = !ownLocations.length && sampleLocations.length > 0;
+  const locations = ownLocations.length ? ownLocations : sampleLocations;
   const selectedLocation = locations.find((l) => l.id === selectedLocationId) ?? null;
   const saveLocation = (updated: StoreLocation) => set("locations", locations.map((l) => (l.id === updated.id ? updated : l)));
   const removeLocation = (id: string) => set("locations", locations.filter((l) => l.id !== id));
@@ -197,6 +202,12 @@ export function StoreForm({
                         <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={addLocation}><Plus className="h-3.5 w-3.5" /> Add location</Button>
                       </div>
                     </div>
+                    {isSample && (
+                      <div className="mb-2 text-xs text-muted-foreground">
+                        Showing a <span className="text-foreground/80">real sample</span> of {locations.length} of this store's{" "}
+                        <span className="font-medium text-foreground">{(s.activeLocationsCount ?? 0).toLocaleString()}</span> live locations (backoffice sample).
+                      </div>
+                    )}
                     <div className="overflow-hidden rounded-lg border border-border">
                       <table className="w-full text-sm">
                         <thead className="bg-secondary/60">

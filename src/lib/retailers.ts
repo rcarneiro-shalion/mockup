@@ -230,6 +230,18 @@ export function getStores(): Store[] {
   return base.map((s) => ({ ...s, activeLocationsCount: s.activeLocationsCount ?? STORE_LOCATIONS[s.name] ?? 0 }));
 }
 
+/** A real SAMPLE of a store's locations (from the live backoffice /admin/locations pull,
+ *  matched by store name) mapped to the StoreLocation shape — used to populate the Store
+ *  form's Locations tab so simulations are easier to trust. Empty when the store wasn't in
+ *  the sampled pull. Display-only: not persisted unless the user edits + saves the store. */
+export function sampleStoreLocations(storeName: string): StoreLocation[] {
+  const set = REAL_LOCATION_SETS.find((s) => s.store === storeName);
+  if (!set) return [];
+  return set.locations.map((l, i) => ({
+    id: `rl-${storeName}-${i}`, name: l.name, locator: "", address: l.address, city: l.city, postal: l.postal, status: "Active" as const,
+  }));
+}
+
 export function emptyStore(): Store {
   return { id: genId(), name: "", domain: "", retailer: "", type: "GEOLOC", klass: "BRICK_AND_CLICK", device: "WEB", country: "", status: "Active", ecometryId: "", timezone: "", locale: "", logoUrl: "", meta: "{}", locations: [], createdAt: nowStamp(), updatedAt: nowStamp() };
 }
