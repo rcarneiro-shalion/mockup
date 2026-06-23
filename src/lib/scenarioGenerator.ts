@@ -382,10 +382,14 @@ export const hasSimulated = (): boolean => readIndex().batches.length > 0;
 export const simulatedSlugs = (): string[] => [...new Set(readIndex().batches.map((b) => b.slug).filter(Boolean))];
 
 // ---- task estimation (mirrors planner + extends with disjoint fan-out) ----------
-export function estimateTasks(sub: Subscription, opt?: ScrappingOptionValues): number {
+// A geolocated (MANUAL) subscription extracts each of its store's active locations, so
+// tasks = seeds × locations. `storeLocCount` is the store's active-location count from
+// the prod store entity (≈1,677 stores via storeLocationCounts()); when omitted it falls
+// back to the curated STORE_LOCATIONS subset. Zero/unknown → the TBD estimate.
+export function estimateTasks(sub: Subscription, opt?: ScrappingOptionValues, storeLocCount?: number): number {
   const seeds = sub.seeds.length || 1;
-  const known = sub.store in STORE_LOCATIONS;
-  const locations = sub.geo === "MANUAL" ? (known ? Math.max(1, STORE_LOCATIONS[sub.store]) : LOC_VOLUME_TBD) : 1;
+  const count = storeLocCount ?? STORE_LOCATIONS[sub.store] ?? 0;
+  const locations = sub.geo === "MANUAL" ? (count > 0 ? count : LOC_VOLUME_TBD) : 1;
   const modalities = opt?.modalities && opt.modalityValues?.length ? opt.modalityValues.length : 1;
   const timeframes = opt?.timeframes?.length || 1;
   return seeds * locations * modalities * timeframes;

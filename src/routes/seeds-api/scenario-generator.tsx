@@ -12,6 +12,7 @@ import { FlaskConical, PlayCircle, Trash2, Network, TriangleAlert, Sprout, Calcu
 import { REAL_JOBS, CLIENT_LABELS, SCENARIO_CLIENTS, type RealJob } from "@/lib/scenarioSeedData";
 import { generateForClient, clearSimulated, clearSimulatedForClient, hasSimulated, simulatedSlugs, estimateTasks, validateScenario, extractionToSeedType, pruneInvalidSimProjects, type BuiltScenario } from "@/lib/scenarioGenerator";
 import { buildQueryMatch } from "@/lib/textMatch";
+import { storeLocationCounts } from "@/lib/retailers";
 
 export const Route = createFileRoute("/seeds-api/scenario-generator")({
   head: () => ({ meta: [{ title: "Scenario simulator — Shalion" }] }),
@@ -117,6 +118,7 @@ function ScenarioGeneratorPage() {
   const [seedFilter, setSeedFilter] = useState<Set<string>>(new Set());
   const [jobQuery, setJobQuery] = useState("");
 
+  const storeLoc = useMemo(() => storeLocationCounts(), []);
   const clientOpts = useMemo<Opt[]>(() => SCENARIO_CLIENTS.map((slug) => ({ value: slug, label: CLIENT_LABELS[slug] ?? slug, hint: String((REAL_JOBS[slug] ?? []).length) })), []);
   const extOpts = useMemo<Opt[]>(() => {
     const s = new Set<string>();
@@ -329,7 +331,7 @@ function ScenarioGeneratorPage() {
               {results.map((b) => {
                 const warns = validateScenario(b);
                 const optByName = new Map(b.scrappingOptions.map((o) => [o.name, o]));
-                const total = b.subscriptions.reduce((a, s) => a + estimateTasks(s, optByName.get(s.scrappingOption)), 0);
+                const total = b.subscriptions.reduce((a, s) => a + estimateTasks(s, optByName.get(s.scrappingOption), storeLoc.get(s.store)), 0);
                 return (
                   <div key={b.project.id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -352,7 +354,7 @@ function ScenarioGeneratorPage() {
                           <span className="min-w-0 flex-1 truncate font-mono text-foreground/75">{s.name}</span>
                           {s.locationSet && <span className="shrink-0 text-muted-foreground" title={s.locationSet}>📍 {s.locationSet.replace(/ — .*/, "")}</span>}
                           {(s.destinationOptions?.length ?? 0) > 0 && <span className="shrink-0 text-violet-600" title={`→ ${s.destinationOptions!.join(", ")}`}>→ PDP</span>}
-                          <span className="shrink-0 tabular-nums text-muted-foreground">{estimateTasks(s, optByName.get(s.scrappingOption))} tasks</span>
+                          <span className="shrink-0 tabular-nums text-muted-foreground">{estimateTasks(s, optByName.get(s.scrappingOption), storeLoc.get(s.store)).toLocaleString()} tasks</span>
                         </div>
                       ))}
                     </div>

@@ -230,6 +230,17 @@ export function getStores(): Store[] {
   return base.map((s) => ({ ...s, activeLocationsCount: s.activeLocationsCount ?? STORE_LOCATIONS[s.name] ?? 0 }));
 }
 
+/**
+ * Real per-store active-location count keyed by store name, for every store in the
+ * prod store entity (≈1,677). This is the authoritative location volume the Value
+ * Stream Map / task estimator scale by — far wider coverage than the curated
+ * STORE_LOCATIONS subset, so a MANUAL subscription's tasks = seeds × the store's
+ * own active locations whenever its store is on record.
+ */
+export function storeLocationCounts(): Map<string, number> {
+  return new Map(getStores().map((s) => [s.name, s.activeLocationsCount ?? 0]));
+}
+
 /** A real SAMPLE of a store's locations (from the live backoffice /admin/locations pull,
  *  matched by store name) mapped to the StoreLocation shape — used to populate the Store
  *  form's Locations tab so simulations are easier to trust. Empty when the store wasn't in

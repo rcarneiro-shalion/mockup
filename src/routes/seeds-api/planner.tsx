@@ -13,7 +13,7 @@ import { getClients } from "@/lib/clients";
 import { getProjects } from "@/lib/projects";
 import { getSubscriptions, subDestinationOptions, subRotation, subProjects } from "@/lib/subscriptions";
 import { getScrappingOptions } from "@/lib/scrappingOptions";
-import { STORE_LOCATIONS } from "@/lib/scenarioSeedData";
+import { storeLocationCounts } from "@/lib/retailers";
 import { useSessionState } from "@/hooks/usePersistentState";
 import type { ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import { cn } from "@/lib/utils";
@@ -232,19 +232,22 @@ function PlannerPage() {
   }, [nodes, edges, hasFilter, fClient, fProject, fSub, fStore, fSeed, fScrap, fExtraction]);
 
   // Task generation estimation over the visible subscriptions.
-  // Rule (TBD): tasks ≈ seeds × locations per store, locations = location set volume.
+  // Rule: tasks = seeds × locations per store. Locations = the active-location count the
+  // subscription's store declares in the prod store entity (storeLocationCounts).
+  const storeLoc = useMemo(() => storeLocationCounts(), []);
   const visibleSubs = subs.filter((s) => visible.has(`s:${s.id}`));
   const estRows = visibleSubs.map((s) => {
     const seedCount = (s.seeds ?? []).length;
     const usesLoc = s.geo === "MANUAL";
-    // Location volume = the real active-location count of the store the subscription
-    // belongs to (STORE_LOCATIONS, from the prod store entity); fallback when unknown.
-    const knownStore = s.store in STORE_LOCATIONS;
-    const locations = usesLoc ? (knownStore ? Math.max(1, STORE_LOCATIONS[s.store]) : LOC_VOLUME_TBD) : 1;
-    return { id: s.id, name: s.name, seeds: seedCount, locations, usesLoc, tasks: seedCount * locations };
+    // A geolocated (MANUAL) subscription extracts each of its store's active locations,
+    // so its volume = the store's own active-location count; non-geo runs the store once.
+    const storeCount = storeLoc.get(s.store) ?? 0;
+    const tbd = usesLoc && storeCount <= 0; // store has no count on record → estimate
+    const locations = usesLoc ? (storeCount > 0 ? storeCount : LOC_VOLUME_TBD) : 1;
+    return { id: s.id, name: s.name, seeds: seedCount, locations, usesLoc, tbd, tasks: seedCount * locations };
   });
   const totalTasks = estRows.reduce((a, r) => a + r.tasks, 0);
-  const anyTbd = estRows.some((r) => r.usesLoc);
+  const anyTbd = estRows.some((r) => r.tbd);
 
   const columns: { kind: NodeKind; label: string; icon: typeof Users; tone: string }[] = [
     { kind: "client", label: "Clients", icon: Users, tone: "text-emerald-600" },
@@ -458,9 +461,9 @@ function PlannerPage() {
                   className="rounded-lg border border-border bg-card p-4 shadow-sm"
                 >
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    A task ≈ <span className="font-medium text-foreground">seeds × locations</span> per store. Locations ={" "}
-                    location set volume{" "}
-                    <span className="rounded bg-amber-100 px-1 text-[10px] font-medium text-amber-800">TBD</span>.
+                    A task = <span className="font-medium text-foreground">seeds × locations</span> per store. Locations ={" "}
+                    the store's <span className="font-medium text-foreground">active-location count</span> for geolocated
+                    (MANUAL) subscriptions; otherwise 1.
                   </p>
                   <div className="mt-3 space-y-1.5">
                     {estRows.length === 0 && <p className="text-xs text-muted-foreground">No subscriptions in view.</p>}
@@ -468,7 +471,7 @@ function PlannerPage() {
                       <div key={r.id} className="flex items-center justify-between gap-2 text-xs">
                         <span className="min-w-0 truncate text-foreground/80" title={r.name}>{r.name}</span>
                         <span className="shrink-0 font-mono text-muted-foreground">
-                          {r.seeds}×{r.locations}{r.usesLoc ? "*" : ""} = <b className="text-foreground">{r.tasks}</b>
+                          {r.seeds}×{r.locations.toLocaleString()}{r.tbd ? "*" : ""} = <b className="text-foreground">{r.tasks.toLocaleString()}</b>
                         </span>
                       </div>
                     ))}
@@ -478,7 +481,7 @@ function PlannerPage() {
                     <span className="text-base font-semibold text-rose-600">{totalTasks.toLocaleString()} tasks</span>
                   </div>
                   {anyTbd && (
-                    <p className="mt-2 text-[11px] text-muted-foreground">* location volume = the store's active locations (fallback {LOC_VOLUME_TBD} when the store is unknown)</p>
+                    <p className="mt-2 text-[11px] text-muted-foreground">* estimated — the store has no active-location count on record (assumed {LOC_VOLUME_TBD})</p>
                   )}
                 </div>
               </div>
