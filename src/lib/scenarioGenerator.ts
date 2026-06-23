@@ -95,14 +95,15 @@ const REAL_URLS = realByType("URL");
 const REAL_API = realByType("API");
 const REAL_PDPS = realByType("PDP");
 
-// Seed volume per subscription↔seeds relation for a single-client DEEP generate — set
-// high for realism (clients carry up to 30 real jobs / ~42 subs incl. PDP siblings, so
-// 150/sub ≈ 6k seeds for one client). Affordable because the seed CORPUS is now a
-// read-only overlay (never re-persisted): only these cloned sim seeds are written
-// (~4MB for one deep client, within the ~5MB localStorage budget). Generate-all uses a
-// smaller per-sub count (GEN_ALL_SEEDS_PER_SUB) so the broad 18-client run covers many.
-// 100 keeps even the heaviest client (Walmart ~47 subs incl. PDP siblings) near ~4MB.
-export const SEEDS_PER_SUB = 100;
+// Seed volume per subscription↔seeds relation for a single-client DEEP generate —
+// MAXIMIZED for realism. Affordable because the seed CORPUS is a read-only overlay
+// (never re-persisted): only these cloned sim seeds hit localStorage. Measured: the
+// HEAVIEST client (Walmart, 47 subs incl. PDP siblings) persists ~9.2k seeds ≈ 7.6MB —
+// fits a modern Chrome/Firefox (~10MB) per-origin budget with headroom; on a stricter
+// ~5MB browser a deep generate of a heavy client rolls back + warns (persistScenario is
+// atomic + resilient). Generate-all uses a much smaller GEN_ALL_SEEDS_PER_SUB so the
+// broad 18-client run still covers many clients.
+export const SEEDS_PER_SUB = 200;
 
 // KEYWORD template pool for a client: curated brand-accurate keywords first (so a
 // Samsung job leads with "samsung galaxy", a Danone job with "activia", …), then the
