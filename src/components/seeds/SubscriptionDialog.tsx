@@ -28,6 +28,7 @@ import {
 import { getScrappingOptions } from "@/lib/scrappingOptions";
 import { getProjects } from "@/lib/projects";
 import { getStores } from "@/lib/retailers";
+import { REAL_LOCATION_SETS } from "@/lib/scenarioSeedData";
 import {
   SUBSCRIPTION_GEOLOC_OPTIONS,
   SUBSCRIPTION_STATUS_OPTIONS,
@@ -103,6 +104,8 @@ export function SubscriptionDialog({
   const storeOptions = [...new Set(getStores().map((s) => s.name))].sort((a, b) => a.localeCompare(b));
 
   const locationEnabled = v.geo === "MANUAL";
+  // Real location set behind the selected label (real records pulled from backoffice).
+  const realSet = REAL_LOCATION_SETS.find((s) => s.name === v.locationSet);
   // Business rule: VIRTUAL_STORE geolocation is ONLY available for a PDP scrapping
   // option; for every other extraction type it stays visible but disabled.
   const isPdp = selectedExtraction === "DIGITAL_SHELF_PDP";
@@ -278,6 +281,23 @@ export function SubscriptionDialog({
                   disabled={!locationEnabled}
                   placeholder={locationEnabled ? "Select a location set" : "Enabled when Geolocation mode is MANUAL"}
                 />
+                {locationEnabled && realSet && realSet.locations.length > 0 && (
+                  <div className="mt-1.5 rounded-md border border-border bg-secondary/30 px-2.5 py-2 text-xs">
+                    <div className="text-muted-foreground">
+                      <span className="font-medium text-foreground">{realSet.count.toLocaleString()}</span> real locations · sample:
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {realSet.locations.slice(0, 6).map((l, i) => (
+                        <span key={i} className="rounded bg-background px-1.5 py-0.5 text-foreground/80" title={[l.city, l.address, l.postal].filter(Boolean).join(" · ")}>
+                          {l.name}
+                        </span>
+                      ))}
+                      {realSet.count > Math.min(6, realSet.locations.length) && (
+                        <span className="self-center text-muted-foreground">+{(realSet.count - Math.min(6, realSet.locations.length)).toLocaleString()} more</span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </Field>
 
               <Field label="Frequency" required className="sm:col-span-2">

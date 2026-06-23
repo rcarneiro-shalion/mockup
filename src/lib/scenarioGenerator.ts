@@ -14,7 +14,7 @@ import { getSubscriptions, SUBSCRIPTIONS_KEY, emptySubscription, subProjects, ty
 import { getSeeds, INITIAL_SEEDS, BULK_SEEDS_EXTRA, SEEDS_KEY, type Seed, type SeedType } from "./seeds";
 import { getScrappingOptions, SCRAPPING_OPTIONS_KEY } from "./scrappingOptions";
 import { EMPTY_SCRAPPING_OPTION, type ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
-import { REAL_JOBS, CLIENT_LABELS, STORE_LOCATIONS, CLIENT_KEYWORDS, CLIENT_CATEGORY, type RealJob } from "./scenarioSeedData";
+import { REAL_JOBS, CLIENT_LABELS, STORE_LOCATIONS, CLIENT_KEYWORDS, CLIENT_CATEGORY, REAL_LOCATION_SETS, type RealJob } from "./scenarioSeedData";
 
 const SIM_KEY = "seeds-api:sim:index";
 const LOC_VOLUME_TBD = 10;
@@ -159,7 +159,13 @@ const buildSubSeeds = (types: SeedType[], count: number, store: string, slug: st
 // location volume = the store's real activeLocationsCount (STORE_LOCATIONS, pulled
 // from the prod store entity). The locationSet label reflects that store + count.
 const storeLocations = (store: string): number => STORE_LOCATIONS[store] ?? 0;
+// Stores with a REAL location set (real records pulled from backoffice /admin/locations).
+const realSetByStore = new Map(REAL_LOCATION_SETS.map((s) => [s.store, s]));
 const locationSetLabel = (store: string): string => {
+  // Prefer the real location set's name when we have real records for the store, so the
+  // MANUAL subscription references a set whose locations the UI can actually show.
+  const real = realSetByStore.get(store);
+  if (real) return real.name;
   const n = storeLocations(store);
   return n > 0 ? `${store} — ${n.toLocaleString()} locations` : "";
 };

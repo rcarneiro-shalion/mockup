@@ -1,5 +1,5 @@
 import { nowStamp } from "./clients";
-import { STORE_LOCATIONS } from "./scenarioSeedData";
+import { STORE_LOCATIONS, REAL_LOCATION_SETS } from "./scenarioSeedData";
 import { BULK_STORES } from "./storesBulk";
 
 // ---------- shared options ----------
@@ -290,21 +290,11 @@ export function emptyLocationSet(): LocationSet {
   return { id: genId(), name: "New location set", locations: [] };
 }
 
-// Pool of locations that can be assigned to a set (mock).
-export const ASSIGNABLE_LOCATIONS = [
-  "2041619 Mobile County Health Department Newburn Clinic",
-  "208418 Dukuhan",
-  "1085495 White Pond",
-  "871713 Ashburnham State Forest",
-  "133270 Kebonpala",
-  "130565 Cemitério São Sebastião",
-  "50577 Walker Spring",
-  "Hytop",
-  "Rinvyle House",
-  "1003727 Township of Vesta",
-  "994210 Praça da Sé",
-  "77120 Riverside Market",
-];
+// Pool of locations that can be assigned to a set — REAL location names sampled from the
+// live backoffice /admin/locations pull (see locationsBulk.ts), deduped + capped.
+export const ASSIGNABLE_LOCATIONS: string[] = [
+  ...new Set(REAL_LOCATION_SETS.flatMap((s) => s.locations.map((l) => l.name))),
+].slice(0, 100);
 
 export const LOCATION_CATALOGS_KEY = "retailers:location-catalogs";
 
