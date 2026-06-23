@@ -274,12 +274,28 @@ export type SetLocation = {
 export type LocationSet = {
   id: string;
   name: string;
+  /**
+   * Which product flows this set (bucket) is meant for — zero or more, optional
+   * (empty = no specific purpose). NOTE — UX exploration: the RFC (Location Catalog
+   * §5.1) puts the use-case dimension on the client↔catalog enablement
+   * (`ClientLocationCatalog.useCases`) and treats sets as neutral buckets. Product
+   * asked to also categorize the set itself, so we surface set-level `purposes`
+   * (multi-select, same vocabulary as `useCases`) to validate the interaction
+   * before settling where it lives.
+   */
+  purposes?: Purpose[];
   locations: SetLocation[];
 };
 
 // Use cases a client enables a catalog for (replaces the never-shipped `type` tag).
 export const USE_CASE_OPTIONS = ["DASHBOARD", "MSRP", "ASSORTMENT", "SCRAPING"] as const;
 export type UseCase = (typeof USE_CASE_OPTIONS)[number];
+
+// A location set's `purposes` shares the same vocabulary as the client `useCases`
+// (RFC §5.1: the type→use-case dimension). Kept under its own name so the set-level
+// concept can diverge from client useCases if the design evolves.
+export const PURPOSE_OPTIONS = USE_CASE_OPTIONS;
+export type Purpose = UseCase;
 
 export type LocationCatalog = {
   id: string;
