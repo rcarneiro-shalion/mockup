@@ -343,14 +343,24 @@ function splitCsvLine(line: string): { v: string; quoted: boolean }[] {
   return out;
 }
 
-/** Parse a pasted/uploaded two-column CSV (`<pk>,<column>_value`) for a chosen field. */
+// Split one row into [pk, value] cells. Comma-delimited (quote-aware) when a comma is
+// present; otherwise the first whitespace run is the separator — the PK is always a bare
+// id (no spaces), so the first token is the PK and the remainder is the value (which may
+// itself contain spaces). This lets users paste "<id> <value>" without commas.
+function splitRow(line: string): { v: string; quoted: boolean }[] {
+  if (line.includes(",")) return splitCsvLine(line);
+  const m = line.match(/^(\S+)\s+([\s\S]*)$/);
+  return m ? [{ v: m[1], quoted: false }, { v: m[2], quoted: false }] : [{ v: line, quoted: false }];
+}
+
+/** Parse a pasted/uploaded two-column input (`<pk>,<value>` or `<pk> <value>`) for a field. */
 export function parseSuperUpdateCsv(text: string, table: PatchTable, field: PatchField): ParseResult {
   const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const rows: ParsedRow[] = [];
   let headerSkipped = false;
 
   lines.forEach((line, idx) => {
-    const cells = splitCsvLine(line);
+    const cells = splitRow(line);
     // Header detection is conservative: only when the first cell IS the PK/`id` literal —
     // never inferred from the value cell (a real value could look header-ish).
     if (idx === 0) {

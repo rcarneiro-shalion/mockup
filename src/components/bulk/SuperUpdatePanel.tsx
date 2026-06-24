@@ -279,7 +279,7 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
                 </code>
               </div>
               <div className="pt-1">
-                <span className="text-xs font-medium text-muted-foreground">Expected CSV columns</span>
+                <span className="text-xs font-medium text-muted-foreground">Expected columns <span className="font-normal">(comma or space separated)</span></span>
                 <code className="mt-0.5 block rounded bg-secondary/60 px-2 py-1 text-[11px] text-foreground/80">{csvHeaderHint(table, field)}</code>
               </div>
             </div>
@@ -299,7 +299,7 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
             value={csv}
             onChange={(e) => { setCsv(e.target.value); if (fileName) setFileName(""); }}
             disabled={!field}
-            placeholder={table && field ? `${csvHeaderHint(table, field)}\n<id-1>,<value-1>\n<id-2>,<value-2>` : "Select a microservice, table and field first…"}
+            placeholder={table && field ? `${csvHeaderHint(table, field)}\n<id-1>,<value-1>\n<id-2> <value-2>` : "Select a microservice, table and field first…"}
             spellCheck={false}
             className="h-44 w-full resize-y rounded-lg border border-border bg-background p-3 font-mono text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
           />
