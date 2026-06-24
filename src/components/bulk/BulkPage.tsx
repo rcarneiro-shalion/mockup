@@ -32,12 +32,14 @@ import {
 } from "@/components/seeds/ListPrimitives";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { BulkMethodsModal } from "./BulkMethodsModal";
+import { SuperUpdatePanel, type SuperUpdateRun } from "./SuperUpdatePanel";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { BULK_METHODS, BULK_GROUPS, type BulkMethod } from "@/lib/bulkMethods";
 import { toast } from "sonner";
 import { Plus, Upload, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Bulk processes list + the Super Update single-field PATCH tab.
 type Status = "Completed" | "Processing" | "Queued" | "Partial" | "Failed";
 type BulkProcess = {
   id: string;
@@ -75,6 +77,7 @@ export function BulkPage() {
   const [q, setQ] = useState("");
   const sort = useSort("bulk");
   const [newOpen, setNewOpen] = useState(false);
+  const [tab, setTab] = useState<"processes" | "super">("processes");
 
   const ql = q.trim().toLowerCase();
   const filtered = ql
@@ -114,24 +117,76 @@ export function BulkPage() {
     }, 1900);
   };
 
+  // Super Update — a single-field PATCH run lands in the same processes list.
+  const runSuperUpdate = (r: SuperUpdateRun) => {
+    const proc: BulkProcess = {
+      id: crypto.randomUUID(),
+      entity: r.service,
+      action: `PATCH ${r.field}`,
+      fileName: r.fileName,
+      status: "Processing",
+      rows: 0,
+      errors: 0,
+      createdBy: "rcarneiro@shalion.com",
+      createdAt: stamp(),
+    };
+    setRows((prev) => [proc, ...prev]);
+    setTab("processes");
+    toast.success(`Super Update (preview) — PATCH ${r.field} on ${r.valid.toLocaleString("en-US")} record${r.valid === 1 ? "" : "s"} · no request sent`);
+    setTimeout(() => {
+      setRows((prev) =>
+        prev.map((p) =>
+          p.id === proc.id
+            ? { ...p, status: r.errors > 0 ? "Partial" : "Completed", rows: r.valid, errors: r.errors }
+            : p,
+        ),
+      );
+    }, 1600);
+  };
+
   return (
     <AppShell>
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between px-6 pt-5">
           <h1 className="text-[17px] font-semibold text-foreground">Bulk</h1>
-          <div className="flex items-center gap-2">
-            <BulkMethodsModal />
-            <Button size="sm" className="h-8 gap-1.5" onClick={() => setNewOpen(true)}>
-              <Plus className="h-4 w-4" /> New bulk process
-            </Button>
-          </div>
+          {tab === "processes" && (
+            <div className="flex items-center gap-2">
+              <BulkMethodsModal />
+              <Button size="sm" className="h-8 gap-1.5" onClick={() => setNewOpen(true)}>
+                <Plus className="h-4 w-4" /> New bulk process
+              </Button>
+            </div>
+          )}
         </div>
 
-        <div className="px-6 pt-1">
+        {/* Tabs */}
+        <div className="mt-3 flex gap-1 border-b border-border px-6">
+          {([["processes", "Bulk processes"], ["super", "Super Update"]] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={cn(
+                "relative -mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                tab === key
+                  ? "border-[var(--sidebar-active-fg)] text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "super" && <SuperUpdatePanel onRun={runSuperUpdate} />}
+
+        {tab === "processes" && (
+        <>
+        <div className="px-6 pt-3">
           <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
             Import or update many records at once by uploading a spreadsheet. Open{" "}
             <span className="font-medium text-foreground">Bulk methods</span> for the catalogue of
-            every supported operation and its example file, then start a new process below.
+            every supported operation and its example file, or use <span className="font-medium text-foreground">Super Update</span> to PATCH a single field by primary key.
           </p>
         </div>
 
@@ -186,6 +241,8 @@ export function BulkPage() {
         </TableShell>
 
         <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
+        </>
+        )}
       </div>
 
       <NewProcessDialog open={newOpen} onOpenChange={setNewOpen} onStart={startProcess} />
