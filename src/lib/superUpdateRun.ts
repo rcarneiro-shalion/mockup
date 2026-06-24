@@ -11,6 +11,8 @@ import {
   proxyServiceFor,
   getByPath,
   buildPayload,
+  buildMergedBody,
+  isNestedField,
   type PatchService,
   type PatchTable,
   type PatchField,
@@ -63,21 +65,23 @@ export async function runSuperUpdate(input: RunInput): Promise<SuperUpdateRowRes
   const svc = proxyServiceFor(service);
   const liveEnv = toLiveEnv(env);
   const wirePath = field.path ?? field.column;
+  const nested = isNestedField(field);
   const auth = { token: token || undefined, idToken: idToken || undefined, env: liveEnv };
 
-  // Phase 1 — snapshot the current value of each row (read-only). A row is only
-  // "ok" to patch when the GET succeeded AND the field was actually present: an
-  // absent value (undefined) is NOT patched, because we couldn't capture a value
-  // to roll back to. The pool callback never throws (returns an error result).
+  // Phase 1 — snapshot the current value of each row (read-only). For a TOP-LEVEL field
+  // a row is only "ok" when the value was actually present (an absent value can't be
+  // rolled back). For a NESTED field the patch is read-modify-write (siblings preserved),
+  // so an absent leaf is still recoverable — recorded as null; we also keep the full GET
+  // record to merge against in phase 2. The pool callback never throws.
   let snapDone = 0;
   const snaps = await pool(rows, async (r) => {
     try {
       const res = await fetchLive({ data: { service: svc, path: path(table, r.pk), ...auth } });
       if (!res.ok) return { ok: false as const, error: res.error ?? `GET failed (${res.status})` };
-      const oldValue = getByPath(res.data, wirePath);
-      if (oldValue === undefined)
+      const found = getByPath(res.data, wirePath);
+      if (found === undefined && !nested)
         return { ok: false as const, error: "current value not found in record — not patched (no rollback snapshot)" };
-      return { ok: true as const, oldValue };
+      return { ok: true as const, oldValue: found === undefined ? null : found, record: res.data };
     } catch (e) {
       return { ok: false as const, error: `snapshot error: ${(e as Error).message}` };
     } finally {
@@ -101,8 +105,10 @@ export async function runSuperUpdate(input: RunInput): Promise<SuperUpdateRowRes
       return { ...base, error: "no value to write" };
     }
     try {
+      // Nested fields read-modify-write the parent (from the snapshot record) to keep siblings.
+      const body = nested ? buildMergedBody(field, r.value, snap.record) : buildPayload(field, r.value);
       const res = await mutateLive({
-        data: { service: svc, path: path(table, r.pk), method: "PATCH", body: buildPayload(field, r.value), ...auth },
+        data: { service: svc, path: path(table, r.pk), method: "PATCH", body, ...auth },
       });
       return res.ok ? { ...base, status: "ok" as const } : { ...base, error: res.error ?? `PATCH failed (${res.status})` };
     } catch (e) {

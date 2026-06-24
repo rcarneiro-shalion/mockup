@@ -73,16 +73,20 @@ export const PATCH_SERVICES: PatchService[] = [
         ],
       },
       {
-        // Only genuinely top-level, partial-safe columns. The seedType.attributes.* fields
-        // (pageType/keywordType/maxRank/discoveryKey) are intentionally NOT here: a PATCH that
-        // sets seedType.attributes={oneKey} replaces the whole attributes node on the live API
-        // (the scripts always send it wholesale), which would wipe sibling attributes with no
-        // recoverable per-leaf snapshot. Re-add only with whole-object snapshot + merge.
+        // Top-level columns are simple partial patches. The seedType.attributes.* fields are
+        // nested (dotted path) → the run uses READ-MODIFY-WRITE (buildMergedBody): it re-sends
+        // the WHOLE attributes object (live siblings + the one overridden leaf), so a sibling
+        // is never wiped whether the API merges or replaces that node, and rollback re-merges
+        // the old leaf (preserving whatever is current). See buildMergedBody + superUpdateRun.
         table: "seed", resource: "seeds", pk: "seed_id",
         fields: [
           { column: "description", type: "string" },
           { column: "status", type: "enum", options: [...STATUS] },
           { column: "store_id", type: "uuid", path: "storeId" },
+          { column: "page_type", type: "enum", path: "seedType.attributes.pageType", options: ["SUBCATEGORY", "CATEGORY", "HOME", "OFFERS", "BRAND_STORE", "LEGACY"], nullable: true },
+          { column: "keyword_type", type: "enum", path: "seedType.attributes.keywordType", options: ["BRANDED", "CATEGORY"], nullable: true },
+          { column: "max_rank", type: "number", path: "seedType.attributes.maxRank", int: true, nullable: true },
+          { column: "discovery_key", type: "string", path: "seedType.attributes.discoveryKey", nullable: true },
         ],
       },
       {
@@ -287,6 +291,32 @@ export function buildPayload(field: PatchField, value: unknown): Record<string, 
   }
   cur[keys[keys.length - 1]] = value;
   return root;
+}
+
+/** True when the field is nested under a parent object that must be preserved on PATCH. */
+export function isNestedField(field: PatchField): boolean {
+  return (field.path ?? field.column).includes(".");
+}
+
+/**
+ * Build a PATCH body that sets ONE field while PRESERVING its siblings. For a nested
+ * field it READ-MODIFY-WRITES the parent object from the freshly-GET'd `record`: clone
+ * the live parent (e.g. seedType.attributes), override the one leaf, and re-wrap up the
+ * path — so the body carries the FULL parent (siblings intact) and is safe whether the
+ * API merges or replaces that node. For a top-level field it is just `{ key: value }`.
+ */
+export function buildMergedBody(field: PatchField, value: unknown, record: unknown): Record<string, unknown> {
+  const segs = (field.path ?? field.column).split(".");
+  if (segs.length === 1) return { [segs[0]]: value };
+  const parentSegs = segs.slice(0, -1);
+  const leaf = segs[segs.length - 1];
+  const parent = getByPath(record, parentSegs.join("."));
+  let body: Record<string, unknown> = {
+    ...(parent && typeof parent === "object" ? (structuredClone(parent) as Record<string, unknown>) : {}),
+    [leaf]: value,
+  };
+  for (let i = parentSegs.length - 1; i >= 0; i--) body = { [parentSegs[i]]: body };
+  return body;
 }
 
 export type ParsedRow = { line: number; id: string; raw: string; value: unknown; isNull: boolean; error?: string };
