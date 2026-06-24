@@ -122,7 +122,7 @@ export function BulkPage() {
     const proc: BulkProcess = {
       id: crypto.randomUUID(),
       entity: r.service,
-      action: `PATCH ${r.field}`,
+      action: `PATCH ${r.field} (${r.env})`,
       fileName: r.fileName,
       status: "Processing",
       rows: 0,
@@ -132,7 +132,7 @@ export function BulkPage() {
     };
     setRows((prev) => [proc, ...prev]);
     setTab("processes");
-    toast.success(`Super Update (preview) — PATCH ${r.field} on ${r.valid.toLocaleString("en-US")} record${r.valid === 1 ? "" : "s"} · no request sent`);
+    toast.success(`Super Update (preview · ${r.env}) — PATCH ${r.field} on ${r.valid.toLocaleString("en-US")} record${r.valid === 1 ? "" : "s"} · no request sent`);
     setTimeout(() => {
       setRows((prev) =>
         prev.map((p) =>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import {
   PATCH_SERVICES,
@@ -13,9 +14,10 @@ import {
   type PatchService,
   type PatchTable,
   type PatchField,
+  type PatchEnv,
 } from "@/lib/superUpdate";
 import { toast } from "sonner";
-import { Upload, Wand2, Check, TriangleAlert, Copy, ArrowRight } from "lucide-react";
+import { Upload, Wand2, Check, TriangleAlert, Copy, ArrowRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type SuperUpdateRun = {
@@ -25,6 +27,7 @@ export type SuperUpdateRun = {
   fileName: string;
   valid: number;
   errors: number;
+  env: PatchEnv;
 };
 
 export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void }) {
@@ -34,6 +37,7 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
   const [csv, setCsv] = useState("");
   const [fileName, setFileName] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [env, setEnv] = useState<PatchEnv>("dev"); // safe-mode default: target develop first
   const fileRef = useRef<HTMLInputElement>(null);
 
   const service: PatchService | undefined = PATCH_SERVICES.find((s) => s.slug === serviceSlug);
@@ -50,8 +54,8 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
     if (!service || !table || !field) return null;
     const id = firstValid?.id ?? "{" + table.pk + "}";
     const value = firstValid ? firstValid.value : (field.nullable ? null : "<value>");
-    return { url: patchUrl(service, table, id), body: buildPayload(field, value) };
-  }, [service, table, field, firstValid]);
+    return { url: patchUrl(service, table, id, env), body: buildPayload(field, value) };
+  }, [service, table, field, firstValid, env]);
 
   const pickService = (v: string) => { setServiceSlug(v); setTableName(""); setFieldColumn(""); };
   const pickTable = (v: string) => { setTableName(v); setFieldColumn(""); };
@@ -74,6 +78,7 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
       fileName: fileName || `super-update-${table.table}-${field.column}.csv`,
       valid: parsed.valid,
       errors: parsed.errors,
+      env,
     });
   };
 
@@ -85,23 +90,61 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
 
   return (
     <div className="px-6 py-5">
-      <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
-        <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-        <span>
-          <span className="font-semibold">Preview only.</span> This builds the real PATCH payload and validates your
-          CSV, but <span className="font-semibold">sends no request</span> — copy the payload into the live admin API
-          or a patch script to apply it.
-        </span>
+      {/* Header: title + (i) hint + safe-mode environment switch */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5">
+          <h2 className="text-sm font-semibold text-foreground">Super Update</h2>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" aria-label="About Super Update" className="text-muted-foreground transition-colors hover:text-foreground">
+                  <Info className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="start" className="max-w-sm text-xs leading-relaxed">
+                Update a single column across many records by primary key — no full-row file required. Pick the
+                microservice → table → field, paste a two-column CSV (PK, value), and Super Update prepares the
+                relative PATCH payload (an empty value clears the column to NULL where allowed).
+                <span className="mt-1.5 block text-amber-300">
+                  Safe mode: defaults to the Dev environment — switch to Prod only to target production hosts.
+                </span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">Environment</span>
+          <div className="inline-flex rounded-md border border-border p-0.5" role="group" aria-label="Target environment">
+            {(["dev", "prod"] as const).map((e) => (
+              <button
+                key={e}
+                type="button"
+                onClick={() => setEnv(e)}
+                className={cn(
+                  "rounded px-2.5 py-1 text-xs font-semibold transition-colors",
+                  env === e
+                    ? e === "dev" ? "bg-emerald-600 text-white" : "bg-rose-600 text-white"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {e === "dev" ? "Dev" : "Prod"}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
-      <div className="rounded-lg border border-border bg-secondary/30 px-4 py-3">
-        <p className="max-w-4xl text-sm leading-relaxed text-muted-foreground">
-          Update <span className="font-medium text-foreground">a single column</span> across many records
-          by primary key — no full-row file required. Pick the{" "}
-          <span className="font-medium text-foreground">microservice → table → field</span>, paste a
-          two-column CSV (<span className="font-mono text-xs">PK, value</span>), and Super Update prepares the
-          relative <span className="font-mono text-xs">PATCH</span> payload (an empty value clears the column to{" "}
-          <span className="font-mono text-xs">NULL</span> where allowed).
-        </p>
+
+      <div className={cn(
+        "mb-1 flex items-start gap-2 rounded-lg border px-4 py-2.5 text-sm",
+        env === "prod" ? "border-rose-300 bg-rose-50 text-rose-900" : "border-amber-300 bg-amber-50 text-amber-900",
+      )}>
+        <TriangleAlert className={cn("mt-0.5 h-4 w-4 shrink-0", env === "prod" ? "text-rose-600" : "text-amber-600")} />
+        <span>
+          <span className="font-semibold">Preview only.</span> Builds the real PATCH payload for{" "}
+          <span className="font-semibold">{env === "prod" ? "PRODUCTION" : "the Dev environment"}</span> and validates
+          your CSV, but <span className="font-semibold">sends no request</span> — copy it into the live admin API or a
+          patch script to apply it.
+        </span>
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -149,9 +192,9 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
                 </div>
               )}
               <div className="pt-1">
-                <span className="text-xs font-medium text-muted-foreground">Endpoint</span>
+                <span className="text-xs font-medium text-muted-foreground">Endpoint <span className={cn("ml-1 rounded px-1 py-0.5 text-[10px] font-semibold", env === "prod" ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700")}>{env.toUpperCase()}</span></span>
                 <code className="mt-0.5 block break-all rounded bg-secondary/60 px-2 py-1 text-[11px] text-foreground/80">
-                  <span className="font-semibold text-emerald-600">PATCH</span> {patchUrl(service, table)}
+                  <span className="font-semibold text-emerald-600">PATCH</span> {patchUrl(service, table, "{id}", env)}
                 </code>
               </div>
               <div className="pt-1">
@@ -246,6 +289,7 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
               <span className="font-medium text-foreground">no request is sent to production</span>.
             </p>
             <ul className="space-y-1 rounded-md border border-border bg-secondary/40 p-3 text-[13px]">
+              <li>Environment: <span className={cn("font-semibold", env === "prod" ? "text-rose-600" : "text-emerald-600")}>{env === "prod" ? "Production" : "Dev"}</span></li>
               <li>Target: <span className="font-medium text-foreground">{service?.label} · {table?.table}</span></li>
               <li>Field: <span className="font-mono text-foreground">{field?.column}</span> → body key <span className="font-mono text-foreground">{field?.path ?? field?.column}</span></li>
               <li>Records: <span className="font-medium text-foreground">{parsed?.valid ?? 0}</span></li>
@@ -255,7 +299,7 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
             </ul>
             {service && table && (
               <code className="block break-all rounded bg-secondary/60 px-2 py-1 text-[11px] text-foreground/80">
-                <span className="font-semibold text-emerald-600">PATCH</span> {patchUrl(service, table)}
+                <span className="font-semibold text-emerald-600">PATCH</span> {patchUrl(service, table, "{id}", env)}
               </code>
             )}
           </div>

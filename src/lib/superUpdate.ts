@@ -206,9 +206,23 @@ export const PATCH_SERVICES: PatchService[] = [
 
 // ---------- helpers ----------
 
+export type PatchEnv = "dev" | "prod";
+
+/**
+ * Host for a service in the chosen environment. `host` is the prod URL; the dev host
+ * derives from it (`-prod.v2.shalion.com` → `-develop.develop.shalion.com`, the pattern
+ * the live scripts use, e.g. visualization-api-develop.develop.shalion.com). Dev is the
+ * safe default so a single-field mass update is tried against develop first.
+ */
+export function hostFor(service: PatchService, env: PatchEnv): string {
+  return env === "dev"
+    ? service.host.replace("-prod.v2.shalion.com", "-develop.develop.shalion.com")
+    : service.host;
+}
+
 /** Real PATCH URL for one row (id interpolated raw, as the live scripts do). */
-export function patchUrl(service: PatchService, table: PatchTable, id = "{id}"): string {
-  return `https://${service.host}/v1.0/admin/${table.resource}/${id}`;
+export function patchUrl(service: PatchService, table: PatchTable, id = "{id}", env: PatchEnv = "prod"): string {
+  return `https://${hostFor(service, env)}/v1.0/admin/${table.resource}/${id}`;
 }
 
 /** CSV header the user should provide: `<pk>,<column>_value`. */
