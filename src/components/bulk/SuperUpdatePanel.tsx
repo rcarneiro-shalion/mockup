@@ -119,6 +119,8 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
       else if (applied === 0) toast.error(`All ${failed} update${failed === 1 ? "" : "s"} failed — see history`);
       else toast.warning(`${applied} applied, ${failed} failed — see history`);
       if (applied > 0 && rows.length > 200) toast.info("Large run — download its Rollback CSV from the history to keep a reload-safe copy.");
+      if (results.some((r) => /Unauthorized/i.test(r.error ?? "")))
+        toast.error(`Unauthorized on ${env === "prod" ? "Prod" : "Dev"} — the token must match the environment (a develop token only works on Dev; a prod token only on Prod). Develop is also corporate-VPN only.`, { duration: 9000 });
     } catch (e) {
       toast.error(`Run failed: ${(e as Error).message}`);
     } finally {
