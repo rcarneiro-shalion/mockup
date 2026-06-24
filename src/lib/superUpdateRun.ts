@@ -77,7 +77,14 @@ export async function runSuperUpdate(input: RunInput): Promise<SuperUpdateRowRes
   const snaps = await pool(rows, async (r) => {
     try {
       const res = await fetchLive({ data: { service: svc, path: path(table, r.pk), ...auth } });
-      if (!res.ok) return { ok: false as const, error: res.error ?? `GET failed (${res.status})` };
+      if (!res.ok) {
+        // The admin API hides soft-deleted rows (deleted_at set), returning 404 — so a 404
+        // means "deleted or absent on this environment"; we can't snapshot it → skip it.
+        const why = res.status === 404
+          ? `not found on ${env} — the row is deleted or absent (can't snapshot); skipped`
+          : (res.error ?? `GET failed (${res.status})`);
+        return { ok: false as const, error: why };
+      }
       const found = getByPath(res.data, wirePath);
       if (found === undefined && !nested)
         return { ok: false as const, error: "current value not found in record — not patched (no rollback snapshot)" };
