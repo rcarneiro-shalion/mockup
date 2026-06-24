@@ -73,14 +73,16 @@ export const PATCH_SERVICES: PatchService[] = [
         ],
       },
       {
+        // Only genuinely top-level, partial-safe columns. The seedType.attributes.* fields
+        // (pageType/keywordType/maxRank/discoveryKey) are intentionally NOT here: a PATCH that
+        // sets seedType.attributes={oneKey} replaces the whole attributes node on the live API
+        // (the scripts always send it wholesale), which would wipe sibling attributes with no
+        // recoverable per-leaf snapshot. Re-add only with whole-object snapshot + merge.
         table: "seed", resource: "seeds", pk: "seed_id",
         fields: [
           { column: "description", type: "string" },
           { column: "status", type: "enum", options: [...STATUS] },
-          { column: "page_type", type: "enum", path: "seedType.attributes.pageType", options: ["SUBCATEGORY", "CATEGORY", "HOME", "OFFERS", "BRAND_STORE", "LEGACY"], nullable: true },
-          { column: "keyword_type", type: "enum", path: "seedType.attributes.keywordType", options: ["BRANDED", "CATEGORY"], nullable: true },
-          { column: "max_rank", type: "number", path: "seedType.attributes.maxRank", int: true, nullable: true },
-          { column: "discovery_key", type: "string", path: "seedType.attributes.discoveryKey", nullable: true },
+          { column: "store_id", type: "uuid", path: "storeId" },
         ],
       },
       {
@@ -331,6 +333,12 @@ export function parseSuperUpdateCsv(text: string, table: PatchTable, field: Patc
       rows.push({ line: idx + 1, id: "", raw: valCell?.v ?? "", value: valCell?.v ?? "", isNull: false, error: `missing ${table.pk}` });
       return;
     }
+    // The id is interpolated into the request path — reject anything that isn't a bare
+    // id token (no '/', '.', '?', whitespace …) so it can't escape the {resource}/{id} path.
+    if (!/^[A-Za-z0-9_-]+$/.test(id)) {
+      rows.push({ line: idx + 1, id, raw: valCell?.v ?? "", value: null, isNull: false, error: `invalid ${table.pk} — expected a bare id` });
+      return;
+    }
     if (cells.length > 2 && cells.slice(2).some((c) => c.v.trim() !== "")) {
       rows.push({ line: idx + 1, id, raw: line, value: null, isNull: false, error: `expected 2 columns (${table.pk}, ${field.column}_value)` });
       return;
@@ -342,4 +350,74 @@ export function parseSuperUpdateCsv(text: string, table: PatchTable, field: Patc
   const errors = rows.filter((r) => r.error).length;
   const nulls = rows.filter((r) => !r.error && r.isNull).length;
   return { rows, total: rows.length, valid: rows.length - errors, errors, nulls, headerSkipped };
+}
+
+// ---------- real run: proxy mapping + rollback history ----------
+
+/** Live-proxy service key (live.functions) for a catalogue service — strips `-api`. */
+export function proxyServiceFor(service: PatchService): string {
+  return service.slug.replace(/-api$/, "");
+}
+
+/** Read a (possibly nested) value out of a fetched record by a dotted wire path. */
+export function getByPath(obj: unknown, path: string): unknown {
+  return path.split(".").reduce<unknown>(
+    (acc, k) => (acc && typeof acc === "object" ? (acc as Record<string, unknown>)[k] : undefined),
+    obj,
+  );
+}
+
+export type RowStatus = "ok" | "error";
+
+/** One PK's result in a run — carries the snapshot `oldValue` for rollback. */
+export type SuperUpdateRowResult = {
+  pk: string;
+  oldValue: unknown; // captured BEFORE the patch (the rollback value)
+  newValue: unknown;
+  status: RowStatus;
+  error?: string;
+};
+
+/** A recorded Super Update run (session history + rollback source). */
+export type SuperUpdateBatch = {
+  id: string;
+  when: string;
+  kind: "apply" | "restore";
+  env: PatchEnv;
+  serviceSlug: string;
+  serviceLabel: string;
+  table: string;
+  resource: string;
+  pk: string;
+  fieldColumn: string;
+  fieldPath: string;
+  rows: SuperUpdateRowResult[];
+  applied: number;
+  failed: number;
+};
+
+// CSV-escape one cell. null/undefined → bare empty cell (= restore to NULL). A STRING is
+// double-quoted whenever it would otherwise re-parse ambiguously — empty string, a NULL
+// token ("null"/"\N"/…), leading/trailing space, or comma/quote/newline — so the
+// round-trip through parseSuperUpdateCsv restores the literal value, never a stray NULL.
+function csvCell(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  if (typeof v === "string") {
+    const ambiguous = v === "" || NULL_TOKENS.has(v) || v !== v.trim() || /[",\n]/.test(v);
+    return ambiguous ? `"${v.replace(/"/g, '""')}"` : v;
+  }
+  const s = typeof v === "object" ? JSON.stringify(v) : String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/**
+ * Rollback CSV (`<pk>,<column>_value`) of the captured OLD values for the rows that were
+ * actually changed — re-runnable through Super Update (same table+field) to restore.
+ */
+export function buildRollbackCsv(batch: SuperUpdateBatch): string {
+  const header = `${batch.pk},${batch.fieldColumn}_value`;
+  const lines = batch.rows
+    .filter((r) => r.status === "ok")
+    .map((r) => `${r.pk},${csvCell(r.oldValue)}`);
+  return [header, ...lines].join("\n");
 }

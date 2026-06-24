@@ -317,14 +317,28 @@ const WRITE_PATH_PREFIXES = [
   "/v1.0/admin/datagroup-retailers",
 ];
 // PATCH is limited to:
-//  - section CONTENT (/dashboardsections) — Section editor live save (snapshots first); and
+//  - section CONTENT (/dashboardsections) — Section editor live save (snapshots first);
 //  - the `position` of section ASSIGNMENTS (retailer-/datagroup-dashboardsections) —
-//    the Section position page's "Enforce order" (snapshots + Undo). No POST/DELETE
-//    of whole sections here; PATCH only touches existing rows.
+//    the Section position page's "Enforce order" (snapshots + Undo); and
+//  - the Bulk "Super Update" single-field patches by id — one column of one record at a
+//    time (snapshots the old value first → session rollback). Each resource below is an
+//    explicit, audited entry (anti-SSRF); PATCH only touches existing rows ({resource}/{id}).
 const PATCH_PATH_PREFIXES = [
   "/v1.0/admin/dashboardsections",
   "/v1.0/admin/retailer-dashboardsections",
   "/v1.0/admin/datagroup-dashboardsections",
+  // Super Update target tables (mirror PATCH_SERVICES in superUpdate.ts):
+  "/v1.0/admin/jobs",
+  "/v1.0/admin/seeds",
+  "/v1.0/admin/timeframes",
+  "/v1.0/admin/client-skus",
+  "/v1.0/admin/store-skus",
+  "/v1.0/admin/assortments",
+  "/v1.0/admin/brands",
+  "/v1.0/admin/manufacturers",
+  "/v1.0/admin/datagroups",
+  "/v1.0/admin/stores",
+  "/v1.0/admin/users",
 ];
 
 export type LiveMethod = "POST" | "DELETE" | "PATCH";

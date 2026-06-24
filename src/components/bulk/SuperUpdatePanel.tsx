@@ -5,19 +5,23 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pill } from "@/components/seeds/ListPrimitives";
+import { DevTokensTrigger } from "@/components/common/DevTokensDialog";
+import { usePersistentState } from "@/hooks/usePersistentState";
 import {
   PATCH_SERVICES,
   patchUrl,
   csvHeaderHint,
   parseSuperUpdateCsv,
-  buildPayload,
+  buildRollbackCsv,
   type PatchService,
   type PatchTable,
   type PatchField,
   type PatchEnv,
+  type SuperUpdateBatch,
 } from "@/lib/superUpdate";
+import { runSuperUpdate, restoreSuperUpdate, type RunPhase } from "@/lib/superUpdateRun";
 import { toast } from "sonner";
-import { Upload, Wand2, Check, TriangleAlert, Copy, ArrowRight, Info } from "lucide-react";
+import { Upload, Wand2, Check, TriangleAlert, ArrowRight, Info, History, Download, RotateCcw, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type SuperUpdateRun = {
@@ -25,10 +29,24 @@ export type SuperUpdateRun = {
   table: string;
   field: string;
   fileName: string;
-  valid: number;
-  errors: number;
+  applied: number;
+  failed: number;
   env: PatchEnv;
 };
+
+// Keep the newest runs within a localStorage-safe row budget (always at least the newest),
+// so a big run can't silently fail to persist. The Rollback CSV is the durable artifact.
+const HISTORY_ROW_BUDGET = 5000;
+function capHistory(list: SuperUpdateBatch[]): SuperUpdateBatch[] {
+  const out: SuperUpdateBatch[] = [];
+  let rows = 0;
+  for (const b of list) {
+    if (out.length > 0 && (rows + b.rows.length > HISTORY_ROW_BUDGET || out.length >= 20)) break;
+    out.push(b);
+    rows += b.rows.length;
+  }
+  return out;
+}
 
 export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void }) {
   const [serviceSlug, setServiceSlug] = useState("");
@@ -40,6 +58,14 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
   const [env, setEnv] = useState<PatchEnv>("dev"); // safe-mode default: target develop first
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const [token] = usePersistentState<string>("shalion:devToken", "");
+  const [idToken] = usePersistentState<string>("shalion:devIdToken", "");
+  const hasToken = !!(token && idToken);
+  const [history, setHistory] = usePersistentState<SuperUpdateBatch[]>("bulk:superUpdateHistory:v1", []);
+  const [busy, setBusy] = useState<null | { kind: "apply" | "restore"; id?: string }>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number; phase: RunPhase } | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<SuperUpdateBatch | null>(null);
+
   const service: PatchService | undefined = PATCH_SERVICES.find((s) => s.slug === serviceSlug);
   const table: PatchTable | undefined = service?.tables.find((t) => t.table === tableName);
   const field: PatchField | undefined = table?.fields.find((f) => f.column === fieldColumn);
@@ -48,14 +74,6 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
     () => (table && field && csv.trim() ? parseSuperUpdateCsv(csv, table, field) : null),
     [csv, table, field],
   );
-
-  const firstValid = parsed?.rows.find((r) => !r.error);
-  const preview = useMemo(() => {
-    if (!service || !table || !field) return null;
-    const id = firstValid?.id ?? "{" + table.pk + "}";
-    const value = firstValid ? firstValid.value : (field.nullable ? null : "<value>");
-    return { url: patchUrl(service, table, id, env), body: buildPayload(field, value) };
-  }, [service, table, field, firstValid, env]);
 
   const pickService = (v: string) => { setServiceSlug(v); setTableName(""); setFieldColumn(""); };
   const pickTable = (v: string) => { setTableName(v); setFieldColumn(""); };
@@ -67,26 +85,82 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
     reader.readAsText(file);
   };
 
-  const run = () => {
+  const onProgress = (done: number, total: number, phase: RunPhase) => setProgress({ done, total, phase });
+
+  const doRun = async () => {
     setConfirmOpen(false);
-    if (!service || !table || !field || !parsed) return;
-    if (parsed.valid === 0) { toast.error("No valid rows to update"); return; }
-    onRun({
-      service: `${service.label} · ${table.table}`,
-      table: table.table,
-      field: field.column,
-      fileName: fileName || `super-update-${table.table}-${field.column}.csv`,
-      valid: parsed.valid,
-      errors: parsed.errors,
-      env,
-    });
+    if (!service || !table || !field || !parsed || parsed.valid === 0) return;
+    if (!hasToken) { toast.error("Paste your API tokens first"); return; }
+    const rows = parsed.rows.filter((r) => !r.error).map((r) => ({ pk: r.id, value: r.value }));
+    setBusy({ kind: "apply" }); setProgress({ done: 0, total: rows.length, phase: "snapshot" });
+    try {
+      const results = await runSuperUpdate({ service, table, field, env, token, idToken, rows, onProgress });
+      const applied = results.filter((r) => r.status === "ok").length;
+      const failed = results.length - applied;
+      const batch: SuperUpdateBatch = {
+        id: crypto.randomUUID(),
+        when: new Date().toLocaleString(),
+        kind: "apply",
+        env,
+        serviceSlug: service.slug,
+        serviceLabel: service.label,
+        table: table.table,
+        resource: table.resource,
+        pk: table.pk,
+        fieldColumn: field.column,
+        fieldPath: field.path ?? field.column,
+        rows: results,
+        applied,
+        failed,
+      };
+      setHistory((prev) => capHistory([batch, ...prev]));
+      onRun({ service: `${service.label} · ${table.table}`, table: table.table, field: field.column, fileName: fileName || `super-update-${table.table}-${field.column}.csv`, applied, failed, env });
+      if (failed === 0) toast.success(`Applied ${applied} update${applied === 1 ? "" : "s"} on ${env}`);
+      else if (applied === 0) toast.error(`All ${failed} update${failed === 1 ? "" : "s"} failed — see history`);
+      else toast.warning(`${applied} applied, ${failed} failed — see history`);
+      if (applied > 0 && rows.length > 200) toast.info("Large run — download its Rollback CSV from the history to keep a reload-safe copy.");
+    } catch (e) {
+      toast.error(`Run failed: ${(e as Error).message}`);
+    } finally {
+      setBusy(null); setProgress(null);
+    }
   };
 
-  const copyPayload = () => {
-    if (!preview) return;
-    navigator.clipboard?.writeText(`PATCH ${preview.url}\n${JSON.stringify(preview.body, null, 2)}`);
-    toast.success("PATCH payload copied");
+  const restore = async (batch: SuperUpdateBatch) => {
+    const svc = PATCH_SERVICES.find((s) => s.slug === batch.serviceSlug);
+    const tbl = svc?.tables.find((t) => t.table === batch.table);
+    const fld = tbl?.fields.find((f) => f.column === batch.fieldColumn);
+    if (!svc || !tbl || !fld) { toast.error("Cannot restore — unknown target"); return; }
+    if (!hasToken) { toast.error("Paste your API tokens to restore"); return; }
+    const rows = batch.rows.filter((r) => r.status === "ok").map((r) => ({ pk: r.pk, oldValue: r.oldValue }));
+    if (!rows.length) { toast.info("Nothing to restore in this run"); return; }
+    setBusy({ kind: "restore", id: batch.id }); setProgress({ done: 0, total: rows.length, phase: "snapshot" });
+    try {
+      const results = await restoreSuperUpdate({ service: svc, table: tbl, field: fld, env: batch.env, token, idToken, rows, onProgress });
+      const applied = results.filter((r) => r.status === "ok").length;
+      const failed = results.length - applied;
+      const rb: SuperUpdateBatch = { ...batch, id: crypto.randomUUID(), when: new Date().toLocaleString(), kind: "restore", rows: results, applied, failed };
+      setHistory((prev) => capHistory([rb, ...prev]));
+      if (failed === 0) toast.success(`Restored ${applied} record${applied === 1 ? "" : "s"}`);
+      else toast.warning(`Restore: ${applied} reverted, ${failed} failed`);
+    } catch (e) {
+      toast.error(`Restore failed: ${(e as Error).message}`);
+    } finally {
+      setBusy(null); setProgress(null);
+    }
   };
+
+  const downloadRollback = (batch: SuperUpdateBatch) => {
+    const blob = new Blob([buildRollbackCsv(batch)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `rollback-${batch.table}-${batch.fieldColumn}-${batch.id.slice(0, 8)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const running = busy !== null;
 
   return (
     <div className="px-6 py-5">
@@ -103,10 +177,11 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
               </TooltipTrigger>
               <TooltipContent side="bottom" align="start" className="max-w-sm text-xs leading-relaxed">
                 Update a single column across many records by primary key — no full-row file required. Pick the
-                microservice → table → field, paste a two-column CSV (PK, value), and Super Update prepares the
-                relative PATCH payload (an empty value clears the column to NULL where allowed).
+                microservice → table → field, paste a two-column CSV (PK, value), and Super Update applies the
+                relative PATCH (an empty value clears the column to NULL where allowed).
                 <span className="mt-1.5 block text-amber-300">
-                  Safe mode: defaults to the Dev environment — switch to Prod only to target production hosts.
+                  Safe mode: defaults to Dev. Every run snapshots each record's current value first, so you can roll
+                  back from the history below.
                 </span>
               </TooltipContent>
             </Tooltip>
@@ -140,10 +215,14 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
       )}>
         <TriangleAlert className={cn("mt-0.5 h-4 w-4 shrink-0", env === "prod" ? "text-rose-600" : "text-amber-600")} />
         <span>
-          <span className="font-semibold">Preview only.</span> Builds the real PATCH payload for{" "}
-          <span className="font-semibold">{env === "prod" ? "PRODUCTION" : "the Dev environment"}</span> and validates
-          your CSV, but <span className="font-semibold">sends no request</span> — copy it into the live admin API or a
-          patch script to apply it.
+          <span className="font-semibold">Live write to {env === "prod" ? "PRODUCTION" : "the Dev environment"}.</span>{" "}
+          Running applies a real PATCH to each record. The current value is{" "}
+          <span className="font-semibold">snapshotted first</span> — roll back any run from the history below.
+          {env === "dev" && (
+            <span className="mt-0.5 block text-xs">
+              Dev targets the develop host — reachable only on the corporate VPN; from a deployed instance use Prod.
+            </span>
+          )}
         </span>
       </div>
 
@@ -250,46 +329,91 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
         </div>
       </div>
 
-      {/* Payload preview */}
-      {preview && (
-        <div className="mt-5 rounded-lg border border-border bg-card p-4 shadow-sm">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-semibold text-foreground">PATCH payload preview {firstValid && <span className="font-normal text-muted-foreground">(first row)</span>}</span>
-            <Button variant="outline" size="sm" className="h-7 gap-1.5" onClick={copyPayload}><Copy className="h-3.5 w-3.5" /> Copy</Button>
-          </div>
-          <code className="block break-all rounded bg-secondary/60 px-2 py-1 text-[11px] text-foreground/80">
-            <span className="font-semibold text-emerald-600">PATCH</span> {preview.url}
-          </code>
-          <pre className="mt-2 overflow-x-auto rounded bg-secondary/60 p-3 text-[11px] leading-relaxed text-foreground/90">{JSON.stringify(preview.body, null, 2)}</pre>
-          {parsed && parsed.nulls > 0 && (
-            <p className="mt-2 text-[11px] text-amber-700">
-              <span className="font-medium">{parsed.nulls}</span> of {parsed.valid} record{parsed.valid === 1 ? "" : "s"} will clear <span className="font-mono">{field?.column}</span> to <span className="font-mono">null</span>.
-            </p>
-          )}
-        </div>
-      )}
-
-      <div className="mt-5 flex items-center justify-end gap-3">
-        {parsed && parsed.valid > 0 && (
-          <span className="text-sm text-muted-foreground">
-            Will PATCH <span className="font-medium text-foreground">{parsed.valid}</span> {table?.table} record{parsed.valid === 1 ? "" : "s"} · field <span className="font-mono text-foreground">{field?.column}</span>
+      {/* Run row */}
+      <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
+        {progress && (
+          <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {progress.phase === "snapshot" ? "Snapshotting" : "Applying"} {progress.done}/{progress.total}…
           </span>
         )}
-        <Button className="gap-1.5" disabled={!parsed || parsed.valid === 0} onClick={() => setConfirmOpen(true)}>
+        {!hasToken && (
+          <span className="inline-flex items-center gap-2 text-sm text-amber-700">
+            API token required <DevTokensTrigger />
+          </span>
+        )}
+        {parsed && parsed.valid > 0 && !running && (
+          <span className="text-sm text-muted-foreground">
+            PATCH <span className="font-medium text-foreground">{parsed.valid}</span> {table?.table} record{parsed.valid === 1 ? "" : "s"} · <span className="font-mono text-foreground">{field?.column}</span> on <span className={cn("font-semibold", env === "prod" ? "text-rose-600" : "text-emerald-600")}>{env}</span>
+          </span>
+        )}
+        <Button className="gap-1.5" disabled={!parsed || parsed.valid === 0 || running || !hasToken} onClick={() => setConfirmOpen(true)}>
           <Wand2 className="h-4 w-4" /> Run Super Update <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
 
+      {/* Changes / rollback history (this session) */}
+      {history.length > 0 && (
+        <div className="mt-6">
+          <div className="mb-2 flex items-center gap-1.5">
+            <History className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-semibold text-foreground">Changes this session</span>
+            <span className="text-xs text-muted-foreground">({history.length})</span>
+          </div>
+          <div className="space-y-2">
+            {history.map((b) => {
+              const restoringThis = busy?.kind === "restore" && busy.id === b.id;
+              return (
+                <div key={b.id} className="rounded-lg border border-border bg-card p-3 text-sm shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-foreground">{b.serviceLabel} · {b.table}</span>
+                      <span className="font-mono text-xs text-foreground/80">{b.fieldColumn}</span>
+                      <Pill tone={b.env === "prod" ? "red" : "green"}>{b.env}</Pill>
+                      {b.kind === "restore" && <Pill tone="slate">restore</Pill>}
+                    </div>
+                    <span className="text-xs text-muted-foreground">{b.when}</span>
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">
+                    <span className="text-emerald-700">{b.applied} applied</span>
+                    {b.failed > 0 && <span className="text-rose-600">{b.failed} failed</span>}
+                    <span className="text-muted-foreground">{b.rows.length} row{b.rows.length === 1 ? "" : "s"}</span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="h-7 gap-1.5" onClick={() => downloadRollback(b)} disabled={b.applied === 0}>
+                      <Download className="h-3.5 w-3.5" /> Rollback CSV
+                    </Button>
+                    {b.kind === "apply" && (
+                      <Button variant="outline" size="sm" className="h-7 gap-1.5" onClick={() => setRestoreTarget(b)} disabled={running || !hasToken || b.applied === 0}>
+                        {restoringThis ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />} Restore
+                      </Button>
+                    )}
+                  </div>
+                  {b.failed > 0 && (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-[11px] text-rose-600">{b.failed} failed row{b.failed === 1 ? "" : "s"}</summary>
+                      <ul className="mt-1 max-h-28 overflow-auto rounded border border-rose-200 bg-rose-50/60 p-2 text-[11px] text-rose-700">
+                        {b.rows.filter((r) => r.status === "error").slice(0, 12).map((r) => (
+                          <li key={r.pk}><span className="font-mono">{r.pk.slice(0, 12)}…</span> — {r.error}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader><DialogTitle>Confirm Super Update</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Run Super Update on {env === "prod" ? "PRODUCTION" : "Dev"}?</DialogTitle></DialogHeader>
           <div className="space-y-2 py-1 text-sm">
-            <p className="text-muted-foreground">
-              Preview only — this builds the payload and a process record;{" "}
-              <span className="font-medium text-foreground">no request is sent to production</span>.
+            <p className={cn("rounded-md border px-3 py-2", env === "prod" ? "border-rose-300 bg-rose-50 text-rose-900" : "border-amber-300 bg-amber-50 text-amber-900")}>
+              This sends a <span className="font-semibold">real PATCH</span> to {env === "prod" ? "PRODUCTION" : "the Dev environment"}. Each record's current value is snapshotted first, so you can roll back from the history.
             </p>
             <ul className="space-y-1 rounded-md border border-border bg-secondary/40 p-3 text-[13px]">
-              <li>Environment: <span className={cn("font-semibold", env === "prod" ? "text-rose-600" : "text-emerald-600")}>{env === "prod" ? "Production" : "Dev"}</span></li>
               <li>Target: <span className="font-medium text-foreground">{service?.label} · {table?.table}</span></li>
               <li>Field: <span className="font-mono text-foreground">{field?.column}</span> → body key <span className="font-mono text-foreground">{field?.path ?? field?.column}</span></li>
               <li>Records: <span className="font-medium text-foreground">{parsed?.valid ?? 0}</span></li>
@@ -305,7 +429,40 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button>
-            <Button className="gap-1.5" onClick={run}><Wand2 className="h-4 w-4" /> Confirm — build payload</Button>
+            <Button
+              className={cn("gap-1.5", env === "prod" && "bg-rose-600 text-white hover:bg-rose-700")}
+              disabled={!hasToken}
+              onClick={doRun}
+            >
+              <Wand2 className="h-4 w-4" /> {hasToken ? `Apply to ${env}` : "Token required"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!restoreTarget} onOpenChange={(v) => { if (!v) setRestoreTarget(null); }}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader><DialogTitle>Restore on {restoreTarget?.env === "prod" ? "PRODUCTION" : "Dev"}?</DialogTitle></DialogHeader>
+          <div className="space-y-2 py-1 text-sm">
+            <p className={cn("rounded-md border px-3 py-2", restoreTarget?.env === "prod" ? "border-rose-300 bg-rose-50 text-rose-900" : "border-amber-300 bg-amber-50 text-amber-900")}>
+              Re-applies the captured <span className="font-semibold">previous values</span> with a real PATCH to{" "}
+              {restoreTarget?.env === "prod" ? "PRODUCTION" : "the Dev environment"}. Any record changed by someone else since the run will be overwritten back.
+            </p>
+            {restoreTarget && (
+              <ul className="space-y-1 rounded-md border border-border bg-secondary/40 p-3 text-[13px]">
+                <li>Target: <span className="font-medium text-foreground">{restoreTarget.serviceLabel} · {restoreTarget.table}</span> · <span className="font-mono text-foreground">{restoreTarget.fieldColumn}</span></li>
+                <li>Records to revert: <span className="font-medium text-foreground">{restoreTarget.rows.filter((r) => r.status === "ok").length}</span></li>
+              </ul>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRestoreTarget(null)}>Cancel</Button>
+            <Button
+              className={cn("gap-1.5", restoreTarget?.env === "prod" && "bg-rose-600 text-white hover:bg-rose-700")}
+              onClick={() => { const t = restoreTarget; setRestoreTarget(null); if (t) restore(t); }}
+            >
+              <RotateCcw className="h-4 w-4" /> Restore to {restoreTarget?.env === "prod" ? "prod" : "dev"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

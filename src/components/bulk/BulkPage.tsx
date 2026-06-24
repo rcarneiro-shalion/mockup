@@ -117,31 +117,23 @@ export function BulkPage() {
     }, 1900);
   };
 
-  // Super Update — a single-field PATCH run lands in the same processes list.
+  // Super Update — a real single-field PATCH run (snapshot + apply) reports its final
+  // result here, which lands as a finished row in the processes list. The panel keeps the
+  // rollback history + toasts the outcome, so we don't switch tabs or re-toast.
   const runSuperUpdate = (r: SuperUpdateRun) => {
+    const status: Status = r.failed === 0 ? "Completed" : r.applied === 0 ? "Failed" : "Partial";
     const proc: BulkProcess = {
       id: crypto.randomUUID(),
       entity: r.service,
       action: `PATCH ${r.field} (${r.env})`,
       fileName: r.fileName,
-      status: "Processing",
-      rows: 0,
-      errors: 0,
+      status,
+      rows: r.applied,
+      errors: r.failed,
       createdBy: "rcarneiro@shalion.com",
       createdAt: stamp(),
     };
     setRows((prev) => [proc, ...prev]);
-    setTab("processes");
-    toast.success(`Super Update (preview · ${r.env}) — PATCH ${r.field} on ${r.valid.toLocaleString("en-US")} record${r.valid === 1 ? "" : "s"} · no request sent`);
-    setTimeout(() => {
-      setRows((prev) =>
-        prev.map((p) =>
-          p.id === proc.id
-            ? { ...p, status: r.errors > 0 ? "Partial" : "Completed", rows: r.valid, errors: r.errors }
-            : p,
-        ),
-      );
-    }, 1600);
   };
 
   return (
