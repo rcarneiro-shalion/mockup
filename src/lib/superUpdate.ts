@@ -322,9 +322,10 @@ export function buildMergedBody(field: PatchField, value: unknown, record: unkno
 export type ParsedRow = { line: number; id: string; raw: string; value: unknown; isNull: boolean; error?: string };
 export type ParseResult = { rows: ParsedRow[]; total: number; valid: number; errors: number; nulls: number; headerSkipped: boolean };
 
-// Split a CSV line into fields, honouring double-quoted values (with "" escapes).
-// `quoted` flags a field that was wrapped in quotes (→ a literal string value).
-function splitCsvLine(line: string): { v: string; quoted: boolean }[] {
+// Split a line on `delim`, honouring double-quoted values (with "" escapes). `quoted`
+// flags a field that was wrapped in quotes (→ a literal string value); the quotes are
+// stripped. Works for comma (CSV) or tab (TSV / spreadsheet paste).
+function splitDelimited(line: string, delim: string): { v: string; quoted: boolean }[] {
   const out: { v: string; quoted: boolean }[] = [];
   let cur = "";
   let q = false;
@@ -336,21 +337,31 @@ function splitCsvLine(line: string): { v: string; quoted: boolean }[] {
         if (line[i + 1] === '"') { cur += '"'; i++; } else q = false;
       } else cur += ch;
     } else if (ch === '"') { q = true; quoted = true; }
-    else if (ch === ",") { out.push({ v: cur, quoted }); cur = ""; quoted = false; }
+    else if (ch === delim) { out.push({ v: cur, quoted }); cur = ""; quoted = false; }
     else cur += ch;
   }
   out.push({ v: cur, quoted });
   return out;
 }
 
-// Split one row into [pk, value] cells. Comma-delimited (quote-aware) when a comma is
-// present; otherwise the first whitespace run is the separator — the PK is always a bare
-// id (no spaces), so the first token is the PK and the remainder is the value (which may
-// itself contain spaces). This lets users paste "<id> <value>" without commas.
+// Strip one pair of surrounding double-quotes from a token (→ literal cell).
+function unquoteToken(s: string): { v: string; quoted: boolean } {
+  const t = s.trim();
+  return t.length >= 2 && t.startsWith('"') && t.endsWith('"')
+    ? { v: t.slice(1, -1).replace(/""/g, '"'), quoted: true }
+    : { v: t, quoted: false };
+}
+
+// Split one row into [pk, value] cells, auto-detecting the separator (all quote-aware):
+//   • TAB present  → TSV (e.g. a spreadsheet/SQL paste: `"<id>"\t"<value>"`)
+//   • else comma   → CSV
+//   • else         → whitespace: the PK is always a bare id (no spaces) so the first token
+//                    is the PK and the remainder is the value (which may contain spaces).
 function splitRow(line: string): { v: string; quoted: boolean }[] {
-  if (line.includes(",")) return splitCsvLine(line);
+  if (line.includes("\t")) return splitDelimited(line, "\t");
+  if (line.includes(",")) return splitDelimited(line, ",");
   const m = line.match(/^(\S+)\s+([\s\S]*)$/);
-  return m ? [{ v: m[1], quoted: false }, { v: m[2], quoted: false }] : [{ v: line, quoted: false }];
+  return m ? [unquoteToken(m[1]), unquoteToken(m[2])] : [unquoteToken(line)];
 }
 
 /** Parse a pasted/uploaded two-column input (`<pk>,<value>` or `<pk> <value>`) for a field. */
