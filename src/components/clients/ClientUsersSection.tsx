@@ -28,6 +28,9 @@ const MAESTRO_GROUPS: { group: string; cols: { key: string; label: string }[] }[
   ] },
 ];
 const MAESTRO_COLS = MAESTRO_GROUPS.flatMap((g) => g.cols);
+const MAESTRO_LABEL: Record<string, string> = Object.fromEntries(
+  MAESTRO_GROUPS.flatMap((g) => g.cols.map((c) => [c.key, `${g.group} · ${c.label}`])),
+);
 
 // Persist a Live-synced graph per client + env so the real data survives reload (Set/Map are
 // stored as arrays). Keyed by client id + env; cleared via the Live bar's "Clear" action.
@@ -103,7 +106,7 @@ export function ClientUsersSection({
   client: Client;
   set: <K extends keyof Client>(k: K, v: Client[K]) => void;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = usePersistentState<boolean>("pref:clientForm:usersOpen", true);
   const [search, setSearch] = useState("");
   const [assignOpen, setAssignOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -788,12 +791,16 @@ function UnifiedMatrixDialog({
   const [grants, setGrants] = useState<Map<string, Set<string>>>(() => new Map([...initialGrants].map(([k, v]) => [k, new Set(v)])));
   const [q, setQ] = useState("");
   const [dgFilter, setDgFilter] = useState<string[]>([]);
+  const [permFilter, setPermFilter] = useState<string[]>([]);
   const [onlyMembers, setOnlyMembers] = useState(false);
 
   const visibleCols = dgFilter.length ? dataGroups.filter((d) => dgFilter.includes(d.id)) : dataGroups;
   const memberScope = dgFilter.length ? dgFilter : dataGroups.map((d) => d.id);
   const visibleRows = rows.filter(
-    (r) => r.email.toLowerCase().includes(q.toLowerCase()) && (!onlyMembers || memberScope.some((id) => ticks.has(`${r.key}::${id}`))),
+    (r) =>
+      r.email.toLowerCase().includes(q.toLowerCase()) &&
+      (!onlyMembers || memberScope.some((id) => ticks.has(`${r.key}::${id}`))) &&
+      (!permFilter.length || permFilter.some((k) => grants.get(r.key)?.has(k))),
   );
 
   const toggleTick = (key: string) => setTicks((p) => { const n = new Set(p); n.has(key) ? n.delete(key) : n.add(key); return n; });
@@ -849,6 +856,7 @@ function UnifiedMatrixDialog({
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users" className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           </div>
           <FilterChip label="Data groups" icon={LayoutGrid} options={dataGroups.map((d) => d.id)} value={dgFilter} onChange={setDgFilter} getLabel={(id) => dataGroups.find((d) => d.id === id)?.name ?? id} searchable />
+          <FilterChip label="Permissions" icon={ShieldCheck} options={MAESTRO_COLS.map((c) => c.key)} value={permFilter} onChange={setPermFilter} getLabel={(k) => MAESTRO_LABEL[k] ?? k} />
           <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground" title="Show only users that belong to the filtered data groups.">
             <input type="checkbox" checked={onlyMembers} onChange={(e) => setOnlyMembers(e.target.checked)} className="h-4 w-4 rounded border-border" /> Only in data groups
           </label>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { usePersistentState } from "@/hooks/usePersistentState";
 import { AppShell } from "@/components/layout/AppShell";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -38,10 +39,11 @@ export function ClientForm({
   onDelete?: () => void;
 }) {
   const [client, setClient] = useState<Client>(initial);
-  const [metaOpen, setMetaOpen] = useState(true);
+  // Section collapse/expand persists as a user preference (global across clients).
+  const [metaOpen, setMetaOpen] = usePersistentState<boolean>("pref:clientForm:metaOpen", true);
   const [metaEditing, setMetaEditing] = useState(false);
-  const [projectsOpen, setProjectsOpen] = useState(true);
-  const [countryGroupsOpen, setCountryGroupsOpen] = useState(false);
+  const [projectsOpen, setProjectsOpen] = usePersistentState<boolean>("pref:clientForm:projectsOpen", true);
+  const [countryGroupsOpen, setCountryGroupsOpen] = usePersistentState<boolean>("pref:clientForm:countryGroupsOpen", false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
