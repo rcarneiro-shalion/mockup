@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Th, Td, GroupedPills, Pagination, usePagination } from "@/components/seeds/ListPrimitives";
+import { Th, Td, GroupedPills, Pagination, usePagination, useSort, sortRows, SortTh, parseListDate } from "@/components/seeds/ListPrimitives";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import { LiveConnectBar } from "@/components/common/LiveConnectBar";
 import { usePersistentState } from "@/hooks/usePersistentState";
@@ -160,8 +160,24 @@ export function ClientUsersSection({
     });
   }, [effUsers, search, dgNames, dgFilter]);
 
-  const pg = usePagination(filtered.length, `${search}|${dgFilter.join(",")}`);
-  const rows = pg.slice(filtered);
+  // Sortable columns; the chosen column + direction persist across reloads (one global pref for
+  // this grid, `pref:sort:clientUsers`). Date columns parse the display strings to epoch; the
+  // Datagroup column sorts by its (resolved, client-scoped) joined names.
+  const sort = useSort("clientUsers", "email", "asc");
+  const sortAccessors = useMemo(
+    () => ({
+      email: (u: ClientUser) => u.email,
+      datagroups: (u: ClientUser) => dgNames(u).join(", "),
+      status: (u: ClientUser) => u.status,
+      createdAt: (u: ClientUser) => parseListDate(u.createdAt),
+      updatedAt: (u: ClientUser) => parseListDate(u.updatedAt),
+    }),
+    [dgNames],
+  );
+  const sorted = useMemo(() => sortRows(filtered, sort, sortAccessors), [filtered, sort, sortAccessors]);
+
+  const pg = usePagination(sorted.length, `${search}|${dgFilter.join(",")}|${sort.key}|${sort.dir}`);
+  const rows = pg.slice(sorted);
 
   const emptyMsg = effUsers.length === 0
     ? (live ? "No live users found for this client (check the client name matches production)." : "No users yet.")
@@ -338,11 +354,11 @@ export function ClientUsersSection({
             <table className="w-full text-sm">
               <thead className="bg-secondary/60">
                 <tr>
-                  <Th>Email</Th>
-                  <Th>Datagroup</Th>
-                  <Th>Status</Th>
-                  <Th>Created at</Th>
-                  <Th>Updated at</Th>
+                  <SortTh label="Email" sortKey="email" sort={sort} />
+                  <SortTh label="Datagroup" sortKey="datagroups" sort={sort} />
+                  <SortTh label="Status" sortKey="status" sort={sort} />
+                  <SortTh label="Created at" sortKey="createdAt" sort={sort} />
+                  <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
                   <Th className="w-24" />
                 </tr>
               </thead>
