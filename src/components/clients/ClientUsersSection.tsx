@@ -8,12 +8,13 @@ import { usePersistentState } from "@/hooks/usePersistentState";
 import type { Client, ClientUser, DataGroup } from "@/lib/clients";
 import { nowStamp } from "@/lib/clients";
 import { getClientUsersSnapshot } from "@/lib/clientUsersSnapshot";
+import { toCsv, downloadCsv, fileSlug } from "@/lib/csv";
 import { useLiveConnection } from "@/lib/useLiveConnection";
 import { syncClientUsers, applyLiveAssignments, diffMemberships, pairKey, type LiveUserGraph } from "@/lib/liveUsers";
 import { bulkReadMaestroGrants, applyMaestroGrants } from "@/lib/liveMaestro";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ChevronUp, Database, LayoutGrid, Loader2, Mail, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, TriangleAlert, UserPlus, Wifi } from "lucide-react";
+import { ChevronUp, Database, Download, LayoutGrid, Loader2, Mail, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, TriangleAlert, UserPlus, Wifi } from "lucide-react";
 
 // Maestro (external app) permission grants, grouped for the bulk matrix exactly as the draft:
 // Maestro → View / Manage / Unlimited, Slides → View / Manage. Keys are `<resource>.<grant>`
@@ -178,6 +179,15 @@ export function ClientUsersSection({
 
   const pg = usePagination(sorted.length, `${search}|${dgFilter.join(",")}|${sort.key}|${sort.dir}`);
   const rows = pg.slice(sorted);
+  const hasFilter = !!search.trim() || dgFilter.length > 0;
+
+  // Export the FULL filtered + sorted set (every matching user — not just the visible page).
+  const exportUsersCsv = () => {
+    const header = ["Email", "Data groups", "Status", "Created at", "Updated at"];
+    const body = sorted.map((u) => [u.email, dgNames(u).join("; "), u.status, u.createdAt, u.updatedAt]);
+    downloadCsv(`${fileSlug(client.name)}-users`, toCsv([header, ...body]));
+    toast.success(`Exported ${sorted.length} user${sorted.length === 1 ? "" : "s"} to CSV`);
+  };
 
   const emptyMsg = effUsers.length === 0
     ? (live ? "No live users found for this client (check the client name matches production)." : "No users yet.")
@@ -305,7 +315,7 @@ export function ClientUsersSection({
             <ChevronUp className={cn("h-4 w-4 transition-transform", !open && "rotate-180")} />
           </span>
           <span className="text-base font-semibold text-foreground">Users</span>
-          <span className="text-sm text-muted-foreground">({effUsers.length})</span>
+          <span className="text-sm text-muted-foreground">({hasFilter ? `${filtered.length} of ${effUsers.length}` : effUsers.length})</span>
           {live && <span className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700"><Wifi className="h-3 w-3" /> live</span>}
         </button>
         <div className="flex flex-wrap items-center gap-2">
@@ -328,6 +338,9 @@ export function ClientUsersSection({
             getLabel={(id) => dgNameById.get(id) ?? id}
             searchable
           />
+          <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={!sorted.length} onClick={exportUsersCsv} title="Export all matching users (CSV)">
+            <Download className="h-3.5 w-3.5" /> Export CSV
+          </Button>
           {!live && (
             <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setCreateOpen(true)}>
               <Plus className="h-3.5 w-3.5" /> Create users
@@ -589,186 +602,6 @@ function ManageDataGroupsDialog({
 }
 
 /**
- * Users × data-groups assignment MATRIX (mirrors Massive update's relationship map):
- * rows = current client users + the assignable pool, columns = this client's data groups,
- * each intersection a toggle. Pool users with at least one tick are created on the client.
- */
-function AssignMatrixDialog({
-  users,
-  dataGroups,
-  assignable,
-  onClose,
-  onApply,
-}: {
-  users: ClientUser[];
-  dataGroups: DataGroup[];
-  assignable: string[];
-  onClose: () => void;
-  onApply: (changes: {
-    existing: { id: string; dataGroupIds: string[] }[];
-    created: { email: string; dataGroupIds: string[] }[];
-  }) => void;
-}) {
-  const validIds = useMemo(() => new Set(dataGroups.map((d) => d.id)), [dataGroups]);
-  // Row keys are namespaced (`u:` existing / `p:` pool) so the two key spaces are provably
-  // disjoint regardless of id/email contents; tick keys are `${rowKey}::${dgId}`.
-  const rows = useMemo(
-    () => [
-      ...users.map((u) => ({ key: `u:${u.id}`, email: u.email, isNew: false })),
-      ...assignable.map((e) => ({ key: `p:${e}`, email: e, isNew: true })),
-    ],
-    [users, assignable],
-  );
-  const initialKeys = useMemo(() => {
-    const s = new Set<string>();
-    for (const u of users) for (const id of u.dataGroupIds) if (validIds.has(id)) s.add(`u:${u.id}::${id}`);
-    return s;
-  }, [users, validIds]);
-  const [ticks, setTicks] = useState<Set<string>>(() => new Set(initialKeys));
-  const [q, setQ] = useState("");
-  const [dgFilter, setDgFilter] = useState<string[]>([]);
-  const [onlyMembers, setOnlyMembers] = useState(false);
-  const toggle = (key: string) => setTicks((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
-  // Column filter is a VIEW concern only — hidden-column ticks are preserved (apply() uses the full set).
-  const visibleCols = dgFilter.length ? dataGroups.filter((d) => dgFilter.includes(d.id)) : dataGroups;
-  // Rows: by email search, and — when "Only in data groups" is on — only users that currently
-  // belong to the filtered data groups (or to any data group when no column filter is set).
-  const memberScope = dgFilter.length ? dgFilter : dataGroups.map((d) => d.id);
-  const visibleRows = rows.filter((r) => {
-    if (!r.email.toLowerCase().includes(q.toLowerCase())) return false;
-    if (onlyMembers && !memberScope.some((id) => ticks.has(`${r.key}::${id}`))) return false;
-    return true;
-  });
-  // Empty-state cause: search wins when it alone empties the set; otherwise it's the membership filter.
-  const emptyMessage = onlyMembers && rows.some((r) => r.email.toLowerCase().includes(q.toLowerCase()))
-    ? "No users belong to the filtered data groups."
-    : "No users match your search.";
-  // Pending changes = toggled cells vs the initial memberships (drives the Apply label).
-  const changes = useMemo(() => {
-    let c = 0;
-    for (const k of ticks) if (!initialKeys.has(k)) c++;
-    for (const k of initialKeys) if (!ticks.has(k)) c++;
-    return c;
-  }, [ticks, initialKeys]);
-
-  const apply = () => {
-    const existing = users.map((u) => ({
-      id: u.id,
-      dataGroupIds: dataGroups.filter((d) => ticks.has(`u:${u.id}::${d.id}`)).map((d) => d.id),
-    }));
-    const created = assignable
-      .map((e) => ({ email: e, dataGroupIds: dataGroups.filter((d) => ticks.has(`p:${e}::${d.id}`)).map((d) => d.id) }))
-      .filter((c) => c.dataGroupIds.length > 0);
-    onApply({ existing, created });
-  };
-
-  return (
-    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-[880px]">
-        <DialogHeader><DialogTitle>Assign users to data groups</DialogTitle></DialogHeader>
-        <p className="-mt-1 text-sm text-muted-foreground">
-          Tick the intersections to set which data groups each user belongs to. Pool users (marked{" "}
-          <span className="font-medium text-foreground">new</span>) are added to the client when you tick any cell.
-        </p>
-        {dataGroups.length === 0 ? (
-          <div className="rounded-md border border-border px-3 py-6 text-center text-sm text-muted-foreground">
-            This client has no data groups yet — create a data group first.
-          </div>
-        ) : (
-          <>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative w-64">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search users"
-                  className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-              <FilterChip
-                label="Data groups"
-                icon={LayoutGrid}
-                options={dataGroups.map((d) => d.id)}
-                value={dgFilter}
-                onChange={setDgFilter}
-                getLabel={(id) => dataGroups.find((d) => d.id === id)?.name ?? id}
-                searchable
-              />
-              <label
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
-                title="Show only users that belong to the filtered data groups. Uncheck to see everyone — including users not yet assigned — and tick the ones who should be in."
-              >
-                <input type="checkbox" checked={onlyMembers} onChange={(e) => setOnlyMembers(e.target.checked)} className="h-4 w-4 rounded border-border" />
-                Only in data groups
-              </label>
-            </div>
-            <div className="max-h-[55vh] overflow-auto rounded-md border border-border">
-              <table className="border-separate border-spacing-0 text-sm">
-                <thead>
-                  <tr>
-                    <th className="sticky left-0 top-0 z-20 border-b border-r border-border bg-card px-3 py-2 text-left text-xs font-medium text-muted-foreground">
-                      User \ Data group
-                    </th>
-                    {visibleCols.map((d) => (
-                      <th key={d.id} className="sticky top-0 z-10 border-b border-border bg-card px-1 py-2 align-bottom">
-                        <div className="flex flex-col items-center gap-1">
-                          <span className={cn("h-2.5 w-2.5 rounded-full border", dataGroupColorClass(d.id))} title={d.name} />
-                          <div className="mx-auto max-h-32 w-5 overflow-hidden whitespace-nowrap text-[11px] text-foreground/80 [writing-mode:vertical-rl] rotate-180" title={d.name}>
-                            {d.name}
-                          </div>
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleRows.length === 0 ? (
-                    <tr><td colSpan={visibleCols.length + 1} className="px-3 py-6 text-center text-muted-foreground">{emptyMessage}</td></tr>
-                  ) : (
-                    visibleRows.map((r) => (
-                      <tr key={r.key} className="hover:bg-secondary/40">
-                        <td className="sticky left-0 z-10 border-t border-r border-border bg-card px-3 py-1.5 whitespace-nowrap">
-                          <span className="text-foreground">{r.email}</span>
-                          {r.isNew && <span className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">new</span>}
-                        </td>
-                        {visibleCols.map((d) => {
-                          const key = `${r.key}::${d.id}`;
-                          const on = ticks.has(key);
-                          return (
-                            <td key={d.id} className="border-t border-border px-1 py-1 text-center">
-                              <button
-                                type="button"
-                                onClick={() => toggle(key)}
-                                title={`${r.email} — ${d.name}`}
-                                className={cn(
-                                  "mx-auto grid h-5 min-w-5 place-items-center rounded border px-1 text-[10px] font-semibold transition-transform hover:scale-110",
-                                  on ? dataGroupColorClass(d.id) : "border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary",
-                                )}
-                              >
-                                {on ? "✓" : <Plus className="h-3 w-3" />}
-                              </button>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button disabled={dataGroups.length === 0 || changes === 0} onClick={apply}>Apply{changes ? ` (${changes})` : ""}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/**
  * Unified bulk matrix (Mockup): users (rows) × [Maestro permission grants — grouped permissions →
  * Maestro View/Manage/Unlimited · Slides View/Manage] + [this client's data-group membership
  * columns, colored + / ✓ toggles]. Per-column select-all over visible rows; user search +
@@ -857,6 +690,18 @@ function UnifiedMatrixDialog({
     onApply({ existing, created });
   };
 
+  // Export every matching row (respects the matrix filters) with its current permissions + data
+  // groups — email, permissions, data groups.
+  const exportCsv = () => {
+    const header = ["Email", "Permissions", "Data groups"];
+    const body = visibleRows.filter((r) => !r.isNew).map((r) => [
+      r.email,
+      MAESTRO_COLS.filter((c) => grants.get(r.key)?.has(c.key)).map((c) => MAESTRO_LABEL[c.key]).join("; "),
+      dataGroups.filter((d) => ticks.has(`${r.key}::${d.id}`)).map((d) => d.name).join("; "),
+    ]);
+    downloadCsv("assign-permissions", toCsv([header, ...body]));
+  };
+
   const selAll = (st: "none" | "some" | "all", onChange: () => void, title: string) => (
     <input type="checkbox" checked={st === "all"} ref={(el) => { if (el) el.indeterminate = st === "some"; }} onChange={onChange} title={title} className="h-3.5 w-3.5 rounded border-border" />
   );
@@ -941,6 +786,9 @@ function UnifiedMatrixDialog({
           </table>
         </div>
         <DialogFooter>
+          <Button variant="outline" className="mr-auto gap-1.5" disabled={!visibleRows.length} onClick={exportCsv} title="Export these users — email, permissions, data groups (CSV)">
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button disabled={changes === 0} onClick={apply}>Apply{changes ? ` (${changes})` : ""}</Button>
         </DialogFooter>
