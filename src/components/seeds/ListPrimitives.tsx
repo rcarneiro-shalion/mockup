@@ -372,15 +372,31 @@ export function GroupedPills({
   noun,
   tone = "slate",
   onSeeAll,
+  colorFor,
 }: {
   items: string[];
   /** singular noun, e.g. "client" / "subscription" / "seed" / "scrapping option" */
   noun: string;
   tone?: PillTone;
   onSeeAll?: () => void;
+  /** Optional per-item color: returns a tailwind class string (border+bg+text) for distinct, identity-stable coloring. Overrides `tone` per pill. */
+  colorFor?: (item: string) => string;
 }) {
   if (!items.length) return <span className="text-muted-foreground">—</span>;
-  const pills = (list: string[]) => list.map((x, i) => <Pill key={`${i}-${x}`} tone={tone}>{x}</Pill>);
+  const pills = (list: string[]) =>
+    list.map((x, i) =>
+      colorFor ? (
+        <span
+          key={`${i}-${x}`}
+          title={x}
+          className={cn("inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium", colorFor(x))}
+        >
+          {x}
+        </span>
+      ) : (
+        <Pill key={`${i}-${x}`} tone={tone}>{x}</Pill>
+      ),
+    );
   if (items.length <= GROUP_INLINE_MAX) {
     return <div className="flex flex-wrap gap-1">{pills(items)}</div>;
   }

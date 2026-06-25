@@ -14,6 +14,29 @@ const ASSIGNABLE_POOL = [
   "omar.haddad@coca-cola.com", "grace.lee@shalion.com", "pablo.ortiz@embonor.cl", "feng.li@coca-cola.com",
 ];
 
+// Distinct, identity-stable colors per data group, so the same DG reads the same everywhere
+// (column pills, the assign matrix, the dialogs). Keyed by data-group id via a small hash —
+// full literal class strings so Tailwind keeps them.
+const DG_PALETTE = [
+  "border-rose-200 bg-rose-50 text-rose-700",
+  "border-amber-200 bg-amber-50 text-amber-800",
+  "border-lime-200 bg-lime-50 text-lime-700",
+  "border-emerald-200 bg-emerald-50 text-emerald-700",
+  "border-teal-200 bg-teal-50 text-teal-700",
+  "border-sky-200 bg-sky-50 text-sky-700",
+  "border-indigo-200 bg-indigo-50 text-indigo-700",
+  "border-violet-200 bg-violet-50 text-violet-700",
+  "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700",
+  "border-pink-200 bg-pink-50 text-pink-700",
+  "border-cyan-200 bg-cyan-50 text-cyan-700",
+  "border-orange-200 bg-orange-50 text-orange-700",
+];
+function dataGroupColorClass(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (Math.imul(h, 31) + id.charCodeAt(i)) >>> 0;
+  return DG_PALETTE[h % DG_PALETTE.length];
+}
+
 /**
  * Client-level Users grid (moved up from the per–data-group Users tab). A user can belong
  * to many data groups at once; the "Datagroup" column lists the memberships — but only the
@@ -36,6 +59,7 @@ export function ClientUsersSection({
   const users = client.users ?? [];
   const dataGroups = client.dataGroups ?? [];
   const dgNameById = useMemo(() => new Map(dataGroups.map((d) => [d.id, d.name])), [dataGroups]);
+  const dgColorByName = useMemo(() => new Map(dataGroups.map((d) => [d.name, dataGroupColorClass(d.id)])), [dataGroups]);
   // Resolve a user's memberships to names within THIS client only (unknown / other-client ids dropped).
   const dgNames = useMemo(
     () => (u: ClientUser) => u.dataGroupIds.map((id) => dgNameById.get(id)).filter((n): n is string => !!n),
@@ -118,7 +142,7 @@ export function ClientUsersSection({
                     <tr key={u.id} className="border-t border-border hover:bg-secondary/40">
                       <Td className="text-foreground">{u.email}</Td>
                       <Td>
-                        <GroupedPills items={dgNames(u)} noun="data group" tone="blue" onSeeAll={() => setEditUser(u)} />
+                        <GroupedPills items={dgNames(u)} noun="data group" onSeeAll={() => setEditUser(u)} colorFor={(name) => dgColorByName.get(name) ?? ""} />
                       </Td>
                       <Td><StatusPill status={u.status} /></Td>
                       <Td className="text-muted-foreground">{u.createdAt}</Td>
@@ -165,15 +189,27 @@ export function ClientUsersSection({
       )}
 
       {assignOpen && (
-        <AssignUserDialog
+        <AssignMatrixDialog
+          users={users}
           dataGroups={dataGroups}
           assignable={ASSIGNABLE_POOL.filter((e) => !users.some((u) => u.email === e))}
           onClose={() => setAssignOpen(false)}
-          onAssign={(email, dgIds) => {
+          onApply={({ existing, created }) => {
             const now = nowStamp();
-            setUsers([...users, { id: crypto.randomUUID(), email, status: "Active", dataGroupIds: dgIds, createdAt: now, updatedAt: now }]);
+            let changedCount = 0;
+            const next = users.map((u) => {
+              const want = existing.find((e) => e.id === u.id)?.dataGroupIds ?? u.dataGroupIds;
+              const changed = want.length !== u.dataGroupIds.length || want.some((id) => !u.dataGroupIds.includes(id));
+              if (changed) changedCount++;
+              return changed ? { ...u, dataGroupIds: want, updatedAt: now } : u;
+            });
+            const createdUsers = created.map((c) => ({ id: crypto.randomUUID(), email: c.email, status: "Active" as const, dataGroupIds: c.dataGroupIds, createdAt: now, updatedAt: now }));
+            setUsers([...next, ...createdUsers]);
             setAssignOpen(false);
-            toast.success(`Assigned ${email}`);
+            const parts: string[] = [];
+            if (changedCount) parts.push(`updated ${changedCount}`);
+            if (createdUsers.length) parts.push(`added ${createdUsers.length}`);
+            toast.success(parts.length ? `Assignments — ${parts.join(", ")}` : "No changes");
           }}
         />
       )}
@@ -262,6 +298,7 @@ function DgMultiSelect({
                 onChange={() => onToggle(d.id)}
                 className="h-4 w-4 rounded border-border"
               />
+              <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full border", dataGroupColorClass(d.id))} />
               <span className="text-foreground">{d.name}</span>
             </label>
           ))
@@ -300,60 +337,147 @@ function ManageDataGroupsDialog({
   );
 }
 
-function AssignUserDialog({
+/**
+ * Users × data-groups assignment MATRIX (mirrors Massive update's relationship map):
+ * rows = current client users + the assignable pool, columns = this client's data groups,
+ * each intersection a toggle. Pool users with at least one tick are created on the client.
+ */
+function AssignMatrixDialog({
+  users,
   dataGroups,
   assignable,
   onClose,
-  onAssign,
+  onApply,
 }: {
+  users: ClientUser[];
   dataGroups: DataGroup[];
   assignable: string[];
   onClose: () => void;
-  onAssign: (email: string, dgIds: string[]) => void;
+  onApply: (changes: {
+    existing: { id: string; dataGroupIds: string[] }[];
+    created: { email: string; dataGroupIds: string[] }[];
+  }) => void;
 }) {
+  const validIds = useMemo(() => new Set(dataGroups.map((d) => d.id)), [dataGroups]);
+  // Row keys are namespaced (`u:` existing / `p:` pool) so the two key spaces are provably
+  // disjoint regardless of id/email contents; tick keys are `${rowKey}::${dgId}`.
+  const rows = useMemo(
+    () => [
+      ...users.map((u) => ({ key: `u:${u.id}`, email: u.email, isNew: false })),
+      ...assignable.map((e) => ({ key: `p:${e}`, email: e, isNew: true })),
+    ],
+    [users, assignable],
+  );
+  const initialKeys = useMemo(() => {
+    const s = new Set<string>();
+    for (const u of users) for (const id of u.dataGroupIds) if (validIds.has(id)) s.add(`u:${u.id}::${id}`);
+    return s;
+  }, [users, validIds]);
+  const [ticks, setTicks] = useState<Set<string>>(() => new Set(initialKeys));
   const [q, setQ] = useState("");
-  const [email, setEmail] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const toggle = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const filtered = assignable.filter((e) => e.toLowerCase().includes(q.toLowerCase()));
+  const toggle = (key: string) => setTicks((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
+  const visibleRows = rows.filter((r) => r.email.toLowerCase().includes(q.toLowerCase()));
+  // Pending changes = toggled cells vs the initial memberships (drives the Apply label).
+  const changes = useMemo(() => {
+    let c = 0;
+    for (const k of ticks) if (!initialKeys.has(k)) c++;
+    for (const k of initialKeys) if (!ticks.has(k)) c++;
+    return c;
+  }, [ticks, initialKeys]);
+
+  const apply = () => {
+    const existing = users.map((u) => ({
+      id: u.id,
+      dataGroupIds: dataGroups.filter((d) => ticks.has(`u:${u.id}::${d.id}`)).map((d) => d.id),
+    }));
+    const created = assignable
+      .map((e) => ({ email: e, dataGroupIds: dataGroups.filter((d) => ticks.has(`p:${e}::${d.id}`)).map((d) => d.id) }))
+      .filter((c) => c.dataGroupIds.length > 0);
+    onApply({ existing, created });
+  };
+
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-[460px]">
-        <DialogHeader><DialogTitle>Assign existing user</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-foreground">User <span className="text-destructive">*</span></label>
-            <input
-              value={email || q}
-              onChange={(e) => { setQ(e.target.value); setEmail(""); }}
-              placeholder="Search a user by email"
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            {!email && (
-              <div className="max-h-40 overflow-auto rounded-md border border-border">
-                {filtered.length === 0 ? (
-                  <div className="px-3 py-4 text-center text-sm text-muted-foreground">No matches.</div>
-                ) : filtered.map((e) => (
-                  <button
-                    key={e}
-                    type="button"
-                    onClick={() => { setEmail(e); setQ(""); }}
-                    className="block w-full border-b border-border px-3 py-2 text-left text-sm text-foreground last:border-0 hover:bg-accent"
-                  >
-                    {e}
-                  </button>
-                ))}
-              </div>
-            )}
+      <DialogContent className="sm:max-w-[880px]">
+        <DialogHeader><DialogTitle>Assign users to data groups</DialogTitle></DialogHeader>
+        <p className="-mt-1 text-sm text-muted-foreground">
+          Tick the intersections to set which data groups each user belongs to. Pool users (marked{" "}
+          <span className="font-medium text-foreground">new</span>) are added to the client when you tick any cell.
+        </p>
+        {dataGroups.length === 0 ? (
+          <div className="rounded-md border border-border px-3 py-6 text-center text-sm text-muted-foreground">
+            This client has no data groups yet — create a data group first.
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-foreground">Data groups</label>
-            <DgMultiSelect dataGroups={dataGroups} selected={selected} onToggle={toggle} />
-          </div>
-        </div>
+        ) : (
+          <>
+            <div className="relative w-64">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search users"
+                className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="max-h-[55vh] overflow-auto rounded-md border border-border">
+              <table className="border-separate border-spacing-0 text-sm">
+                <thead>
+                  <tr>
+                    <th className="sticky left-0 top-0 z-20 border-b border-r border-border bg-card px-3 py-2 text-left text-xs font-medium text-muted-foreground">
+                      User \ Data group
+                    </th>
+                    {dataGroups.map((d) => (
+                      <th key={d.id} className="sticky top-0 z-10 border-b border-border bg-card px-1 py-2 align-bottom">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={cn("h-2.5 w-2.5 rounded-full border", dataGroupColorClass(d.id))} title={d.name} />
+                          <div className="mx-auto max-h-32 w-5 overflow-hidden whitespace-nowrap text-[11px] text-foreground/80 [writing-mode:vertical-rl] rotate-180" title={d.name}>
+                            {d.name}
+                          </div>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRows.length === 0 ? (
+                    <tr><td colSpan={dataGroups.length + 1} className="px-3 py-6 text-center text-muted-foreground">No users match your search.</td></tr>
+                  ) : (
+                    visibleRows.map((r) => (
+                      <tr key={r.key} className="hover:bg-secondary/40">
+                        <td className="sticky left-0 z-10 border-t border-r border-border bg-card px-3 py-1.5 whitespace-nowrap">
+                          <span className="text-foreground">{r.email}</span>
+                          {r.isNew && <span className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">new</span>}
+                        </td>
+                        {dataGroups.map((d) => {
+                          const key = `${r.key}::${d.id}`;
+                          const on = ticks.has(key);
+                          return (
+                            <td key={d.id} className="border-t border-border px-1 py-1 text-center">
+                              <button
+                                type="button"
+                                onClick={() => toggle(key)}
+                                title={`${r.email} — ${d.name}`}
+                                className={cn(
+                                  "mx-auto grid h-5 min-w-5 place-items-center rounded border px-1 text-[10px] font-semibold transition-transform hover:scale-110",
+                                  on ? dataGroupColorClass(d.id) : "border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary",
+                                )}
+                              >
+                                {on ? "✓" : <Plus className="h-3 w-3" />}
+                              </button>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button disabled={!email} onClick={() => email && onAssign(email, [...selected])}>Assign user</Button>
+          <Button disabled={dataGroups.length === 0 || changes === 0} onClick={apply}>Apply{changes ? ` (${changes})` : ""}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
