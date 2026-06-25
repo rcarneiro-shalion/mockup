@@ -26,6 +26,23 @@ export type ClientLocationCatalog = { id: string; name: string; country: string;
 export type Manufacturer = { id: string; name: string };
 export type Competitor = { id: string; name: string; isMain?: boolean };
 
+// A user can be a member of MANY data groups at once (the USER_DATA_GROUP N:M), and —
+// for internal Customer-Success / Sales staff — those memberships can span MULTIPLE
+// clients (e.g. the same person in Coke→DG1/DG2, Pepsico→DG1/DG4, Lego→DG1).
+// `ClientUser` is the per-client PROJECTION of that global (IAM) user: it lists only the
+// memberships within THIS client, so `dataGroupIds` references only Client.dataGroups[].id.
+// The client-level Users grid is intentionally scoped to the current client's domain;
+// the full cross-client view of every data group a user belongs to is a future IAM-module
+// feature. The same email may therefore appear under several clients, each showing its own DGs.
+export type ClientUser = {
+  id: string;
+  email: string;
+  status: "Active" | "Inactive";
+  dataGroupIds: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Client = {
   id: string;
   name: string;
@@ -37,6 +54,7 @@ export type Client = {
   updatedAt: string;
   assignedProjects?: AssignedProject[];
   dataGroups?: DataGroup[];
+  users?: ClientUser[];
   locationCatalogs?: ClientLocationCatalog[];
   manufacturers?: Manufacturer[];
   competitors?: Competitor[];
@@ -86,6 +104,23 @@ const COCA_DATA_GROUPS: DataGroup[] = [
   DG("dg7", "Coca Cola NAOU-US (+RFP)", "Fri, Nov 7, 2025 1:45 PM", "Tue, Jun 2, 2026 7:15 AM"),
   DG("dg8", "Coca Cola RFP - DSM", "Tue, Feb 17, 2026 11:04 AM", "Wed, Mar 25, 2026 10:30 AM"),
   DG("dg9", "dummy-con", "Fri, Nov 28, 2025 5:35 PM", "Fri, Nov 28, 2025 5:35 PM"),
+];
+
+// Client-level users — each a member of one or many data groups (USER_DATA_GROUP N:M).
+const CU = (id: string, email: string, dataGroupIds: string[], createdAt: string, updatedAt: string, status: "Active" | "Inactive" = "Active"): ClientUser =>
+  ({ id, email, status, dataGroupIds, createdAt, updatedAt });
+const COCA_USERS: ClientUser[] = [
+  CU("cu1", "gian.hernandez@coca-cola.com", ["dg6", "dg4"], "Tue, Jul 15, 2025 7:59 PM", "Tue, Jul 15, 2025 7:59 PM"),
+  CU("cu2", "brandon.vega@coca-cola.com", ["dg6"], "Tue, Jul 15, 2025 1:26 PM", "Tue, Jul 15, 2025 1:26 PM"),
+  CU("cu3", "martha.garcia@coca-cola.com", ["dg3"], "Tue, Aug 12, 2025 4:45 PM", "Tue, Aug 12, 2025 4:45 PM"),
+  CU("cu4", "luis.fernandez@kof.com", ["dg6", "dg1", "dg5"], "Thu, Oct 30, 2025 2:41 PM", "Thu, Oct 30, 2025 2:41 PM"),
+  CU("cu5", "sofia.ramos@ccep.com", ["dg3"], "Fri, Oct 31, 2025 8:41 AM", "Fri, Oct 31, 2025 8:41 AM"),
+  CU("cu6", "david.costa@coca-cola.com", ["dg7"], "Thu, Oct 16, 2025 7:30 AM", "Thu, Oct 16, 2025 7:30 AM"),
+  // Internal CS member — also belongs to other clients' data groups (Pepsico, Lego, …);
+  // here only the Coca-Cola memberships are shown (client-scoped view).
+  CU("cu7", "carla.mendes@shalion.com", ["dg4", "dg1", "dg3", "dg7"], "Mon, Sep 1, 2025 10:12 AM", "Wed, Nov 5, 2025 9:03 AM"),
+  CU("cu8", "marco.bianchi@coca-cola.com", ["dg2"], "Wed, Sep 17, 2025 3:20 PM", "Wed, Sep 17, 2025 3:20 PM", "Inactive"),
+  CU("cu9", "amara.okafor@coca-cola.com", ["dg5", "dg6"], "Fri, Nov 7, 2025 11:48 AM", "Fri, Nov 7, 2025 11:48 AM"),
 ];
 
 const RS = (id: string, name: string, country: string, useCases: UseCase[] = ["DASHBOARD"]): ClientLocationCatalog => ({ id, name, country, useCases });
@@ -144,7 +179,7 @@ export const INITIAL_CLIENTS: Client[] = [
   C("baye", "Bayer", "BAYE", false, "Thu, Dec 19, 2024 4:37 PM", "Thu, Dec 19, 2024 4:53 PM"),
   C("beam", "Beam Suntory", "BEAM", false, "Mon, Jul 10, 2023 7:58 AM", "Tue, Aug 6, 2024 10:30 AM"),
   C("bimb", "Bimbo", "BIMB", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:28 AM"),
-  { ...C("coca", "Coca Cola", "COCA", false, "Thu, Mar 7, 2024 11:15 AM", "Fri, Jul 19, 2024 12:41 PM"), account: "Coca Cola", assignedProjects: COCA_PROJECTS, dataGroups: COCA_DATA_GROUPS, locationCatalogs: COCA_LOCATION_CATALOGS, manufacturers: COCA_MANUFACTURERS, competitors: COCA_COMPETITORS },
+  { ...C("coca", "Coca Cola", "COCA", false, "Thu, Mar 7, 2024 11:15 AM", "Fri, Jul 19, 2024 12:41 PM"), account: "Coca Cola", assignedProjects: COCA_PROJECTS, dataGroups: COCA_DATA_GROUPS, users: COCA_USERS, locationCatalogs: COCA_LOCATION_CATALOGS, manufacturers: COCA_MANUFACTURERS, competitors: COCA_COMPETITORS },
   C("cosn", "Cosnova", "COSN", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:30 AM"),
   C("dano", "Danone", "DANO", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:28 AM"),
   C("long", "De Longhi", "LONG", false, "Mon, Jul 14, 2025 9:17 AM", "Mon, Jul 14, 2025 2:41 PM"),
@@ -311,6 +346,7 @@ export function emptyClient(): Client {
     updatedAt: nowStamp(),
     assignedProjects: [],
     dataGroups: [],
+    users: [],
     locationCatalogs: [],
     manufacturers: [],
     competitors: [],

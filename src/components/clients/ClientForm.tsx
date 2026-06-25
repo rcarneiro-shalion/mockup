@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AssignProjectDialog } from "@/components/clients/AssignProjectDialog";
 import { ClientBottomTabs } from "@/components/clients/ClientBottomTabs";
+import { ClientUsersSection } from "@/components/clients/ClientUsersSection";
 import { LinkText, Pagination, Th, Td } from "@/components/seeds/ListPrimitives";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Client } from "@/lib/clients";
@@ -286,6 +287,9 @@ export function ClientForm({
                 </>
               )}
             </div>
+
+            {/* Users (client-level pool; Datagroup column shows this client's data groups) */}
+            <ClientUsersSection client={client} set={set} />
 
             {/* Bottom tabbed section */}
             <ClientBottomTabs

@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { ChevronDown, Copy, GripVertical, LayoutList, Mail, Plus, Trash2, Users, Box, X, Globe, MapPin, LayoutGrid, Store, Target, ArrowUp, ArrowDown, Filter, Check, Search } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, Copy, GripVertical, LayoutList, Plus, Box, X, Globe, MapPin, LayoutGrid, Store, Target, ArrowUp, ArrowDown, Filter, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { flag, countryLabel, COUNTRY_OPTIONS } from "@/lib/retailers";
 import { usePersistentState } from "@/hooks/usePersistentState";
@@ -8,7 +8,6 @@ import { MU_SEED } from "@/lib/massiveUpdate";
 type SectionType = "CUSTOM" | "BUILT_IN";
 type Maestro = string;
 type Section = { id: string; path: string; type: SectionType; maestro: Maestro; group?: string; label?: string };
-type User = { id: string; email: string; status: "Active" | "Inactive"; createdAt: string; updatedAt: string };
 type Cube = { id: string; name: string; createdAt: string; updatedAt: string };
 type CountryRow = { id: string; code: string; createdAt: string; updatedAt: string };
 
@@ -28,16 +27,6 @@ const INITIAL_SECTIONS: Section[] = [
   { id: "13", path: "actionplan", type: "CUSTOM", maestro: "Amazon Shelf Maestro" },
   { id: "14", path: "syntheticqueries", type: "CUSTOM", maestro: "Amazon Shelf Maestro" },
 ];
-// Emails are anonymized for the mockup (no real PII).
-const USER_DOMAINS = ["coca-cola.com", "ccep.com", "shalion.com"];
-const INITIAL_USERS: User[] = Array.from({ length: 27 }, (_, i) => ({
-  id: `u${i + 1}`,
-  email: `user${String(i + 1).padStart(2, "0")}@${USER_DOMAINS[i % USER_DOMAINS.length]}`,
-  status: "Active",
-  createdAt: "Mon, Nov 24, 2025 3:00",
-  updatedAt: "Mon, Nov 24, 2025 3:00",
-}));
-
 const CUBE_NAMES = [
   "mart_asm", "rufus_query_results", "rufus_actions", "mart_range", "mart_range_agg_brand_region",
   "mart_range_agg_brand_location", "mart_range_agg_dk_region", "mart_content_assortment_ilo", "mart_content_assortment",
@@ -87,11 +76,6 @@ const EXTRACTION_STORES = [
 const TARGET_OPTIONS = [
   "description_score_target", "secondary_image_score_target", "image_count_target", "availability_target",
   "rating_average_target", "outofstock_target", "image_score_target", "drop_price_alert_threshold", "overprice_threshold",
-];
-// Anonymized for the mockup.
-const ASSIGNABLE_USERS = [
-  "user.a@kof.com", "user.b@ccep.com", "user.c@kof.com", "user.d@coca-cola.com", "user.e@coca-cola.com",
-  "user.f@bepensa.com", "user.g@embonor.cl", "user.h@coca-cola.com", "user.i@coca-cola.com",
 ];
 const CATEGORY_PICKER: { value: string; hint?: string }[] = [
   { value: "Pharma > Health > Allergy and Asthma", hint: "Allergy and asthma such as loratadine" },
@@ -199,7 +183,7 @@ const INITIAL_COUNTRIES: CountryRow[] = COUNTRY_CODES.map((code, i) => ({
   updatedAt: i % 3 === 0 ? "Mon, May 19, 2025 11:00" : "Tue, Oct 15, 2024 9:11",
 }));
 
-type TabKey = "countries" | "client-regions" | "categories" | "store-extraction-types" | "targets" | "sections" | "users" | "cubes";
+type TabKey = "countries" | "client-regions" | "categories" | "store-extraction-types" | "targets" | "sections" | "cubes";
 
 const ALL_TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "countries", label: "Countries", icon: <Globe className="h-4 w-4" /> },
@@ -208,10 +192,9 @@ const ALL_TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "store-extraction-types", label: "Store extraction types", icon: <Store className="h-4 w-4" /> },
   { key: "targets", label: "Targets", icon: <Target className="h-4 w-4" /> },
   { key: "sections", label: "Dashboard sections", icon: <LayoutList className="h-4 w-4" /> },
-  { key: "users", label: "Users", icon: <Users className="h-4 w-4" /> },
   { key: "cubes", label: "Cubes", icon: <Box className="h-4 w-4" /> },
 ];
-const PARENT_TAB_KEYS: TabKey[] = ["sections", "users", "cubes"];
+const PARENT_TAB_KEYS: TabKey[] = ["sections", "cubes"];
 
 export function DataGroupTabs({ isParent = false, dataGroupId }: { isParent?: boolean; dataGroupId?: string }) {
   const visibleTabs = isParent ? ALL_TABS.filter((t) => PARENT_TAB_KEYS.includes(t.key)) : ALL_TABS;
@@ -224,12 +207,10 @@ export function DataGroupTabs({ isParent = false, dataGroupId }: { isParent?: bo
     INITIAL_SECTIONS,
   );
   const [sectionsCollapsed, setSectionsCollapsed] = useState(false);
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
   const [cubes, setCubes] = useState<Cube[]>(INITIAL_CUBES);
   const [countries, setCountries] = useState<CountryRow[]>(INITIAL_COUNTRIES);
 
   const [addSectionOpen, setAddSectionOpen] = useState(false);
-  const [createUserOpen, setCreateUserOpen] = useState(false);
   const [assignCubeOpen, setAssignCubeOpen] = useState(false);
 
   return (
@@ -252,7 +233,6 @@ export function DataGroupTabs({ isParent = false, dataGroupId }: { isParent?: bo
         {activeTab === "sections" && (
           <SectionsPanel sections={sections} setSections={setSections} collapsed={sectionsCollapsed} setCollapsed={setSectionsCollapsed} onAdd={() => setAddSectionOpen(true)} />
         )}
-        {activeTab === "users" && <UsersPanel users={users} setUsers={setUsers} onCreate={() => setCreateUserOpen(true)} />}
         {activeTab === "cubes" && <CubesPanel cubes={cubes} setCubes={setCubes} onAssign={() => setAssignCubeOpen(true)} />}
       </div>
 
@@ -265,9 +245,6 @@ export function DataGroupTabs({ isParent = false, dataGroupId }: { isParent?: bo
             setAddSectionOpen(false);
           }}
         />
-      )}
-      {createUserOpen && (
-        <CreateUserModal onClose={() => setCreateUserOpen(false)} onCreate={(emails) => { const now = formatNow(); setUsers((p) => [...p, ...emails.map((email) => ({ id: crypto.randomUUID(), email, status: "Active" as const, createdAt: now, updatedAt: now }))]); setCreateUserOpen(false); }} />
       )}
       {assignCubeOpen && (
         <AssignCubeModal existing={cubes.map((c) => c.name)} onClose={() => setAssignCubeOpen(false)} onAssign={(name) => { const now = formatNow(); setCubes((p) => [...p, { id: crypto.randomUUID(), name, createdAt: now, updatedAt: now }]); setAssignCubeOpen(false); }} />
@@ -616,83 +593,6 @@ function SectionsPanel({ sections, setSections, collapsed, setCollapsed, onAdd }
   );
 }
 
-function UsersPanel({ users, setUsers, onCreate }: { users: User[]; setUsers: React.Dispatch<React.SetStateAction<User[]>>; onCreate: () => void }) {
-  const [search, setSearch] = useState("");
-  const [assignOpen, setAssignOpen] = useState(false);
-  const filtered = useMemo(() => users.filter((u) => u.email.toLowerCase().includes(search.toLowerCase())), [users, search]);
-  return (
-    <div className="rounded-xl border border-border bg-card shadow-sm p-5">
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <div className="flex flex-col gap-3">
-          <h3 className="text-base font-semibold text-foreground">Users</h3>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users" className="w-64 rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setAssignOpen(true)} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors">
-            <Users className="h-3.5 w-3.5" /> Assign user
-          </button>
-          <button onClick={onCreate} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors">
-            <Plus className="h-3.5 w-3.5" /> Create users
-          </button>
-        </div>
-      </div>
-      <div className="overflow-hidden rounded-md border border-border">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-muted/40 text-muted-foreground">
-              <th className="px-4 py-2.5 text-left font-medium">Email</th>
-              <th className="px-4 py-2.5 text-left font-medium">Status</th>
-              <th className="px-4 py-2.5 text-left font-medium">Created at</th>
-              <th className="px-4 py-2.5 text-left font-medium">Updated at</th>
-              <th className="w-20" />
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">No users found.</td></tr>
-            ) : (
-              filtered.map((u) => (
-                <tr key={u.id} className="border-t border-border">
-                  <td className="px-4 py-2.5 text-foreground">{u.email}</td>
-                  <td className="px-4 py-2.5">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> {u.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{u.createdAt}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{u.updatedAt}</td>
-                  <td className="px-2 py-2.5">
-                    <div className="flex items-center justify-end gap-1">
-                      <button className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors" aria-label="Email user"><Mail className="h-4 w-4" /></button>
-                      <button onClick={() => setUsers((rows) => rows.filter((r) => r.id !== u.id))} className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive transition-colors" aria-label="Delete user"><Trash2 className="h-4 w-4" /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-      <Pagination total={filtered.length} />
-      {assignOpen && (
-        <AssignPicker
-          title="Assign existent user"
-          label="User"
-          placeholder="Search an user by email"
-          options={ASSIGNABLE_USERS.filter((e) => !users.some((u) => u.email === e))}
-          confirmLabel="Assign user"
-          onClose={() => setAssignOpen(false)}
-          onAssign={(email) => {
-            const now = formatNow();
-            setUsers((p) => [...p, { id: crypto.randomUUID(), email, status: "Active", createdAt: now, updatedAt: now }]);
-            setAssignOpen(false);
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
 function CubesPanel({ cubes, setCubes, onAssign }: { cubes: Cube[]; setCubes: React.Dispatch<React.SetStateAction<Cube[]>>; onAssign: () => void }) {
   return (
     <div className="rounded-xl border border-border bg-card shadow-sm p-5">
@@ -890,52 +790,6 @@ function AddSectionModal({
               Add {sel.size || ""} section{sel.size === 1 ? "" : "s"}
             </button>
           </div>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-function CreateUserModal({ onClose, onCreate }: { onClose: () => void; onCreate: (emails: string[]) => void }) {
-  const [emails, setEmails] = useState("");
-  const [language, setLanguage] = useState("English");
-  const [permsOpen, setPermsOpen] = useState(true);
-  const [perms, setPerms] = useState({ explorerView: false, convManage: false, convUnlimited: false, slidesView: false, slidesManage: false });
-  const tp = (k: keyof typeof perms) => setPerms((p) => ({ ...p, [k]: !p[k] }));
-  const parsed = emails.split(/[,;\s]+/).map((s) => s.trim()).filter(Boolean);
-  const Check = ({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) => (
-    <label className="inline-flex cursor-pointer items-center gap-2"><input type="checkbox" checked={on} onChange={onClick} className="h-4 w-4 rounded border-border" />{label}</label>
-  );
-  return (
-    <Modal title="Create users" onClose={onClose}>
-      <p className="-mt-2 mb-4 text-sm text-muted-foreground">The new users will be created and assigned to this data group. Default language will be set to English.</p>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Emails <span className="text-destructive">*</span></label>
-          <textarea value={emails} onChange={(e) => setEmails(e.target.value)} rows={3} placeholder="Enter emails separated by commas, semicolons, or whitespace..." className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-1.5">Language <span className="text-destructive">*</span></label>
-          <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
-            {["English", "Spanish", "Portuguese", "French", "German"].map((l) => <option key={l}>{l}</option>)}
-          </select>
-        </div>
-        <div className="rounded-lg border border-border p-4">
-          <button type="button" onClick={() => setPermsOpen((o) => !o)} className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <span className="grid place-items-center h-6 w-6 rounded bg-muted"><ChevronDown className={cn("h-4 w-4 transition-transform", !permsOpen && "-rotate-90")} /></span>
-            Maestro permissions
-          </button>
-          {permsOpen && (
-            <div className="mt-3 divide-y divide-border text-sm">
-              <div className="flex items-center justify-between py-2"><span>explorer</span><Check on={perms.explorerView} onClick={() => tp("explorerView")} label="view" /></div>
-              <div className="flex items-center justify-between py-2"><span>conversation</span><span className="flex items-center gap-4"><Check on={perms.convManage} onClick={() => tp("convManage")} label="manage" /><Check on={perms.convUnlimited} onClick={() => tp("convUnlimited")} label="unlimited" /></span></div>
-              <div className="flex items-center justify-between py-2"><span>slides</span><span className="flex items-center gap-4"><Check on={perms.slidesView} onClick={() => tp("slidesView")} label="view" /><Check on={perms.slidesManage} onClick={() => tp("slidesManage")} label="manage" /></span></div>
-            </div>
-          )}
-        </div>
-        <div className="flex justify-end gap-2 pt-2">
-          <button onClick={onClose} className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-accent transition-colors">Cancel</button>
-          <button onClick={() => parsed.length && onCreate(parsed)} disabled={!parsed.length} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">Create users</button>
         </div>
       </div>
     </Modal>
