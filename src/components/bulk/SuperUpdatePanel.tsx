@@ -287,9 +287,9 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
           {mode === "field" ? (
             <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <Field label="Microservice">
+                <Field label="Ecometry section">
                   <Select value={serviceSlug} onValueChange={pickService}>
-                    <SelectTrigger><SelectValue placeholder="Service" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Section" /></SelectTrigger>
                     <SelectContent>{PATCH_SERVICES.map((s) => <SelectItem key={s.slug} value={s.slug}>{s.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </Field>
@@ -383,7 +383,7 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
             value={csv}
             onChange={(e) => { setCsv(e.target.value); if (fileName) setFileName(""); }}
             disabled={!ready}
-            placeholder={ready ? `${headerHint}\n<id-1>,<value-1>\n<id-2> <value-2>` : mode === "field" ? "Select a microservice, table and field first…" : "Select a join table first…"}
+            placeholder={ready ? `${headerHint}\n<id-1>,<value-1>\n<id-2> <value-2>` : mode === "field" ? "Select an Ecometry section, table and field first…" : "Select a join table first…"}
             spellCheck={false}
             className="h-44 w-full resize-y rounded-lg border border-border bg-background p-3 font-mono text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
           />

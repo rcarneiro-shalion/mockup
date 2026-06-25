@@ -56,7 +56,7 @@ const STATUS = ["ACTIVE", "INACTIVE"] as const;
 export const PATCH_SERVICES: PatchService[] = [
   {
     slug: "ecometry-tasks-api",
-    label: "ecometry-tasks-api",
+    label: "Tasks",
     host: "ecometry-tasks-api-prod.v2.shalion.com",
     tables: [
       {
@@ -101,7 +101,7 @@ export const PATCH_SERVICES: PatchService[] = [
   },
   {
     slug: "product-api",
-    label: "product-api",
+    label: "Product",
     host: "product-api-prod.v2.shalion.com",
     tables: [
       {
@@ -135,7 +135,7 @@ export const PATCH_SERVICES: PatchService[] = [
   },
   {
     slug: "codification-api",
-    label: "codification-api",
+    label: "Codification",
     host: "codification-api-prod.v2.shalion.com",
     tables: [
       {
@@ -157,7 +157,7 @@ export const PATCH_SERVICES: PatchService[] = [
   },
   {
     slug: "visualization-api",
-    label: "visualization-api",
+    label: "Visualization",
     host: "visualization-api-prod.v2.shalion.com",
     tables: [
       {
@@ -180,7 +180,7 @@ export const PATCH_SERVICES: PatchService[] = [
   },
   {
     slug: "backoffice-api",
-    label: "backoffice-api",
+    label: "Clients/Retailers",
     host: "backoffice-api-prod.v2.shalion.com",
     tables: [
       {
@@ -190,20 +190,6 @@ export const PATCH_SERVICES: PatchService[] = [
           { column: "status", type: "enum", options: [...STATUS] },
           { column: "default_timezone", type: "string", path: "defaultTimezone", nullable: true },
           { column: "active_locations_count", type: "number", path: "activeLocationsCount", int: true, nullable: true },
-        ],
-      },
-    ],
-  },
-  {
-    slug: "iam-api",
-    label: "iam-api",
-    host: "iam-api-prod.v2.shalion.com",
-    tables: [
-      {
-        table: "user", resource: "users", pk: "user_id",
-        fields: [
-          { column: "status", type: "enum", options: [...STATUS] },
-          { column: "default_application_id", type: "uuid", path: "defaultApplicationId", nullable: true },
         ],
       },
     ],

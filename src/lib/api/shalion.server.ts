@@ -360,7 +360,6 @@ const PATCH_PATH_PREFIXES = [
   "/v1.0/admin/manufacturers",
   "/v1.0/admin/datagroups",
   "/v1.0/admin/stores",
-  "/v1.0/admin/users",
 ];
 
 export type LiveMethod = "POST" | "DELETE" | "PATCH";
