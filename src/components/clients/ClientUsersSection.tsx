@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Th, Td, GroupedPills, Pagination, usePagination } from "@/components/seeds/ListPrimitives";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { DevTokensTrigger } from "@/components/common/DevTokensDialog";
+import { LiveConnectBar } from "@/components/common/LiveConnectBar";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import type { Client, ClientUser, DataGroup } from "@/lib/clients";
 import { nowStamp } from "@/lib/clients";
-import { isLiveCapable } from "@/lib/liveMode";
-import { syncClientUsers, applyLiveAssignments, diffMemberships, pairKey, serializeGraph, deserializeGraph, type LiveEnv, type LiveUserGraph } from "@/lib/liveUsers";
+import { getClientUsersSnapshot } from "@/lib/clientUsersSnapshot";
+import { useLiveConnection } from "@/lib/useLiveConnection";
+import { syncClientUsers, applyLiveAssignments, diffMemberships, pairKey, type LiveUserGraph } from "@/lib/liveUsers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ChevronUp, Database, LayoutGrid, Loader2, Mail, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, TriangleAlert, UserPlus, Wifi } from "lucide-react";
@@ -31,37 +32,6 @@ const MAESTRO_COLS = MAESTRO_GROUPS.flatMap((g) => g.cols);
 const MAESTRO_LABEL: Record<string, string> = Object.fromEntries(
   MAESTRO_GROUPS.flatMap((g) => g.cols.map((c) => [c.key, `${g.group} · ${c.label}`])),
 );
-
-// Persist a Live-synced graph per client + env so the real data survives reload (Set/Map are
-// stored as arrays). Keyed by client id + env; cleared via the Live bar's "Clear" action.
-const graphKey = (clientId: string, env: LiveEnv) => `bulk:liveUsers:${clientId}:${env}:v1`;
-function loadStoredGraph(clientId: string, env: LiveEnv): { graph: LiveUserGraph; syncedAt: string } | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(graphKey(clientId, env));
-    if (!raw) return null;
-    const p = JSON.parse(raw) as { graph: Parameters<typeof deserializeGraph>[0]; syncedAt: string };
-    return { graph: deserializeGraph(p.graph), syncedAt: p.syncedAt };
-  } catch {
-    return null;
-  }
-}
-function saveStoredGraph(clientId: string, env: LiveEnv, graph: LiveUserGraph, syncedAt: string) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(graphKey(clientId, env), JSON.stringify({ graph: serializeGraph(graph), syncedAt }));
-  } catch {
-    /* localStorage quota / serialization — non-fatal */
-  }
-}
-function clearStoredGraph(clientId: string, env: LiveEnv) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.removeItem(graphKey(clientId, env));
-  } catch {
-    /* ignore */
-  }
-}
 
 // Pool of existing account users that can be assigned to this client (anonymized for the mockup).
 const ASSIGNABLE_POOL = [
@@ -113,34 +83,29 @@ export function ClientUsersSection({
   const [createOpen, setCreateOpen] = useState(false);
   const [editUser, setEditUser] = useState<ClientUser | null>(null);
 
-  // One data-environment selector. "simulated" = the seeded mockup (unified permissions matrix,
-  // Create users — the public-demo experience). "develop"/"prod" = the REAL visualization-api.
-  // The real environments are only offered on the local app; the deployed/stand-alone host
-  // (Vercel — no VPN, no API reach) is locked to Simulated.
-  const liveCapable = isLiveCapable();
-  const [env, setEnv] = useState<"simulated" | LiveEnv>("simulated");
-  const live = liveCapable && env !== "simulated";
-  const liveEnv: LiveEnv = env === "prod" ? "prod" : "develop"; // meaningful only when `live`
-  const [liveGraph, setLiveGraph] = useState<LiveUserGraph | null>(null);
-  const [syncedAt, setSyncedAt] = useState<string | null>(null);
-  // Switch environments. Simulated needs no graph; switching to a real env rehydrates that
-  // env's last persisted sync (per client+env) so the pulled data survives across switches/reload.
-  const switchEnv = (e: "simulated" | LiveEnv) => {
-    setEnv(e);
-    if (e === "simulated") return;
-    const s = loadStoredGraph(client.id, e);
-    setLiveGraph(s?.graph ?? null);
-    setSyncedAt(s?.syncedAt ?? null);
-  };
-  const [syncing, setSyncing] = useState(false);
-  const [syncMsg, setSyncMsg] = useState("");
+  // Live (real-API) connection — the Massive update pattern, via the shared useLiveConnection
+  // hook + <LiveConnectBar/>: a Dev/Prod choice, a token gate, and Connect / Refresh / disconnect.
+  // When NOT connected we render the pre-fetched snapshot (so the hosted/Vercel build, where the
+  // live API isn't reachable, still shows realistic data); on localhost the user can Connect to
+  // read + write against the real visualization-api. Defaults to prod (public — the env that loads).
+  const conn = useLiveConnection<LiveUserGraph>({
+    storageKey: `pref:clientUsers:${client.id}`,
+    defaultEnv: "prod",
+    load: ({ env, token, idToken, onProgress }) =>
+      syncClientUsers({ clientName: client.account || client.name, env, token, idToken, onProgress }),
+  });
+  const live = conn.connected; // true ⇒ the grid shows real live data (else: snapshot)
+  const liveGraph = conn.data;
+  const liveEnv = conn.loadedEnv;
+  const hasToken = conn.hasToken;
   const [applying, setApplying] = useState(false);
   const [liveConfirm, setLiveConfirm] = useState<{ adds: { userId: string; dataGroupId: string }[]; removes: { relationId: string; userId: string; dataGroupId: string }[]; skipped: { userId: string; dataGroupId: string }[] } | null>(null);
-  const [token] = usePersistentState<string>("shalion:devToken", "");
-  const [idToken] = usePersistentState<string>("shalion:devIdToken", "");
-  const hasToken = !!(token && idToken);
+  // Toast the specifics after a Connect/Refresh (LiveConnectBar drives the generic flow).
+  const onSynced = (g: LiveUserGraph | null) => {
+    if (g) toast.success(`Synced ${g.users.length} users · ${g.dataGroups.length} data groups${g.truncated ? " (partial)" : ""}`);
+  };
 
-  // Effective data source: Mockup (the seeded client) or Live (the synced visualization-api graph).
+  // Effective data source: the pre-fetched snapshot (disconnected) or the live visualization-api graph.
   const liveUsersList = useMemo<ClientUser[]>(() => {
     if (!liveGraph) return [];
     return liveGraph.users.map((u) => ({
@@ -156,7 +121,7 @@ export function ClientUsersSection({
     () => (liveGraph?.dataGroups ?? []).map((d) => ({ id: d.id, name: d.name, dashboardType: "", createdAt: "", updatedAt: "" })),
     [liveGraph],
   );
-  const effUsers = live ? liveUsersList : (client.users ?? []);
+  const effUsers = live ? liveUsersList : getClientUsersSnapshot(client);
   const effDataGroups = live ? liveDgList : (client.dataGroups ?? []);
 
   const dgNameById = useMemo(() => new Map(effDataGroups.map((d) => [d.id, d.name])), [effDataGroups]);
@@ -181,7 +146,7 @@ export function ClientUsersSection({
   const rows = pg.slice(filtered);
 
   const emptyMsg = effUsers.length === 0
-    ? (live ? (liveGraph ? "No live users found for this client." : "Click “Sync” to load this client’s live users.") : "No users yet.")
+    ? (live ? "No live users found for this client (check the client name matches production)." : "No users yet.")
     : "No users match your search.";
 
   const removeUser = (id: string) => {
@@ -224,21 +189,6 @@ export function ClientUsersSection({
     toast.success(parts.length ? `Assignments & permissions — ${parts.join(", ")}` : "No changes");
   };
 
-  const doSync = async () => {
-    if (!hasToken) { toast.error("Paste your API tokens to sync"); return; }
-    setSyncing(true); setSyncMsg("Starting…");
-    try {
-      const graph = await syncClientUsers({ clientName: client.account || client.name, env: liveEnv, token, idToken, onProgress: setSyncMsg });
-      const at = nowStamp();
-      saveStoredGraph(client.id, liveEnv, graph, at); // persist so it survives reload
-      setLiveGraph(graph);
-      setSyncedAt(at);
-      toast.success(`Synced ${graph.users.length} users · ${graph.dataGroups.length} data groups${graph.truncated ? " (partial)" : ""}`);
-    } catch (e) {
-      toast.error(`Sync failed: ${(e as Error).message}`);
-    } finally { setSyncing(false); setSyncMsg(""); }
-  };
-
   // Live matrix apply: diff desired memberships vs the synced graph → confirm → real writes.
   const requestLiveApply = (existing: { id: string; dataGroupIds: string[] }[]) => {
     if (!liveGraph) return;
@@ -263,12 +213,12 @@ export function ClientUsersSection({
     const { adds, removes, skipped } = liveConfirm;
     setLiveConfirm(null); setApplying(true);
     try {
-      const results = await applyLiveAssignments({ env: liveEnv, token, idToken, adds, removes });
+      const results = await applyLiveAssignments({ env: liveEnv, token: conn.token, idToken: conn.idToken, adds, removes });
       const failed = results.filter((r) => r.status === "error").length;
       const okN = results.length - failed;
       const skippedN = skipped.length;
       toast[failed || skippedN ? "warning" : "success"](`Live ${liveEnv}: ${okN} applied${failed ? `, ${failed} failed` : ""}${skippedN ? `, ${skippedN} skipped` : ""}`);
-      await doSync();
+      onSynced(await conn.refresh()); // re-pull so the grid reflects the writes
     } catch (e) {
       toast.error(`Apply failed: ${(e as Error).message}`);
     } finally { setApplying(false); }
@@ -286,27 +236,7 @@ export function ClientUsersSection({
           {live && <span className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700"><Wifi className="h-3 w-3" /> live</span>}
         </button>
         <div className="flex flex-wrap items-center gap-2">
-          {liveCapable ? (
-            // Live options ordered Prod-first: prod is PUBLIC (no VPN) and the pasted tokens are
-            // prod tokens, so it's the env that actually loads — same as Massive update (defaults
-            // prod). Develop is the VPN-only env that needs a separate develop token.
-            <div className="inline-flex rounded-md border border-border p-0.5" role="group" aria-label="Data environment">
-              {([
-                ["simulated", "Simulated", Database, "Seeded mockup data (no live API)."],
-                ["prod", "Prod", Wifi, "Real production data — public, no VPN needed (paste your prod token)."],
-                ["develop", "Dev", Wifi, "Develop: a separate environment — needs a develop token + corporate VPN (a prod token won't work)."],
-              ] as const).map(([e, label, Icon, tip]) => (
-                <button key={e} type="button" title={tip} onClick={() => switchEnv(e)}
-                  className={cn("inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-semibold transition-colors", env === e ? (e === "prod" ? "bg-rose-600 text-white" : e === "develop" ? "bg-emerald-600 text-white" : "bg-[var(--sidebar-active-fg)] text-white") : "text-muted-foreground hover:text-foreground")}>
-                  <Icon className="h-3.5 w-3.5" /> {label}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <span className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground" title="The hosted demo always uses simulated data — no VPN / live-API access from here.">
-              <Database className="h-3.5 w-3.5" /> Simulated
-            </span>
-          )}
+          <LiveConnectBar conn={conn} serviceLabel="visualization-api" onData={onSynced} />
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -327,28 +257,12 @@ export function ClientUsersSection({
         </div>
       </div>
 
-      {live && (
-        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-sky-300 bg-sky-50 px-4 py-2.5 text-sm">
-          <span className="inline-flex items-center gap-1.5 font-semibold text-sky-900"><Wifi className="h-4 w-4" /> Live · visualization-api · <span className={cn("rounded px-1.5 py-0.5 text-[11px] uppercase tracking-wide text-white", liveEnv === "prod" ? "bg-rose-600" : "bg-emerald-600")}>{liveEnv === "prod" ? "Prod" : "Develop"}</span></span>
-          {!hasToken && <span className="inline-flex items-center gap-1.5 text-amber-700">Token required <DevTokensTrigger /></span>}
-          <Button size="sm" variant="outline" className="h-7 gap-1.5" disabled={!hasToken || syncing} onClick={doSync}>
-            {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Sync from {liveEnv}
-          </Button>
-          {syncing && syncMsg && <span className="text-xs text-sky-900/70">{syncMsg}</span>}
-          {!syncing && liveGraph && (
-            <span className="inline-flex items-center gap-2 text-xs text-sky-900/70">
-              <span>{liveGraph.users.length} users · {liveGraph.dataGroups.length} DGs{liveGraph.matchedClients.length ? ` · ${liveGraph.matchedClients.join(", ")}` : ""}{liveGraph.truncated ? " · partial" : ""}</span>
-              {syncedAt && <span className="text-sky-900/60">· saved {syncedAt}</span>}
-              <button type="button" onClick={() => { clearStoredGraph(client.id, liveEnv); setLiveGraph(null); setSyncedAt(null); }} className="font-medium text-sky-700 hover:underline">Clear</button>
-            </span>
-          )}
-          <span className="w-full text-xs text-sky-900/70">
-            Synced data is saved locally (this browser) and reloads automatically. Reads + real user↔data-group assigns hit <span className="font-medium">{liveEnv}</span>.{" "}
-            {liveEnv === "develop"
-              ? "Develop is a separate environment — it needs a develop access + id token and the corporate VPN (a prod token won’t authenticate here)."
-              : "Prod is public — your prod token works without VPN (same as Massive update)."}{" "}
-            Creating users stays in Simulated for now.
-          </span>
+      {live && liveGraph && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-sky-300 bg-sky-50 px-4 py-2 text-xs text-sky-900/80">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-sky-900"><Wifi className="h-3.5 w-3.5" /> Live · visualization-api · <span className={cn("rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white", liveEnv === "prod" ? "bg-rose-600" : "bg-emerald-600")}>{liveEnv}</span></span>
+          <span>{liveGraph.users.length} users · {liveGraph.dataGroups.length} data groups{liveGraph.matchedClients.length ? ` · ${liveGraph.matchedClients.join(", ")}` : ""}{liveGraph.truncated ? " · partial" : ""}</span>
+          {conn.connectedAt && <span className="text-sky-900/60">· connected {conn.connectedAt}</span>}
+          <span className="w-full text-sky-900/70">Real reads + user↔data-group assigns hit <span className="font-medium">{liveEnv}</span>. Disconnect to return to the snapshot. Creating users stays local.</span>
         </div>
       )}
 
