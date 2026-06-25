@@ -338,9 +338,6 @@ export function ClientUsersSection({
             getLabel={(id) => dgNameById.get(id) ?? id}
             searchable
           />
-          <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={!sorted.length} onClick={exportUsersCsv} title="Export all matching users (CSV)">
-            <Download className="h-3.5 w-3.5" /> Export CSV
-          </Button>
           {!live && (
             <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setCreateOpen(true)}>
               <Plus className="h-3.5 w-3.5" /> Create users
@@ -348,6 +345,9 @@ export function ClientUsersSection({
           )}
           <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={live && (!liveGraph || !hasToken || applying || permLoading)} onClick={() => (live ? openLiveAssign() : setAssignOpen(true))}>
             {permLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />} Assign &amp; permissions
+          </Button>
+          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" disabled={!sorted.length} onClick={exportUsersCsv} title="Export all matching users (CSV)" aria-label="Export CSV">
+            <Download className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
