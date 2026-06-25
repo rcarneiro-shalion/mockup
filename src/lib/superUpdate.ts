@@ -403,6 +403,163 @@ export function parseSuperUpdateCsv(text: string, table: PatchTable, field: Patc
   return { rows, total: rows.length, valid: rows.length - errors, errors, nulls, headerSkipped };
 }
 
+// ---------- join tables (junctions): link / unlink ----------
+
+/**
+ * A many-to-many junction patched via link (POST /{resource}/batch with [{leftKey,
+ * rightKey}]) / unlink (DELETE /{resource}/{relationId}). CSV is two id columns. The
+ * job-seeds shape is verified from the scripts; job-locations / job-timeframes follow the
+ * same convention (verify on Dev).
+ */
+export type PatchJunction = {
+  key: string;
+  label: string;
+  serviceSlug: string;
+  resource: string;
+  leftCol: string;   // CSV header / display, e.g. "job_id"
+  rightCol: string;  // e.g. "seed_id"
+  leftKey: string;   // payload key, e.g. "jobId"
+  rightKey: string;  // e.g. "seedId"
+  confirmed: boolean;
+};
+
+export const PATCH_JUNCTIONS: PatchJunction[] = [
+  { key: "job_seed", label: "Job ↔ Seed", serviceSlug: "ecometry-tasks-api", resource: "job-seeds", leftCol: "job_id", rightCol: "seed_id", leftKey: "jobId", rightKey: "seedId", confirmed: true },
+  { key: "job_location", label: "Job ↔ Location", serviceSlug: "ecometry-tasks-api", resource: "job-locations", leftCol: "job_id", rightCol: "location_id", leftKey: "jobId", rightKey: "locationId", confirmed: false },
+  { key: "job_timeframe", label: "Job ↔ Timeframe", serviceSlug: "ecometry-tasks-api", resource: "job-timeframes", leftCol: "job_id", rightCol: "timeframe_id", leftKey: "jobId", rightKey: "timeframeId", confirmed: false },
+];
+
+export type JunctionOp = "link" | "unlink";
+
+const BARE_ID = /^[A-Za-z0-9_-]+$/;
+
+export type JunctionRow = { line: number; left: string; right: string; error?: string };
+export type JunctionParseResult = { rows: JunctionRow[]; total: number; valid: number; errors: number; headerSkipped: boolean };
+
+/** Parse a junction CSV: two id columns (comma / tab / space), both validated as bare ids. */
+export function parseJunctionCsv(text: string, j: PatchJunction): JunctionParseResult {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const rows: JunctionRow[] = [];
+  let headerSkipped = false;
+  lines.forEach((line, idx) => {
+    const cells = splitRow(line);
+    const left = (cells[0]?.v ?? "").trim();
+    const right = (cells[1]?.v ?? "").trim();
+    if (idx === 0) {
+      // Conservative (mirrors the field parser): only the LEFT cell, never inferred from
+      // the value — a real right id could otherwise look header-ish.
+      const c0 = left.toLowerCase();
+      if (c0 === j.leftCol.toLowerCase() || c0 === "id") { headerSkipped = true; return; }
+    }
+    if (!left || !right) { rows.push({ line: idx + 1, left, right, error: `expected two ids (${j.leftCol} ${j.rightCol})` }); return; }
+    if (!BARE_ID.test(left)) { rows.push({ line: idx + 1, left, right, error: `invalid ${j.leftCol} — expected a bare id` }); return; }
+    if (!BARE_ID.test(right)) { rows.push({ line: idx + 1, left, right, error: `invalid ${j.rightCol} — expected a bare id` }); return; }
+    rows.push({ line: idx + 1, left, right });
+  });
+  const errors = rows.filter((r) => r.error).length;
+  return { rows, total: rows.length, valid: rows.length - errors, errors, headerSkipped };
+}
+
+/** Body for a link batch: array of `{<leftKey>, <rightKey>}` (mirrors bulk_job_seed.js). */
+export function junctionLinkBody(j: PatchJunction, pairs: { left: string; right: string }[]): Record<string, string>[] {
+  return pairs.map((p) => ({ [j.leftKey]: p.left, [j.rightKey]: p.right }));
+}
+
+/** Unwrap a create/list response to an array of rows (handles `[...]`, `{data}`, `{items}`, `{content}`, single obj). */
+export function unwrapRows(data: unknown): Record<string, unknown>[] {
+  if (Array.isArray(data)) return data as Record<string, unknown>[];
+  if (data && typeof data === "object") {
+    const o = data as Record<string, unknown>;
+    for (const k of ["data", "items", "content", "results"]) if (Array.isArray(o[k])) return o[k] as Record<string, unknown>[];
+    if (typeof o.id === "string") return [o]; // single created row
+  }
+  return [];
+}
+
+// Unlink is BY RELATION ID (mirrors removeJobSeeds.js: DELETE /{resource}/{id}); the CSV is
+// a single column of relation ids, validated as bare ids.
+export type RelationIdRow = { line: number; id: string; error?: string };
+export type RelationIdParseResult = { rows: RelationIdRow[]; total: number; valid: number; errors: number; headerSkipped: boolean };
+
+export function parseRelationIds(text: string): RelationIdParseResult {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const rows: RelationIdRow[] = [];
+  let headerSkipped = false;
+  lines.forEach((line, idx) => {
+    const id = (splitRow(line)[0]?.v ?? "").trim(); // first token only (ignore trailing cols)
+    if (idx === 0 && (id.toLowerCase() === "id" || id.toLowerCase() === "relation_id")) { headerSkipped = true; return; }
+    if (!id) { rows.push({ line: idx + 1, id: "", error: "missing relation id" }); return; }
+    if (!BARE_ID.test(id)) { rows.push({ line: idx + 1, id, error: "invalid relation id — expected a bare id" }); return; }
+    rows.push({ line: idx + 1, id });
+  });
+  const errors = rows.filter((r) => r.error).length;
+  return { rows, total: rows.length, valid: rows.length - errors, errors, headerSkipped };
+}
+
+/** Read a relation row's left/right id — handles flat (`jobId`) and nested (`job:{id}`). */
+export function relationSideId(row: unknown, payloadKey: string): string | undefined {
+  if (!row || typeof row !== "object") return undefined;
+  const r = row as Record<string, unknown>;
+  if (typeof r[payloadKey] === "string") return r[payloadKey] as string;
+  const obj = r[payloadKey.replace(/Id$/, "")]; // jobId → job
+  if (obj && typeof obj === "object" && typeof (obj as Record<string, unknown>).id === "string") {
+    return (obj as Record<string, unknown>).id as string;
+  }
+  return undefined;
+}
+
+/** Find the relation row matching a pair (by left+right id) to capture/resolve its `id`. */
+export function findRelation(rows: unknown[], j: PatchJunction, left: string, right: string): Record<string, unknown> | undefined {
+  return rows.find((r) => relationSideId(r, j.leftKey) === left && relationSideId(r, j.rightKey) === right) as
+    | Record<string, unknown>
+    | undefined;
+}
+
+export type JunctionRowResult = {
+  left: string;
+  right: string;
+  relationId?: string; // captured on link (drives unlink rollback) / the id deleted on unlink
+  status: RowStatus;
+  error?: string;
+  warn?: string; // e.g. linked OK but the relation id couldn't be captured → no in-tool unlink
+};
+
+export type SuperUpdateJunctionBatch = {
+  id: string;
+  when: string;
+  kind: "apply" | "restore";
+  mode: "junction";
+  op: JunctionOp;
+  env: PatchEnv;
+  junctionKey: string;
+  junctionLabel: string;
+  resource: string;
+  leftCol: string;
+  rightCol: string;
+  rows: JunctionRowResult[];
+  applied: number;
+  failed: number;
+};
+
+export type AnyBatch = SuperUpdateBatch | SuperUpdateJunctionBatch;
+export function isJunctionBatch(b: AnyBatch): b is SuperUpdateJunctionBatch {
+  return (b as SuperUpdateJunctionBatch).mode === "junction";
+}
+
+/**
+ * Rollback CSV for a junction batch, re-runnable in the OPPOSITE op:
+ *  - a LINK batch → the created relation ids (one column), to re-run as Unlink (by id);
+ *  - an UNLINK batch → the pairs (leftCol,rightCol), to re-run as Link.
+ */
+export function junctionRollbackCsv(batch: SuperUpdateJunctionBatch): string {
+  const ok = batch.rows.filter((r) => r.status === "ok");
+  if (batch.op === "link") {
+    const lines = ok.filter((r) => r.relationId).map((r) => r.relationId as string);
+    return ["relation_id", ...lines].join("\n");
+  }
+  return [`${batch.leftCol},${batch.rightCol}`, ...ok.map((r) => `${r.left},${r.right}`)].join("\n");
+}
+
 // ---------- real run: proxy mapping + rollback history ----------
 
 /** Live-proxy service key (live.functions) for a catalogue service — strips `-api`. */
@@ -434,6 +591,7 @@ export type SuperUpdateBatch = {
   id: string;
   when: string;
   kind: "apply" | "restore";
+  mode?: "field"; // discriminates from junction batches in the shared history
   env: PatchEnv;
   serviceSlug: string;
   serviceLabel: string;

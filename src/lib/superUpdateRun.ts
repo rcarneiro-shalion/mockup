@@ -13,11 +13,17 @@ import {
   buildPayload,
   buildMergedBody,
   isNestedField,
+  junctionLinkBody,
+  findRelation,
+  relationSideId,
+  unwrapRows,
   type PatchService,
   type PatchTable,
   type PatchField,
   type PatchEnv,
   type SuperUpdateRowResult,
+  type PatchJunction,
+  type JunctionRowResult,
 } from "./superUpdate";
 
 type LiveEnv = "develop" | "prod";
@@ -150,4 +156,113 @@ export async function restoreSuperUpdate(input: {
     rows: input.rows.map((r) => ({ pk: r.pk, value: r.oldValue })),
     onProgress: input.onProgress,
   });
+}
+
+// ---------- join tables (junctions): link / unlink ----------
+
+const LINK_BATCH = 100;
+const BARE_ID = /^[A-Za-z0-9_-]+$/;
+
+type JAuth = { token?: string; idToken?: string; env: LiveEnv };
+const jauth = (token: string, idToken: string, env: PatchEnv): JAuth => ({ token: token || undefined, idToken: idToken || undefined, env: toLiveEnv(env) });
+
+// Link a single pair via POST /batch with a 1-element body — accurate per-pair result +
+// relation-id capture. Used as the chunk fallback so a failed/409 chunk never orphans rows.
+async function linkOne(svc: string, base: string, auth: JAuth, j: PatchJunction, p: { left: string; right: string }): Promise<JunctionRowResult> {
+  try {
+    const res = await mutateLive({ data: { service: svc, path: `${base}/batch`, method: "POST", body: junctionLinkBody(j, [p]), ...auth } });
+    if (!res.ok) {
+      // 409 = the pair already exists (not created by us) → leave it; never roll it back.
+      if (res.status === 409) return { left: p.left, right: p.right, status: "ok", warn: "already linked (pre-existing) — not added; excluded from rollback" };
+      return { left: p.left, right: p.right, status: "error", error: res.error ?? `link failed (${res.status})` };
+    }
+    const created = unwrapRows(res.data);
+    const rel = findRelation(created, j, p.left, p.right) ?? (created.length === 1 ? created[0] : undefined);
+    const relationId = rel && typeof rel.id === "string" ? rel.id : undefined;
+    return relationId
+      ? { left: p.left, right: p.right, relationId, status: "ok" }
+      : { left: p.left, right: p.right, status: "ok", warn: "linked, but relation id not captured — in-tool unlink unavailable (keep the Rollback CSV)" };
+  } catch (e) {
+    return { left: p.left, right: p.right, status: "error", error: `link error: ${(e as Error).message}` };
+  }
+}
+
+/** Link pairs via POST /{resource}/batch (chunks of 100). A failed/409 chunk falls back to
+ *  per-pair POSTs so each pair gets an accurate result + captured id (no silent orphans). */
+export async function linkJunction(input: {
+  junction: PatchJunction; env: PatchEnv; token: string; idToken: string;
+  pairs: { left: string; right: string }[]; onProgress?: (d: number, t: number, p: RunPhase) => void;
+}): Promise<JunctionRowResult[]> {
+  const { junction: j, env, token, idToken, pairs, onProgress } = input;
+  const svc = j.serviceSlug.replace(/-api$/, "");
+  const base = `/v1.0/admin/${j.resource}`;
+  const auth = jauth(token, idToken, env);
+  const out: JunctionRowResult[] = [];
+  let done = 0;
+  for (let i = 0; i < pairs.length; i += LINK_BATCH) {
+    const chunk = pairs.slice(i, i + LINK_BATCH);
+    let res: Awaited<ReturnType<typeof mutateLive>> | null = null;
+    try { res = await mutateLive({ data: { service: svc, path: `${base}/batch`, method: "POST", body: junctionLinkBody(j, chunk), ...auth } }); } catch { res = null; }
+    if (res && res.ok) {
+      const created = unwrapRows(res.data);
+      for (const p of chunk) {
+        const rel = findRelation(created, j, p.left, p.right);
+        const relationId = rel && typeof rel.id === "string" ? rel.id : undefined;
+        out.push(relationId
+          ? { left: p.left, right: p.right, relationId, status: "ok" }
+          : { left: p.left, right: p.right, status: "ok", warn: "linked, but relation id not captured — in-tool unlink unavailable (keep the Rollback CSV)" });
+      }
+    } else {
+      // The chunk failed (or returned 409) and MAY have partially applied — retry per pair
+      // so each is definitively attempted and its created id captured. No blanket orphaning.
+      for (const p of chunk) out.push(await linkOne(svc, base, auth, j, p));
+    }
+    done += chunk.length;
+    onProgress?.(done, pairs.length, "apply");
+  }
+  return out;
+}
+
+/** Unlink BY RELATION ID (mirrors removeJobSeeds.js): GET /{resource}/{id} to snapshot the
+ *  pair (for re-link rollback) — skip if it can't be read — then DELETE /{resource}/{id}. */
+export async function unlinkJunction(input: {
+  junction: PatchJunction; env: PatchEnv; token: string; idToken: string;
+  relationIds: string[]; onProgress?: (d: number, t: number, p: RunPhase) => void;
+}): Promise<JunctionRowResult[]> {
+  const { junction: j, env, token, idToken, relationIds, onProgress } = input;
+  const svc = j.serviceSlug.replace(/-api$/, "");
+  const base = `/v1.0/admin/${j.resource}`;
+  const auth = jauth(token, idToken, env);
+  let done = 0;
+  return pool(relationIds, async (id) => {
+    try {
+      if (!BARE_ID.test(id)) return { left: "", right: "", relationId: id, status: "error" as const, error: "invalid relation id" };
+      const got = await fetchLive({ data: { service: svc, path: `${base}/${id}`, ...auth } });
+      if (!got.ok) return { left: "", right: "", relationId: id, status: "error" as const, error: got.status === 404 ? "relation not found (already unlinked)" : got.error ?? `lookup failed (${got.status})` };
+      const left = relationSideId(got.data, j.leftKey) ?? "";
+      const right = relationSideId(got.data, j.rightKey) ?? "";
+      const del = await mutateLive({ data: { service: svc, path: `${base}/${id}`, method: "DELETE", ...auth } });
+      return del.ok
+        ? { left, right, relationId: id, status: "ok" as const }
+        : { left, right, relationId: id, status: "error" as const, error: del.error ?? `unlink failed (${del.status})` };
+    } catch (e) {
+      return { left: "", right: "", relationId: id, status: "error" as const, error: `unlink error: ${(e as Error).message}` };
+    } finally {
+      onProgress?.(++done, relationIds.length, "apply");
+    }
+  });
+}
+
+/** Invert a junction run: undo a Link by unlinking its captured relation ids; undo an
+ *  Unlink by re-linking the snapshotted pairs. */
+export async function restoreJunction(input: {
+  junction: PatchJunction; op: "link" | "unlink"; env: PatchEnv; token: string; idToken: string;
+  rows: JunctionRowResult[]; onProgress?: (d: number, t: number, p: RunPhase) => void;
+}): Promise<JunctionRowResult[]> {
+  const { junction, op, env, token, idToken, rows, onProgress } = input;
+  if (op === "link") {
+    const relationIds = rows.map((r) => r.relationId).filter((x): x is string => !!x);
+    return unlinkJunction({ junction, env, token, idToken, relationIds, onProgress });
+  }
+  return linkJunction({ junction, env, token, idToken, pairs: rows.filter((r) => r.left && r.right).map((r) => ({ left: r.left, right: r.right })), onProgress });
 }

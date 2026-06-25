@@ -309,13 +309,35 @@ export async function aggregateSectionPositions(args: {
 // assignments (mirrors the bulks_scripts: datagroup-dashboardsections,
 // datagroup-retailer-dashboardsections, retailer-dashboardsections,
 // datagroup-retailers). Everything else is rejected before any network call.
-// POST / DELETE are limited to the assignment endpoints (Massive update).
+// POST / DELETE are limited to the assignment endpoints (Massive update) + the Super
+// Update junction (join-table) endpoints: link = POST /{junction}/batch, unlink = DELETE
+// /{junction}/{relationId} (mirrors bulk_job_seed.js / removeJobSeeds.js).
 const WRITE_PATH_PREFIXES = [
   "/v1.0/admin/datagroup-dashboardsections",
   "/v1.0/admin/datagroup-retailer-dashboardsections",
   "/v1.0/admin/retailer-dashboardsections",
   "/v1.0/admin/datagroup-retailers",
 ];
+// Super Update junction (join-table) endpoints are gated to TWO exact shapes only
+// (not the whole subtree): link = POST /{junction}/batch, unlink = DELETE
+// /{junction}/{relationId} where the relationId is a single bare id. This keeps the
+// blast radius to the documented operations and blocks any other verb/path shape.
+const JUNCTION_WRITE_PREFIXES = [
+  "/v1.0/admin/job-seeds",
+  "/v1.0/admin/job-locations",
+  "/v1.0/admin/job-timeframes",
+];
+const BARE_ID_RE = /^[A-Za-z0-9_-]+$/;
+function junctionWriteAllowed(method: LiveMethod, pathOnly: string): boolean {
+  for (const p of JUNCTION_WRITE_PREFIXES) {
+    if (method === "POST" && pathOnly === `${p}/batch`) return true;
+    if (method === "DELETE" && pathOnly.startsWith(`${p}/`)) {
+      const id = pathOnly.slice(p.length + 1);
+      if (id !== "batch" && BARE_ID_RE.test(id)) return true;
+    }
+  }
+  return false;
+}
 // PATCH is limited to:
 //  - section CONTENT (/dashboardsections) — Section editor live save (snapshots first);
 //  - the `position` of section ASSIGNMENTS (retailer-/datagroup-dashboardsections) —
@@ -373,8 +395,12 @@ export async function mutateShalion(args: {
   if (args.method === "PATCH") {
     if (!PATCH_PATH_PREFIXES.some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`)))
       return { ok: false, status: 0, data: null, hadToken, error: `PATCH is not allowed on "${pathOnly}".` };
-  } else if (!WRITE_PATH_PREFIXES.some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`))) {
-    return { ok: false, status: 0, data: null, hadToken, error: `Path "${pathOnly}" is not a writable endpoint.` };
+  } else {
+    // POST/DELETE: dashboard-assignment endpoints (Massive update, broad subtree) OR the
+    // Super Update junction endpoints (two exact shapes only).
+    const assignmentOk = WRITE_PATH_PREFIXES.some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`));
+    if (!assignmentOk && !junctionWriteAllowed(args.method, pathOnly))
+      return { ok: false, status: 0, data: null, hadToken, error: `Path "${pathOnly}" is not a writable endpoint.` };
   }
 
   const token = resolveToken(args.token);
