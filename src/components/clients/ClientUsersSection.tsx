@@ -98,7 +98,8 @@ function dataGroupColorClass(id: string): string {
  * data groups of THIS client (cross-client memberships, e.g. for internal CS/Sales staff,
  * are intentionally not shown here; that is a future IAM-module view).
  */
-// Mockup + Live (real visualization-api) dual-mode client Users × data-groups section.
+// Client Users × data-groups section with one environment selector: Simulated (seeded mockup)
+// · Dev · Prod (the real visualization-api). Dev/Prod are localhost-only; Vercel locks Simulated.
 export function ClientUsersSection({
   client,
   set,
@@ -112,13 +113,25 @@ export function ClientUsersSection({
   const [createOpen, setCreateOpen] = useState(false);
   const [editUser, setEditUser] = useState<ClientUser | null>(null);
 
-  // Live (real-API) mode — only offered on the local app; the deployed/stand-alone host stays Mockup.
+  // One data-environment selector. "simulated" = the seeded mockup (unified permissions matrix,
+  // Create users — the public-demo experience). "develop"/"prod" = the REAL visualization-api.
+  // The real environments are only offered on the local app; the deployed/stand-alone host
+  // (Vercel — no VPN, no API reach) is locked to Simulated.
   const liveCapable = isLiveCapable();
-  const [mode, setMode] = useState<"mockup" | "live">("mockup");
-  const live = liveCapable && mode === "live";
-  const [liveEnv, setLiveEnv] = useState<LiveEnv>("develop");
-  const [liveGraph, setLiveGraph] = useState<LiveUserGraph | null>(() => loadStoredGraph(client.id, "develop")?.graph ?? null);
-  const [syncedAt, setSyncedAt] = useState<string | null>(() => loadStoredGraph(client.id, "develop")?.syncedAt ?? null);
+  const [env, setEnv] = useState<"simulated" | LiveEnv>("simulated");
+  const live = liveCapable && env !== "simulated";
+  const liveEnv: LiveEnv = env === "prod" ? "prod" : "develop"; // meaningful only when `live`
+  const [liveGraph, setLiveGraph] = useState<LiveUserGraph | null>(null);
+  const [syncedAt, setSyncedAt] = useState<string | null>(null);
+  // Switch environments. Simulated needs no graph; switching to a real env rehydrates that
+  // env's last persisted sync (per client+env) so the pulled data survives across switches/reload.
+  const switchEnv = (e: "simulated" | LiveEnv) => {
+    setEnv(e);
+    if (e === "simulated") return;
+    const s = loadStoredGraph(client.id, e);
+    setLiveGraph(s?.graph ?? null);
+    setSyncedAt(s?.syncedAt ?? null);
+  };
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
   const [applying, setApplying] = useState(false);
@@ -273,15 +286,19 @@ export function ClientUsersSection({
           {live && <span className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700"><Wifi className="h-3 w-3" /> live</span>}
         </button>
         <div className="flex flex-wrap items-center gap-2">
-          {liveCapable && (
-            <div className="inline-flex rounded-md border border-border p-0.5" role="group" aria-label="Data source">
-              {([["mockup", "Mockup", Database], ["live", "Live", Wifi]] as const).map(([m, label, Icon]) => (
-                <button key={m} type="button" onClick={() => setMode(m)}
-                  className={cn("inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-semibold transition-colors", mode === m ? (m === "live" ? "bg-sky-600 text-white" : "bg-[var(--sidebar-active-fg)] text-white") : "text-muted-foreground hover:text-foreground")}>
+          {liveCapable ? (
+            <div className="inline-flex rounded-md border border-border p-0.5" role="group" aria-label="Data environment">
+              {([["simulated", "Simulated", Database], ["develop", "Dev", Wifi], ["prod", "Prod", Wifi]] as const).map(([e, label, Icon]) => (
+                <button key={e} type="button" onClick={() => switchEnv(e)}
+                  className={cn("inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-semibold transition-colors", env === e ? (e === "prod" ? "bg-rose-600 text-white" : e === "develop" ? "bg-emerald-600 text-white" : "bg-[var(--sidebar-active-fg)] text-white") : "text-muted-foreground hover:text-foreground")}>
                   <Icon className="h-3.5 w-3.5" /> {label}
                 </button>
               ))}
             </div>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground" title="The hosted demo always uses simulated data — no VPN / live-API access from here.">
+              <Database className="h-3.5 w-3.5" /> Simulated
+            </span>
           )}
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -305,15 +322,7 @@ export function ClientUsersSection({
 
       {live && (
         <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-sky-300 bg-sky-50 px-4 py-2.5 text-sm">
-          <span className="inline-flex items-center gap-1.5 font-semibold text-sky-900"><Wifi className="h-4 w-4" /> Live · visualization-api</span>
-          <div className="inline-flex rounded-md border border-sky-300 bg-white/60 p-0.5">
-            {(["develop", "prod"] as const).map((e) => (
-              <button key={e} type="button" onClick={() => { setLiveEnv(e); const s = loadStoredGraph(client.id, e); setLiveGraph(s?.graph ?? null); setSyncedAt(s?.syncedAt ?? null); }}
-                className={cn("rounded px-2 py-0.5 text-xs font-semibold transition-colors", liveEnv === e ? (e === "prod" ? "bg-rose-600 text-white" : "bg-emerald-600 text-white") : "text-sky-900/70 hover:text-sky-900")}>
-                {e === "prod" ? "Prod" : "Develop"}
-              </button>
-            ))}
-          </div>
+          <span className="inline-flex items-center gap-1.5 font-semibold text-sky-900"><Wifi className="h-4 w-4" /> Live · visualization-api · <span className={cn("rounded px-1.5 py-0.5 text-[11px] uppercase tracking-wide text-white", liveEnv === "prod" ? "bg-rose-600" : "bg-emerald-600")}>{liveEnv === "prod" ? "Prod" : "Develop"}</span></span>
           {!hasToken && <span className="inline-flex items-center gap-1.5 text-amber-700">Token required <DevTokensTrigger /></span>}
           <Button size="sm" variant="outline" className="h-7 gap-1.5" disabled={!hasToken || syncing} onClick={doSync}>
             {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Sync from {liveEnv}
