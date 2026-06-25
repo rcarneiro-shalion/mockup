@@ -287,9 +287,16 @@ export function ClientUsersSection({
         </button>
         <div className="flex flex-wrap items-center gap-2">
           {liveCapable ? (
+            // Live options ordered Prod-first: prod is PUBLIC (no VPN) and the pasted tokens are
+            // prod tokens, so it's the env that actually loads — same as Massive update (defaults
+            // prod). Develop is the VPN-only env that needs a separate develop token.
             <div className="inline-flex rounded-md border border-border p-0.5" role="group" aria-label="Data environment">
-              {([["simulated", "Simulated", Database], ["develop", "Dev", Wifi], ["prod", "Prod", Wifi]] as const).map(([e, label, Icon]) => (
-                <button key={e} type="button" onClick={() => switchEnv(e)}
+              {([
+                ["simulated", "Simulated", Database, "Seeded mockup data (no live API)."],
+                ["prod", "Prod", Wifi, "Real production data — public, no VPN needed (paste your prod token)."],
+                ["develop", "Dev", Wifi, "Develop: a separate environment — needs a develop token + corporate VPN (a prod token won't work)."],
+              ] as const).map(([e, label, Icon, tip]) => (
+                <button key={e} type="button" title={tip} onClick={() => switchEnv(e)}
                   className={cn("inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-semibold transition-colors", env === e ? (e === "prod" ? "bg-rose-600 text-white" : e === "develop" ? "bg-emerald-600 text-white" : "bg-[var(--sidebar-active-fg)] text-white") : "text-muted-foreground hover:text-foreground")}>
                   <Icon className="h-3.5 w-3.5" /> {label}
                 </button>
@@ -335,7 +342,13 @@ export function ClientUsersSection({
               <button type="button" onClick={() => { clearStoredGraph(client.id, liveEnv); setLiveGraph(null); setSyncedAt(null); }} className="font-medium text-sky-700 hover:underline">Clear</button>
             </span>
           )}
-          <span className="w-full text-xs text-sky-900/70">Synced data is saved locally (this browser) and reloads automatically. Reads + real user↔data-group assigns hit <span className="font-medium">{liveEnv}</span>{liveEnv === "develop" ? " (corporate-VPN only)" : ""}. Creating users stays in Mockup for now.</span>
+          <span className="w-full text-xs text-sky-900/70">
+            Synced data is saved locally (this browser) and reloads automatically. Reads + real user↔data-group assigns hit <span className="font-medium">{liveEnv}</span>.{" "}
+            {liveEnv === "develop"
+              ? "Develop is a separate environment — it needs a develop access + id token and the corporate VPN (a prod token won’t authenticate here)."
+              : "Prod is public — your prod token works without VPN (same as Massive update)."}{" "}
+            Creating users stays in Simulated for now.
+          </span>
         </div>
       )}
 

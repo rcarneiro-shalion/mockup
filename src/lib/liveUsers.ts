@@ -117,7 +117,9 @@ async function pageAll(
   const out: Record<string, unknown>[] = [];
   let page = 0;
   for (; page < maxPages; page++) {
-    const res = await fetchLive({ data: { service: "visualization", path: path(page), token: auth.token, idToken: auth.idToken, env: auth.env } });
+    const req = { data: { service: "visualization", path: path(page), token: auth.token, idToken: auth.idToken, env: auth.env } };
+    let res = await fetchLive(req);
+    if (!res.ok) res = await fetchLive(req); // one retry (mirrors Massive update's fetchPage)
     if (!res.ok) {
       if (page === 0) throw new Error(res.error || `fetch failed (${res.status})`);
       break; // partial; stop on a mid-stream error
