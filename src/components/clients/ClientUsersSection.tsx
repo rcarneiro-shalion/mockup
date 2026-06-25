@@ -3,11 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Th, Td, GroupedPills, Pagination, usePagination } from "@/components/seeds/ListPrimitives";
 import { FilterChip } from "@/components/seeds/FilterChip";
+import { DevTokensTrigger } from "@/components/common/DevTokensDialog";
+import { usePersistentState } from "@/hooks/usePersistentState";
 import type { Client, ClientUser, DataGroup } from "@/lib/clients";
 import { nowStamp } from "@/lib/clients";
+import { isLiveCapable } from "@/lib/liveMode";
+import { syncClientUsers, applyLiveAssignments, diffMemberships, pairKey, type LiveEnv, type LiveUserGraph } from "@/lib/liveUsers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ChevronUp, LayoutGrid, Mail, Pencil, Plus, Search, Trash2, UserPlus } from "lucide-react";
+import { ChevronUp, Database, LayoutGrid, Loader2, Mail, Pencil, Plus, RefreshCw, Search, Trash2, TriangleAlert, UserPlus, Wifi } from "lucide-react";
 
 // Pool of existing account users that can be assigned to this client (anonymized for the mockup).
 const ASSIGNABLE_POOL = [
@@ -44,6 +48,7 @@ function dataGroupColorClass(id: string): string {
  * data groups of THIS client (cross-client memberships, e.g. for internal CS/Sales staff,
  * are intentionally not shown here; that is a future IAM-module view).
  */
+// Mockup + Live (real visualization-api) dual-mode client Users × data-groups section.
 export function ClientUsersSection({
   client,
   set,
@@ -57,11 +62,42 @@ export function ClientUsersSection({
   const [createOpen, setCreateOpen] = useState(false);
   const [editUser, setEditUser] = useState<ClientUser | null>(null);
 
-  const users = client.users ?? [];
-  const dataGroups = client.dataGroups ?? [];
-  const dgNameById = useMemo(() => new Map(dataGroups.map((d) => [d.id, d.name])), [dataGroups]);
-  const dgColorByName = useMemo(() => new Map(dataGroups.map((d) => [d.name, dataGroupColorClass(d.id)])), [dataGroups]);
-  // Resolve a user's memberships to names within THIS client only (unknown / other-client ids dropped).
+  // Live (real-API) mode — only offered on the local app; the deployed/stand-alone host stays Mockup.
+  const liveCapable = isLiveCapable();
+  const [mode, setMode] = useState<"mockup" | "live">("mockup");
+  const live = liveCapable && mode === "live";
+  const [liveEnv, setLiveEnv] = useState<LiveEnv>("develop");
+  const [liveGraph, setLiveGraph] = useState<LiveUserGraph | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState("");
+  const [applying, setApplying] = useState(false);
+  const [liveConfirm, setLiveConfirm] = useState<{ adds: { userId: string; dataGroupId: string }[]; removes: { relationId: string; userId: string; dataGroupId: string }[]; skipped: { userId: string; dataGroupId: string }[] } | null>(null);
+  const [token] = usePersistentState<string>("shalion:devToken", "");
+  const [idToken] = usePersistentState<string>("shalion:devIdToken", "");
+  const hasToken = !!(token && idToken);
+
+  // Effective data source: Mockup (the seeded client) or Live (the synced visualization-api graph).
+  const liveUsersList = useMemo<ClientUser[]>(() => {
+    if (!liveGraph) return [];
+    return liveGraph.users.map((u) => ({
+      id: u.id,
+      email: u.email,
+      status: u.isActive ? "Active" : "Inactive",
+      dataGroupIds: liveGraph.dataGroups.filter((d) => liveGraph.memberships.has(pairKey(u.id, d.id))).map((d) => d.id),
+      createdAt: "—",
+      updatedAt: "—",
+    }));
+  }, [liveGraph]);
+  const liveDgList = useMemo<DataGroup[]>(
+    () => (liveGraph?.dataGroups ?? []).map((d) => ({ id: d.id, name: d.name, dashboardType: "", createdAt: "", updatedAt: "" })),
+    [liveGraph],
+  );
+  const effUsers = live ? liveUsersList : (client.users ?? []);
+  const effDataGroups = live ? liveDgList : (client.dataGroups ?? []);
+
+  const dgNameById = useMemo(() => new Map(effDataGroups.map((d) => [d.id, d.name])), [effDataGroups]);
+  const dgColorByName = useMemo(() => new Map(effDataGroups.map((d) => [d.name, dataGroupColorClass(d.id)])), [effDataGroups]);
+  // Resolve a user's memberships to names within THIS client only (unknown ids dropped).
   const dgNames = useMemo(
     () => (u: ClientUser) => u.dataGroupIds.map((id) => dgNameById.get(id)).filter((n): n is string => !!n),
     [dgNameById],
@@ -71,22 +107,76 @@ export function ClientUsersSection({
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter(
+    if (!q) return effUsers;
+    return effUsers.filter(
       (u) => u.email.toLowerCase().includes(q) || dgNames(u).some((n) => n.toLowerCase().includes(q)),
     );
-  }, [users, search, dgNames]);
+  }, [effUsers, search, dgNames]);
 
   const pg = usePagination(filtered.length, search);
   const rows = pg.slice(filtered);
 
+  const emptyMsg = effUsers.length === 0
+    ? (live ? (liveGraph ? "No live users found for this client." : "Click “Sync” to load this client’s live users.") : "No users yet.")
+    : "No users match your search.";
+
   const removeUser = (id: string) => {
-    const u = users.find((x) => x.id === id);
-    setUsers(users.filter((x) => x.id !== id));
+    const cur = client.users ?? [];
+    const u = cur.find((x) => x.id === id);
+    setUsers(cur.filter((x) => x.id !== id));
     if (u) toast.success(`Removed ${u.email}`);
   };
-  const saveMembership = (id: string, ids: string[]) =>
-    setUsers(users.map((u) => (u.id === id ? { ...u, dataGroupIds: ids, updatedAt: nowStamp() } : u)));
+  const saveMembership = (id: string, ids: string[]) => {
+    const cur = client.users ?? [];
+    setUsers(cur.map((u) => (u.id === id ? { ...u, dataGroupIds: ids, updatedAt: nowStamp() } : u)));
+  };
+
+  const doSync = async () => {
+    if (!hasToken) { toast.error("Paste your API tokens to sync"); return; }
+    setSyncing(true); setSyncMsg("Starting…");
+    try {
+      const graph = await syncClientUsers({ clientName: client.account || client.name, env: liveEnv, token, idToken, onProgress: setSyncMsg });
+      setLiveGraph(graph);
+      toast.success(`Synced ${graph.users.length} users · ${graph.dataGroups.length} data groups${graph.truncated ? " (partial)" : ""}`);
+    } catch (e) {
+      toast.error(`Sync failed: ${(e as Error).message}`);
+    } finally { setSyncing(false); setSyncMsg(""); }
+  };
+
+  // Live matrix apply: diff desired memberships vs the synced graph → confirm → real writes.
+  const requestLiveApply = (existing: { id: string; dataGroupIds: string[] }[]) => {
+    if (!liveGraph) return;
+    setAssignOpen(false);
+    // Safety gate: never write unless the sync resolved to exactly ONE live client (the
+    // exact-name match should give 0 or 1; >1 means an ambiguous/duplicate name — block).
+    if (liveGraph.matchedClients.length !== 1) {
+      toast.error(`Sync matched ${liveGraph.matchedClients.length} live clients — refine to exactly one before assigning.`);
+      return;
+    }
+    const desired = new Set<string>();
+    for (const e of existing) for (const dg of e.dataGroupIds) desired.add(pairKey(e.id, dg));
+    const { adds, removes, skipped } = diffMemberships(liveGraph, desired);
+    if (!adds.length && !removes.length) {
+      toast.success(skipped.length ? `No applicable changes — ${skipped.length} unassign(s) skipped (no relation id)` : "No changes");
+      return;
+    }
+    setLiveConfirm({ adds, removes, skipped });
+  };
+  const runLiveApply = async () => {
+    if (!liveConfirm || !hasToken) return;
+    const { adds, removes, skipped } = liveConfirm;
+    setLiveConfirm(null); setApplying(true);
+    try {
+      const results = await applyLiveAssignments({ env: liveEnv, token, idToken, adds, removes });
+      const failed = results.filter((r) => r.status === "error").length;
+      const okN = results.length - failed;
+      const skippedN = skipped.length;
+      toast[failed || skippedN ? "warning" : "success"](`Live ${liveEnv}: ${okN} applied${failed ? `, ${failed} failed` : ""}${skippedN ? `, ${skippedN} skipped` : ""}`);
+      await doSync();
+    } catch (e) {
+      toast.error(`Apply failed: ${(e as Error).message}`);
+    } finally { setApplying(false); }
+  };
 
   return (
     <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
@@ -96,9 +186,20 @@ export function ClientUsersSection({
             <ChevronUp className={cn("h-4 w-4 transition-transform", !open && "rotate-180")} />
           </span>
           <span className="text-base font-semibold text-foreground">Users</span>
-          <span className="text-sm text-muted-foreground">({users.length})</span>
+          <span className="text-sm text-muted-foreground">({effUsers.length})</span>
+          {live && <span className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700"><Wifi className="h-3 w-3" /> live</span>}
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {liveCapable && (
+            <div className="inline-flex rounded-md border border-border p-0.5" role="group" aria-label="Data source">
+              {([["mockup", "Mockup", Database], ["live", "Live", Wifi]] as const).map(([m, label, Icon]) => (
+                <button key={m} type="button" onClick={() => setMode(m)}
+                  className={cn("inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-semibold transition-colors", mode === m ? (m === "live" ? "bg-sky-600 text-white" : "bg-[var(--sidebar-active-fg)] text-white") : "text-muted-foreground hover:text-foreground")}>
+                  <Icon className="h-3.5 w-3.5" /> {label}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -108,14 +209,37 @@ export function ClientUsersSection({
               className="h-8 w-52 rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setAssignOpen(true)}>
-            <UserPlus className="h-3.5 w-3.5" /> Assign user
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-3.5 w-3.5" /> Create users
+          {!live && (
+            <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> Create users
+            </Button>
+          )}
+          <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={live && (!liveGraph || !hasToken || applying)} onClick={() => setAssignOpen(true)}>
+            <UserPlus className="h-3.5 w-3.5" /> Assign user{live ? "s" : ""}
           </Button>
         </div>
       </div>
+
+      {live && (
+        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-sky-300 bg-sky-50 px-4 py-2.5 text-sm">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-sky-900"><Wifi className="h-4 w-4" /> Live · visualization-api</span>
+          <div className="inline-flex rounded-md border border-sky-300 bg-white/60 p-0.5">
+            {(["develop", "prod"] as const).map((e) => (
+              <button key={e} type="button" onClick={() => { setLiveEnv(e); setLiveGraph(null); }}
+                className={cn("rounded px-2 py-0.5 text-xs font-semibold transition-colors", liveEnv === e ? (e === "prod" ? "bg-rose-600 text-white" : "bg-emerald-600 text-white") : "text-sky-900/70 hover:text-sky-900")}>
+                {e === "prod" ? "Prod" : "Develop"}
+              </button>
+            ))}
+          </div>
+          {!hasToken && <span className="inline-flex items-center gap-1.5 text-amber-700">Token required <DevTokensTrigger /></span>}
+          <Button size="sm" variant="outline" className="h-7 gap-1.5" disabled={!hasToken || syncing} onClick={doSync}>
+            {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Sync from {liveEnv}
+          </Button>
+          {syncing && syncMsg && <span className="text-xs text-sky-900/70">{syncMsg}</span>}
+          {!syncing && liveGraph && <span className="text-xs text-sky-900/70">{liveGraph.users.length} users · {liveGraph.dataGroups.length} DGs{liveGraph.matchedClients.length ? ` · ${liveGraph.matchedClients.join(", ")}` : ""}{liveGraph.truncated ? " · partial" : ""}</span>}
+          <span className="w-full text-xs text-sky-900/70">Reads + real user↔data-group assigns hit <span className="font-medium">{liveEnv}</span>{liveEnv === "develop" ? " (corporate-VPN only)" : ""}. Creating users stays in Mockup for now.</span>
+        </div>
+      )}
 
       {open && (
         <>
@@ -134,44 +258,46 @@ export function ClientUsersSection({
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
-                      {users.length === 0 ? "No users yet." : "No users match your search."}
-                    </td>
+                    <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">{emptyMsg}</td>
                   </tr>
                 ) : (
                   rows.map((u) => (
                     <tr key={u.id} className="border-t border-border hover:bg-secondary/40">
                       <Td className="text-foreground">{u.email}</Td>
                       <Td>
-                        <GroupedPills items={dgNames(u)} noun="data group" onSeeAll={() => setEditUser(u)} colorFor={(name) => dgColorByName.get(name) ?? ""} />
+                        <GroupedPills items={dgNames(u)} noun="data group" onSeeAll={live ? undefined : () => setEditUser(u)} colorFor={(name) => dgColorByName.get(name) ?? ""} />
                       </Td>
                       <Td><StatusPill status={u.status} /></Td>
                       <Td className="text-muted-foreground">{u.createdAt}</Td>
                       <Td className="text-muted-foreground">{u.updatedAt}</Td>
                       <Td>
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setEditUser(u)}
-                            className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                            aria-label={`Edit data groups for ${u.email}`}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => toast.success(`Invitation sent to ${u.email}`)}
-                            className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                            aria-label={`Email ${u.email}`}
-                          >
-                            <Mail className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => removeUser(u.id)}
-                            className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
-                            aria-label={`Remove ${u.email}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        {live ? (
+                          <span className="block text-right text-xs text-muted-foreground">via Assign</span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => setEditUser(u)}
+                              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              aria-label={`Edit data groups for ${u.email}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => toast.success(`Invitation sent to ${u.email}`)}
+                              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              aria-label={`Email ${u.email}`}
+                            >
+                              <Mail className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => removeUser(u.id)}
+                              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
+                              aria-label={`Remove ${u.email}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
                       </Td>
                     </tr>
                   ))
@@ -191,14 +317,16 @@ export function ClientUsersSection({
 
       {assignOpen && (
         <AssignMatrixDialog
-          users={users}
-          dataGroups={dataGroups}
-          assignable={ASSIGNABLE_POOL.filter((e) => !users.some((u) => u.email === e))}
+          users={effUsers}
+          dataGroups={effDataGroups}
+          assignable={live ? [] : ASSIGNABLE_POOL.filter((e) => !effUsers.some((u) => u.email === e))}
           onClose={() => setAssignOpen(false)}
           onApply={({ existing, created }) => {
+            if (live) { requestLiveApply(existing); return; }
             const now = nowStamp();
+            const cur = client.users ?? [];
             let changedCount = 0;
-            const next = users.map((u) => {
+            const next = cur.map((u) => {
               const want = existing.find((e) => e.id === u.id)?.dataGroupIds ?? u.dataGroupIds;
               const changed = want.length !== u.dataGroupIds.length || want.some((id) => !u.dataGroupIds.includes(id));
               if (changed) changedCount++;
@@ -216,14 +344,15 @@ export function ClientUsersSection({
       )}
       {createOpen && (
         <CreateUsersDialog
-          dataGroups={dataGroups}
+          dataGroups={client.dataGroups ?? []}
           onClose={() => setCreateOpen(false)}
           onCreate={(emails, dgIds) => {
             const now = nowStamp();
-            const existing = new Set(users.map((u) => u.email.toLowerCase()));
+            const cur = client.users ?? [];
+            const existing = new Set(cur.map((u) => u.email.toLowerCase()));
             const fresh = emails.filter((e) => !existing.has(e.toLowerCase()));
             setUsers([
-              ...users,
+              ...cur,
               ...fresh.map((email) => ({ id: crypto.randomUUID(), email, status: "Active" as const, dataGroupIds: dgIds, createdAt: now, updatedAt: now })),
             ]);
             setCreateOpen(false);
@@ -234,7 +363,7 @@ export function ClientUsersSection({
       {editUser && (
         <ManageDataGroupsDialog
           user={editUser}
-          dataGroups={dataGroups}
+          dataGroups={client.dataGroups ?? []}
           onClose={() => setEditUser(null)}
           onSave={(ids) => {
             saveMembership(editUser.id, ids);
@@ -242,6 +371,28 @@ export function ClientUsersSection({
             toast.success("Data groups updated");
           }}
         />
+      )}
+      {liveConfirm && (
+        <Dialog open onOpenChange={(o) => { if (!o) setLiveConfirm(null); }}>
+          <DialogContent className="sm:max-w-[460px]">
+            <DialogHeader><DialogTitle>Apply to {liveEnv === "prod" ? "PRODUCTION" : "Develop"}?</DialogTitle></DialogHeader>
+            <p className={cn("rounded-md border px-3 py-2 text-sm", liveEnv === "prod" ? "border-rose-300 bg-rose-50 text-rose-900" : "border-amber-300 bg-amber-50 text-amber-900")}>
+              <span className="inline-flex items-center gap-1.5 font-semibold"><TriangleAlert className="h-4 w-4" /> Real write to {liveEnv === "prod" ? "PRODUCTION" : "Develop"}.</span>{" "}
+              Assigns / unassigns users to data groups via the live visualization-api (reversible by re-assigning).
+            </p>
+            <ul className="space-y-1 rounded-md border border-border bg-secondary/40 p-3 text-[13px]">
+              <li className="text-emerald-700">Assign: <span className="font-medium">{liveConfirm.adds.length}</span></li>
+              <li className="text-rose-600">Unassign: <span className="font-medium">{liveConfirm.removes.length}</span></li>
+              {liveConfirm.skipped.length > 0 && <li className="text-amber-700">Skipped (no relation id): <span className="font-medium">{liveConfirm.skipped.length}</span></li>}
+            </ul>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setLiveConfirm(null)}>Cancel</Button>
+              <Button className={cn("gap-1.5", liveEnv === "prod" && "bg-rose-600 text-white hover:bg-rose-700")} disabled={!hasToken} onClick={runLiveApply}>
+                {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Apply on {liveEnv}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

@@ -326,6 +326,9 @@ const JUNCTION_WRITE_PREFIXES = [
   "/v1.0/admin/job-seeds",
   "/v1.0/admin/job-locations",
   "/v1.0/admin/job-timeframes",
+  // visualization-api user↔data-group membership (client-level Users live assign/unassign):
+  // link = POST /user-datagroups/batch, unlink = DELETE /user-datagroups/{relationId}.
+  "/v1.0/admin/user-datagroups",
 ];
 const BARE_ID_RE = /^[A-Za-z0-9_-]+$/;
 function junctionWriteAllowed(method: LiveMethod, pathOnly: string): boolean {
