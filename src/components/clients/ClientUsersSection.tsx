@@ -11,7 +11,23 @@ import { isLiveCapable } from "@/lib/liveMode";
 import { syncClientUsers, applyLiveAssignments, diffMemberships, pairKey, type LiveEnv, type LiveUserGraph } from "@/lib/liveUsers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ChevronUp, Database, LayoutGrid, Loader2, Mail, Pencil, Plus, RefreshCw, Search, Trash2, TriangleAlert, UserPlus, Wifi } from "lucide-react";
+import { ChevronUp, Database, LayoutGrid, Loader2, Mail, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, TriangleAlert, UserPlus, Wifi } from "lucide-react";
+
+// Maestro (external app) permission grants, grouped for the bulk matrix exactly as the draft:
+// Maestro → View / Manage / Unlimited, Slides → View / Manage. Keys are `<resource>.<grant>`
+// (ClientUser.maestroGrants); the modal's resources (explorer/conversation/slides) map to these.
+const MAESTRO_GROUPS: { group: string; cols: { key: string; label: string }[] }[] = [
+  { group: "Maestro", cols: [
+    { key: "explorer.view", label: "View" },
+    { key: "conversation.manage", label: "Manage" },
+    { key: "conversation.unlimited", label: "Unlimited" },
+  ] },
+  { group: "Slides", cols: [
+    { key: "slides.view", label: "View" },
+    { key: "slides.manage", label: "Manage" },
+  ] },
+];
+const MAESTRO_COLS = MAESTRO_GROUPS.flatMap((g) => g.cols);
 
 // Pool of existing account users that can be assigned to this client (anonymized for the mockup).
 const ASSIGNABLE_POOL = [
@@ -60,6 +76,7 @@ export function ClientUsersSection({
   const [search, setSearch] = useState("");
   const [assignOpen, setAssignOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [permsOpen, setPermsOpen] = useState(false);
   const [editUser, setEditUser] = useState<ClientUser | null>(null);
 
   // Live (real-API) mode — only offered on the local app; the deployed/stand-alone host stays Mockup.
@@ -129,6 +146,24 @@ export function ClientUsersSection({
   const saveMembership = (id: string, ids: string[]) => {
     const cur = client.users ?? [];
     setUsers(cur.map((u) => (u.id === id ? { ...u, dataGroupIds: ids, updatedAt: nowStamp() } : u)));
+  };
+  // Bulk Maestro permissions (Mockup): apply the desired grant set per user (diff → updatedAt bump).
+  const applyPerms = (grantsByUser: Map<string, string[]>) => {
+    const cur = client.users ?? [];
+    const now = nowStamp();
+    let changed = 0;
+    const next = cur.map((u) => {
+      const want = grantsByUser.get(u.id);
+      if (!want) return u;
+      const before = (u.maestroGrants ?? []).slice().sort().join(",");
+      const after = want.slice().sort().join(",");
+      if (before === after) return u;
+      changed++;
+      return { ...u, maestroGrants: want, updatedAt: now };
+    });
+    setUsers(next);
+    setPermsOpen(false);
+    toast.success(changed ? `Maestro permissions updated for ${changed} user${changed === 1 ? "" : "s"}` : "No changes");
   };
 
   const doSync = async () => {
@@ -209,6 +244,11 @@ export function ClientUsersSection({
               className="h-8 w-52 rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
+          {!live && (
+            <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setPermsOpen(true)}>
+              <ShieldCheck className="h-3.5 w-3.5" /> Maestro permissions
+            </Button>
+          )}
           {!live && (
             <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setCreateOpen(true)}>
               <Plus className="h-3.5 w-3.5" /> Create users
@@ -340,6 +380,14 @@ export function ClientUsersSection({
             if (createdUsers.length) parts.push(`added ${createdUsers.length}`);
             toast.success(parts.length ? `Assignments — ${parts.join(", ")}` : "No changes");
           }}
+        />
+      )}
+      {permsOpen && (
+        <PermissionsMatrixDialog
+          users={client.users ?? []}
+          dataGroups={client.dataGroups ?? []}
+          onClose={() => setPermsOpen(false)}
+          onApply={applyPerms}
         />
       )}
       {createOpen && (
@@ -663,6 +711,153 @@ function AssignMatrixDialog({
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button disabled={dataGroups.length === 0 || changes === 0} onClick={apply}>Apply{changes ? ` (${changes})` : ""}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Bulk Maestro-permissions matrix: users (rows) × grant leaves grouped Maestro (View/Manage/
+ * Unlimited) · Slides (View/Manage), per-column select-all over visible rows, a read-only
+ * data-group context column, and user/data-group row filters. Apply sets each user's grants.
+ */
+function PermissionsMatrixDialog({
+  users,
+  dataGroups,
+  onClose,
+  onApply,
+}: {
+  users: ClientUser[];
+  dataGroups: DataGroup[];
+  onClose: () => void;
+  onApply: (grantsByUser: Map<string, string[]>) => void;
+}) {
+  const dgNameById = useMemo(() => new Map(dataGroups.map((d) => [d.id, d.name])), [dataGroups]);
+  const dgColorByName = useMemo(() => new Map(dataGroups.map((d) => [d.name, dataGroupColorClass(d.id)])), [dataGroups]);
+  const dgNamesOf = (u: ClientUser) => u.dataGroupIds.map((id) => dgNameById.get(id)).filter((n): n is string => !!n);
+
+  const initial = useMemo(() => new Map(users.map((u) => [u.id, new Set(u.maestroGrants ?? [])])), [users]);
+  const [grants, setGrants] = useState<Map<string, Set<string>>>(() => new Map([...initial].map(([k, v]) => [k, new Set(v)])));
+  const [q, setQ] = useState("");
+  const [dgFilter, setDgFilter] = useState<string[]>([]);
+
+  // Row filters: email search + (when set) only users belonging to the selected data groups —
+  // so you can bulk-grant to e.g. one data group's external users.
+  const visibleRows = users.filter(
+    (u) => u.email.toLowerCase().includes(q.toLowerCase()) && (!dgFilter.length || dgFilter.some((id) => u.dataGroupIds.includes(id))),
+  );
+
+  const toggle = (userId: string, key: string) =>
+    setGrants((prev) => { const m = new Map(prev); const s = new Set(m.get(userId) ?? []); s.has(key) ? s.delete(key) : s.add(key); m.set(userId, s); return m; });
+  const colState = (key: string): "none" | "some" | "all" => {
+    if (!visibleRows.length) return "none";
+    const n = visibleRows.filter((u) => grants.get(u.id)?.has(key)).length;
+    return n === 0 ? "none" : n === visibleRows.length ? "all" : "some";
+  };
+  const toggleCol = (key: string) =>
+    setGrants((prev) => {
+      const m = new Map(prev);
+      const all = visibleRows.every((u) => (m.get(u.id) ?? new Set()).has(key));
+      for (const u of visibleRows) { const s = new Set(m.get(u.id) ?? []); all ? s.delete(key) : s.add(key); m.set(u.id, s); }
+      return m;
+    });
+
+  const changes = useMemo(() => {
+    let c = 0;
+    for (const u of users) {
+      const before = [...(initial.get(u.id) ?? [])].sort().join(",");
+      const after = [...(grants.get(u.id) ?? [])].sort().join(",");
+      if (before !== after) c++;
+    }
+    return c;
+  }, [users, initial, grants]);
+
+  const apply = () => {
+    const out = new Map<string, string[]>();
+    for (const u of users) out.set(u.id, [...(grants.get(u.id) ?? [])]);
+    onApply(out);
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-[920px]">
+        <DialogHeader><DialogTitle>Maestro permissions — bulk grant</DialogTitle></DialogHeader>
+        <p className="-mt-1 text-sm text-muted-foreground">
+          Grant Maestro / Slides permissions across users at once. Use the column headers to select all
+          (visible) users for a grant, and the data-group filter to scope to a group's users.
+        </p>
+        {users.length === 0 ? (
+          <div className="rounded-md border border-border px-3 py-6 text-center text-sm text-muted-foreground">This client has no users yet.</div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative w-64">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users" className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              <FilterChip label="Data groups" icon={LayoutGrid} options={dataGroups.map((d) => d.id)} value={dgFilter} onChange={setDgFilter} getLabel={(id) => dataGroups.find((d) => d.id === id)?.name ?? id} searchable />
+            </div>
+            <div className="max-h-[55vh] overflow-auto rounded-md border border-border">
+              <table className="border-separate border-spacing-0 text-sm">
+                <thead>
+                  <tr>
+                    <th rowSpan={2} className="sticky left-0 top-0 z-20 h-7 border-b border-r border-border bg-card px-3 text-left text-xs font-medium text-muted-foreground">User \ Maestro permission</th>
+                    {MAESTRO_GROUPS.map((g) => (
+                      <th key={g.group} colSpan={g.cols.length} className="sticky top-0 z-10 h-7 border-b border-l border-border bg-card px-2 text-center text-xs font-semibold text-foreground">{g.group}</th>
+                    ))}
+                    <th rowSpan={2} className="sticky top-0 z-10 border-b border-l border-border bg-card px-3 text-left text-xs font-medium text-muted-foreground">Data groups</th>
+                  </tr>
+                  <tr>
+                    {MAESTRO_COLS.map((c, i) => {
+                      const st = colState(c.key);
+                      return (
+                        <th key={c.key} className={cn("sticky top-7 z-10 border-b border-border bg-card px-1 py-1 align-bottom", i === 0 && "border-l")}>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-[11px] text-foreground/80">{c.label}</span>
+                            <input
+                              type="checkbox"
+                              checked={st === "all"}
+                              ref={(el) => { if (el) el.indeterminate = st === "some"; }}
+                              onChange={() => toggleCol(c.key)}
+                              className="h-3.5 w-3.5 rounded border-border"
+                              title={`Select all visible users for ${c.label}`}
+                            />
+                          </div>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRows.length === 0 ? (
+                    <tr><td colSpan={MAESTRO_COLS.length + 2} className="px-3 py-6 text-center text-muted-foreground">No users match your filters.</td></tr>
+                  ) : (
+                    visibleRows.map((u) => (
+                      <tr key={u.id} className="hover:bg-secondary/40">
+                        <td className="sticky left-0 z-10 border-t border-r border-border bg-card px-3 py-1.5 whitespace-nowrap">
+                          <span className="text-foreground">{u.email}</span>
+                          {u.status === "Inactive" && <span className="ml-2 text-[10px] text-muted-foreground">(inactive)</span>}
+                        </td>
+                        {MAESTRO_COLS.map((c, i) => (
+                          <td key={c.key} className={cn("border-t border-border px-1 py-1 text-center", i === 0 && "border-l")}>
+                            <input type="checkbox" checked={!!grants.get(u.id)?.has(c.key)} onChange={() => toggle(u.id, c.key)} className="h-4 w-4 rounded border-border" />
+                          </td>
+                        ))}
+                        <td className="border-t border-l border-border px-3 py-1.5">
+                          <GroupedPills items={dgNamesOf(u)} noun="data group" colorFor={(name) => dgColorByName.get(name) ?? ""} />
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button disabled={users.length === 0 || changes === 0} onClick={apply}>Apply{changes ? ` (${changes})` : ""}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

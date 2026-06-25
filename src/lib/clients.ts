@@ -39,6 +39,10 @@ export type ClientUser = {
   email: string;
   status: "Active" | "Inactive";
   dataGroupIds: string[];
+  // Per-user application permission grants (from IAM), keyed `<resource>.<grant>`. Currently the
+  // focus is the external app Maestro: explorer.view / conversation.manage / conversation.unlimited
+  // / slides.view / slides.manage. Per-user (global to the app), independent of data groups.
+  maestroGrants?: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -107,20 +111,20 @@ const COCA_DATA_GROUPS: DataGroup[] = [
 ];
 
 // Client-level users — each a member of one or many data groups (USER_DATA_GROUP N:M).
-const CU = (id: string, email: string, dataGroupIds: string[], createdAt: string, updatedAt: string, status: "Active" | "Inactive" = "Active"): ClientUser =>
-  ({ id, email, status, dataGroupIds, createdAt, updatedAt });
+const CU = (id: string, email: string, dataGroupIds: string[], createdAt: string, updatedAt: string, status: "Active" | "Inactive" = "Active", maestroGrants: string[] = []): ClientUser =>
+  ({ id, email, status, dataGroupIds, maestroGrants, createdAt, updatedAt });
 const COCA_USERS: ClientUser[] = [
-  CU("cu1", "gian.hernandez@coca-cola.com", ["dg6", "dg4"], "Tue, Jul 15, 2025 7:59 PM", "Tue, Jul 15, 2025 7:59 PM"),
-  CU("cu2", "brandon.vega@coca-cola.com", ["dg6"], "Tue, Jul 15, 2025 1:26 PM", "Tue, Jul 15, 2025 1:26 PM"),
-  CU("cu3", "martha.garcia@coca-cola.com", ["dg3"], "Tue, Aug 12, 2025 4:45 PM", "Tue, Aug 12, 2025 4:45 PM"),
-  CU("cu4", "luis.fernandez@kof.com", ["dg6", "dg1", "dg5"], "Thu, Oct 30, 2025 2:41 PM", "Thu, Oct 30, 2025 2:41 PM"),
+  CU("cu1", "gian.hernandez@coca-cola.com", ["dg6", "dg4"], "Tue, Jul 15, 2025 7:59 PM", "Tue, Jul 15, 2025 7:59 PM", "Active", ["explorer.view"]),
+  CU("cu2", "brandon.vega@coca-cola.com", ["dg6"], "Tue, Jul 15, 2025 1:26 PM", "Tue, Jul 15, 2025 1:26 PM", "Active", ["explorer.view", "slides.view"]),
+  CU("cu3", "martha.garcia@coca-cola.com", ["dg3"], "Tue, Aug 12, 2025 4:45 PM", "Tue, Aug 12, 2025 4:45 PM", "Active", ["explorer.view"]),
+  CU("cu4", "luis.fernandez@kof.com", ["dg6", "dg1", "dg5"], "Thu, Oct 30, 2025 2:41 PM", "Thu, Oct 30, 2025 2:41 PM", "Active", ["explorer.view", "conversation.manage"]),
   CU("cu5", "sofia.ramos@ccep.com", ["dg3"], "Fri, Oct 31, 2025 8:41 AM", "Fri, Oct 31, 2025 8:41 AM"),
-  CU("cu6", "david.costa@coca-cola.com", ["dg7"], "Thu, Oct 16, 2025 7:30 AM", "Thu, Oct 16, 2025 7:30 AM"),
+  CU("cu6", "david.costa@coca-cola.com", ["dg7"], "Thu, Oct 16, 2025 7:30 AM", "Thu, Oct 16, 2025 7:30 AM", "Active", ["explorer.view"]),
   // Internal CS member — also belongs to other clients' data groups (Pepsico, Lego, …);
-  // here only the Coca-Cola memberships are shown (client-scoped view).
-  CU("cu7", "carla.mendes@shalion.com", ["dg4", "dg1", "dg3", "dg7"], "Mon, Sep 1, 2025 10:12 AM", "Wed, Nov 5, 2025 9:03 AM"),
+  // here only the Coca-Cola memberships are shown (client-scoped view). Full Maestro grants.
+  CU("cu7", "carla.mendes@shalion.com", ["dg4", "dg1", "dg3", "dg7"], "Mon, Sep 1, 2025 10:12 AM", "Wed, Nov 5, 2025 9:03 AM", "Active", ["explorer.view", "conversation.manage", "conversation.unlimited", "slides.view", "slides.manage"]),
   CU("cu8", "marco.bianchi@coca-cola.com", ["dg2"], "Wed, Sep 17, 2025 3:20 PM", "Wed, Sep 17, 2025 3:20 PM", "Inactive"),
-  CU("cu9", "amara.okafor@coca-cola.com", ["dg5", "dg6"], "Fri, Nov 7, 2025 11:48 AM", "Fri, Nov 7, 2025 11:48 AM"),
+  CU("cu9", "amara.okafor@coca-cola.com", ["dg5", "dg6"], "Fri, Nov 7, 2025 11:48 AM", "Fri, Nov 7, 2025 11:48 AM", "Active", ["explorer.view", "slides.view", "slides.manage"]),
 ];
 
 const RS = (id: string, name: string, country: string, useCases: UseCase[] = ["DASHBOARD"]): ClientLocationCatalog => ({ id, name, country, useCases });
