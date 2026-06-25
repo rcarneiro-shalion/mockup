@@ -377,10 +377,22 @@ function AssignMatrixDialog({
   const [ticks, setTicks] = useState<Set<string>>(() => new Set(initialKeys));
   const [q, setQ] = useState("");
   const [dgFilter, setDgFilter] = useState<string[]>([]);
+  const [onlyMembers, setOnlyMembers] = useState(false);
   const toggle = (key: string) => setTicks((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
-  const visibleRows = rows.filter((r) => r.email.toLowerCase().includes(q.toLowerCase()));
   // Column filter is a VIEW concern only — hidden-column ticks are preserved (apply() uses the full set).
   const visibleCols = dgFilter.length ? dataGroups.filter((d) => dgFilter.includes(d.id)) : dataGroups;
+  // Rows: by email search, and — when "Only in data groups" is on — only users that currently
+  // belong to the filtered data groups (or to any data group when no column filter is set).
+  const memberScope = dgFilter.length ? dgFilter : dataGroups.map((d) => d.id);
+  const visibleRows = rows.filter((r) => {
+    if (!r.email.toLowerCase().includes(q.toLowerCase())) return false;
+    if (onlyMembers && !memberScope.some((id) => ticks.has(`${r.key}::${id}`))) return false;
+    return true;
+  });
+  // Empty-state cause: search wins when it alone empties the set; otherwise it's the membership filter.
+  const emptyMessage = onlyMembers && rows.some((r) => r.email.toLowerCase().includes(q.toLowerCase()))
+    ? "No users belong to the filtered data groups."
+    : "No users match your search.";
   // Pending changes = toggled cells vs the initial memberships (drives the Apply label).
   const changes = useMemo(() => {
     let c = 0;
@@ -433,6 +445,13 @@ function AssignMatrixDialog({
                 getLabel={(id) => dataGroups.find((d) => d.id === id)?.name ?? id}
                 searchable
               />
+              <label
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+                title="Show only users that belong to the filtered data groups. Uncheck to see everyone — including users not yet assigned — and tick the ones who should be in."
+              >
+                <input type="checkbox" checked={onlyMembers} onChange={(e) => setOnlyMembers(e.target.checked)} className="h-4 w-4 rounded border-border" />
+                Only in data groups
+              </label>
             </div>
             <div className="max-h-[55vh] overflow-auto rounded-md border border-border">
               <table className="border-separate border-spacing-0 text-sm">
@@ -455,7 +474,7 @@ function AssignMatrixDialog({
                 </thead>
                 <tbody>
                   {visibleRows.length === 0 ? (
-                    <tr><td colSpan={visibleCols.length + 1} className="px-3 py-6 text-center text-muted-foreground">No users match your search.</td></tr>
+                    <tr><td colSpan={visibleCols.length + 1} className="px-3 py-6 text-center text-muted-foreground">{emptyMessage}</td></tr>
                   ) : (
                     visibleRows.map((r) => (
                       <tr key={r.key} className="hover:bg-secondary/40">
