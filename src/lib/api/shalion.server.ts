@@ -365,7 +365,18 @@ const PATCH_PATH_PREFIXES = [
   "/v1.0/admin/stores",
 ];
 
-export type LiveMethod = "POST" | "DELETE" | "PATCH";
+// PUT is limited to the IAM user↔application "authorities" endpoint — the per-application
+// permission set for one user (Maestro etc.). REPLACE semantics: the body carries the full
+// desired permission-id list for that app. Gated to exactly this shape (anti-SSRF): two bare
+// ids in the path, nothing else.
+const PUT_PATH_PATTERNS = [
+  /^\/v1\.0\/admin\/users\/[A-Za-z0-9_-]+\/applications\/[A-Za-z0-9_-]+\/authorities$/,
+];
+function putAllowed(pathOnly: string): boolean {
+  return PUT_PATH_PATTERNS.some((re) => re.test(pathOnly));
+}
+
+export type LiveMethod = "POST" | "DELETE" | "PATCH" | "PUT";
 
 /**
  * Allow-listed write proxy to a Shalion API. POST/DELETE to the dashboard
@@ -387,16 +398,19 @@ export async function mutateShalion(args: {
   const hadToken = !!resolveToken(args.token);
 
   if (!base) return { ok: false, status: 0, data: null, hadToken, error: `Unknown service "${args.service}".` };
-  if (args.method !== "POST" && args.method !== "DELETE" && args.method !== "PATCH")
+  if (args.method !== "POST" && args.method !== "DELETE" && args.method !== "PATCH" && args.method !== "PUT")
     return { ok: false, status: 0, data: null, hadToken, error: `Method ${args.method} not allowed.` };
   if (!args.path.startsWith("/"))
     return { ok: false, status: 0, data: null, hadToken, error: "Path must start with '/'." };
   // Strip any query string, then gate per method: PATCH → section content only;
-  // POST/DELETE → the assignment endpoints only.
+  // PUT → the IAM user-authorities endpoint only; POST/DELETE → the assignment endpoints only.
   const pathOnly = args.path.split("?")[0];
   if (args.method === "PATCH") {
     if (!PATCH_PATH_PREFIXES.some((p) => pathOnly === p || pathOnly.startsWith(`${p}/`)))
       return { ok: false, status: 0, data: null, hadToken, error: `PATCH is not allowed on "${pathOnly}".` };
+  } else if (args.method === "PUT") {
+    if (!putAllowed(pathOnly))
+      return { ok: false, status: 0, data: null, hadToken, error: `PUT is not allowed on "${pathOnly}".` };
   } else {
     // POST/DELETE: dashboard-assignment endpoints (Massive update, broad subtree) OR the
     // Super Update junction endpoints (two exact shapes only).
@@ -419,9 +433,9 @@ export async function mutateShalion(args: {
         Accept: "application/json",
         "x-caller-id": "console",
         ...(idToken ? { "x-id-token": idToken } : {}),
-        ...(args.method === "POST" || args.method === "PATCH" ? { "Content-Type": "application/json" } : {}),
+        ...(args.method === "POST" || args.method === "PATCH" || args.method === "PUT" ? { "Content-Type": "application/json" } : {}),
       },
-      body: args.method === "POST" || args.method === "PATCH" ? JSON.stringify(args.body ?? {}) : undefined,
+      body: args.method === "POST" || args.method === "PATCH" || args.method === "PUT" ? JSON.stringify(args.body ?? {}) : undefined,
       signal: AbortSignal.timeout(20000),
     });
     const text = await res.text();

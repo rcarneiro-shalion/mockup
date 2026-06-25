@@ -33,7 +33,7 @@ export const mutateLive = createServerFn({ method: "POST" })
     z.object({
       service: z.string().min(1),
       path: z.string().startsWith("/"),
-      method: z.enum(["POST", "DELETE", "PATCH"]),
+      method: z.enum(["POST", "DELETE", "PATCH", "PUT"]),
       body: jsonValue.optional(),
       token: z.string().optional(),
       idToken: z.string().optional(),

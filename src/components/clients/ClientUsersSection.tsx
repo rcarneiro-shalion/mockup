@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Th, Td, GroupedPills, Pagination, usePagination } from "@/components/seeds/ListPrimitives";
@@ -10,6 +10,7 @@ import { nowStamp } from "@/lib/clients";
 import { getClientUsersSnapshot } from "@/lib/clientUsersSnapshot";
 import { useLiveConnection } from "@/lib/useLiveConnection";
 import { syncClientUsers, applyLiveAssignments, diffMemberships, pairKey, type LiveUserGraph } from "@/lib/liveUsers";
+import { bulkReadMaestroGrants, applyMaestroGrants } from "@/lib/liveMaestro";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ChevronUp, Database, LayoutGrid, Loader2, Mail, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, TriangleAlert, UserPlus, Wifi } from "lucide-react";
@@ -99,7 +100,13 @@ export function ClientUsersSection({
   const liveEnv = conn.loadedEnv;
   const hasToken = conn.hasToken;
   const [applying, setApplying] = useState(false);
-  const [liveConfirm, setLiveConfirm] = useState<{ adds: { userId: string; dataGroupId: string }[]; removes: { relationId: string; userId: string; dataGroupId: string }[]; skipped: { userId: string; dataGroupId: string }[] } | null>(null);
+  const [liveConfirm, setLiveConfirm] = useState<{ adds: { userId: string; dataGroupId: string }[]; removes: { relationId: string; userId: string; dataGroupId: string }[]; skipped: { userId: string; dataGroupId: string }[]; permChanges: { userId: string; desiredKeys: string[] }[] } | null>(null);
+  // Live Maestro permission grants (IAM), read on demand when the live "Assign & permissions"
+  // matrix opens: userId -> granted mockup keys. Reset whenever the live graph changes
+  // (connect / refresh / disconnect) so a re-open re-reads fresh.
+  const [livePerms, setLivePerms] = useState<Map<string, string[]> | null>(null);
+  const [permLoading, setPermLoading] = useState(false);
+  useEffect(() => { setLivePerms(null); }, [liveGraph]);
   // Toast the specifics after a Connect/Refresh (LiveConnectBar drives the generic flow).
   const onSynced = (g: LiveUserGraph | null) => {
     if (g) toast.success(`Synced ${g.users.length} users · ${g.dataGroups.length} data groups${g.truncated ? " (partial)" : ""}`);
@@ -120,6 +127,11 @@ export function ClientUsersSection({
   const liveDgList = useMemo<DataGroup[]>(
     () => (liveGraph?.dataGroups ?? []).map((d) => ({ id: d.id, name: d.name, dashboardType: "", createdAt: "", updatedAt: "" })),
     [liveGraph],
+  );
+  // Live users enriched with their (live-read) Maestro grants — fed to the live unified matrix.
+  const liveUsersWithGrants = useMemo<ClientUser[]>(
+    () => liveUsersList.map((u) => ({ ...u, maestroGrants: livePerms?.get(u.id) ?? [] })),
+    [liveUsersList, livePerms],
   );
   const effUsers = live ? liveUsersList : getClientUsersSnapshot(client);
   const effDataGroups = live ? liveDgList : (client.dataGroups ?? []);
@@ -189,8 +201,32 @@ export function ClientUsersSection({
     toast.success(parts.length ? `Assignments & permissions — ${parts.join(", ")}` : "No changes");
   };
 
-  // Live matrix apply: diff desired memberships vs the synced graph → confirm → real writes.
-  const requestLiveApply = (existing: { id: string; dataGroupIds: string[] }[]) => {
+  // Open the live "Assign & permissions" matrix: lazily bulk-read each live user's Maestro grants
+  // from IAM (so the permission columns reflect reality), then open. Cached until the graph changes.
+  const openLiveAssign = async () => {
+    if (!liveGraph) return;
+    if (livePerms) { setAssignOpen(true); return; }
+    setPermLoading(true);
+    const tid = toast.loading("Reading Maestro permissions…");
+    try {
+      const map = await bulkReadMaestroGrants(
+        liveUsersList.map((u) => u.id),
+        { token: conn.token, idToken: conn.idToken, env: liveEnv },
+        (d, t) => toast.loading(`Reading Maestro permissions… ${d}/${t}`, { id: tid }),
+      );
+      setLivePerms(map);
+      toast.dismiss(tid);
+      setAssignOpen(true);
+    } catch (e) {
+      toast.error(`Couldn’t read permissions: ${(e as Error).message}`, { id: tid });
+    } finally {
+      setPermLoading(false);
+    }
+  };
+
+  // Live unified apply: diff desired DG memberships vs the synced graph AND desired Maestro grants
+  // vs the live-read grants → confirm → real writes (visualization-api + IAM).
+  const requestLiveApply = ({ existing }: { existing: { id: string; dataGroupIds: string[]; maestroGrants: string[] }[] }) => {
     if (!liveGraph) return;
     setAssignOpen(false);
     // Safety gate: never write unless the sync resolved to exactly ONE live client (the
@@ -202,23 +238,38 @@ export function ClientUsersSection({
     const desired = new Set<string>();
     for (const e of existing) for (const dg of e.dataGroupIds) desired.add(pairKey(e.id, dg));
     const { adds, removes, skipped } = diffMemberships(liveGraph, desired);
-    if (!adds.length && !removes.length) {
+    const permChanges = existing
+      .filter((e) => !sameSet(e.maestroGrants ?? [], livePerms?.get(e.id) ?? []))
+      .map((e) => ({ userId: e.id, desiredKeys: e.maestroGrants ?? [] }));
+    if (!adds.length && !removes.length && !permChanges.length) {
       toast.success(skipped.length ? `No applicable changes — ${skipped.length} unassign(s) skipped (no relation id)` : "No changes");
       return;
     }
-    setLiveConfirm({ adds, removes, skipped });
+    setLiveConfirm({ adds, removes, skipped, permChanges });
   };
   const runLiveApply = async () => {
     if (!liveConfirm || !hasToken) return;
-    const { adds, removes, skipped } = liveConfirm;
+    const { adds, removes, skipped, permChanges } = liveConfirm;
     setLiveConfirm(null); setApplying(true);
     try {
-      const results = await applyLiveAssignments({ env: liveEnv, token: conn.token, idToken: conn.idToken, adds, removes });
-      const failed = results.filter((r) => r.status === "error").length;
-      const okN = results.length - failed;
-      const skippedN = skipped.length;
-      toast[failed || skippedN ? "warning" : "success"](`Live ${liveEnv}: ${okN} applied${failed ? `, ${failed} failed` : ""}${skippedN ? `, ${skippedN} skipped` : ""}`);
-      onSynced(await conn.refresh()); // re-pull so the grid reflects the writes
+      const parts: string[] = [];
+      let failed = 0;
+      if (adds.length || removes.length) {
+        const results = await applyLiveAssignments({ env: liveEnv, token: conn.token, idToken: conn.idToken, adds, removes });
+        const f = results.filter((r) => r.status === "error").length;
+        failed += f;
+        parts.push(`data groups: ${results.length - f} applied${f ? `, ${f} failed` : ""}`);
+      }
+      if (permChanges.length) {
+        const pres = await applyMaestroGrants({ env: liveEnv, token: conn.token, idToken: conn.idToken, changes: permChanges });
+        const pf = pres.filter((r) => r.status === "error").length;
+        failed += pf;
+        parts.push(`permissions: ${pres.length - pf} applied${pf ? `, ${pf} failed` : ""}`);
+      }
+      if (skipped.length) parts.push(`${skipped.length} skipped`);
+      toast[failed || skipped.length ? "warning" : "success"](`Live ${liveEnv} — ${parts.join(" · ") || "no changes"}`);
+      setLivePerms(null); // force a fresh grant re-read on the next open
+      onSynced(await conn.refresh()); // re-pull memberships so the grid reflects the writes
     } catch (e) {
       toast.error(`Apply failed: ${(e as Error).message}`);
     } finally { setApplying(false); }
@@ -251,8 +302,8 @@ export function ClientUsersSection({
               <Plus className="h-3.5 w-3.5" /> Create users
             </Button>
           )}
-          <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={live && (!liveGraph || !hasToken || applying)} onClick={() => setAssignOpen(true)}>
-            {live ? <UserPlus className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />} {live ? "Assign users" : "Assign & permissions"}
+          <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={live && (!liveGraph || !hasToken || applying || permLoading)} onClick={() => (live ? openLiveAssign() : setAssignOpen(true))}>
+            {permLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />} Assign &amp; permissions
           </Button>
         </div>
       </div>
@@ -262,7 +313,7 @@ export function ClientUsersSection({
           <span className="inline-flex items-center gap-1.5 font-semibold text-sky-900"><Wifi className="h-3.5 w-3.5" /> Live · visualization-api · <span className={cn("rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white", liveEnv === "prod" ? "bg-rose-600" : "bg-emerald-600")}>{liveEnv}</span></span>
           <span>{liveGraph.users.length} users · {liveGraph.dataGroups.length} data groups{liveGraph.matchedClients.length ? ` · ${liveGraph.matchedClients.join(", ")}` : ""}{liveGraph.truncated ? " · partial" : ""}</span>
           {conn.connectedAt && <span className="text-sky-900/60">· connected {conn.connectedAt}</span>}
-          <span className="w-full text-sky-900/70">Real reads + user↔data-group assigns hit <span className="font-medium">{liveEnv}</span>. Disconnect to return to the snapshot. Creating users stays local.</span>
+          <span className="w-full text-sky-900/70">Real reads + writes hit <span className="font-medium">{liveEnv}</span>: data-group assigns (visualization-api) + Maestro permissions (IAM). Disconnect to return to the snapshot. Creating users stays local.</span>
         </div>
       )}
 
@@ -341,12 +392,12 @@ export function ClientUsersSection({
       )}
 
       {assignOpen && live && (
-        <AssignMatrixDialog
-          users={effUsers}
+        <UnifiedMatrixDialog
+          users={liveUsersWithGrants}
           dataGroups={effDataGroups}
           assignable={[]}
           onClose={() => setAssignOpen(false)}
-          onApply={({ existing }) => requestLiveApply(existing)}
+          onApply={requestLiveApply}
         />
       )}
       {assignOpen && !live && (
@@ -394,11 +445,12 @@ export function ClientUsersSection({
             <DialogHeader><DialogTitle>Apply to {liveEnv === "prod" ? "PRODUCTION" : "Develop"}?</DialogTitle></DialogHeader>
             <p className={cn("rounded-md border px-3 py-2 text-sm", liveEnv === "prod" ? "border-rose-300 bg-rose-50 text-rose-900" : "border-amber-300 bg-amber-50 text-amber-900")}>
               <span className="inline-flex items-center gap-1.5 font-semibold"><TriangleAlert className="h-4 w-4" /> Real write to {liveEnv === "prod" ? "PRODUCTION" : "Develop"}.</span>{" "}
-              Assigns / unassigns users to data groups via the live visualization-api (reversible by re-assigning).
+              Data-group memberships via visualization-api; Maestro permissions via IAM (reversible by re-applying).
             </p>
             <ul className="space-y-1 rounded-md border border-border bg-secondary/40 p-3 text-[13px]">
-              <li className="text-emerald-700">Assign: <span className="font-medium">{liveConfirm.adds.length}</span></li>
-              <li className="text-rose-600">Unassign: <span className="font-medium">{liveConfirm.removes.length}</span></li>
+              <li className="text-emerald-700">Assign (data group): <span className="font-medium">{liveConfirm.adds.length}</span></li>
+              <li className="text-rose-600">Unassign (data group): <span className="font-medium">{liveConfirm.removes.length}</span></li>
+              <li className="text-indigo-700">Permission changes (Maestro): <span className="font-medium">{liveConfirm.permChanges.length}</span> user(s)</li>
               {liveConfirm.skipped.length > 0 && <li className="text-amber-700">Skipped (no relation id): <span className="font-medium">{liveConfirm.skipped.length}</span></li>}
             </ul>
             <DialogFooter>
