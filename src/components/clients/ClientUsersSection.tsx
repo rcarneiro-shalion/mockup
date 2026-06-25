@@ -8,7 +8,7 @@ import { usePersistentState } from "@/hooks/usePersistentState";
 import type { Client, ClientUser, DataGroup } from "@/lib/clients";
 import { nowStamp } from "@/lib/clients";
 import { isLiveCapable } from "@/lib/liveMode";
-import { syncClientUsers, applyLiveAssignments, diffMemberships, pairKey, type LiveEnv, type LiveUserGraph } from "@/lib/liveUsers";
+import { syncClientUsers, applyLiveAssignments, diffMemberships, pairKey, serializeGraph, deserializeGraph, type LiveEnv, type LiveUserGraph } from "@/lib/liveUsers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ChevronUp, Database, LayoutGrid, Loader2, Mail, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, TriangleAlert, UserPlus, Wifi } from "lucide-react";
@@ -28,6 +28,37 @@ const MAESTRO_GROUPS: { group: string; cols: { key: string; label: string }[] }[
   ] },
 ];
 const MAESTRO_COLS = MAESTRO_GROUPS.flatMap((g) => g.cols);
+
+// Persist a Live-synced graph per client + env so the real data survives reload (Set/Map are
+// stored as arrays). Keyed by client id + env; cleared via the Live bar's "Clear" action.
+const graphKey = (clientId: string, env: LiveEnv) => `bulk:liveUsers:${clientId}:${env}:v1`;
+function loadStoredGraph(clientId: string, env: LiveEnv): { graph: LiveUserGraph; syncedAt: string } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(graphKey(clientId, env));
+    if (!raw) return null;
+    const p = JSON.parse(raw) as { graph: Parameters<typeof deserializeGraph>[0]; syncedAt: string };
+    return { graph: deserializeGraph(p.graph), syncedAt: p.syncedAt };
+  } catch {
+    return null;
+  }
+}
+function saveStoredGraph(clientId: string, env: LiveEnv, graph: LiveUserGraph, syncedAt: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(graphKey(clientId, env), JSON.stringify({ graph: serializeGraph(graph), syncedAt }));
+  } catch {
+    /* localStorage quota / serialization — non-fatal */
+  }
+}
+function clearStoredGraph(clientId: string, env: LiveEnv) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(graphKey(clientId, env));
+  } catch {
+    /* ignore */
+  }
+}
 
 // Pool of existing account users that can be assigned to this client (anonymized for the mockup).
 const ASSIGNABLE_POOL = [
@@ -83,7 +114,8 @@ export function ClientUsersSection({
   const [mode, setMode] = useState<"mockup" | "live">("mockup");
   const live = liveCapable && mode === "live";
   const [liveEnv, setLiveEnv] = useState<LiveEnv>("develop");
-  const [liveGraph, setLiveGraph] = useState<LiveUserGraph | null>(null);
+  const [liveGraph, setLiveGraph] = useState<LiveUserGraph | null>(() => loadStoredGraph(client.id, "develop")?.graph ?? null);
+  const [syncedAt, setSyncedAt] = useState<string | null>(() => loadStoredGraph(client.id, "develop")?.syncedAt ?? null);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState("");
   const [applying, setApplying] = useState(false);
@@ -181,7 +213,10 @@ export function ClientUsersSection({
     setSyncing(true); setSyncMsg("Starting…");
     try {
       const graph = await syncClientUsers({ clientName: client.account || client.name, env: liveEnv, token, idToken, onProgress: setSyncMsg });
+      const at = nowStamp();
+      saveStoredGraph(client.id, liveEnv, graph, at); // persist so it survives reload
       setLiveGraph(graph);
+      setSyncedAt(at);
       toast.success(`Synced ${graph.users.length} users · ${graph.dataGroups.length} data groups${graph.truncated ? " (partial)" : ""}`);
     } catch (e) {
       toast.error(`Sync failed: ${(e as Error).message}`);
@@ -270,7 +305,7 @@ export function ClientUsersSection({
           <span className="inline-flex items-center gap-1.5 font-semibold text-sky-900"><Wifi className="h-4 w-4" /> Live · visualization-api</span>
           <div className="inline-flex rounded-md border border-sky-300 bg-white/60 p-0.5">
             {(["develop", "prod"] as const).map((e) => (
-              <button key={e} type="button" onClick={() => { setLiveEnv(e); setLiveGraph(null); }}
+              <button key={e} type="button" onClick={() => { setLiveEnv(e); const s = loadStoredGraph(client.id, e); setLiveGraph(s?.graph ?? null); setSyncedAt(s?.syncedAt ?? null); }}
                 className={cn("rounded px-2 py-0.5 text-xs font-semibold transition-colors", liveEnv === e ? (e === "prod" ? "bg-rose-600 text-white" : "bg-emerald-600 text-white") : "text-sky-900/70 hover:text-sky-900")}>
                 {e === "prod" ? "Prod" : "Develop"}
               </button>
@@ -281,8 +316,14 @@ export function ClientUsersSection({
             {syncing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Sync from {liveEnv}
           </Button>
           {syncing && syncMsg && <span className="text-xs text-sky-900/70">{syncMsg}</span>}
-          {!syncing && liveGraph && <span className="text-xs text-sky-900/70">{liveGraph.users.length} users · {liveGraph.dataGroups.length} DGs{liveGraph.matchedClients.length ? ` · ${liveGraph.matchedClients.join(", ")}` : ""}{liveGraph.truncated ? " · partial" : ""}</span>}
-          <span className="w-full text-xs text-sky-900/70">Reads + real user↔data-group assigns hit <span className="font-medium">{liveEnv}</span>{liveEnv === "develop" ? " (corporate-VPN only)" : ""}. Creating users stays in Mockup for now.</span>
+          {!syncing && liveGraph && (
+            <span className="inline-flex items-center gap-2 text-xs text-sky-900/70">
+              <span>{liveGraph.users.length} users · {liveGraph.dataGroups.length} DGs{liveGraph.matchedClients.length ? ` · ${liveGraph.matchedClients.join(", ")}` : ""}{liveGraph.truncated ? " · partial" : ""}</span>
+              {syncedAt && <span className="text-sky-900/60">· saved {syncedAt}</span>}
+              <button type="button" onClick={() => { clearStoredGraph(client.id, liveEnv); setLiveGraph(null); setSyncedAt(null); }} className="font-medium text-sky-700 hover:underline">Clear</button>
+            </span>
+          )}
+          <span className="w-full text-xs text-sky-900/70">Synced data is saved locally (this browser) and reloads automatically. Reads + real user↔data-group assigns hit <span className="font-medium">{liveEnv}</span>{liveEnv === "develop" ? " (corporate-VPN only)" : ""}. Creating users stays in Mockup for now.</span>
         </div>
       )}
 

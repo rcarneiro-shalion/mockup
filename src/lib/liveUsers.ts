@@ -22,6 +22,36 @@ export type LiveUserGraph = {
 
 export const pairKey = (userId: string, dataGroupId: string) => `${userId}::${dataGroupId}`;
 
+// JSON-safe shape for persisting a synced graph to localStorage (Set/Map → arrays).
+export type StoredGraph = {
+  matchedClients: string[];
+  dataGroups: { id: string; name: string }[];
+  users: { id: string; email: string; isActive: boolean }[];
+  memberships: string[];
+  relationIds: [string, string][];
+  truncated: boolean;
+};
+export function serializeGraph(g: LiveUserGraph): StoredGraph {
+  return {
+    matchedClients: g.matchedClients,
+    dataGroups: g.dataGroups,
+    users: g.users,
+    memberships: [...g.memberships],
+    relationIds: [...g.relationIdByPair],
+    truncated: g.truncated,
+  };
+}
+export function deserializeGraph(s: StoredGraph): LiveUserGraph {
+  return {
+    matchedClients: s.matchedClients ?? [],
+    dataGroups: s.dataGroups ?? [],
+    users: s.users ?? [],
+    memberships: new Set(s.memberships ?? []),
+    relationIdByPair: new Map(s.relationIds ?? []),
+    truncated: !!s.truncated,
+  };
+}
+
 /** Unwrap a list envelope (array / {data|content|items|results}). */
 export function unwrapRows(data: unknown): Record<string, unknown>[] {
   if (Array.isArray(data)) return data as Record<string, unknown>[];
