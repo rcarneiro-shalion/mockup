@@ -76,7 +76,6 @@ export function ClientUsersSection({
   const [search, setSearch] = useState("");
   const [assignOpen, setAssignOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const [permsOpen, setPermsOpen] = useState(false);
   const [editUser, setEditUser] = useState<ClientUser | null>(null);
 
   // Live (real-API) mode — only offered on the local app; the deployed/stand-alone host stays Mockup.
@@ -147,23 +146,34 @@ export function ClientUsersSection({
     const cur = client.users ?? [];
     setUsers(cur.map((u) => (u.id === id ? { ...u, dataGroupIds: ids, updatedAt: nowStamp() } : u)));
   };
-  // Bulk Maestro permissions (Mockup): apply the desired grant set per user (diff → updatedAt bump).
-  const applyPerms = (grantsByUser: Map<string, string[]>) => {
+  // Unified Mockup apply (data-group membership + Maestro permissions in one matrix): update
+  // each existing user (bump updatedAt only when its memberships or grants changed), and create
+  // pool users who got any tick.
+  const sameSet = (a: string[], b: string[]) => a.slice().sort().join(",") === b.slice().sort().join(",");
+  const applyUnified = ({
+    existing,
+    created,
+  }: {
+    existing: { id: string; dataGroupIds: string[]; maestroGrants: string[] }[];
+    created: { email: string; dataGroupIds: string[]; maestroGrants: string[] }[];
+  }) => {
     const cur = client.users ?? [];
     const now = nowStamp();
     let changed = 0;
     const next = cur.map((u) => {
-      const want = grantsByUser.get(u.id);
-      if (!want) return u;
-      const before = (u.maestroGrants ?? []).slice().sort().join(",");
-      const after = want.slice().sort().join(",");
-      if (before === after) return u;
+      const e = existing.find((x) => x.id === u.id);
+      if (!e) return u;
+      if (sameSet(e.dataGroupIds, u.dataGroupIds) && sameSet(e.maestroGrants, u.maestroGrants ?? [])) return u;
       changed++;
-      return { ...u, maestroGrants: want, updatedAt: now };
+      return { ...u, dataGroupIds: e.dataGroupIds, maestroGrants: e.maestroGrants, updatedAt: now };
     });
-    setUsers(next);
-    setPermsOpen(false);
-    toast.success(changed ? `Maestro permissions updated for ${changed} user${changed === 1 ? "" : "s"}` : "No changes");
+    const createdUsers = created.map((c) => ({ id: crypto.randomUUID(), email: c.email, status: "Active" as const, dataGroupIds: c.dataGroupIds, maestroGrants: c.maestroGrants, createdAt: now, updatedAt: now }));
+    setUsers([...next, ...createdUsers]);
+    setAssignOpen(false);
+    const parts: string[] = [];
+    if (changed) parts.push(`updated ${changed}`);
+    if (createdUsers.length) parts.push(`added ${createdUsers.length}`);
+    toast.success(parts.length ? `Assignments & permissions — ${parts.join(", ")}` : "No changes");
   };
 
   const doSync = async () => {
@@ -245,17 +255,12 @@ export function ClientUsersSection({
             />
           </div>
           {!live && (
-            <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setPermsOpen(true)}>
-              <ShieldCheck className="h-3.5 w-3.5" /> Maestro permissions
-            </Button>
-          )}
-          {!live && (
             <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setCreateOpen(true)}>
               <Plus className="h-3.5 w-3.5" /> Create users
             </Button>
           )}
           <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={live && (!liveGraph || !hasToken || applying)} onClick={() => setAssignOpen(true)}>
-            <UserPlus className="h-3.5 w-3.5" /> Assign user{live ? "s" : ""}
+            {live ? <UserPlus className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />} {live ? "Assign users" : "Assign & permissions"}
           </Button>
         </div>
       </div>
@@ -355,39 +360,22 @@ export function ClientUsersSection({
         </>
       )}
 
-      {assignOpen && (
+      {assignOpen && live && (
         <AssignMatrixDialog
           users={effUsers}
           dataGroups={effDataGroups}
-          assignable={live ? [] : ASSIGNABLE_POOL.filter((e) => !effUsers.some((u) => u.email === e))}
+          assignable={[]}
           onClose={() => setAssignOpen(false)}
-          onApply={({ existing, created }) => {
-            if (live) { requestLiveApply(existing); return; }
-            const now = nowStamp();
-            const cur = client.users ?? [];
-            let changedCount = 0;
-            const next = cur.map((u) => {
-              const want = existing.find((e) => e.id === u.id)?.dataGroupIds ?? u.dataGroupIds;
-              const changed = want.length !== u.dataGroupIds.length || want.some((id) => !u.dataGroupIds.includes(id));
-              if (changed) changedCount++;
-              return changed ? { ...u, dataGroupIds: want, updatedAt: now } : u;
-            });
-            const createdUsers = created.map((c) => ({ id: crypto.randomUUID(), email: c.email, status: "Active" as const, dataGroupIds: c.dataGroupIds, createdAt: now, updatedAt: now }));
-            setUsers([...next, ...createdUsers]);
-            setAssignOpen(false);
-            const parts: string[] = [];
-            if (changedCount) parts.push(`updated ${changedCount}`);
-            if (createdUsers.length) parts.push(`added ${createdUsers.length}`);
-            toast.success(parts.length ? `Assignments — ${parts.join(", ")}` : "No changes");
-          }}
+          onApply={({ existing }) => requestLiveApply(existing)}
         />
       )}
-      {permsOpen && (
-        <PermissionsMatrixDialog
+      {assignOpen && !live && (
+        <UnifiedMatrixDialog
           users={client.users ?? []}
           dataGroups={client.dataGroups ?? []}
-          onClose={() => setPermsOpen(false)}
-          onApply={applyPerms}
+          assignable={ASSIGNABLE_POOL.filter((e) => !(client.users ?? []).some((u) => u.email === e))}
+          onClose={() => setAssignOpen(false)}
+          onApply={applyUnified}
         />
       )}
       {createOpen && (
@@ -718,146 +706,175 @@ function AssignMatrixDialog({
 }
 
 /**
- * Bulk Maestro-permissions matrix: users (rows) × grant leaves grouped Maestro (View/Manage/
- * Unlimited) · Slides (View/Manage), per-column select-all over visible rows, a read-only
- * data-group context column, and user/data-group row filters. Apply sets each user's grants.
+ * Unified bulk matrix (Mockup): users (rows) × [Maestro permission grants — grouped permissions →
+ * Maestro View/Manage/Unlimited · Slides View/Manage] + [this client's data-group membership
+ * columns, colored + / ✓ toggles]. Per-column select-all over visible rows; user search +
+ * data-group column filter + "only members" row filter; pool users created on any tick. Apply
+ * returns both memberships and grants.
  */
-function PermissionsMatrixDialog({
+function UnifiedMatrixDialog({
   users,
   dataGroups,
+  assignable,
   onClose,
   onApply,
 }: {
   users: ClientUser[];
   dataGroups: DataGroup[];
+  assignable: string[];
   onClose: () => void;
-  onApply: (grantsByUser: Map<string, string[]>) => void;
+  onApply: (changes: {
+    existing: { id: string; dataGroupIds: string[]; maestroGrants: string[] }[];
+    created: { email: string; dataGroupIds: string[]; maestroGrants: string[] }[];
+  }) => void;
 }) {
-  const dgNameById = useMemo(() => new Map(dataGroups.map((d) => [d.id, d.name])), [dataGroups]);
-  const dgColorByName = useMemo(() => new Map(dataGroups.map((d) => [d.name, dataGroupColorClass(d.id)])), [dataGroups]);
-  const dgNamesOf = (u: ClientUser) => u.dataGroupIds.map((id) => dgNameById.get(id)).filter((n): n is string => !!n);
+  const rows = useMemo(
+    () => [
+      ...users.map((u) => ({ key: `u:${u.id}`, email: u.email, isNew: false })),
+      ...assignable.map((e) => ({ key: `p:${e}`, email: e, isNew: true })),
+    ],
+    [users, assignable],
+  );
+  const validIds = useMemo(() => new Set(dataGroups.map((d) => d.id)), [dataGroups]);
+  const initialTicks = useMemo(() => {
+    const s = new Set<string>();
+    for (const u of users) for (const id of u.dataGroupIds) if (validIds.has(id)) s.add(`u:${u.id}::${id}`);
+    return s;
+  }, [users, validIds]);
+  const initialGrants = useMemo(() => new Map(users.map((u) => [`u:${u.id}`, new Set(u.maestroGrants ?? [])])), [users]);
 
-  const initial = useMemo(() => new Map(users.map((u) => [u.id, new Set(u.maestroGrants ?? [])])), [users]);
-  const [grants, setGrants] = useState<Map<string, Set<string>>>(() => new Map([...initial].map(([k, v]) => [k, new Set(v)])));
+  const [ticks, setTicks] = useState<Set<string>>(() => new Set(initialTicks));
+  const [grants, setGrants] = useState<Map<string, Set<string>>>(() => new Map([...initialGrants].map(([k, v]) => [k, new Set(v)])));
   const [q, setQ] = useState("");
   const [dgFilter, setDgFilter] = useState<string[]>([]);
+  const [onlyMembers, setOnlyMembers] = useState(false);
 
-  // Row filters: email search + (when set) only users belonging to the selected data groups —
-  // so you can bulk-grant to e.g. one data group's external users.
-  const visibleRows = users.filter(
-    (u) => u.email.toLowerCase().includes(q.toLowerCase()) && (!dgFilter.length || dgFilter.some((id) => u.dataGroupIds.includes(id))),
+  const visibleCols = dgFilter.length ? dataGroups.filter((d) => dgFilter.includes(d.id)) : dataGroups;
+  const memberScope = dgFilter.length ? dgFilter : dataGroups.map((d) => d.id);
+  const visibleRows = rows.filter(
+    (r) => r.email.toLowerCase().includes(q.toLowerCase()) && (!onlyMembers || memberScope.some((id) => ticks.has(`${r.key}::${id}`))),
   );
 
-  const toggle = (userId: string, key: string) =>
-    setGrants((prev) => { const m = new Map(prev); const s = new Set(m.get(userId) ?? []); s.has(key) ? s.delete(key) : s.add(key); m.set(userId, s); return m; });
-  const colState = (key: string): "none" | "some" | "all" => {
-    if (!visibleRows.length) return "none";
-    const n = visibleRows.filter((u) => grants.get(u.id)?.has(key)).length;
-    return n === 0 ? "none" : n === visibleRows.length ? "all" : "some";
-  };
-  const toggleCol = (key: string) =>
-    setGrants((prev) => {
-      const m = new Map(prev);
-      const all = visibleRows.every((u) => (m.get(u.id) ?? new Set()).has(key));
-      for (const u of visibleRows) { const s = new Set(m.get(u.id) ?? []); all ? s.delete(key) : s.add(key); m.set(u.id, s); }
-      return m;
-    });
+  const toggleTick = (key: string) => setTicks((p) => { const n = new Set(p); n.has(key) ? n.delete(key) : n.add(key); return n; });
+  const toggleGrant = (rk: string, gk: string) => setGrants((p) => { const m = new Map(p); const s = new Set(m.get(rk) ?? []); s.has(gk) ? s.delete(gk) : s.add(gk); m.set(rk, s); return m; });
+  const dgCol = (id: string): "none" | "some" | "all" => { if (!visibleRows.length) return "none"; const n = visibleRows.filter((r) => ticks.has(`${r.key}::${id}`)).length; return n === 0 ? "none" : n === visibleRows.length ? "all" : "some"; };
+  const toggleDgCol = (id: string) => setTicks((p) => { const n = new Set(p); const all = visibleRows.every((r) => n.has(`${r.key}::${id}`)); for (const r of visibleRows) { const k = `${r.key}::${id}`; all ? n.delete(k) : n.add(k); } return n; });
+  const grCol = (gk: string): "none" | "some" | "all" => { if (!visibleRows.length) return "none"; const n = visibleRows.filter((r) => grants.get(r.key)?.has(gk)).length; return n === 0 ? "none" : n === visibleRows.length ? "all" : "some"; };
+  const toggleGrCol = (gk: string) => setGrants((p) => { const m = new Map(p); const all = visibleRows.every((r) => (m.get(r.key) ?? new Set()).has(gk)); for (const r of visibleRows) { const s = new Set(m.get(r.key) ?? []); all ? s.delete(gk) : s.add(gk); m.set(r.key, s); } return m; });
 
   const changes = useMemo(() => {
     let c = 0;
-    for (const u of users) {
-      const before = [...(initial.get(u.id) ?? [])].sort().join(",");
-      const after = [...(grants.get(u.id) ?? [])].sort().join(",");
-      if (before !== after) c++;
+    for (const r of rows) {
+      const dgNow = dataGroups.filter((d) => ticks.has(`${r.key}::${d.id}`)).map((d) => d.id).sort().join(",");
+      const dgInit = r.isNew ? "" : dataGroups.filter((d) => initialTicks.has(`${r.key}::${d.id}`)).map((d) => d.id).sort().join(",");
+      const grNow = [...(grants.get(r.key) ?? [])].sort().join(",");
+      const grInit = [...(initialGrants.get(r.key) ?? [])].sort().join(",");
+      if (dgNow !== dgInit || grNow !== grInit) c++;
     }
     return c;
-  }, [users, initial, grants]);
+  }, [rows, dataGroups, ticks, grants, initialTicks, initialGrants]);
 
   const apply = () => {
-    const out = new Map<string, string[]>();
-    for (const u of users) out.set(u.id, [...(grants.get(u.id) ?? [])]);
-    onApply(out);
+    const existing = users.map((u) => ({
+      id: u.id,
+      dataGroupIds: dataGroups.filter((d) => ticks.has(`u:${u.id}::${d.id}`)).map((d) => d.id),
+      maestroGrants: [...(grants.get(`u:${u.id}`) ?? [])],
+    }));
+    const created = assignable
+      .map((e) => ({
+        email: e,
+        dataGroupIds: dataGroups.filter((d) => ticks.has(`p:${e}::${d.id}`)).map((d) => d.id),
+        maestroGrants: [...(grants.get(`p:${e}`) ?? [])],
+      }))
+      .filter((c) => c.dataGroupIds.length > 0 || c.maestroGrants.length > 0);
+    onApply({ existing, created });
   };
+
+  const selAll = (st: "none" | "some" | "all", onChange: () => void, title: string) => (
+    <input type="checkbox" checked={st === "all"} ref={(el) => { if (el) el.indeterminate = st === "some"; }} onChange={onChange} title={title} className="h-3.5 w-3.5 rounded border-border" />
+  );
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-[920px]">
-        <DialogHeader><DialogTitle>Maestro permissions — bulk grant</DialogTitle></DialogHeader>
+      <DialogContent className="sm:max-w-[1040px]">
+        <DialogHeader><DialogTitle>Assign data groups & Maestro permissions</DialogTitle></DialogHeader>
         <p className="-mt-1 text-sm text-muted-foreground">
-          Grant Maestro / Slides permissions across users at once. Use the column headers to select all
-          (visible) users for a grant, and the data-group filter to scope to a group's users.
+          Set Maestro / Slides permissions and data-group membership in one grid. Column headers select all
+          (visible) users; pool users (marked <span className="font-medium text-foreground">new</span>) are added on any tick.
         </p>
-        {users.length === 0 ? (
-          <div className="rounded-md border border-border px-3 py-6 text-center text-sm text-muted-foreground">This client has no users yet.</div>
-        ) : (
-          <>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative w-64">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users" className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-              </div>
-              <FilterChip label="Data groups" icon={LayoutGrid} options={dataGroups.map((d) => d.id)} value={dgFilter} onChange={setDgFilter} getLabel={(id) => dataGroups.find((d) => d.id === id)?.name ?? id} searchable />
-            </div>
-            <div className="max-h-[55vh] overflow-auto rounded-md border border-border">
-              <table className="border-separate border-spacing-0 text-sm">
-                <thead>
-                  <tr>
-                    <th rowSpan={2} className="sticky left-0 top-0 z-20 h-7 border-b border-r border-border bg-card px-3 text-left text-xs font-medium text-muted-foreground">User \ Maestro permission</th>
-                    {MAESTRO_GROUPS.map((g) => (
-                      <th key={g.group} colSpan={g.cols.length} className="sticky top-0 z-10 h-7 border-b border-l border-border bg-card px-2 text-center text-xs font-semibold text-foreground">{g.group}</th>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative w-60">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users" className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          </div>
+          <FilterChip label="Data groups" icon={LayoutGrid} options={dataGroups.map((d) => d.id)} value={dgFilter} onChange={setDgFilter} getLabel={(id) => dataGroups.find((d) => d.id === id)?.name ?? id} searchable />
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground" title="Show only users that belong to the filtered data groups.">
+            <input type="checkbox" checked={onlyMembers} onChange={(e) => setOnlyMembers(e.target.checked)} className="h-4 w-4 rounded border-border" /> Only in data groups
+          </label>
+        </div>
+        <div className="max-h-[58vh] overflow-auto rounded-md border border-border">
+          <table className="border-separate border-spacing-0 text-sm">
+            <thead>
+              <tr>
+                <th rowSpan={3} className="sticky left-0 z-20 border-b border-r border-border bg-card px-3 text-left text-xs font-medium text-muted-foreground">User \ Data group</th>
+                <th colSpan={MAESTRO_COLS.length} className="border-b border-l border-border bg-secondary/40 px-2 py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">permissions</th>
+                {visibleCols.map((d) => (
+                  <th key={d.id} rowSpan={3} className="border-b border-l border-border bg-card px-1 pt-1 align-bottom">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className={cn("h-2.5 w-2.5 rounded-full border", dataGroupColorClass(d.id))} title={d.name} />
+                      <div className="mx-auto max-h-32 w-5 overflow-hidden whitespace-nowrap text-[11px] text-foreground/80 [writing-mode:vertical-rl] rotate-180" title={d.name}>{d.name}</div>
+                      {selAll(dgCol(d.id), () => toggleDgCol(d.id), `Select all visible for ${d.name}`)}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+              <tr>
+                {MAESTRO_GROUPS.map((g) => (
+                  <th key={g.group} colSpan={g.cols.length} className="border-b border-l border-border bg-card px-2 py-1 text-center text-xs font-semibold text-foreground">{g.group}</th>
+                ))}
+              </tr>
+              <tr>
+                {MAESTRO_COLS.map((c, i) => (
+                  <th key={c.key} className={cn("border-b border-border bg-card px-1 py-1 align-bottom", i === 0 && "border-l")}>
+                    <div className="flex flex-col items-center gap-1"><span className="text-[11px] text-foreground/80">{c.label}</span>{selAll(grCol(c.key), () => toggleGrCol(c.key), `Select all visible for ${c.label}`)}</div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {visibleRows.length === 0 ? (
+                <tr><td colSpan={MAESTRO_COLS.length + visibleCols.length + 1} className="px-3 py-6 text-center text-muted-foreground">No users match your filters.</td></tr>
+              ) : (
+                visibleRows.map((r) => (
+                  <tr key={r.key} className="hover:bg-secondary/40">
+                    <td className="sticky left-0 z-10 border-t border-r border-border bg-card px-3 py-1.5 whitespace-nowrap">
+                      <span className="text-foreground">{r.email}</span>
+                      {r.isNew && <span className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">new</span>}
+                    </td>
+                    {MAESTRO_COLS.map((c, i) => (
+                      <td key={c.key} className={cn("border-t border-border px-1 py-1 text-center", i === 0 && "border-l")}>
+                        <input type="checkbox" checked={!!grants.get(r.key)?.has(c.key)} onChange={() => toggleGrant(r.key, c.key)} className="h-4 w-4 rounded border-border" />
+                      </td>
                     ))}
-                    <th rowSpan={2} className="sticky top-0 z-10 border-b border-l border-border bg-card px-3 text-left text-xs font-medium text-muted-foreground">Data groups</th>
-                  </tr>
-                  <tr>
-                    {MAESTRO_COLS.map((c, i) => {
-                      const st = colState(c.key);
+                    {visibleCols.map((d) => {
+                      const on = ticks.has(`${r.key}::${d.id}`);
                       return (
-                        <th key={c.key} className={cn("sticky top-7 z-10 border-b border-border bg-card px-1 py-1 align-bottom", i === 0 && "border-l")}>
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-[11px] text-foreground/80">{c.label}</span>
-                            <input
-                              type="checkbox"
-                              checked={st === "all"}
-                              ref={(el) => { if (el) el.indeterminate = st === "some"; }}
-                              onChange={() => toggleCol(c.key)}
-                              className="h-3.5 w-3.5 rounded border-border"
-                              title={`Select all visible users for ${c.label}`}
-                            />
-                          </div>
-                        </th>
+                        <td key={d.id} className="border-t border-l border-border px-1 py-1 text-center">
+                          <button type="button" onClick={() => toggleTick(`${r.key}::${d.id}`)} title={`${r.email} — ${d.name}`} className={cn("mx-auto grid h-5 min-w-5 place-items-center rounded border px-1 text-[10px] font-semibold transition-transform hover:scale-110", on ? dataGroupColorClass(d.id) : "border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary")}>
+                            {on ? "✓" : <Plus className="h-3 w-3" />}
+                          </button>
+                        </td>
                       );
                     })}
                   </tr>
-                </thead>
-                <tbody>
-                  {visibleRows.length === 0 ? (
-                    <tr><td colSpan={MAESTRO_COLS.length + 2} className="px-3 py-6 text-center text-muted-foreground">No users match your filters.</td></tr>
-                  ) : (
-                    visibleRows.map((u) => (
-                      <tr key={u.id} className="hover:bg-secondary/40">
-                        <td className="sticky left-0 z-10 border-t border-r border-border bg-card px-3 py-1.5 whitespace-nowrap">
-                          <span className="text-foreground">{u.email}</span>
-                          {u.status === "Inactive" && <span className="ml-2 text-[10px] text-muted-foreground">(inactive)</span>}
-                        </td>
-                        {MAESTRO_COLS.map((c, i) => (
-                          <td key={c.key} className={cn("border-t border-border px-1 py-1 text-center", i === 0 && "border-l")}>
-                            <input type="checkbox" checked={!!grants.get(u.id)?.has(c.key)} onChange={() => toggle(u.id, c.key)} className="h-4 w-4 rounded border-border" />
-                          </td>
-                        ))}
-                        <td className="border-t border-l border-border px-3 py-1.5">
-                          <GroupedPills items={dgNamesOf(u)} noun="data group" colorFor={(name) => dgColorByName.get(name) ?? ""} />
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button disabled={users.length === 0 || changes === 0} onClick={apply}>Apply{changes ? ` (${changes})` : ""}</Button>
+          <Button disabled={changes === 0} onClick={apply}>Apply{changes ? ` (${changes})` : ""}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
