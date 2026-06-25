@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Th, Td, GroupedPills, Pagination, usePagination } from "@/components/seeds/ListPrimitives";
+import { FilterChip } from "@/components/seeds/FilterChip";
 import type { Client, ClientUser, DataGroup } from "@/lib/clients";
 import { nowStamp } from "@/lib/clients";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ChevronUp, Mail, Pencil, Plus, Search, Trash2, UserPlus } from "lucide-react";
+import { ChevronUp, LayoutGrid, Mail, Pencil, Plus, Search, Trash2, UserPlus } from "lucide-react";
 
 // Pool of existing account users that can be assigned to this client (anonymized for the mockup).
 const ASSIGNABLE_POOL = [
@@ -375,8 +376,11 @@ function AssignMatrixDialog({
   }, [users, validIds]);
   const [ticks, setTicks] = useState<Set<string>>(() => new Set(initialKeys));
   const [q, setQ] = useState("");
+  const [dgFilter, setDgFilter] = useState<string[]>([]);
   const toggle = (key: string) => setTicks((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
   const visibleRows = rows.filter((r) => r.email.toLowerCase().includes(q.toLowerCase()));
+  // Column filter is a VIEW concern only — hidden-column ticks are preserved (apply() uses the full set).
+  const visibleCols = dgFilter.length ? dataGroups.filter((d) => dgFilter.includes(d.id)) : dataGroups;
   // Pending changes = toggled cells vs the initial memberships (drives the Apply label).
   const changes = useMemo(() => {
     let c = 0;
@@ -410,13 +414,24 @@ function AssignMatrixDialog({
           </div>
         ) : (
           <>
-            <div className="relative w-64">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search users"
-                className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative w-64">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search users"
+                  className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <FilterChip
+                label="Data groups"
+                icon={LayoutGrid}
+                options={dataGroups.map((d) => d.id)}
+                value={dgFilter}
+                onChange={setDgFilter}
+                getLabel={(id) => dataGroups.find((d) => d.id === id)?.name ?? id}
+                searchable
               />
             </div>
             <div className="max-h-[55vh] overflow-auto rounded-md border border-border">
@@ -426,7 +441,7 @@ function AssignMatrixDialog({
                     <th className="sticky left-0 top-0 z-20 border-b border-r border-border bg-card px-3 py-2 text-left text-xs font-medium text-muted-foreground">
                       User \ Data group
                     </th>
-                    {dataGroups.map((d) => (
+                    {visibleCols.map((d) => (
                       <th key={d.id} className="sticky top-0 z-10 border-b border-border bg-card px-1 py-2 align-bottom">
                         <div className="flex flex-col items-center gap-1">
                           <span className={cn("h-2.5 w-2.5 rounded-full border", dataGroupColorClass(d.id))} title={d.name} />
@@ -440,7 +455,7 @@ function AssignMatrixDialog({
                 </thead>
                 <tbody>
                   {visibleRows.length === 0 ? (
-                    <tr><td colSpan={dataGroups.length + 1} className="px-3 py-6 text-center text-muted-foreground">No users match your search.</td></tr>
+                    <tr><td colSpan={visibleCols.length + 1} className="px-3 py-6 text-center text-muted-foreground">No users match your search.</td></tr>
                   ) : (
                     visibleRows.map((r) => (
                       <tr key={r.key} className="hover:bg-secondary/40">
@@ -448,7 +463,7 @@ function AssignMatrixDialog({
                           <span className="text-foreground">{r.email}</span>
                           {r.isNew && <span className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">new</span>}
                         </td>
-                        {dataGroups.map((d) => {
+                        {visibleCols.map((d) => {
                           const key = `${r.key}::${d.id}`;
                           const on = ticks.has(key);
                           return (
