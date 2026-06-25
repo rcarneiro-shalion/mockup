@@ -80,6 +80,7 @@ export function ClientUsersSection({
 }) {
   const [open, setOpen] = usePersistentState<boolean>("pref:clientForm:usersOpen", true);
   const [search, setSearch] = useState("");
+  const [dgFilter, setDgFilter] = useState<string[]>([]); // data-group ids to narrow the grid
   const [assignOpen, setAssignOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [editUser, setEditUser] = useState<ClientUser | null>(null);
@@ -107,6 +108,9 @@ export function ClientUsersSection({
   const [livePerms, setLivePerms] = useState<Map<string, string[]> | null>(null);
   const [permLoading, setPermLoading] = useState(false);
   useEffect(() => { setLivePerms(null); }, [liveGraph]);
+  // The data-group id space differs between snapshot and live, so clear the grid filter when the
+  // source flips (stale ids would just silently match nothing).
+  useEffect(() => { setDgFilter([]); }, [live]);
   // Toast the specifics after a Connect/Refresh (LiveConnectBar drives the generic flow).
   const onSynced = (g: LiveUserGraph | null) => {
     if (g) toast.success(`Synced ${g.users.length} users · ${g.dataGroups.length} data groups${g.truncated ? " (partial)" : ""}`);
@@ -148,13 +152,15 @@ export function ClientUsersSection({
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return effUsers;
-    return effUsers.filter(
-      (u) => u.email.toLowerCase().includes(q) || dgNames(u).some((n) => n.toLowerCase().includes(q)),
-    );
-  }, [effUsers, search, dgNames]);
+    const dgSel = new Set(dgFilter);
+    return effUsers.filter((u) => {
+      if (dgSel.size && !u.dataGroupIds.some((id) => dgSel.has(id))) return false;
+      if (!q) return true;
+      return u.email.toLowerCase().includes(q) || dgNames(u).some((n) => n.toLowerCase().includes(q));
+    });
+  }, [effUsers, search, dgNames, dgFilter]);
 
-  const pg = usePagination(filtered.length, search);
+  const pg = usePagination(filtered.length, `${search}|${dgFilter.join(",")}`);
   const rows = pg.slice(filtered);
 
   const emptyMsg = effUsers.length === 0
@@ -297,6 +303,15 @@ export function ClientUsersSection({
               className="h-8 w-52 rounded-md border border-border bg-background pl-8 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
+          <FilterChip
+            label="Data groups"
+            icon={LayoutGrid}
+            options={effDataGroups.map((d) => d.id)}
+            value={dgFilter}
+            onChange={setDgFilter}
+            getLabel={(id) => dgNameById.get(id) ?? id}
+            searchable
+          />
           {!live && (
             <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setCreateOpen(true)}>
               <Plus className="h-3.5 w-3.5" /> Create users
