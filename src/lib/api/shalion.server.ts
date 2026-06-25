@@ -326,12 +326,17 @@ const JUNCTION_WRITE_PREFIXES = [
   "/v1.0/admin/job-seeds",
   "/v1.0/admin/job-locations",
   "/v1.0/admin/job-timeframes",
-  // visualization-api user↔data-group membership (client-level Users live assign/unassign):
-  // link = POST /user-datagroups/batch, unlink = DELETE /user-datagroups/{relationId}.
+  // visualization-api user↔data-group membership — unlink = DELETE /user-datagroups/{relationId}
+  // (assign is a bare POST, see CREATE_POST_PATHS below — there is NO /batch endpoint here).
   "/v1.0/admin/user-datagroups",
 ];
+// Bare-resource create POSTs (single-object body), distinct from the /batch junctions. The
+// visualization user↔data-group assign is POST /v1.0/admin/user-datagroups { userId, dataGroupId }
+// (confirmed from the Visualization Swagger).
+const CREATE_POST_PATHS = ["/v1.0/admin/user-datagroups"];
 const BARE_ID_RE = /^[A-Za-z0-9_-]+$/;
 function junctionWriteAllowed(method: LiveMethod, pathOnly: string): boolean {
+  if (method === "POST" && CREATE_POST_PATHS.includes(pathOnly)) return true;
   for (const p of JUNCTION_WRITE_PREFIXES) {
     if (method === "POST" && pathOnly === `${p}/batch`) return true;
     if (method === "DELETE" && pathOnly.startsWith(`${p}/`)) {

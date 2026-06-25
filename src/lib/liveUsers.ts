@@ -151,13 +151,15 @@ export async function syncClientUsers(opts: {
 
 export type AssignResult = { kind: "assign" | "unassign"; userId: string; dataGroupId: string; status: "ok" | "error"; error?: string; relationId?: string };
 
-/** Body for an assign batch — flat `{userId, dataGroupId}` (mirrors the job-seeds junction; verify on Dev). */
-export const assignBatchBody = (pairs: { userId: string; dataGroupId: string }[]) =>
-  pairs.map((p) => ({ userId: p.userId, dataGroupId: p.dataGroupId }));
+const CONC = 8; // bounded concurrency for the per-row create POSTs
 
-const CHUNK = 100;
-
-/** Apply real assignment changes: POST /user-datagroups/batch (adds) + DELETE /user-datagroups/{id} (removes). */
+/**
+ * Apply real assignment changes against visualization-api (contract confirmed from the
+ * Visualization Swagger, 2026-06-25):
+ *  - assign  = POST   /v1.0/admin/user-datagroups   body { userId, dataGroupId }   (ONE row per call;
+ *              there is NO `/batch` endpoint — it 500s "method not supported")
+ *  - unassign = DELETE /v1.0/admin/user-datagroups/{relationId}
+ */
 export async function applyLiveAssignments(opts: {
   env: LiveEnv;
   token: string;
@@ -173,32 +175,27 @@ export async function applyLiveAssignments(opts: {
   const total = opts.adds.length + opts.removes.length;
   let done = 0;
 
-  // adds — chunked batch POST, with per-pair fallback so one bad pair can't sink the chunk.
-  for (let i = 0; i < opts.adds.length; i += CHUNK) {
-    const chunk = opts.adds.slice(i, i + CHUNK);
-    let ok = false;
-    try {
-      const res = await mutateLive({ data: { service: "visualization", path: `${base}/batch`, method: "POST", body: assignBatchBody(chunk), token: auth.token, idToken: auth.idToken, env } });
-      ok = res.ok;
-      if (!ok && chunk.length === 1) out.push({ kind: "assign", ...chunk[0], status: "error", error: res.error ?? `assign failed (${res.status})` });
-    } catch (e) {
-      if (chunk.length === 1) out.push({ kind: "assign", ...chunk[0], status: "error", error: `assign error: ${(e as Error).message}` });
-    }
-    if (ok) {
-      for (const p of chunk) out.push({ kind: "assign", ...p, status: "ok" });
-    } else if (chunk.length > 1) {
-      for (const p of chunk) {
+  // adds — one POST per pair (bounded concurrency); capture the created relation id from the row.
+  for (let i = 0; i < opts.adds.length; i += CONC) {
+    const batch = opts.adds.slice(i, i + CONC);
+    const results = await Promise.all(
+      batch.map(async (p): Promise<AssignResult> => {
         try {
-          const r = await mutateLive({ data: { service: "visualization", path: `${base}/batch`, method: "POST", body: assignBatchBody([p]), token: auth.token, idToken: auth.idToken, env } });
-          out.push({ kind: "assign", ...p, status: r.ok ? "ok" : "error", error: r.ok ? undefined : (r.error ?? `assign failed (${r.status})`) });
+          const res = await mutateLive({ data: { service: "visualization", path: base, method: "POST", body: { userId: p.userId, dataGroupId: p.dataGroupId }, token: auth.token, idToken: auth.idToken, env } });
+          // 409 = the membership already exists → treat as success (idempotent).
+          if (res.ok || res.status === 409) {
+            const row = unwrapRows(res.data)[0] as { id?: string } | undefined;
+            const relationId = typeof row?.id === "string" ? row.id : (typeof (res.data as { id?: string })?.id === "string" ? (res.data as { id: string }).id : undefined);
+            return { kind: "assign", ...p, status: "ok", relationId };
+          }
+          return { kind: "assign", ...p, status: "error", error: res.error ?? `assign failed (${res.status})` };
         } catch (e) {
-          out.push({ kind: "assign", ...p, status: "error", error: `assign error: ${(e as Error).message}` });
+          return { kind: "assign", ...p, status: "error", error: `assign error: ${(e as Error).message}` };
         }
-        opts.onProgress?.(++done, total);
-      }
-      continue;
-    }
-    done += chunk.length;
+      }),
+    );
+    out.push(...results);
+    done += batch.length;
     opts.onProgress?.(done, total);
   }
 
