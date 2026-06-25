@@ -81,9 +81,11 @@ export function LiveConnectBar<T>({
             type="button"
             onClick={async () => onData?.(await conn.refresh())}
             disabled={conn.connecting}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-secondary disabled:opacity-60"
+            title="Refresh"
+            aria-label="Refresh"
+            className="inline-flex items-center justify-center rounded-md border border-border px-2 py-1 text-foreground transition-colors hover:bg-secondary disabled:opacity-60"
           >
-            {conn.connecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Refresh
+            {conn.connecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
           </button>
         </>
       ) : (
