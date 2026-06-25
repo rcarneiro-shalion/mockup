@@ -186,7 +186,8 @@ export function ClientUsersSection({
     const header = ["Email", "Data groups", "Status", "Created at", "Updated at"];
     const body = sorted.map((u) => [u.email, dgNames(u).join("; "), u.status, u.createdAt, u.updatedAt]);
     downloadCsv(`${fileSlug(client.name)}-users`, toCsv([header, ...body]));
-    toast.success(`Exported ${sorted.length} user${sorted.length === 1 ? "" : "s"} to CSV`);
+    const partial = live && !!liveGraph?.truncated; // live sync hit its safety cap → set is incomplete
+    toast[partial ? "warning" : "success"](`Exported ${sorted.length} user${sorted.length === 1 ? "" : "s"}${partial ? " — LIVE data is partial, some users may be missing" : ""} to CSV`);
   };
 
   const emptyMsg = effUsers.length === 0
@@ -440,6 +441,7 @@ export function ClientUsersSection({
           users={liveUsersWithGrants}
           dataGroups={effDataGroups}
           assignable={[]}
+          partial={!!liveGraph?.truncated}
           onClose={() => setAssignOpen(false)}
           onApply={requestLiveApply}
         />
@@ -612,12 +614,14 @@ function UnifiedMatrixDialog({
   users,
   dataGroups,
   assignable,
+  partial,
   onClose,
   onApply,
 }: {
   users: ClientUser[];
   dataGroups: DataGroup[];
   assignable: string[];
+  partial?: boolean;
   onClose: () => void;
   onApply: (changes: {
     existing: { id: string; dataGroupIds: string[]; maestroGrants: string[] }[];
@@ -700,6 +704,7 @@ function UnifiedMatrixDialog({
       dataGroups.filter((d) => ticks.has(`${r.key}::${d.id}`)).map((d) => d.name).join("; "),
     ]);
     downloadCsv("assign-permissions", toCsv([header, ...body]));
+    toast[partial ? "warning" : "success"](`Exported ${body.length} user${body.length === 1 ? "" : "s"}${partial ? " — LIVE data is partial, some users may be missing" : ""} to CSV`);
   };
 
   const selAll = (st: "none" | "some" | "all", onChange: () => void, title: string) => (

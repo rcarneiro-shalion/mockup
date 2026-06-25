@@ -107,16 +107,24 @@ export function reconstructLiveGraph(
 
 type Auth = { token?: string; idToken?: string; env: LiveEnv };
 
+/**
+ * Page a 100/row admin list to completion. Completion is driven by the REAL total
+ * (`x-total-count`, surfaced as res.total) — keep paging until we've pulled every row — not a
+ * fixed page guess. `safetyCap` is only a runaway guard (set far above any real table); hitting
+ * it returns truncated=true so a partial set is never treated as complete. These endpoints can't
+ * be server-filtered by client, so this is inherently O(global table) — hence a generous cap.
+ */
 async function pageAll(
   path: (page: number) => string,
   auth: Auth,
-  maxPages: number,
+  safetyCap: number,
   onProgress?: (msg: string) => void,
   label = "rows",
 ): Promise<{ rows: Record<string, unknown>[]; truncated: boolean }> {
   const out: Record<string, unknown>[] = [];
+  let total: number | undefined;
   let page = 0;
-  for (; page < maxPages; page++) {
+  for (; page < safetyCap; page++) {
     const req = { data: { service: "visualization", path: path(page), token: auth.token, idToken: auth.idToken, env: auth.env } };
     let res = await fetchLive(req);
     if (!res.ok) res = await fetchLive(req); // one retry (mirrors Massive update's fetchPage)
@@ -124,12 +132,14 @@ async function pageAll(
       if (page === 0) throw new Error(res.error || `fetch failed (${res.status})`);
       break; // partial; stop on a mid-stream error
     }
+    if (typeof res.total === "number" && Number.isFinite(res.total)) total = res.total;
     const rows = unwrapRows(res.data);
     out.push(...rows);
-    onProgress?.(`${out.length} ${label}…`);
-    if (rows.length < 100) return { rows: out, truncated: false };
+    onProgress?.(`${out.length}${total != null ? `/${total}` : ""} ${label}…`);
+    if (rows.length < 100) return { rows: out, truncated: false };          // last (short) page
+    if (total != null && out.length >= total) return { rows: out, truncated: false }; // pulled the full count
   }
-  return { rows: out, truncated: page >= maxPages };
+  return { rows: out, truncated: true }; // hit the runaway guard before the real total — partial
 }
 
 /** Pull this client's data groups + user memberships from the live visualization-api. */
@@ -142,10 +152,11 @@ export async function syncClientUsers(opts: {
 }): Promise<LiveUserGraph> {
   const auth: Auth = { token: opts.token || undefined, idToken: opts.idToken || undefined, env: opts.env };
   opts.onProgress?.("Loading data groups…");
-  const dg = await pageAll((p) => `/v1.0/admin/datagroups?size=100&page=${p}`, auth, 6, opts.onProgress, "data groups");
+  const dg = await pageAll((p) => `/v1.0/admin/datagroups?size=100&page=${p}`, auth, 200, opts.onProgress, "data groups");
   opts.onProgress?.("Loading memberships…");
   // user-datagroups is unfiltered (server ignores ?dataGroupId=), so page all + filter client-side.
-  const udg = await pageAll((p) => `/v1.0/admin/user-datagroups?size=100&page=${p}`, auth, 40, opts.onProgress, "memberships");
+  // Total-driven (x-total-count); the cap is just a runaway guard (1000 pages = 100k rows).
+  const udg = await pageAll((p) => `/v1.0/admin/user-datagroups?size=100&page=${p}`, auth, 1000, opts.onProgress, "memberships");
   return reconstructLiveGraph(dg.rows, udg.rows, opts.clientName, dg.truncated || udg.truncated);
 }
 
