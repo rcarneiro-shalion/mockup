@@ -240,7 +240,7 @@ function ScenarioGeneratorPage() {
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" align="start" className="max-w-sm text-xs leading-relaxed">
-                    Fabricate internally-consistent client → project → subscription → scrapping option → seeds scenarios from real production Jobs (ecometry-tasks-api), with real seeds and real store locations, then review them in the Value Stream Map. Cross-references are wired by name so the whole flow resolves.
+                    Fabricate internally-consistent client → project → subscription → scraping option → seeds scenarios from real production Jobs (ecometry-tasks-api), with real seeds and real store locations, then review them in the Value Stream Map. Cross-references are wired by name so the whole flow resolves.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -344,7 +344,7 @@ function ScenarioGeneratorPage() {
                     </div>
                     <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
                       <Pill tone="slate">{b.subscriptions.length} subscriptions</Pill>
-                      <Pill tone="slate">{b.scrappingOptions.length} scrapping options</Pill>
+                      <Pill tone="slate">{b.scrappingOptions.length} scraping options</Pill>
                       <Pill tone="green"><Sprout className="mr-1 inline h-3 w-3" />{b.seeds.length} seeds</Pill>
                       {b.clientIsNew && <Pill tone="amber">test client created</Pill>}
                     </div>
@@ -368,7 +368,7 @@ function ScenarioGeneratorPage() {
                 );
               })}
               <p className="text-xs text-muted-foreground">
-                Open the <button className="font-medium text-[var(--sidebar-active-fg)] hover:underline" onClick={() => navigate({ to: "/seeds-api/planner" })}>Value Stream Map</button> to see them wired Client → Project → Subscription → Scrapping option.
+                Open the <button className="font-medium text-[var(--sidebar-active-fg)] hover:underline" onClick={() => navigate({ to: "/seeds-api/planner" })}>Value Stream Map</button> to see them wired Client → Project → Subscription → Scraping option.
               </p>
             </div>
           )}

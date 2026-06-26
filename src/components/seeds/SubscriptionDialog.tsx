@@ -210,7 +210,7 @@ export function SubscriptionDialog({
                 <SelectBox value={v.store} onChange={(x) => set("store", x)} options={storeOptions} />
               </Field>
 
-              <Field label="Scrapping option" required className="sm:col-span-2">
+              <Field label="Scraping option" required className="sm:col-span-2">
                 <ScrappingOptionPicker
                   value={v.scrappingOption}
                   onChange={(name) =>
@@ -244,7 +244,7 @@ export function SubscriptionDialog({
               <Field label="Geolocation mode" required>
                 <SelectBox value={v.geo} onChange={(x) => set("geo", x)} options={geoOptions} />
                 {!isPdp && (
-                  <p className="mt-1 text-xs text-muted-foreground">Virtual store is only available for a PDP scrapping option.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Virtual store is only available for a PDP scraping option.</p>
                 )}
               </Field>
               <Field label="Location set">

@@ -253,7 +253,7 @@ function PlannerPage() {
     { kind: "client", label: "Clients", icon: Users, tone: "text-emerald-600" },
     { kind: "project", label: "Projects", icon: FolderKanban, tone: "text-sky-600" },
     { kind: "subscription", label: "Subscriptions", icon: Layers, tone: "text-violet-600" },
-    { kind: "scrap", label: "Scrapping options", icon: PlayCircle, tone: "text-amber-600" },
+    { kind: "scrap", label: "Scraping options", icon: PlayCircle, tone: "text-amber-600" },
   ];
 
   // ---- Connector measurement ----
@@ -341,7 +341,7 @@ function PlannerPage() {
           <div>
             <h1 className="text-[17px] font-semibold text-foreground">Value Stream Map</h1>
             <p className="text-sm text-muted-foreground">
-              Visual map of the data-extraction setup — clients → projects → subscriptions → scrapping options.
+              Visual map of the data-extraction setup — clients → projects → subscriptions → scraping options.
             </p>
           </div>
           <div className="flex items-center gap-1.5">
@@ -390,7 +390,7 @@ function PlannerPage() {
           <FilterChip label="Subscriptions" icon={Layers} options={subs.map((s) => s.name)} value={fSub} onChange={setFSub} searchable />
           <FilterChip label="Store" icon={Store} options={storeOptions} value={fStore} onChange={setFStore} searchable />
           <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} searchable />
-          <FilterChip label="Scrapping options" icon={PlayCircle} options={baseScraps.map((o) => o.name)} value={fScrap} onChange={setFScrap} searchable />
+          <FilterChip label="Scraping options" icon={PlayCircle} options={baseScraps.map((o) => o.name)} value={fScrap} onChange={setFScrap} searchable />
           <FilterChip label="Extraction type" icon={Calculator} options={extractionOptions} value={fExtraction} onChange={setFExtraction} searchable />
           <button
             type="button"

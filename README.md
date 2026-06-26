@@ -19,7 +19,7 @@ and **IAM** — and each renders its own left-hand menu.
 
 - **Clients** and **Retailers** (Retailers / Stores / Region systems).
 - **Seeds API** — the focus: **Projects**, **Subscriptions**, **Seeds** (URL / API /
-  KEYWORD), **Scrapping options**, **Tags** and **Timeframes**.
+  KEYWORD), **Scraping options**, **Tags** and **Timeframes**.
 - **Tasks** — the legacy operational area, being deprecated by the Seeds API.
 - **Codification**, **Product** (client SKUs, assortments, …), **Bulk** and
   **Settings** (dashboard applications, targets, cubes, …).

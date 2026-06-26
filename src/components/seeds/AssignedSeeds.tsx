@@ -112,7 +112,7 @@ export function AssignedSeeds({
               key={t.key}
               type="button"
               disabled={!enabled}
-              title={enabled ? undefined : "Not available for this scrapping option's extraction type"}
+              title={enabled ? undefined : "Not available for this scraping option's extraction type"}
               onClick={() => enabled && setTab(t.key)}
               className={cn(
                 "flex items-center gap-1.5 border-b-2 px-0.5 pb-2 text-sm transition-colors",

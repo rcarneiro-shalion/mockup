@@ -37,7 +37,7 @@ export const Route = createFileRoute("/seeds-api/scrapping-options")({
   validateSearch: (search: Record<string, unknown>): { edit?: string } => ({
     edit: typeof search.edit === "string" ? search.edit : undefined,
   }),
-  head: () => ({ meta: [{ title: "Scrapping options — Shalion" }] }),
+  head: () => ({ meta: [{ title: "Scraping options — Shalion" }] }),
   component: ScrappingOptionsPage,
 });
 
@@ -125,10 +125,10 @@ function ScrappingOptionsPage() {
     <AppShell>
       <div className="flex h-full flex-col">
         <PageHeader
-          title="Scrapping options"
-          action={{ label: "Add scrapping option", onClick: () => setAddOpen(true) }}
+          title="Scraping options"
+          action={{ label: "Add scraping option", onClick: () => setAddOpen(true) }}
         />
-        <FilterBar search="Search by Scrapping option name" searchValue={query} onSearchChange={setQuery}>
+        <FilterBar search="Search by Scraping option name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Extraction types" icon={PlayCircle} options={distinct(rows, (r) => r.extractionType)} value={fExtraction} onChange={setFExtraction} />
           <FilterChip label="Subscriptions" icon={Layers} options={allSubs.map((s) => s.name)} value={fSub} onChange={setFSub} searchable />
           <FilterChip label="Joints" options={["Multivariants", "Pagination", "Limited discovery"]} value={fJoints} onChange={setFJoints} />
@@ -177,7 +177,7 @@ function ScrappingOptionsPage() {
                   <RowActionsMenu
                     id={r.name}
                     onDelete={() => setRows((prev) => prev.filter((x) => x !== r))}
-                    entityLabel="scrapping option"
+                    entityLabel="scraping option"
                   />
                 </Td>
               </tr>

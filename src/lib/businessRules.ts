@@ -229,7 +229,7 @@ const subscriptions: RulePage = {
     {
       category: "Creating & editing",
       rules: [
-        "A subscription needs a name, a project, a store and a scrapping option; everything else is optional.",
+        "A subscription needs a name, a project, a store and a scraping option; everything else is optional.",
         "Geolocation can be None, Automatic or Manual — and a location set is only required (and only editable) when Manual is chosen.",
         "A new subscription defaults to no geolocation, Daily frequency, and no seeds.",
       ],
@@ -239,8 +239,8 @@ const subscriptions: RulePage = {
       rules: [
         "Frequency is Daily, Weekly, Monthly, or Custom — Custom requires an “every N days” value.",
         "Rotation is a multi-select of Locations and/or Seeds — picking both is the intrinsic \"both\" condition (there is no separate Both value).",
-        "A subscription runs exactly one scrapping option (1:1); the same option may be reused by other subscriptions.",
-        "When the scrapping option is a discovery (PLP / MEDIA) extraction, it can point to zero, one or many PDP sibling subscriptions (Destination options).",
+        "A subscription runs exactly one scraping option (1:1); the same option may be reused by other subscriptions.",
+        "When the scraping option is a discovery (PLP / MEDIA) extraction, it can point to zero, one or many PDP sibling subscriptions (Destination options).",
         "A subscription can hold many seeds across the four types (Keyword, URL, API, PDP), added or removed from a searchable, tabbed picker.",
       ],
     },
@@ -248,13 +248,13 @@ const subscriptions: RulePage = {
       category: "Relationships",
       rules: [
         "A subscription belongs to one project, and its clients are inherited from that project.",
-        "The scrapping option it points to defines how data is extracted (type, stores, timeframes, pagination, sorting, modalities).",
+        "The scraping option it points to defines how data is extracted (type, stores, timeframes, pagination, sorting, modalities).",
       ],
     },
     {
       category: "Search & listing",
       rules: [
-        "Subscriptions can be searched by name and filtered by client, project, store, seeds, scrapping option and geolocation mode.",
+        "Subscriptions can be searched by name and filtered by client, project, store, seeds, scraping option and geolocation mode.",
         "Deleting a subscription asks for confirmation first.",
       ],
     },
@@ -295,13 +295,13 @@ const seeds: RulePage = {
 
 const scrappingOptions: RulePage = {
   key: "scrapping-options",
-  label: "Scrapping options",
+  label: "Scraping options",
   match: "/seeds-api/scrapping-options",
   groups: [
     {
       category: "Creating & editing",
       rules: [
-        "Each scrapping option has a unique name and exactly one extraction type (Search, Shelf, Ad, Digital Shelf PLP, Digital Shelf PDP or Media).",
+        "Each scraping option has a unique name and exactly one extraction type (Search, Shelf, Ad, Digital Shelf PLP, Digital Shelf PDP or Media).",
         "It must target one or more stores/retailers and run on one or more timeframes.",
         "It defaults to Active and can be set Inactive.",
       ],
@@ -1133,7 +1133,7 @@ export const RULE_SECTIONS: RuleSection[] = [
   {
     section: "Seeds API",
     intro:
-      "The Seeds API is what we monitor across the web and how that work is organised — projects, subscriptions, the seeds themselves, scrapping options, tags and timeframes.",
+      "The Seeds API is what we monitor across the web and how that work is organised — projects, subscriptions, the seeds themselves, scraping options, tags and timeframes.",
     pages: [projects, subscriptions, seeds, scrappingOptions, tags, seedsTimeframes],
   },
   {

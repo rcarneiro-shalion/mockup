@@ -115,7 +115,7 @@ function SubscriptionsPage() {
           <FilterChip label="Projects" options={[...new Set(rows.flatMap(subProjects))].sort()} value={fProject} onChange={setFProject} searchable />
           <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
           <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} searchable />
-          <FilterChip label="Scrapping options" options={scrapOptions} value={fScrap} onChange={setFScrap} searchable />
+          <FilterChip label="Scraping options" options={scrapOptions} value={fScrap} onChange={setFScrap} searchable />
           <FilterChip label="Geoloc modes" options={SUBSCRIPTION_GEOLOC_OPTIONS} value={fGeo} onChange={setFGeo} />
           <FilterChip label="Business units" options={BUSINESS_UNITS} value={fBu} onChange={setFBu} />
           <FilterChip label="Created at" icon={Calendar} />
@@ -127,7 +127,7 @@ function SubscriptionsPage() {
               <SortTh label="Projects" sortKey="project" sort={sort} />
               <SortTh label="Clients" sortKey="clients" sort={sort} />
               <SortTh label="Seeds" sortKey="seeds" sort={sort} />
-              <SortTh label="Scrapping option" sortKey="scrappingOption" sort={sort} />
+              <SortTh label="Scraping option" sortKey="scrappingOption" sort={sort} />
               <SortTh label="Destination" sortKey="destinations" sort={sort} />
               <SortTh label="Geoloc" sortKey="geo" sort={sort} />
               <SortTh label="Business unit" sortKey="businessUnit" sort={sort} />

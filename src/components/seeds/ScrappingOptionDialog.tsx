@@ -90,6 +90,45 @@ export const EMPTY_SCRAPPING_OPTION: ScrappingOptionValues = {
   updatedAt: "",
 };
 
+// --- Auto-suggested name convention (scraping option) ----------------------
+// A scraping option's name follows its OWN convention, distinct from the
+// subscription/Job one (ME_KW_WATER — Amazon US, which encodes client + store).
+// It instead encodes the extraction config:
+//   EXTRACTION _ FREQUENCY _ MULTIVARIANTS [_ MODALITY]   e.g. SE_DAY_MONO_SHIP
+// Surfaced as the Name placeholder (a live suggestion that tracks the form); it
+// nudges the convention without auto-filling the field.
+const EXTRACTION_ABBR: Record<string, string> = {
+  SEARCH: "SE",
+  SHELF: "SH",
+  AD: "AD",
+  DIGITAL_SHELF_PLP: "PLP",
+  DIGITAL_SHELF_PDP: "PDP",
+  MEDIA: "ME",
+};
+const FREQUENCY_ABBR: Record<string, string> = {
+  Daily: "DAY",
+  Weekly: "WEEK",
+  Monthly: "MONTH",
+  Custom: "CUSTOM",
+};
+const MODALITY_ABBR: Record<string, string> = {
+  pickup: "PICK",
+  delivery: "DLV",
+  shipping: "SHIP",
+};
+
+export function suggestScrapingName(v: ScrappingOptionValues): string {
+  const parts = [
+    EXTRACTION_ABBR[v.extractionType] ?? "EXT",
+    FREQUENCY_ABBR[v.frequency] ?? "FREQ",
+    v.multivariants ? "MULTI" : "MONO",
+  ];
+  if (v.modalities && v.modalityValues?.length) {
+    parts.push(v.modalityValues.map((m) => MODALITY_ABBR[m] ?? m.toUpperCase()).join("-"));
+  }
+  return parts.join("_");
+}
+
 export function ScrappingOptionDialog({
   open,
   onOpenChange,
@@ -159,7 +198,7 @@ export function ScrappingOptionDialog({
     try {
       await new Promise((resolve) => setTimeout(resolve, 350));
       onSave(v);
-      toast.success(`Scrapping option ${mode === "add" ? "created" : "saved"} successfully`);
+      toast.success(`Scraping option ${mode === "add" ? "created" : "saved"} successfully`);
       onOpenChange(false);
     } catch {
       toast.error("Save failed. Please try again.");
@@ -170,7 +209,7 @@ export function ScrappingOptionDialog({
 
   const handleDelete = () => {
     onDelete?.();
-    toast.success("Scrapping option deleted");
+    toast.success("Scraping option deleted");
     onOpenChange(false);
   };
 
@@ -181,7 +220,7 @@ export function ScrappingOptionDialog({
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border px-6 py-4">
             <DialogTitle className="text-lg font-semibold tracking-tight">
-              {mode === "add" ? "Add scrapping option" : v.name || "Scrapping option"}
+              {mode === "add" ? "Add scraping option" : v.name || "Scraping option"}
             </DialogTitle>
             {mode === "edit" && onDelete && (
               <button
@@ -200,7 +239,7 @@ export function ScrappingOptionDialog({
             {/* Fields */}
             <section className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-4">
               <Field label="Name" required className="sm:col-span-3">
-                <Input value={v.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. ME_KW_WATER — Amazon US" />
+                <Input value={v.name} onChange={(e) => set("name", e.target.value)} placeholder={`e.g. ${suggestScrapingName(v)}`} />
               </Field>
               <Field label="Status" className="sm:col-span-1">
                 <SelectBox value={v.status} onChange={(x) => set("status", x)} options={STATUS_OPTIONS} />
@@ -242,7 +281,7 @@ export function ScrappingOptionDialog({
 
             {/* Scrapping options and values */}
             <section className="rounded-xl border border-border bg-secondary/30 p-5">
-              <h3 className="text-sm font-semibold text-foreground">Scrapping options and values</h3>
+              <h3 className="text-sm font-semibold text-foreground">Scraping options and values</h3>
 
               {/* Joints */}
               <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -393,7 +432,7 @@ export function ScrappingOptionDialog({
               <section className="rounded-xl border border-border bg-card p-5">
                 <div className="flex items-baseline gap-2">
                   <span className="text-base font-semibold text-foreground">Subscriptions</span>
-                  <span className="text-sm text-muted-foreground">where this scrapping option is used</span>
+                  <span className="text-sm text-muted-foreground">where this scraping option is used</span>
                 </div>
                 <div className="mt-4 overflow-hidden rounded-lg border border-border">
                   <table className="w-full text-sm">
@@ -408,7 +447,7 @@ export function ScrappingOptionDialog({
                       {inSubs.length === 0 ? (
                         <tr>
                           <Td className="text-muted-foreground">
-                            <span className="block py-2">This scrapping option isn't used in any subscription yet.</span>
+                            <span className="block py-2">This scraping option isn't used in any subscription yet.</span>
                           </Td>
                           <Td /><Td />
                         </tr>
@@ -442,7 +481,7 @@ export function ScrappingOptionDialog({
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? "Saving..." : mode === "add" ? "Add scrapping option" : "Save scrapping option"}
+              {isSaving ? "Saving..." : mode === "add" ? "Add scraping option" : "Save scraping option"}
             </Button>
           </div>
         </DialogContent>
@@ -451,9 +490,9 @@ export function ScrappingOptionDialog({
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete scrapping option</AlertDialogTitle>
+            <AlertDialogTitle>Delete scraping option</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this scrapping option? This action cannot be undone.
+              Are you sure you want to delete this scraping option? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

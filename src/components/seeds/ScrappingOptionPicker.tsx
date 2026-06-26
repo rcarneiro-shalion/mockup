@@ -35,7 +35,7 @@ const tooltip = (o: ScrappingOptionValues) =>
     `Name: ${o.name}`,
     `Extraction type: ${o.extractionType || "—"}`,
     `TaskGroup: ${taskGroup(o) || "—"}`,
-    `Scrapping options: ${optionsSummary(o) || "—"}`,
+    `Scraping options: ${optionsSummary(o) || "—"}`,
   ].join("\n");
 
 /** Single-line "name (meta)" descriptor — bold name + muted parenthetical. */
@@ -59,7 +59,7 @@ export function ScrappingOptionPicker({
   value,
   onChange,
   options,
-  placeholder = "Select a scrapping option",
+  placeholder = "Select a scraping option",
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -90,7 +90,7 @@ export function ScrappingOptionPicker({
         <Command>
           <CommandInput placeholder="Search by name, extraction type, taskgroup…" />
           <CommandList>
-            <CommandEmpty>No scrapping options found.</CommandEmpty>
+            <CommandEmpty>No scraping options found.</CommandEmpty>
             <CommandGroup>
               {options.map((o) => (
                 <CommandItem
@@ -126,7 +126,7 @@ export function ScrappingOptionMultiPicker({
   value,
   onChange,
   options,
-  placeholder = "Select scrapping options",
+  placeholder = "Select scraping options",
 }: {
   value: string[];
   onChange: (v: string[]) => void;
@@ -151,7 +151,7 @@ export function ScrappingOptionMultiPicker({
             className="flex h-9 w-full items-center justify-between gap-1 whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <span className={cn("min-w-0 flex-1 truncate text-left", !value.length && "text-muted-foreground")}>
-              {value.length ? `${value.length} scrapping option${value.length === 1 ? "" : "s"} selected` : placeholder}
+              {value.length ? `${value.length} scraping option${value.length === 1 ? "" : "s"} selected` : placeholder}
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
           </button>
@@ -160,7 +160,7 @@ export function ScrappingOptionMultiPicker({
           <Command>
             <CommandInput placeholder="Search by name, extraction type, taskgroup…" />
             <CommandList>
-              <CommandEmpty>No scrapping options found.</CommandEmpty>
+              <CommandEmpty>No scraping options found.</CommandEmpty>
               <CommandGroup>
                 {options.map((o) => (
                   <CommandItem
