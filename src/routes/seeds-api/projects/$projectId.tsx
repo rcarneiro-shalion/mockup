@@ -1,7 +1,8 @@
+import { useMemo } from "react";
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { usePersistentState } from "@/hooks/usePersistentState";
-import { PROJECTS_KEY, INITIAL_PROJECTS, type Project } from "@/lib/projects";
+import { PROJECTS_KEY, INITIAL_PROJECTS, BULK_PROJECTS_EXTRA, type Project } from "@/lib/projects";
 import { nowStamp } from "@/lib/clients";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,13 @@ function EditProjectPage() {
   const navigate = useNavigate();
   const goBack = () => navigate({ to: "/seeds-api/projects" });
 
-  const project = projects.find((p) => p.id === projectId);
+  // Look up across the FULL display set: the writable/persisted projects first, then the
+  // read-only live bulk overlay — so a project opened from the list (incl. the ~8k real
+  // projects) always resolves instead of showing "not found".
+  const project = useMemo(
+    () => projects.find((p) => p.id === projectId) ?? BULK_PROJECTS_EXTRA.find((p) => p.id === projectId),
+    [projects, projectId],
+  );
 
   if (!project) {
     return (
@@ -36,20 +43,22 @@ function EditProjectPage() {
       initial={project}
       onCancel={goBack}
       onSave={(updated) => {
-        // The Save button commits only the header fields — the grids auto-save
-        // themselves, so preserve the project's (already-persisted) subscriptions.
+        // The Save button commits only the header fields — the grids auto-save themselves, so
+        // preserve the project's subscriptions. If this is a read-only overlay project (not yet
+        // in the writable set), upsert it so the edit persists ("promote" it).
         setProjects((prev) =>
-          prev.map((p) =>
-            p.id === projectId ? { ...p, name: updated.name, bom: updated.bom, status: updated.status, updatedAt: nowStamp() } : p,
-          ),
+          prev.some((p) => p.id === projectId)
+            ? prev.map((p) => (p.id === projectId ? { ...p, name: updated.name, bom: updated.bom, status: updated.status, updatedAt: nowStamp() } : p))
+            : [...prev, { ...project, name: updated.name, bom: updated.bom, status: updated.status, updatedAt: nowStamp() }],
         );
         goBack();
       }}
       onSubscriptionsChange={(subs) => {
-        // Auto-save: persist the subscription grid immediately (same setter as the
-        // Save button, so neither clobbers the other).
+        // Auto-save the subscription grid (same upsert: promote an overlay project on first edit).
         setProjects((prev) =>
-          prev.map((p) => (p.id === projectId ? { ...p, assignedSubscriptions: subs, updatedAt: nowStamp() } : p)),
+          prev.some((p) => p.id === projectId)
+            ? prev.map((p) => (p.id === projectId ? { ...p, assignedSubscriptions: subs, updatedAt: nowStamp() } : p))
+            : [...prev, { ...project, assignedSubscriptions: subs, updatedAt: nowStamp() }],
         );
       }}
       onDelete={() => {
