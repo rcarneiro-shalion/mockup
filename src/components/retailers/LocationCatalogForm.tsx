@@ -8,9 +8,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimitives";
+import { Th, Td, Pagination, LinkText } from "@/components/seeds/ListPrimitives";
+import { ChipMultiSelect } from "@/components/seeds/ChipMultiSelect";
 import { LocationSetDialog } from "@/components/retailers/LocationSetDialog";
-import { COUNTRY_OPTIONS, countryLabel, emptyLocationSet, type LocationCatalog, type LocationSet } from "@/lib/retailers";
+import { COUNTRY_OPTIONS, countryLabel, emptyLocationSet, PURPOSE_OPTIONS, type LocationCatalog, type LocationSet, type Purpose } from "@/lib/retailers";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, FileSpreadsheet } from "lucide-react";
 
@@ -93,6 +94,19 @@ export function LocationCatalogForm({
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-sm font-medium text-foreground/80">Purpose</Label>
+                <ChipMultiSelect
+                  value={c.purposes ?? []}
+                  onChange={(arr) => set("purposes", arr as Purpose[])}
+                  options={[...PURPOSE_OPTIONS]}
+                  addLabel="Add purpose"
+                  emptyLabel="No specific purpose"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Which product flows this catalog is intended for — choose any of DASHBOARD, MSRP, ASSORTMENT, SCRAPING.
+                </p>
+              </div>
             </div>
 
             {/* Location sets (buckets) */}
@@ -109,14 +123,13 @@ export function LocationCatalogForm({
                 </div>
                 <div className="mt-4 overflow-hidden rounded-lg border border-border">
                   <table className="w-full text-sm">
-                    <thead className="bg-secondary/60"><tr><Th>Name</Th><Th>Purpose</Th><Th>Locations</Th><Th className="w-10" /></tr></thead>
+                    <thead className="bg-secondary/60"><tr><Th>Name</Th><Th>Locations</Th><Th className="w-10" /></tr></thead>
                     <tbody>
                       {sets.length === 0 ? (
-                        <tr><Td className="text-muted-foreground"><span className="block py-2">No location sets yet.</span></Td><Td /><Td /><Td /></tr>
+                        <tr><Td className="text-muted-foreground"><span className="block py-2">No location sets yet.</span></Td><Td /><Td /></tr>
                       ) : sets.map((ls) => (
                         <tr key={ls.id} className="border-t border-border hover:bg-secondary/40">
                           <Td><LinkText onClick={() => setSelectedSetId(ls.id)}>{ls.name}</LinkText></Td>
-                          <Td>{ls.purposes?.length ? <div className="flex flex-wrap gap-1">{ls.purposes.map((p) => <Pill key={p} tone="blue">{p}</Pill>)}</div> : <span className="text-muted-foreground">—</span>}</Td>
                           <Td className="tabular-nums text-foreground/70">{(ls.locations ?? []).length}</Td>
                           <Td>
                             <button onClick={() => removeSet(ls.id)} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive" aria-label={`Remove ${ls.name}`}>

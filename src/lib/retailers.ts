@@ -274,16 +274,7 @@ export type SetLocation = {
 export type LocationSet = {
   id: string;
   name: string;
-  /**
-   * Which product flows this set (bucket) is meant for — zero or more, optional
-   * (empty = no specific purpose). NOTE — UX exploration: the RFC (Location Catalog
-   * §5.1) puts the use-case dimension on the client↔catalog enablement
-   * (`ClientLocationCatalog.useCases`) and treats sets as neutral buckets. Product
-   * asked to also categorize the set itself, so we surface set-level `purposes`
-   * (multi-select, same vocabulary as `useCases`) to validate the interaction
-   * before settling where it lives.
-   */
-  purposes?: Purpose[];
+  // Sets are neutral buckets; the purpose/use-case dimension lives on the CATALOG (below).
   locations: SetLocation[];
 };
 
@@ -291,9 +282,8 @@ export type LocationSet = {
 export const USE_CASE_OPTIONS = ["DASHBOARD", "MSRP", "ASSORTMENT", "SCRAPING"] as const;
 export type UseCase = (typeof USE_CASE_OPTIONS)[number];
 
-// A location set's `purposes` shares the same vocabulary as the client `useCases`
-// (RFC §5.1: the type→use-case dimension). Kept under its own name so the set-level
-// concept can diverge from client useCases if the design evolves.
+// A catalog's `purposes` shares the same vocabulary as the client `useCases` (RFC §5.1: the
+// type→use-case dimension). Kept under its own name so the catalog-level concept can diverge.
 export const PURPOSE_OPTIONS = USE_CASE_OPTIONS;
 export type Purpose = UseCase;
 
@@ -301,6 +291,12 @@ export type LocationCatalog = {
   id: string;
   name: string;
   country: string;
+  /**
+   * Which product flows this catalog is meant for — zero or more, optional (empty = no
+   * specific purpose). Multi-select, same vocabulary as the client `useCases`. (Moved up
+   * from the location set: the catalog, not its buckets, carries the purpose.)
+   */
+  purposes?: Purpose[];
   /** Location sets (buckets) — ex Region. */
   sets?: LocationSet[];
   createdAt: string;
@@ -390,7 +386,7 @@ export function getLocationCatalogs(): LocationCatalog[] {
 }
 
 export function emptyLocationCatalog(): LocationCatalog {
-  return { id: genId(), name: "", country: "", sets: [], createdAt: nowStamp(), updatedAt: nowStamp() };
+  return { id: genId(), name: "", country: "", purposes: [], sets: [], createdAt: nowStamp(), updatedAt: nowStamp() };
 }
 
 // ---------- shared persistence read (SSR-safe) ----------

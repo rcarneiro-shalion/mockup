@@ -7,8 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Th, Td, Pagination, LinkText } from "@/components/seeds/ListPrimitives";
-import { ChipMultiSelect } from "@/components/seeds/ChipMultiSelect";
-import { emptyLocationSet, ASSIGNABLE_LOCATIONS, assignableLocationsForCountry, PURPOSE_OPTIONS, countryLabel, type LocationSet, type SetLocation, type Purpose } from "@/lib/retailers";
+import { emptyLocationSet, ASSIGNABLE_LOCATIONS, assignableLocationsForCountry, countryLabel, type LocationSet, type SetLocation } from "@/lib/retailers";
 import { toast } from "sonner";
 import { Plus, Trash2, FileSpreadsheet, X, ChevronDown } from "lucide-react";
 
@@ -90,20 +89,6 @@ export function LocationSetDialog({
           <div className="flex flex-col gap-1.5">
             <Label className="text-sm font-medium text-foreground/80">Name <span className="text-destructive">*</span></Label>
             <Input value={r.name} onChange={(e) => upd("name", e.target.value)} />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <Label className="text-sm font-medium text-foreground/80">Purpose</Label>
-            <ChipMultiSelect
-              value={r.purposes ?? []}
-              onChange={(arr) => upd("purposes", arr as Purpose[])}
-              options={[...PURPOSE_OPTIONS]}
-              addLabel="Add purpose"
-              emptyLabel="No specific purpose"
-            />
-            <p className="text-xs text-muted-foreground">
-              Which product flows this set is intended for — choose any of DASHBOARD, MSRP, ASSORTMENT, SCRAPING.
-            </p>
           </div>
 
           <div>
