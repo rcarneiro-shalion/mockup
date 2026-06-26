@@ -43,6 +43,8 @@ export type ClientUser = {
   // focus is the external app Maestro: explorer.view / conversation.manage / conversation.unlimited
   // / slides.view / slides.manage. Per-user (global to the app), independent of data groups.
   maestroGrants?: string[];
+  // Default dashboard language chosen at creation (IAM user setting). Default "English".
+  language?: string;
   createdAt: string;
   updatedAt: string;
 };

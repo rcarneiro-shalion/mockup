@@ -34,6 +34,15 @@ const MAESTRO_COLS = MAESTRO_GROUPS.flatMap((g) => g.cols);
 const MAESTRO_LABEL: Record<string, string> = Object.fromEntries(
   MAESTRO_GROUPS.flatMap((g) => g.cols.map((c) => [c.key, `${g.group} · ${c.label}`])),
 );
+// Maestro permissions grouped by RESOURCE for the Create-users form (matches the IAM modal):
+// explorer → view · conversation → manage / unlimited · slides → view / manage. Same `<resource>.<action>` keys.
+const MAESTRO_RESOURCES: { resource: string; actions: { key: string; label: string }[] }[] = [
+  { resource: "explorer", actions: [{ key: "explorer.view", label: "view" }] },
+  { resource: "conversation", actions: [{ key: "conversation.manage", label: "manage" }, { key: "conversation.unlimited", label: "unlimited" }] },
+  { resource: "slides", actions: [{ key: "slides.view", label: "view" }, { key: "slides.manage", label: "manage" }] },
+];
+// Default dashboard languages offered at user creation (IAM user setting; default English).
+const USER_LANGUAGES = ["English", "Spanish", "Portuguese", "French", "German", "Italian"];
 
 // Pool of existing account users that can be assigned to this client (anonymized for the mockup).
 const ASSIGNABLE_POOL = [
@@ -459,14 +468,14 @@ export function ClientUsersSection({
         <CreateUsersDialog
           dataGroups={client.dataGroups ?? []}
           onClose={() => setCreateOpen(false)}
-          onCreate={(emails, dgIds) => {
+          onCreate={(emails, dgIds, language, maestroGrants) => {
             const now = nowStamp();
             const cur = client.users ?? [];
             const existing = new Set(cur.map((u) => u.email.toLowerCase()));
             const fresh = emails.filter((e) => !existing.has(e.toLowerCase()));
             setUsers([
               ...cur,
-              ...fresh.map((email) => ({ id: crypto.randomUUID(), email, status: "Active" as const, dataGroupIds: dgIds, createdAt: now, updatedAt: now })),
+              ...fresh.map((email) => ({ id: crypto.randomUUID(), email, status: "Active" as const, dataGroupIds: dgIds, maestroGrants, language, createdAt: now, updatedAt: now })),
             ]);
             setCreateOpen(false);
             toast.success(`Created ${fresh.length} user${fresh.length === 1 ? "" : "s"}`);
@@ -809,11 +818,15 @@ function CreateUsersDialog({
 }: {
   dataGroups: DataGroup[];
   onClose: () => void;
-  onCreate: (emails: string[], dgIds: string[]) => void;
+  onCreate: (emails: string[], dgIds: string[], language: string, maestroGrants: string[]) => void;
 }) {
   const [emails, setEmails] = useState("");
+  const [language, setLanguage] = useState("English");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const toggle = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const [grants, setGrants] = useState<Set<string>>(new Set());
+  const [permsOpen, setPermsOpen] = useState(true);
+  const toggleDg = (id: string) => setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggleGrant = (k: string) => setGrants((prev) => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n; });
   // De-duplicate the pasted batch case-insensitively (keeps first-seen casing).
   const parsed = useMemo(() => {
     const seen = new Set<string>();
@@ -824,12 +837,15 @@ function CreateUsersDialog({
     }
     return out;
   }, [emails]);
+  const dgName = (id: string) => dataGroups.find((d) => d.id === id)?.name ?? id;
+  const unselected = dataGroups.filter((d) => !selected.has(d.id));
+  const canCreate = parsed.length > 0 && selected.size > 0;
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-[460px]">
+      <DialogContent className="sm:max-w-[520px]">
         <DialogHeader><DialogTitle>Create users</DialogTitle></DialogHeader>
-        <p className="-mt-1 text-sm text-muted-foreground">New users are created on this client and added to the selected data groups.</p>
-        <div className="space-y-3">
+        <p className="-mt-1 text-sm text-muted-foreground">New users are created on this client and assigned to the selected data group(s), with the chosen language and Maestro permissions.</p>
+        <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-foreground">Emails <span className="text-destructive">*</span></label>
             <textarea
@@ -841,14 +857,66 @@ function CreateUsersDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-foreground">Data groups</label>
-            <DgMultiSelect dataGroups={dataGroups} selected={selected} onToggle={toggle} />
+            <label className="text-sm font-medium text-foreground">Language <span className="text-destructive">*</span></label>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {USER_LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">Datagroup <span className="text-destructive">*</span></label>
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-background p-2">
+              {[...selected].map((id) => (
+                <span key={id} className={cn("inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium", dataGroupColorClass(id))}>
+                  {dgName(id)}
+                  <button type="button" onClick={() => toggleDg(id)} aria-label={`Remove ${dgName(id)}`} className="leading-none opacity-70 hover:opacity-100">×</button>
+                </span>
+              ))}
+              {unselected.length > 0 && (
+                <select
+                  value=""
+                  onChange={(e) => { if (e.target.value) toggleDg(e.target.value); }}
+                  aria-label="Add datagroup"
+                  className="rounded-md border border-dashed border-border bg-background px-2 py-1 text-xs text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">+ Add datagroup</option>
+                  {unselected.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              )}
+              {selected.size === 0 && unselected.length === 0 && <span className="px-1 text-xs text-muted-foreground">No data groups on this client.</span>}
+            </div>
+          </div>
+          <div className="rounded-lg border border-border p-3">
+            <button type="button" onClick={() => setPermsOpen((v) => !v)} className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <span className="grid h-6 w-6 place-items-center rounded-md bg-secondary text-muted-foreground"><ChevronUp className={cn("h-4 w-4 transition-transform", !permsOpen && "rotate-180")} /></span>
+              Maestro permissions
+            </button>
+            {permsOpen && (
+              <div className="mt-3">
+                {MAESTRO_RESOURCES.map((r, i) => (
+                  <div key={r.resource} className={cn("flex items-center gap-6 py-2", i > 0 && "border-t border-border")}>
+                    <span className="w-32 text-sm text-foreground">{r.resource}</span>
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5">
+                      {r.actions.map((a) => (
+                        <label key={a.key} className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-foreground">
+                          <input type="checkbox" checked={grants.has(a.key)} onChange={() => toggleGrant(a.key)} className="h-4 w-4 rounded border-border" />
+                          {a.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button disabled={!parsed.length} onClick={() => parsed.length && onCreate(parsed, [...selected])}>
-            Create {parsed.length || ""} user{parsed.length === 1 ? "" : "s"}
+          <Button disabled={!canCreate} onClick={() => canCreate && onCreate(parsed, [...selected], language, [...grants])}>
+            Create user{parsed.length === 1 ? "" : "s"}{parsed.length ? ` (${parsed.length})` : ""}
           </Button>
         </DialogFooter>
       </DialogContent>
