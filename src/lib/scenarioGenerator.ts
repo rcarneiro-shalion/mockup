@@ -210,12 +210,13 @@ export function buildScenario(clientSlug: string, jobs: RealJob[], seedsPerSub: 
     const subSeeds = buildSubSeeds(seedTypesForExtraction(job.extractionType), seedsPerSub, job.store, clientSlug, ji);
 
     const optName = `${job.name}`; // reuse the real job name as the option name
-    const option: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: optName, status: "Active", extractionType: job.extractionType, ...optionPreset(job.extractionType), createdAt: nowStamp(), updatedAt: nowStamp() };
+    // Frequency lives on the scrapping option now (rotation stays on the subscription).
+    const option: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: optName, status: "Active", extractionType: job.extractionType, frequency: freqFromName(job.name), ...optionPreset(job.extractionType), createdAt: nowStamp(), updatedAt: nowStamp() };
 
     const sub: Subscription = {
       ...emptySubscription(), id: uid(), name: job.name, projects: [project.name], store: job.store,
-      seeds: subSeeds.map((s) => s.d), scrappingOption: optName, geo, locationSet,
-      frequency: freqFromName(job.name), rotation: geo === "MANUAL" ? ["Locations"] : ["Seeds"],
+      seeds: subSeeds.map((s) => s.d), scrappingOption: optName, geo,
+      locationSet, rotation: geo === "MANUAL" ? ["Locations"] : ["Seeds"],
       status: "Active", businessUnit: job.businessUnit || "GEN",
       createdAt: nowStamp(), updatedAt: nowStamp(),
     };
@@ -229,12 +230,12 @@ export function buildScenario(clientSlug: string, jobs: RealJob[], seedsPerSub: 
       let pdpOptName = pdpBase;
       for (let n = 2; usedPdpNames.has(pdpOptName); n++) pdpOptName = `${pdpBase} #${n}`;
       usedPdpNames.add(pdpOptName);
-      const pdpOption: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: pdpOptName, status: "Active", extractionType: "DIGITAL_SHELF_PDP", ...optionPreset("DIGITAL_SHELF_PDP"), createdAt: nowStamp(), updatedAt: nowStamp() };
+      const pdpOption: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: pdpOptName, status: "Active", extractionType: "DIGITAL_SHELF_PDP", frequency: "Weekly", ...optionPreset("DIGITAL_SHELF_PDP"), createdAt: nowStamp(), updatedAt: nowStamp() };
       const pdpSeeds: Seed[] = buildSubSeeds(["PDP"], seedsPerSub, job.store, clientSlug, ji + 1000, true);
       const pdpSub: Subscription = {
         ...emptySubscription(), id: uid(), name: pdpOptName, projects: [project.name], store: job.store,
         seeds: pdpSeeds.map((s) => s.d), scrappingOption: pdpOptName, geo, locationSet,
-        frequency: "Weekly", rotation: ["Seeds"], status: "Active", businessUnit: job.businessUnit || "GEN",
+        rotation: ["Seeds"], status: "Active", businessUnit: job.businessUnit || "GEN",
         createdAt: nowStamp(), updatedAt: nowStamp(),
       };
       scrappingOptions.push(pdpOption); subscriptions.push(pdpSub); seeds.push(...pdpSeeds);

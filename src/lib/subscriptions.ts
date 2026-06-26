@@ -34,12 +34,17 @@ export type Subscription = {
   scrappingOption: string;
   geo: string; // NONE | AUTOMATIC | MANUAL | VIRTUAL_STORE
   locationSet: string;
-  frequency: string; // Daily | Weekly | Monthly | Custom
-  frequencyDays?: string; // legacy simple "every N days" (superseded by customSchedule)
-  customSchedule?: CustomSchedule; // rich recurrence when frequency = Custom
-  startWeekday?: string; // Weekly: day of week the run starts on (Sun..Sat)
-  startMonthDay?: string; // Monthly: day of month (1..31) the run starts on
-  rotation: string[]; // multi-select: Locations and/or Seeds ("both" = both selected)
+  /** @deprecated Frequency moved to the scrapping option (`ScrappingOptionValues.frequency`). Kept optional for back-compat with persisted data. */
+  frequency?: string;
+  /** @deprecated frequency config now lives on the scrapping option. */
+  frequencyDays?: string;
+  /** @deprecated frequency config now lives on the scrapping option. */
+  customSchedule?: CustomSchedule;
+  /** @deprecated */
+  startWeekday?: string;
+  /** @deprecated */
+  startMonthDay?: string;
+  rotation: string[]; // multi-select: Locations and/or Seeds ("both" = both selected) — STAYS on the subscription
   status?: SubscriptionStatus; // Active | Inactive
   businessUnit?: string; // single Business Unit (CMI / FSA / DSM / RMM / MSH / GEN)
   // Shown only when the scrapping option's extraction type is DIGITAL_SHELF_PLP or

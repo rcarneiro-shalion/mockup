@@ -141,6 +141,7 @@ function ScrappingOptionsPage() {
             <tr>
               <SortTh label="Name" sortKey="name" sort={sort} />
               <SortTh label="Extraction type" sortKey="extractionType" sort={sort} />
+              <SortTh label="Frequency" sortKey="frequency" sort={sort} />
               <SortTh label="Options" sortKey="options" sort={sort} />
               <SortTh label="Subscriptions" sortKey="subscriptions" sort={sort} />
               <SortTh label="Created at" sortKey="createdAt" sort={sort} />
@@ -156,6 +157,7 @@ function ScrappingOptionsPage() {
               <tr key={i} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
                 <Td><Pill tone="slate">{r.extractionType}</Pill></Td>
+                <Td>{r.frequency ? <Pill tone="slate">{r.frequency === "Custom" ? `Custom · ${r.customDays || "?"}d · ${r.customTimesPerDay || "1x"}` : r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td>
                   <div className="flex flex-wrap gap-1">
                     {summaryPills(r).length ? (

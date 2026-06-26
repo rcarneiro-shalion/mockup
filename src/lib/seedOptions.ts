@@ -70,8 +70,12 @@ export const SORT_OPTIONS = [
   "newest",
 ];
 
-// Subscription: how often it re-runs. "Custom" unlocks a free "every N days" field.
+// Scrapping option: how often it re-runs. "Custom" unlocks a simple Days field + a
+// times-per-day selector (TIMES_PER_DAY_OPTIONS). (Frequency lives on the scrapping option,
+// not the subscription; rotation stays on the subscription.)
 export const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly", "Custom"];
+// Custom frequency: how many runs per day.
+export const TIMES_PER_DAY_OPTIONS = ["1x", "2x", "3x", "4x"];
 
 // Subscription: what the rotation cycles through — a MULTI-select. Picking both
 // Locations + Seeds is the intrinsic "both" condition (no separate value).

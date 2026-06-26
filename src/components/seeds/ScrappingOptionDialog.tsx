@@ -29,6 +29,8 @@ import {
   TIMEFRAME_OPTIONS,
   MODALITY_OPTIONS,
   SORT_OPTIONS,
+  FREQUENCY_OPTIONS,
+  TIMES_PER_DAY_OPTIONS,
 } from "@/lib/seedOptions";
 import { getSubscriptions, subProjects } from "@/lib/subscriptions";
 import { getProjects } from "@/lib/projects";
@@ -44,6 +46,11 @@ export type ScrappingOptionValues = {
   status: string;
   extractionType: string;
   timeframes: string[];
+  // How often the option re-runs (moved here from the subscription). "Custom" → a simple
+  // Days field + times-per-day selector. Daily/Weekly/Monthly carry no extra config.
+  frequency: string;
+  customDays?: string;        // Custom only: which/how many days (free field)
+  customTimesPerDay?: string; // Custom only: 1x | 2x | 3x | 4x
   // Joints (conjuntos)
   multivariants: boolean;
   pagination: boolean;
@@ -66,6 +73,9 @@ export const EMPTY_SCRAPPING_OPTION: ScrappingOptionValues = {
   status: "Active",
   extractionType: "MEDIA",
   timeframes: ["All Day (1 x day)"],
+  frequency: "Daily",
+  customDays: "",
+  customTimesPerDay: "1x",
   multivariants: false,
   pagination: false,
   maxPage: "",
@@ -208,6 +218,25 @@ export function ScrappingOptionDialog({
                   addLabel="Add task group"
                   emptyLabel="No task groups selected"
                 />
+              </Field>
+
+              {/* Frequency — moved here from the subscription. Custom = Days + times/day. */}
+              <Field label="Frequency" required className="sm:col-span-2">
+                <div className="flex flex-wrap items-end gap-4">
+                  <SelectBox value={v.frequency} onChange={(x) => set("frequency", x)} options={FREQUENCY_OPTIONS} className="w-40" />
+                  {v.frequency === "Custom" && (
+                    <>
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-xs font-medium text-foreground/70">Days</span>
+                        <Input value={v.customDays ?? ""} onChange={(e) => set("customDays", e.target.value)} placeholder="e.g. 1, 3, 5" className="h-9 w-40" />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-xs font-medium text-foreground/70">Times</span>
+                        <SelectBox value={v.customTimesPerDay ?? "1x"} onChange={(x) => set("customTimesPerDay", x)} options={TIMES_PER_DAY_OPTIONS} className="w-24" />
+                      </div>
+                    </>
+                  )}
+                </div>
               </Field>
             </section>
 

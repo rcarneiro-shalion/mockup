@@ -131,7 +131,6 @@ function SubscriptionsPage() {
               <SortTh label="Destination" sortKey="destinations" sort={sort} />
               <SortTh label="Geoloc" sortKey="geo" sort={sort} />
               <SortTh label="Business unit" sortKey="businessUnit" sort={sort} />
-              <SortTh label="Frequency" sortKey="frequency" sort={sort} />
               <SortTh label="Rotation" sortKey="rotation" sort={sort} />
               <SortTh label="Created at" sortKey="createdAt" sort={sort} />
               <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
@@ -150,7 +149,6 @@ function SubscriptionsPage() {
                 <Td><GroupedPills items={subDestinationOptions(r)} noun="destination" tone="blue" onSeeAll={() => setSelectedId(r.id)} /></Td>
                 <Td><Pill tone="violet">{r.geo}</Pill></Td>
                 <Td>{r.businessUnit ? <Pill tone="blue">{r.businessUnit}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
-                <Td>{r.frequency ? <Pill tone="slate">{r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td>
                   {subRotation(r).length ? (
                     <div className="flex flex-wrap gap-1">
