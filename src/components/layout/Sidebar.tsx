@@ -187,15 +187,14 @@ export function Sidebar() {
   // The group that contains the active route, if any:
   const activeGroupLabel =
     nav.find((i) => i.children?.some((c) => pathname.startsWith(c.to)))?.label ?? null;
-  // Open the active group by default (or the first defaultOpen group when no
-  // section is active, e.g. on Home). Clicking a header opens it exclusively.
-  const [openGroup, setOpenGroup] = useState<string | null>(
-    activeGroupLabel ?? nav.find((i) => i.children && i.defaultOpen)?.label ?? null,
-  );
-  // Follow cross-section navigation: landing in a section opens it and collapses
-  // the rest. Navigating within the same section keeps the manual choice.
+  // Open ONLY the group that owns the active route; no group auto-opens on routes that
+  // belong to none (Home, Clients) — those open only when their header is clicked.
+  const [openGroup, setOpenGroup] = useState<string | null>(activeGroupLabel);
+  // Follow navigation: landing on a group's route opens that group (collapsing the rest);
+  // landing on a non-group route (Home, Clients) closes any open group. A manual header
+  // click still opens a group and persists until the route's active group changes.
   useEffect(() => {
-    if (activeGroupLabel) setOpenGroup(activeGroupLabel);
+    setOpenGroup(activeGroupLabel);
   }, [activeGroupLabel]);
 
   if (collapsed) {
