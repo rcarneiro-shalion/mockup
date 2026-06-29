@@ -16,19 +16,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { MoreVertical, Copy, Trash2 } from "lucide-react";
+import { MoreVertical, Copy, Pencil, Trash2 } from "lucide-react";
 
 /**
- * Standard datagrid row actions: a "⋮" menu with Copy ID (to clipboard) and
- * Delete (with a confirmation prompt). Reused across every list in the app.
+ * Standard datagrid row actions: a "⋮" menu with Edit (optional), Copy ID (to
+ * clipboard) and Delete (with a confirmation prompt). Reused across every list.
  */
 export function RowActionsMenu({
   id,
+  onEdit,
   onDelete,
   entityLabel = "item",
 }: {
   /** The row id copied to the clipboard. */
   id: string;
+  /** Called when the user picks Edit. Omit to hide the Edit action. */
+  onEdit?: () => void;
   /** Called after the user confirms deletion. Omit to hide the Delete action. */
   onDelete?: () => void;
   /** Used in the confirmation copy, e.g. "data group". */
@@ -54,6 +57,12 @@ export function RowActionsMenu({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
+          {onEdit && (
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={copyId}>
             <Copy className="mr-2 h-4 w-4" />
             Copy ID

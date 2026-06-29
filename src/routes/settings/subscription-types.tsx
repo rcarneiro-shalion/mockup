@@ -79,6 +79,7 @@ function SubscriptionTypesPage() {
       columns={columns}
       rows={rows}
       onDelete={(id) => setRows((prev) => prev.filter((r) => r.id !== id))}
+      onEdit={(r) => setSelected(r)}
       extra={
         <>
           <AddRecordDialog

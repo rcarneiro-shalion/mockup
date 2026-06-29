@@ -26,6 +26,7 @@ export function SettingsList<T extends { id: string }>({
   columns,
   rows,
   onDelete,
+  onEdit,
   extra,
   headerActions,
 }: {
@@ -38,6 +39,8 @@ export function SettingsList<T extends { id: string }>({
   columns: SettingsColumn<T>[];
   rows: T[];
   onDelete: (id: string) => void;
+  /** When provided, the row "⋮" menu shows an Edit action that opens the row. */
+  onEdit?: (r: T) => void;
   extra?: ReactNode;
   /** Extra controls rendered in the header, before the New button. */
   headerActions?: ReactNode;
@@ -94,7 +97,7 @@ export function SettingsList<T extends { id: string }>({
               <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
                 {columns.map((c) => <Td key={c.key}>{c.cell(r)}</Td>)}
                 <Td>
-                  <RowActionsMenu id={r.id} entityLabel={entityLabel} onDelete={() => onDelete(r.id)} />
+                  <RowActionsMenu id={r.id} entityLabel={entityLabel} onDelete={() => onDelete(r.id)} onEdit={onEdit ? () => onEdit(r) : undefined} />
                 </Td>
               </tr>
             ))}
