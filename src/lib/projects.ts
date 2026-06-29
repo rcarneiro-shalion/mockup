@@ -8,7 +8,7 @@ export type AssignedSubscription = {
   name: string;
   store: string;
   geo: string;
-  type: string; // BASE, ADDON, ...
+  type: string; // a Subscription type from Settings › Subscription type (e.g. Select Assortment, Matching)
   expiration: string;
 };
 
@@ -25,8 +25,6 @@ export type Project = {
 };
 
 export const PROJECTS_KEY = "seeds-api:projects";
-
-export const ASSIGN_TYPE_OPTIONS = ["BASE", "ADDON"];
 
 const EC = "ecometry@shalion.com";
 
@@ -54,8 +52,8 @@ const CURATED_PROJECTS: Project[] = [
     id: "abinmx", name: "Ab Inbev MX", bom: "SHL0131", status: "Active",
     createdAt: "Wed, Jun 25, 2025 10:00", updatedAt: "Mon, Oct 27, 2025 1:50", createdBy: EC, updatedBy: EC,
     assignedSubscriptions: [
-      { id: "asu1", name: "ME_KW_WATER — Amazon US", store: "Amazon US", geo: "MANUAL", type: "BASE", expiration: "-" },
-      { id: "asu2", name: "PDP_BEAM_US — Amazon US", store: "Amazon US", geo: "AUTOMATIC", type: "BASE", expiration: "-" },
+      { id: "asu1", name: "ME_KW_WATER — Amazon US", store: "Amazon US", geo: "MANUAL", type: "Select Assortment (SA)", expiration: "-" },
+      { id: "asu2", name: "PDP_BEAM_US — Amazon US", store: "Amazon US", geo: "AUTOMATIC", type: "Matching (MAG)", expiration: "-" },
     ],
   },
   CC("cc1", "DSM - Coca Cola FR (inactivo)", "demo_coca_fr_dsm", "Mon, Jan 6, 2025", "Inactive"),

@@ -241,12 +241,12 @@ export function buildScenario(clientSlug: string, jobs: RealJob[], seedsPerSub: 
         createdAt: nowStamp(), updatedAt: nowStamp(),
       };
       scrappingOptions.push(pdpOption); subscriptions.push(pdpSub); seeds.push(...pdpSeeds);
-      assigned.push({ id: pdpSub.id, name: pdpSub.name, store: pdpSub.store, geo: pdpSub.geo, type: "ADDON", expiration: "-" });
+      assigned.push({ id: pdpSub.id, name: pdpSub.name, store: pdpSub.store, geo: pdpSub.geo, type: "Matching (MAG)", expiration: "-" });
       sub.destinationOptions = [pdpSub.name]; // discovery feeds the PDP sibling
     }
 
     scrappingOptions.push(option); subscriptions.push(sub); seeds.push(...subSeeds);
-    assigned.push({ id: sub.id, name: sub.name, store: sub.store, geo: sub.geo, type: "BASE", expiration: "-" });
+    assigned.push({ id: sub.id, name: sub.name, store: sub.store, geo: sub.geo, type: "Select Assortment (SA)", expiration: "-" });
   });
 
   project.assignedSubscriptions = assigned;

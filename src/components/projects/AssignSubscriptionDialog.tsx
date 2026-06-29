@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getSubscriptions } from "@/lib/subscriptions";
-import { ASSIGN_TYPE_OPTIONS, type AssignedSubscription } from "@/lib/projects";
+import { type AssignedSubscription } from "@/lib/projects";
+import { getSubscriptionTypes } from "@/lib/settings";
 import { buildQueryMatch } from "@/lib/textMatch";
 import { Search } from "lucide-react";
 
@@ -48,16 +49,19 @@ export function AssignSubscriptionDialog({
   editing?: AssignedSubscription | null;
 }) {
   const isEdit = !!editing;
+  // Type options come from the Settings › Subscription type catalog (e.g. Select
+  // Assortment, Matching) — no longer the hardcoded BASE/ADDON placeholders.
+  const typeOptions = getSubscriptionTypes().map((t) => t.name);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
-  const [type, setType] = useState("BASE");
+  const [type, setType] = useState(typeOptions[0] ?? "");
   const [expiration, setExpiration] = useState("");
 
   useEffect(() => {
     if (open) {
       setPicked(new Set());
       setQuery("");
-      setType(editing?.type ?? "BASE");
+      setType(editing?.type ?? typeOptions[0] ?? "");
       setExpiration(toDateInput(editing?.expiration));
     }
   }, [open, editing]);
@@ -141,7 +145,7 @@ export function AssignSubscriptionDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {ASSIGN_TYPE_OPTIONS.map((t) => (
+                  {typeOptions.map((t) => (
                     <SelectItem key={t} value={t}>{t}</SelectItem>
                   ))}
                 </SelectContent>
