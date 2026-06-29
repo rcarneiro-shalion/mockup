@@ -23,10 +23,11 @@ import {
 import { AssignSubscriptionDialog } from "@/components/projects/AssignSubscriptionDialog";
 import { AssignClientDialog } from "@/components/projects/AssignClientDialog";
 import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimitives";
+import { FilterChip } from "@/components/seeds/FilterChip";
 import type { Project, AssignedSubscription } from "@/lib/projects";
 import { getAssignedClientsForProject, setProjectClients, type ProjectClient } from "@/lib/clients";
 import { toast } from "sonner";
-import { ArrowLeft, HelpCircle, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Calendar, HelpCircle, MapPin, Pencil, Plus, Store, Tag, Trash2, Users, X } from "lucide-react";
 
 export function ProjectForm({
   mode,
@@ -51,6 +52,13 @@ export function ProjectForm({
   const [assignClientOpen, setAssignClientOpen] = useState(false);
   const [editClient, setEditClient] = useState<ProjectClient | null>(null);
   const [editSub, setEditSub] = useState<AssignedSubscription | null>(null);
+  // --- grid filters (Assigned clients + Assigned subscriptions) -----------
+  const [fClient, setFClient] = useState<string[]>([]);
+  const [fName, setFName] = useState<string[]>([]);
+  const [fStore, setFStore] = useState<string[]>([]);
+  const [fGeo, setFGeo] = useState<string[]>([]);
+  const [fType, setFType] = useState<string[]>([]);
+  const [fExpBy, setFExpBy] = useState(""); // YYYY-MM-DD — "expires on or before"
   // Assigned clients = the inverse of the client↔project link (lives on the client).
   const [assignedClients, setAssignedClients] = useState<ProjectClient[]>([]);
   useEffect(() => {
@@ -61,6 +69,24 @@ export function ProjectForm({
     setProject((prev) => ({ ...prev, [k]: v }));
 
   const assignedSubscriptions = project.assignedSubscriptions ?? [];
+
+  // Apply the grid filters (mockup-side filtering of the displayed rows).
+  const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const expCutoff = fExpBy ? Date.parse(`${fExpBy}T23:59:59`) : null;
+  const expMatch = (exp: string) => {
+    if (expCutoff === null) return true;
+    const t = Date.parse(exp);
+    return !Number.isNaN(t) && t <= expCutoff;
+  };
+  const shownClients = assignedClients.filter((c) => !fClient.length || fClient.includes(c.name));
+  const shownSubs = assignedSubscriptions.filter(
+    (sp) =>
+      (!fName.length || fName.includes(sp.name)) &&
+      (!fStore.length || fStore.includes(sp.store)) &&
+      (!fGeo.length || fGeo.includes(sp.geo)) &&
+      (!fType.length || fType.includes(sp.type)) &&
+      expMatch(sp.expiration),
+  );
   // The two relationship grids AUTO-SAVE on every add/remove (they don't wait for
   // the Save button). Only possible for an existing project, so they're gated to
   // edit mode — in add mode you save the project first (name/BoM/status), then edit.
@@ -200,6 +226,10 @@ export function ProjectForm({
               </Button>
             </div>
 
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <FilterChip label="Client" icon={Users} options={uniq(assignedClients.map((c) => c.name))} value={fClient} onChange={setFClient} searchable />
+            </div>
+
             <div className="mt-4 overflow-hidden rounded-lg border border-border">
               <table className="w-full text-sm">
                 <thead className="bg-secondary/60">
@@ -219,8 +249,15 @@ export function ProjectForm({
                       </Td>
                       <Td /><Td /><Td /><Td />
                     </tr>
+                  ) : shownClients.length === 0 ? (
+                    <tr>
+                      <Td className="text-muted-foreground">
+                        <span className="block py-2">No clients match the filter.</span>
+                      </Td>
+                      <Td /><Td /><Td /><Td />
+                    </tr>
                   ) : (
-                    assignedClients.map((c) => (
+                    shownClients.map((c) => (
                       <tr key={c.clientId} className="border-t border-border hover:bg-secondary/40">
                         <Td><LinkText>{c.name}</LinkText></Td>
                         <Td><Pill tone="slate">{c.acronym}</Pill></Td>
@@ -250,7 +287,7 @@ export function ProjectForm({
                 </tbody>
               </table>
             </div>
-            <Pagination total={assignedClients.length} />
+            <Pagination total={shownClients.length} />
           </div>
 
           {/* Assigned subscriptions */}
@@ -261,6 +298,23 @@ export function ProjectForm({
                 <Plus className="h-3.5 w-3.5" />
                 Assign subscription
               </Button>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <FilterChip label="Name" options={uniq(assignedSubscriptions.map((s) => s.name))} value={fName} onChange={setFName} searchable />
+              <FilterChip label="Store" icon={Store} options={uniq(assignedSubscriptions.map((s) => s.store))} value={fStore} onChange={setFStore} />
+              <FilterChip label="Geolocation mode" icon={MapPin} options={uniq(assignedSubscriptions.map((s) => s.geo))} value={fGeo} onChange={setFGeo} />
+              <FilterChip label="Type" icon={Tag} options={uniq(assignedSubscriptions.map((s) => s.type))} value={fType} onChange={setFType} />
+              <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm ${fExpBy ? "border-primary bg-primary/5 text-foreground" : "border-border bg-background text-foreground/80"}`}>
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Expires by</span>
+                <input type="date" value={fExpBy} onChange={(e) => setFExpBy(e.target.value)} className="bg-transparent text-sm text-foreground outline-none" aria-label="Filter by expiration date (on or before)" />
+                {fExpBy && (
+                  <button type="button" onClick={() => setFExpBy("")} aria-label="Clear expiration filter" className="text-muted-foreground hover:text-destructive">
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="mt-4 overflow-hidden rounded-lg border border-border">
@@ -283,8 +337,15 @@ export function ProjectForm({
                       </Td>
                       <Td /><Td /><Td /><Td /><Td />
                     </tr>
+                  ) : shownSubs.length === 0 ? (
+                    <tr>
+                      <Td className="text-muted-foreground">
+                        <span className="block py-2">No subscriptions match the filters.</span>
+                      </Td>
+                      <Td /><Td /><Td /><Td /><Td />
+                    </tr>
                   ) : (
-                    assignedSubscriptions.map((sp) => (
+                    shownSubs.map((sp) => (
                       <tr key={sp.id} className="border-t border-border hover:bg-secondary/40">
                         <Td><LinkText>{sp.name}</LinkText></Td>
                         <Td><LinkText>{sp.store}</LinkText></Td>
@@ -315,7 +376,7 @@ export function ProjectForm({
                 </tbody>
               </table>
             </div>
-            <Pagination total={assignedSubscriptions.length} />
+            <Pagination total={shownSubs.length} />
           </div>
         </div>
 
