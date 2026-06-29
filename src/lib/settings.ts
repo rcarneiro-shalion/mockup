@@ -133,6 +133,9 @@ const ST = (id: string, name: string, description: string, createdAt: string, up
 export const INITIAL_SUBSCRIPTION_TYPES: SettingSubscriptionType[] = [
   ST("sub-sa", "Select Assortment (SA)", "Selected Assortment (also sometimes called Selected Items) shows the status of the client products in online retailers.", "Thu, Oct 26, 2023 3:30 PM", "Thu, Oct 26, 2023 3:30 PM"),
   ST("sub-mag", "Matching (MAG)", "Matching identifies which products extracted from online retailers correspond to the client's own catalog — codifying their attributes (brand, size, flavour, …) so each listing is linked to the right product, which makes price, naming and image tracking comparable across retailers.", "Mon, Nov 18, 2024 11:58 AM", "Mon, Dec 29, 2025 4:21 PM"),
+  ST("sub-geo", "GEO", "Category scraping in geolocation mode (automatic), all from store.", "Mon, Jan 13, 2025 9:00 AM", "Mon, Jan 13, 2025 9:00 AM"),
+  ST("sub-se", "Search (SE)", "Search by keywords used to identify new products.", "Mon, Jan 13, 2025 9:05 AM", "Mon, Jan 13, 2025 9:05 AM"),
+  ST("sub-me", "Media (ME)", "A new approach that joins Ads + Search + Shelf.", "Mon, Jan 13, 2025 9:10 AM", "Mon, Jan 13, 2025 9:10 AM"),
 ];
 
 function read<T>(key: string, initial: T[]): T[] {
