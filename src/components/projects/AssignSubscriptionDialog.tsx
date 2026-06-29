@@ -3,16 +3,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { getSubscriptions } from "@/lib/subscriptions";
-import { type AssignedSubscription } from "@/lib/projects";
-import { getSubscriptionTypes } from "@/lib/settings";
+import { typeFromName, type AssignedSubscription } from "@/lib/projects";
 import { buildQueryMatch } from "@/lib/textMatch";
 import { Search } from "lucide-react";
 
@@ -49,19 +41,14 @@ export function AssignSubscriptionDialog({
   editing?: AssignedSubscription | null;
 }) {
   const isEdit = !!editing;
-  // Type options come from the Settings › Subscription type catalog (e.g. Select
-  // Assortment, Matching) — no longer the hardcoded BASE/ADDON placeholders.
-  const typeOptions = getSubscriptionTypes().map((t) => t.name);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
-  const [type, setType] = useState(typeOptions[0] ?? "");
   const [expiration, setExpiration] = useState("");
 
   useEffect(() => {
     if (open) {
       setPicked(new Set());
       setQuery("");
-      setType(editing?.type ?? typeOptions[0] ?? "");
       setExpiration(toDateInput(editing?.expiration));
     }
   }, [open, editing]);
@@ -78,11 +65,11 @@ export function AssignSubscriptionDialog({
 
   const handleSubmit = () => {
     if (isEdit && editing) {
-      onAssign({ ...editing, type, expiration: expiration || "-" });
+      onAssign({ ...editing, type: typeFromName(editing.name), expiration: expiration || "-" });
     } else {
       const subs = available
         .filter((s) => picked.has(s.name))
-        .map((s) => ({ id: newId(), name: s.name, store: s.store, geo: s.geo, type, expiration: expiration || "-" }));
+        .map((s) => ({ id: newId(), name: s.name, store: s.store, geo: s.geo, type: typeFromName(s.name), expiration: expiration || "-" }));
       if (!subs.length) return;
       onAssignMany(subs);
     }
@@ -139,17 +126,11 @@ export function AssignSubscriptionDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label className="text-sm font-medium text-foreground/80">Type{!isEdit && <span className="ml-1 text-xs font-normal text-muted-foreground">(applies to all)</span>}</Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {typeOptions.map((t) => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-sm font-medium text-foreground/80">Type</Label>
+              <div className="flex h-9 items-center rounded-md border border-border bg-secondary/40 px-3 text-sm text-foreground/90">
+                {isEdit ? (typeFromName(editing!.name) || "—") : "Auto from name prefix"}
+              </div>
+              <p className="text-xs text-muted-foreground">Derived from the subscription name prefix (e.g. ME_ → Media).</p>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label className="text-sm font-medium text-foreground/80">Expiration date</Label>

@@ -26,6 +26,29 @@ export type Project = {
 
 export const PROJECTS_KEY = "seeds-api:projects";
 
+// A subscription's "type" is derived from its NAME prefix (the part before the first
+// "_") — it maps to a Subscription type in Settings › Subscription type. Used to
+// "replay" the Type when a subscription is assigned to a project (and by the scenario
+// simulator). Unknown prefixes resolve to "" (no type). Values MUST match the catalog
+// names in src/lib/settings.ts (INITIAL_SUBSCRIPTION_TYPES).
+const TYPE_BY_PREFIX: Record<string, string> = {
+  SA: "Select Assortment (SA)",
+  MAG: "Matching (MAG)",
+  GEO: "GEO",
+  SE: "Search (SE)",
+  ME: "Media (ME)",
+  PLP: "Product Listing Page (PLP)",
+  PDP: "Product Detail Page (PDP)",
+  AD: "Advertising (AD)",
+  SH: "Shelf (SH)",
+};
+
+/** Resolve a subscription/job NAME to its Subscription type via the leading prefix. */
+export function typeFromName(name: string): string {
+  const prefix = (name.split("_")[0] || "").trim().toUpperCase();
+  return TYPE_BY_PREFIX[prefix] ?? "";
+}
+
 const EC = "ecometry@shalion.com";
 
 // Coca Cola projects (client↔project relationship — mirrored in clients.ts COCA_PROJECTS).
@@ -52,8 +75,8 @@ const CURATED_PROJECTS: Project[] = [
     id: "abinmx", name: "Ab Inbev MX", bom: "SHL0131", status: "Active",
     createdAt: "Wed, Jun 25, 2025 10:00", updatedAt: "Mon, Oct 27, 2025 1:50", createdBy: EC, updatedBy: EC,
     assignedSubscriptions: [
-      { id: "asu1", name: "ME_KW_WATER — Amazon US", store: "Amazon US", geo: "MANUAL", type: "Select Assortment (SA)", expiration: "-" },
-      { id: "asu2", name: "PDP_BEAM_US — Amazon US", store: "Amazon US", geo: "AUTOMATIC", type: "Matching (MAG)", expiration: "-" },
+      { id: "asu1", name: "ME_KW_WATER — Amazon US", store: "Amazon US", geo: "MANUAL", type: "Media (ME)", expiration: "-" },
+      { id: "asu2", name: "PDP_BEAM_US — Amazon US", store: "Amazon US", geo: "AUTOMATIC", type: "Product Detail Page (PDP)", expiration: "-" },
     ],
   },
   CC("cc1", "DSM - Coca Cola FR (inactivo)", "demo_coca_fr_dsm", "Mon, Jan 6, 2025", "Inactive"),

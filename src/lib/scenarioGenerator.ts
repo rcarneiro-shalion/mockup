@@ -9,7 +9,7 @@
 // The generator wires those consistently so the planner resolves every edge.
 
 import { getClients, withProjectClients, nowStamp, emptyClient, CLIENTS_KEY, type Client } from "./clients";
-import { getProjects, PROJECTS_KEY, type Project, type AssignedSubscription } from "./projects";
+import { getProjects, PROJECTS_KEY, typeFromName, type Project, type AssignedSubscription } from "./projects";
 import { getSubscriptions, SUBSCRIPTIONS_KEY, emptySubscription, subProjects, type Subscription } from "./subscriptions";
 import { getSeeds, INITIAL_SEEDS, BULK_SEEDS_EXTRA, SEEDS_KEY, type Seed, type SeedType } from "./seeds";
 import { getScrappingOptions, SCRAPPING_OPTIONS_KEY } from "./scrappingOptions";
@@ -241,12 +241,12 @@ export function buildScenario(clientSlug: string, jobs: RealJob[], seedsPerSub: 
         createdAt: nowStamp(), updatedAt: nowStamp(),
       };
       scrappingOptions.push(pdpOption); subscriptions.push(pdpSub); seeds.push(...pdpSeeds);
-      assigned.push({ id: pdpSub.id, name: pdpSub.name, store: pdpSub.store, geo: pdpSub.geo, type: "Matching (MAG)", expiration: "-" });
+      assigned.push({ id: pdpSub.id, name: pdpSub.name, store: pdpSub.store, geo: pdpSub.geo, type: typeFromName(pdpSub.name), expiration: "-" });
       sub.destinationOptions = [pdpSub.name]; // discovery feeds the PDP sibling
     }
 
     scrappingOptions.push(option); subscriptions.push(sub); seeds.push(...subSeeds);
-    assigned.push({ id: sub.id, name: sub.name, store: sub.store, geo: sub.geo, type: "Select Assortment (SA)", expiration: "-" });
+    assigned.push({ id: sub.id, name: sub.name, store: sub.store, geo: sub.geo, type: typeFromName(sub.name), expiration: "-" });
   });
 
   project.assignedSubscriptions = assigned;

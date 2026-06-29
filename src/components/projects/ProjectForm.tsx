@@ -350,7 +350,7 @@ export function ProjectForm({
                         <Td><LinkText>{sp.name}</LinkText></Td>
                         <Td><LinkText>{sp.store}</LinkText></Td>
                         <Td><Pill tone={sp.geo === "VIRTUAL STORE" ? "amber" : "violet"}>{sp.geo}</Pill></Td>
-                        <Td><Pill tone="slate">{sp.type}</Pill></Td>
+                        <Td>{sp.type ? <Pill tone="slate">{sp.type}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                         <Td className="text-muted-foreground">{sp.expiration}</Td>
                         <Td>
                           <div className="flex items-center justify-end gap-0.5">

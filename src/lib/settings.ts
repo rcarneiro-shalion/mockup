@@ -136,6 +136,10 @@ export const INITIAL_SUBSCRIPTION_TYPES: SettingSubscriptionType[] = [
   ST("sub-geo", "GEO", "Category scraping in geolocation mode (automatic), all from store.", "Mon, Jan 13, 2025 9:00 AM", "Mon, Jan 13, 2025 9:00 AM"),
   ST("sub-se", "Search (SE)", "Search by keywords used to identify new products.", "Mon, Jan 13, 2025 9:05 AM", "Mon, Jan 13, 2025 9:05 AM"),
   ST("sub-me", "Media (ME)", "A new approach that joins Ads + Search + Shelf.", "Mon, Jan 13, 2025 9:10 AM", "Mon, Jan 13, 2025 9:10 AM"),
+  ST("sub-plp", "Product Listing Page (PLP)", "Digital-shelf scraping of product listing / category pages.", "Wed, Jan 15, 2025 10:00 AM", "Wed, Jan 15, 2025 10:00 AM"),
+  ST("sub-pdp", "Product Detail Page (PDP)", "Digital-shelf scraping of individual product detail pages, fed by discovery.", "Wed, Jan 15, 2025 10:05 AM", "Wed, Jan 15, 2025 10:05 AM"),
+  ST("sub-ad", "Advertising (AD)", "Scraping of sponsored / advertising placements.", "Wed, Jan 15, 2025 10:10 AM", "Wed, Jan 15, 2025 10:10 AM"),
+  ST("sub-sh", "Shelf (SH)", "Shelf scraping of a retailer's listings (URL / API).", "Wed, Jan 15, 2025 10:15 AM", "Wed, Jan 15, 2025 10:15 AM"),
 ];
 
 function read<T>(key: string, initial: T[]): T[] {
