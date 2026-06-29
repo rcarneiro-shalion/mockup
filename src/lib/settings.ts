@@ -124,15 +124,15 @@ export const INITIAL_RULES: SettingRule[] = [
 ];
 
 // ---------- Subscription types ----------
-// The catalog of subscription types (e.g. BASE, ADDON) referenced when editing a
-// subscription. Maintained from Settings › Subscription type.
+// The catalog of subscription types (e.g. Select Assortment, Matching) referenced when
+// editing a subscription. Maintained from Settings › Subscription type.
 export type SettingSubscriptionType = { id: string; name: string; description: string; createdAt: string; updatedAt: string };
 export const SUBSCRIPTION_TYPES_KEY = "settings:subscription-types";
 const ST = (id: string, name: string, description: string, createdAt: string, updatedAt: string): SettingSubscriptionType =>
   ({ id, name, description, createdAt, updatedAt });
 export const INITIAL_SUBSCRIPTION_TYPES: SettingSubscriptionType[] = [
-  ST("sub-base", "BASE", "Base subscription — the primary data plan.", "Thu, Oct 26, 2023 3:30 PM", "Thu, Oct 26, 2023 3:30 PM"),
-  ST("sub-addon", "ADDON", "Add-on subscription layered on top of a base.", "Mon, Nov 18, 2024 11:58 AM", "Mon, Dec 29, 2025 4:21 PM"),
+  ST("sub-sa", "Select Assortment (SA)", "Selected Assortment (also sometimes called Selected Items) shows the status of the client products in online retailers.", "Thu, Oct 26, 2023 3:30 PM", "Thu, Oct 26, 2023 3:30 PM"),
+  ST("sub-mag", "Matching (MAG)", "Matching identifies which products extracted from online retailers correspond to the client's own catalog — codifying their attributes (brand, size, flavour, …) so each listing is linked to the right product, which makes price, naming and image tracking comparable across retailers.", "Mon, Nov 18, 2024 11:58 AM", "Mon, Dec 29, 2025 4:21 PM"),
 ];
 
 function read<T>(key: string, initial: T[]): T[] {
