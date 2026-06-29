@@ -36,6 +36,7 @@ import {
 import { nowStamp } from "@/lib/clients";
 import { getClientNames, getClientsForProject } from "@/lib/clients";
 import { getProjects } from "@/lib/projects";
+import { getSubscriptionTypes } from "@/lib/settings";
 
 export const Route = createFileRoute("/seeds-api/subscriptions")({
   // `?edit=<id>` deep-links straight into a subscription's edit dialog (used by
@@ -59,6 +60,7 @@ function SubscriptionsPage() {
   const [fScrap, setFScrap] = useState<string[]>([]);
   const [fGeo, setFGeo] = useState<string[]>([]);
   const [fBu, setFBu] = useState<string[]>([]);
+  const [fType, setFType] = useState<string[]>([]);
   const sort = useSort("subscriptions", "updatedAt", "desc");
   const navigate = useNavigate();
 
@@ -75,6 +77,10 @@ function SubscriptionsPage() {
   const q = query.trim().toLowerCase();
   const seedOptions = [...new Set(rows.flatMap((r) => r.seeds ?? []))].sort();
   const scrapOptions = [...new Set(rows.map((r) => r.scrappingOption).filter(Boolean))].sort();
+  // A subscription's "type" slug = its NAME prefix (before the first "_"); the filter
+  // options come from the Subscription type catalog (Settings › Subscription type).
+  const typeSlugs = [...new Set(getSubscriptionTypes().map((t) => t.slug).filter(Boolean))];
+  const subSlug = (r: Subscription) => (r.name.split("_")[0] || "").toUpperCase();
   // subscription → project → client(s)
   const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
   const clientsForSub = (sub: Subscription) =>
@@ -87,7 +93,8 @@ function SubscriptionsPage() {
     (!fSeed.length || (r.seeds ?? []).some((s) => fSeed.includes(s))) &&
     (!fScrap.length || fScrap.includes(r.scrappingOption)) &&
     (!fGeo.length || fGeo.includes(r.geo)) &&
-    (!fBu.length || fBu.includes(r.businessUnit ?? "")),
+    (!fBu.length || fBu.includes(r.businessUnit ?? "")) &&
+    (!fType.length || fType.includes(subSlug(r))),
   );
   const sorted = sortRows(filtered, sort, {
     seeds: (r) => (r.seeds ?? []).length,
@@ -117,6 +124,7 @@ function SubscriptionsPage() {
           <FilterChip label="Scraping options" options={scrapOptions} value={fScrap} onChange={setFScrap} searchable />
           <FilterChip label="Geoloc modes" options={SUBSCRIPTION_GEOLOC_OPTIONS} value={fGeo} onChange={setFGeo} />
           <FilterChip label="Business units" options={BUSINESS_UNITS} value={fBu} onChange={setFBu} />
+          <FilterChip label="Type" options={typeSlugs} value={fType} onChange={setFType} />
           <FilterChip label="Created at" icon={Calendar} />
         </FilterBar>
         <TableShell>

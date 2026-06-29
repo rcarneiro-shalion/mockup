@@ -126,20 +126,22 @@ export const INITIAL_RULES: SettingRule[] = [
 // ---------- Subscription types ----------
 // The catalog of subscription types (e.g. Select Assortment, Matching) referenced when
 // editing a subscription. Maintained from Settings › Subscription type.
-export type SettingSubscriptionType = { id: string; name: string; description: string; createdAt: string; updatedAt: string };
+export type SettingSubscriptionType = { id: string; name: string; slug: string; description: string; createdAt: string; updatedAt: string };
 export const SUBSCRIPTION_TYPES_KEY = "settings:subscription-types";
-const ST = (id: string, name: string, description: string, createdAt: string, updatedAt: string): SettingSubscriptionType =>
-  ({ id, name, description, createdAt, updatedAt });
+// `slug` = the short code (max 3 chars), i.e. the value in parentheses — it matches a
+// subscription NAME prefix (see projects.ts typeFromName) and powers the list's Type filter.
+const ST = (id: string, name: string, slug: string, description: string, createdAt: string, updatedAt: string): SettingSubscriptionType =>
+  ({ id, name, slug, description, createdAt, updatedAt });
 export const INITIAL_SUBSCRIPTION_TYPES: SettingSubscriptionType[] = [
-  ST("sub-sa", "Select Assortment (SA)", "Selected Assortment (also sometimes called Selected Items) shows the status of the client products in online retailers.", "Thu, Oct 26, 2023 3:30 PM", "Thu, Oct 26, 2023 3:30 PM"),
-  ST("sub-mag", "Matching (MAG)", "Matching identifies which products extracted from online retailers correspond to the client's own catalog — codifying their attributes (brand, size, flavour, …) so each listing is linked to the right product, which makes price, naming and image tracking comparable across retailers.", "Mon, Nov 18, 2024 11:58 AM", "Mon, Dec 29, 2025 4:21 PM"),
-  ST("sub-geo", "GEO", "Category scraping in geolocation mode (automatic), all from store.", "Mon, Jan 13, 2025 9:00 AM", "Mon, Jan 13, 2025 9:00 AM"),
-  ST("sub-se", "Search (SE)", "Search by keywords used to identify new products.", "Mon, Jan 13, 2025 9:05 AM", "Mon, Jan 13, 2025 9:05 AM"),
-  ST("sub-me", "Media (ME)", "A new approach that joins Ads + Search + Shelf.", "Mon, Jan 13, 2025 9:10 AM", "Mon, Jan 13, 2025 9:10 AM"),
-  ST("sub-plp", "Product Listing Page (PLP)", "Digital-shelf scraping of product listing / category pages.", "Wed, Jan 15, 2025 10:00 AM", "Wed, Jan 15, 2025 10:00 AM"),
-  ST("sub-pdp", "Product Detail Page (PDP)", "Digital-shelf scraping of individual product detail pages, fed by discovery.", "Wed, Jan 15, 2025 10:05 AM", "Wed, Jan 15, 2025 10:05 AM"),
-  ST("sub-ad", "Advertising (AD)", "Scraping of sponsored / advertising placements.", "Wed, Jan 15, 2025 10:10 AM", "Wed, Jan 15, 2025 10:10 AM"),
-  ST("sub-sh", "Shelf (SH)", "Shelf scraping of a retailer's listings (URL / API).", "Wed, Jan 15, 2025 10:15 AM", "Wed, Jan 15, 2025 10:15 AM"),
+  ST("sub-sa", "Select Assortment (SA)", "SA", "Selected Assortment (also sometimes called Selected Items) shows the status of the client products in online retailers.", "Thu, Oct 26, 2023 3:30 PM", "Thu, Oct 26, 2023 3:30 PM"),
+  ST("sub-mag", "Matching (MAG)", "MAG", "Matching identifies which products extracted from online retailers correspond to the client's own catalog — codifying their attributes (brand, size, flavour, …) so each listing is linked to the right product, which makes price, naming and image tracking comparable across retailers.", "Mon, Nov 18, 2024 11:58 AM", "Mon, Dec 29, 2025 4:21 PM"),
+  ST("sub-geo", "GEO", "GEO", "Category scraping in geolocation mode (automatic), all from store.", "Mon, Jan 13, 2025 9:00 AM", "Mon, Jan 13, 2025 9:00 AM"),
+  ST("sub-se", "Search (SE)", "SE", "Search by keywords used to identify new products.", "Mon, Jan 13, 2025 9:05 AM", "Mon, Jan 13, 2025 9:05 AM"),
+  ST("sub-me", "Media (ME)", "ME", "A new approach that joins Ads + Search + Shelf.", "Mon, Jan 13, 2025 9:10 AM", "Mon, Jan 13, 2025 9:10 AM"),
+  ST("sub-plp", "Product Listing Page (PLP)", "PLP", "Digital-shelf scraping of product listing / category pages.", "Wed, Jan 15, 2025 10:00 AM", "Wed, Jan 15, 2025 10:00 AM"),
+  ST("sub-pdp", "Product Detail Page (PDP)", "PDP", "Digital-shelf scraping of individual product detail pages, fed by discovery.", "Wed, Jan 15, 2025 10:05 AM", "Wed, Jan 15, 2025 10:05 AM"),
+  ST("sub-ad", "Advertising (AD)", "AD", "Scraping of sponsored / advertising placements.", "Wed, Jan 15, 2025 10:10 AM", "Wed, Jan 15, 2025 10:10 AM"),
+  ST("sub-sh", "Shelf (SH)", "SH", "Shelf scraping of a retailer's listings (URL / API).", "Wed, Jan 15, 2025 10:15 AM", "Wed, Jan 15, 2025 10:15 AM"),
 ];
 
 function read<T>(key: string, initial: T[]): T[] {

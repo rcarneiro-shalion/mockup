@@ -47,6 +47,12 @@ function SubscriptionTypesPage() {
       ),
     },
     {
+      key: "slug",
+      label: "Slug",
+      sortValue: (r) => r.slug,
+      cell: (r) => (r.slug ? <Pill tone="blue">{r.slug}</Pill> : <span className="text-muted-foreground">—</span>),
+    },
+    {
       key: "description",
       label: "Description",
       sortValue: (r) => r.description,
@@ -57,16 +63,21 @@ function SubscriptionTypesPage() {
   ];
 
   const addFields: AddFieldDef[] = [
-    { kind: "text", label: "Name", required: true, span: 2 },
+    { kind: "text", label: "Name", required: true, span: 1 },
+    { kind: "text", label: "Slug", required: true, span: 1 },
     { kind: "textarea", label: "Description", span: 2 },
   ];
 
   const editFields: FieldDef[] = selected
     ? [
-        { kind: "text", label: "Name", value: selected.name, required: true, span: 2 },
+        { kind: "text", label: "Name", value: selected.name, required: true, span: 1 },
+        { kind: "text", label: "Slug", value: selected.slug, required: true, span: 1 },
         { kind: "textarea", label: "Description", value: selected.description, span: 2 },
       ]
     : [];
+
+  // Slug is a short code, max 3 chars, uppercased (e.g. SE, ME, GEO).
+  const cleanSlug = (s: unknown) => ((s as string) || "").trim().toUpperCase().slice(0, 3);
 
   return (
     <SettingsList
@@ -74,7 +85,7 @@ function SubscriptionTypesPage() {
       newLabel="New subscription type"
       onNew={() => setAddOpen(true)}
       searchPlaceholder="Search subscription types by name or description"
-      searchText={(r) => `${r.name} ${r.description}`}
+      searchText={(r) => `${r.name} ${r.slug} ${r.description}`}
       entityLabel="subscription type"
       columns={columns}
       rows={rows}
@@ -95,6 +106,7 @@ function SubscriptionTypesPage() {
                 {
                   id: crypto.randomUUID(),
                   name: ((values["Name"] as string) || "Untitled").trim(),
+                  slug: cleanSlug(values["Slug"]),
                   description: ((values["Description"] as string) || "").trim(),
                   createdAt: now,
                   updatedAt: now,
@@ -116,6 +128,7 @@ function SubscriptionTypesPage() {
                     ? {
                         ...r,
                         name: (values["Name"] as string).trim(),
+                        slug: cleanSlug(values["Slug"]),
                         description: ((values["Description"] as string) || "").trim(),
                         updatedAt: stamp(),
                       }
