@@ -210,13 +210,14 @@ export function buildScenario(clientSlug: string, jobs: RealJob[], seedsPerSub: 
     const subSeeds = buildSubSeeds(seedTypesForExtraction(job.extractionType), seedsPerSub, job.store, clientSlug, ji);
 
     const optName = `${job.name}`; // reuse the real job name as the option name
-    // Frequency lives on the scrapping option now (rotation stays on the subscription).
+    // Frequency lives on the scrapping option now; the subscription carries the new Selection parameters.
     const option: ScrappingOptionValues = { ...EMPTY_SCRAPPING_OPTION, name: optName, status: "Active", extractionType: job.extractionType, frequency: freqFromName(job.name), ...optionPreset(job.extractionType), createdAt: nowStamp(), updatedAt: nowStamp() };
 
     const sub: Subscription = {
       ...emptySubscription(), id: uid(), name: job.name, projects: [project.name], store: job.store,
       seeds: subSeeds.map((s) => s.d), scrappingOption: optName, geo,
-      locationSet, rotation: geo === "MANUAL" ? ["Locations"] : ["Seeds"],
+      locationSet, seedSelection: "All seeds", freshnessWindow: "", lastOfferDays: "",
+      locationSelection: (geo === "AUTOMATIC" || geo === "MANUAL") ? "All locations" : "", cycleLength: "", volumeCap: "Full coverage",
       status: "Active", businessUnit: job.businessUnit || "GEN",
       createdAt: nowStamp(), updatedAt: nowStamp(),
     };
@@ -235,7 +236,8 @@ export function buildScenario(clientSlug: string, jobs: RealJob[], seedsPerSub: 
       const pdpSub: Subscription = {
         ...emptySubscription(), id: uid(), name: pdpOptName, projects: [project.name], store: job.store,
         seeds: pdpSeeds.map((s) => s.d), scrappingOption: pdpOptName, geo, locationSet,
-        rotation: ["Seeds"], status: "Active", businessUnit: job.businessUnit || "GEN",
+        seedSelection: "All seeds", freshnessWindow: "", lastOfferDays: "", locationSelection: (geo === "AUTOMATIC" || geo === "MANUAL") ? "All locations" : "", cycleLength: "", volumeCap: "Full coverage",
+        status: "Active", businessUnit: job.businessUnit || "GEN",
         createdAt: nowStamp(), updatedAt: nowStamp(),
       };
       scrappingOptions.push(pdpOption); subscriptions.push(pdpSub); seeds.push(...pdpSeeds);

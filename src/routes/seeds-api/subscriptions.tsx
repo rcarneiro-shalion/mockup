@@ -29,7 +29,6 @@ import {
   INITIAL_SUBSCRIPTIONS,
   BUSINESS_UNITS,
   SUBSCRIPTION_GEOLOC_OPTIONS,
-  subRotation,
   subDestinationOptions,
   subProjects,
   type Subscription,
@@ -96,7 +95,7 @@ function SubscriptionsPage() {
     scrappingOption: (r) => r.scrappingOption,
     project: (r) => subProjects(r).join(", "),
     destinations: (r) => subDestinationOptions(r).length,
-    rotation: (r) => subRotation(r).join(", "),
+    seedSelection: (r) => r.seedSelection ?? "",
     createdAt: (r) => parseListDate(r.createdAt),
     updatedAt: (r) => parseListDate(r.updatedAt),
   });
@@ -131,7 +130,7 @@ function SubscriptionsPage() {
               <SortTh label="Destination" sortKey="destinations" sort={sort} />
               <SortTh label="Geoloc" sortKey="geo" sort={sort} />
               <SortTh label="Business unit" sortKey="businessUnit" sort={sort} />
-              <SortTh label="Rotation" sortKey="rotation" sort={sort} />
+              <SortTh label="Seed selection" sortKey="seedSelection" sort={sort} />
               <SortTh label="Created at" sortKey="createdAt" sort={sort} />
               <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <Th>Active</Th>
@@ -149,15 +148,7 @@ function SubscriptionsPage() {
                 <Td><GroupedPills items={subDestinationOptions(r)} noun="destination" tone="blue" onSeeAll={() => setSelectedId(r.id)} /></Td>
                 <Td><Pill tone="violet">{r.geo}</Pill></Td>
                 <Td>{r.businessUnit ? <Pill tone="blue">{r.businessUnit}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
-                <Td>
-                  {subRotation(r).length ? (
-                    <div className="flex flex-wrap gap-1">
-                      {subRotation(r).map((x) => <Pill key={x} tone="slate">{x}</Pill>)}
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </Td>
+                <Td>{r.seedSelection ? <Pill tone="slate">{r.seedSelection}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                 <Td className="whitespace-nowrap text-muted-foreground">{r.createdAt || "—"}</Td>
                 <Td className="whitespace-nowrap text-muted-foreground">{r.updatedAt || "—"}</Td>
                 <Td><Switch defaultChecked /></Td>

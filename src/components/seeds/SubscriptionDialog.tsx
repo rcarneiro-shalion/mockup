@@ -19,8 +19,11 @@ import { ScrappingOptionPicker } from "@/components/seeds/ScrappingOptionPicker"
 import { MultiSelectPopover } from "@/components/seeds/MultiSelectPopover";
 import { ChipMultiSelect } from "@/components/seeds/ChipMultiSelect";
 import {
-  ROTATION_OPTIONS,
   LOCATION_SET_OPTIONS,
+  SEED_SELECTION_OPTIONS,
+  FRESHNESS_WINDOW_OPTIONS,
+  LOCATION_SELECTION_OPTIONS,
+  VOLUME_CAP_OPTIONS,
 } from "@/lib/seedOptions";
 import { getScrappingOptions } from "@/lib/scrappingOptions";
 import { getProjects } from "@/lib/projects";
@@ -32,7 +35,6 @@ import {
   BUSINESS_UNITS,
   emptySubscription,
   getSubscriptions,
-  subRotation,
   subProjects,
   type Subscription,
   type SubscriptionStatus,
@@ -66,9 +68,7 @@ export function SubscriptionDialog({
     if (open) {
       // Merge over defaults so older saved records get safe defaults (e.g. seeds[]).
       const merged = initial ? { ...emptySubscription(), ...initial } : emptySubscription();
-      // Migrate legacy data: rotation single-string ("Both"/"Zipcode"/…) → array;
-      // a single destinationOption → the destinationOptions array.
-      merged.rotation = subRotation(merged);
+      // Migrate legacy data: a single destinationOption → the destinationOptions array.
       merged.projects = subProjects(merged);
       if (!merged.destinationOptions?.length && merged.destinationOption) {
         merged.destinationOptions = [merged.destinationOption];
@@ -119,10 +119,27 @@ export function SubscriptionDialog({
     ? ["KEYWORD"]
     : ["KEYWORD", "URL", "API"];
 
+  // --- Selection parameters (replaces Rotation): independent seed + location axes. ---
+  const isStateful = v.seedSelection === "Stateful freshness";
+  const showFreshnessDays = isStateful && (v.freshnessWindow || "Last days") === "Last days";
+  const locSelEnabled = v.geo === "AUTOMATIC" || v.geo === "MANUAL";
+  const showCycleLength = locSelEnabled && v.locationSelection === "N-day rotation";
+
   const handleSave = async () => {
     if (!(v.projects ?? []).length) {
       toast.error("Select at least one project");
       return;
+    }
+    if (showFreshnessDays && !String(v.lastOfferDays ?? "").trim()) {
+      toast.error("Enter the number of days for the freshness window");
+      return;
+    }
+    if (showCycleLength) {
+      const n = Number(v.cycleLength);
+      if (!Number.isInteger(n) || n < 2 || n > 6) {
+        toast.error("Cycle length (N) must be a whole number between 2 and 6");
+        return;
+      }
     }
     setIsSaving(true);
     try {
@@ -136,6 +153,14 @@ export function SubscriptionDialog({
         locationSet: locationEnabled ? v.locationSet : "",
         destinationOptions: showDestination ? (v.destinationOptions ?? []) : [],
         destinationOption: undefined,
+        // Selection parameters — clear conditional axes that don't apply.
+        seedSelection: v.seedSelection || "All seeds",
+        freshnessWindow: isStateful ? (v.freshnessWindow || "Last days") : "",
+        lastOfferDays: showFreshnessDays ? (v.lastOfferDays || "") : "",
+        locationSelection: locSelEnabled ? (v.locationSelection || "All locations") : "",
+        cycleLength: showCycleLength ? (v.cycleLength || "") : "",
+        volumeCap: v.volumeCap || "Full coverage",
+        rotation: undefined, // drop the legacy field
       });
       toast.success(`Subscription ${mode === "add" ? "created" : "saved"} successfully`);
       onOpenChange(false);
@@ -274,15 +299,64 @@ export function SubscriptionDialog({
                 )}
               </Field>
 
-              <Field label="Rotation">
-                <ChipMultiSelect
-                  value={v.rotation ?? []}
-                  onChange={(arr) => set("rotation", arr)}
-                  options={ROTATION_OPTIONS}
-                  addLabel="Add rotation"
-                  emptyLabel="No rotation selected"
-                />
-              </Field>
+            </section>
+
+            <section className="mt-6 border-t border-border pt-5">
+              <h3 className="text-sm font-semibold text-foreground">Selection parameters</h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Replaces the legacy Rotation tag-list — independent seed &amp; location selection axes consumed by the Task Generator.
+              </p>
+              <div className="mt-4 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
+                <Field label="Seed selection" required>
+                  <SelectBox value={v.seedSelection} onChange={(x) => set("seedSelection", x)} options={SEED_SELECTION_OPTIONS} />
+                  <p className="mt-1 text-xs text-muted-foreground">All seeds · Weekly bucket · Monthly bucket · Stateful freshness</p>
+                </Field>
+                <Field label="Freshness window">
+                  <SelectBox
+                    value={isStateful ? (v.freshnessWindow || "Last days") : ""}
+                    onChange={(x) => set("freshnessWindow", x)}
+                    options={FRESHNESS_WINDOW_OPTIONS}
+                    disabled={!isStateful}
+                    placeholder={isStateful ? "Select a window" : "Enabled for Stateful freshness"}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">Last days · Current week · Current fortnight · Current month</p>
+                </Field>
+                <Field label="Days" required={showFreshnessDays}>
+                  <Input
+                    type="number"
+                    value={showFreshnessDays ? (v.lastOfferDays ?? "") : ""}
+                    onChange={(e) => set("lastOfferDays", e.target.value)}
+                    disabled={!showFreshnessDays}
+                    placeholder={showFreshnessDays ? "e.g. 14" : "Enabled for Last days"}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">From lastOfferDays</p>
+                </Field>
+                <Field label="Location selection">
+                  <SelectBox
+                    value={locSelEnabled ? (v.locationSelection ?? "All locations") : ""}
+                    onChange={(x) => set("locationSelection", x)}
+                    options={LOCATION_SELECTION_OPTIONS}
+                    disabled={!locSelEnabled}
+                    placeholder={locSelEnabled ? "Select" : "Enabled for AUTOMATIC or MANUAL geolocation"}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">All · Monthly CMI schedule · 1 random per day · N-day rotation</p>
+                </Field>
+                <Field label="Cycle length (N)">
+                  <Input
+                    type="number"
+                    min={2}
+                    max={6}
+                    value={showCycleLength ? (v.cycleLength ?? "") : ""}
+                    onChange={(e) => set("cycleLength", e.target.value)}
+                    disabled={!showCycleLength}
+                    placeholder={showCycleLength ? "N = 2..6" : "Enabled for N-day rotation (N = 2..6)"}
+                  />
+                </Field>
+                <Field label="Volume cap" required>
+                  <SelectBox value={v.volumeCap} onChange={(x) => set("volumeCap", x)} options={VOLUME_CAP_OPTIONS} />
+                  <p className="mt-1 text-xs text-muted-foreground">Full · Top 10/day · Backfill 1.5×</p>
+                </Field>
+              </div>
             </section>
 
             <section className="mt-6 border-t border-border pt-5">

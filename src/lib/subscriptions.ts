@@ -44,7 +44,16 @@ export type Subscription = {
   startWeekday?: string;
   /** @deprecated */
   startMonthDay?: string;
-  rotation: string[]; // multi-select: Locations and/or Seeds ("both" = both selected) — STAYS on the subscription
+  // --- Selection parameters (2026 Task-Generator refactor; REPLACES `rotation`) ---
+  // Independent seed/location selection axes mirroring dim_seed_location_selection_params.
+  seedSelection: string;       // All seeds | Weekly bucket | Monthly bucket | Stateful freshness
+  freshnessWindow?: string;    // Last days | Current week | Current fortnight | Current month — only when seedSelection = Stateful freshness
+  lastOfferDays?: string;      // "Days" window — only when freshnessWindow = Last days (migrating order → subscription)
+  locationSelection?: string;  // All locations | Monthly CMI schedule | 1 random per day | N-day rotation — only when geo = AUTOMATIC | MANUAL
+  cycleLength?: string;        // N (2..6) — only when locationSelection = N-day rotation
+  volumeCap: string;           // Full coverage | Top 10/day | Backfill 1.5×
+  /** @deprecated Replaced by the Selection parameters above. Kept optional for back-compat reads. */
+  rotation?: string[];
   status?: SubscriptionStatus; // Active | Inactive
   businessUnit?: string; // single Business Unit (CMI / FSA / DSM / RMM / MSH / GEN)
   // Shown only when the scrapping option's extraction type is DIGITAL_SHELF_PLP or
@@ -76,8 +85,9 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
     scrappingOption: "ME_KW_WATER — Amazon US",
     geo: "MANUAL",
     locationSet: "Amazon US — All locations",
-    frequency: "Daily",
-    rotation: ["Locations"],
+    seedSelection: "All seeds",
+    locationSelection: "All locations",
+    volumeCap: "Full coverage",
     status: "Active",
     businessUnit: "CMI",
     createdAt: "Thu, May 2, 2024 3:21",
@@ -92,8 +102,11 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
     scrappingOption: "PDP_BEAM_US — Amazon US",
     geo: "AUTOMATIC",
     locationSet: "",
-    frequency: "Weekly",
-    rotation: ["Seeds"],
+    seedSelection: "Stateful freshness",
+    freshnessWindow: "Last days",
+    lastOfferDays: "14",
+    locationSelection: "All locations",
+    volumeCap: "Full coverage",
     status: "Active",
     businessUnit: "FSA",
     createdAt: "Fri, May 3, 2024 8:27",
@@ -143,11 +156,12 @@ export function emptySubscription(): Subscription {
     scrappingOption: "",
     geo: "NONE",
     locationSet: "",
-    frequency: "Daily",
-    frequencyDays: "",
-    startWeekday: "Mon",
-    startMonthDay: "1",
-    rotation: [],
+    seedSelection: "All seeds",
+    freshnessWindow: "Last days",
+    lastOfferDays: "14",
+    locationSelection: "All locations",
+    cycleLength: "",
+    volumeCap: "Full coverage",
     status: "Active",
     businessUnit: "",
     destinationOptions: [],
