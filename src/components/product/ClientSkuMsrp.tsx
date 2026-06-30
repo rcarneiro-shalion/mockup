@@ -173,7 +173,7 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-muted-foreground">
-                    {active === "region" && <Th>Region system</Th>}
+                    {(active === "region" || active === "regionStore") && <Th>Region system</Th>}
                     {(active === "region" || active === "regionStore") && <Th>Region</Th>}
                     {(active === "store" || active === "regionStore") && <Th>Store</Th>}
                     <Th>Currency</Th>
@@ -198,7 +198,7 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
                   )}
                   {rows.map((row) => (
                     <tr key={row.id} className="border-b border-border last:border-0 hover:bg-secondary/40">
-                      {active === "region" && <Td className="text-[var(--sidebar-active-fg)]">{row.regionSystem}</Td>}
+                      {(active === "region" || active === "regionStore") && <Td className="text-[var(--sidebar-active-fg)]">{row.regionSystem}</Td>}
                       {(active === "region" || active === "regionStore") && (
                         <Td className="text-[var(--sidebar-active-fg)]">{row.region}</Td>
                       )}
