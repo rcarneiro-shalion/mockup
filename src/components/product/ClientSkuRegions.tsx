@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronUp, Plus, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,37 +7,40 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
+import { SearchableSelect } from "@/components/common/SearchableSelect";
+import { getBusinessUnitNames, getClientCategoryNames } from "@/lib/productEntities";
 import { toast } from "sonner";
 import type { ClientSku, SkuRegionRow } from "@/lib/clientSkus";
-import { regionCatalogFor, fmtMsrp, simulateSkuRegions } from "@/lib/clientSkus";
+import { regionCatalogFor, getSkuRegions } from "@/lib/clientSkus";
 
-const DEFAULT_SKU: Partial<ClientSku> = {
-  id: "demo",
-  msrp: { value: 28, currency: "MXN" },
-  country: "MX",
-  hero: false,
-};
+const DEFAULT_SKU: Partial<ClientSku> = { id: "demo", msrp: { value: 28, currency: "MXN" }, country: "MX", hero: false };
 
-/** Per-SKU "Client sku regions" grid — the regional override entity (region system,
- *  region, currency, msrp, business unit, client category, hero, active window).
- *  Rows reuse simulateSkuRegions() so they stay consistent with the MSRP › Region tab. */
+/** Per-SKU "Client sku regions" grid — the regional override entity. MSRP (currency +
+ *  value) has migrated to the MSRP › Region level, so this grid carries only the
+ *  non-price overrides (business unit, client category, hero, active window). Rows are
+ *  the real imported client_sku_region data (shared with the MSRP › Region tab). */
 export function ClientSkuRegions({ sku }: { sku?: Partial<ClientSku> } = {}) {
   const effSku = sku?.msrp ? sku : DEFAULT_SKU;
   const [collapsed, setCollapsed] = useState(false);
-  const [rows, setRows] = useState<SkuRegionRow[]>(() => simulateSkuRegions(effSku));
+  const [rows, setRows] = useState<SkuRegionRow[]>(() => getSkuRegions(effSku));
   const [open, setOpen] = useState(false);
+  const [editRow, setEditRow] = useState<SkuRegionRow | null>(null);
+  const [dlgSeq, setDlgSeq] = useState(0);
 
   const catalog = regionCatalogFor(effSku.country ?? "XX");
   const skuCurrency = effSku.msrp?.currency ?? "USD";
 
-  const handleAssign = (row: SkuRegionRow) => {
-    setRows((prev) => [row, ...prev]);
+  const openAssign = () => { setEditRow(null); setDlgSeq((s) => s + 1); setOpen(true); };
+  const openEdit = (row: SkuRegionRow) => { setEditRow(row); setDlgSeq((s) => s + 1); setOpen(true); };
+
+  const handleSubmit = (row: SkuRegionRow) => {
+    setRows((prev) => (editRow ? prev.map((r) => (r.id === row.id ? row : r)) : [row, ...prev]));
     setOpen(false);
-    toast.success("Region assigned");
+    toast.success(editRow ? "Region updated" : "Region assigned");
   };
   const handleDelete = (id: string) => {
     setRows((prev) => prev.filter((r) => r.id !== id));
-    toast.success("Region removed");
+    toast.success("Region unassigned");
   };
 
   return (
@@ -53,7 +56,7 @@ export function ClientSkuRegions({ sku }: { sku?: Partial<ClientSku> } = {}) {
           </span>
           Client sku regions
         </button>
-        <Button variant="outline" onClick={() => setOpen(true)} className="rounded-full gap-1.5">
+        <Button variant="outline" onClick={openAssign} className="rounded-full gap-1.5">
           <Plus className="h-4 w-4" />
           Assign region
         </Button>
@@ -67,8 +70,6 @@ export function ClientSkuRegions({ sku }: { sku?: Partial<ClientSku> } = {}) {
                 <tr className="border-b border-border text-left text-muted-foreground">
                   <Th>Region system</Th>
                   <Th>Region</Th>
-                  <Th>Currency</Th>
-                  <Th>Msrp</Th>
                   <Th>Business unit</Th>
                   <Th>Client category</Th>
                   <Th>Hero</Th>
@@ -82,7 +83,7 @@ export function ClientSkuRegions({ sku }: { sku?: Partial<ClientSku> } = {}) {
               <tbody>
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={12} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
                       No regions assigned to this SKU.
                     </td>
                   </tr>
@@ -91,8 +92,6 @@ export function ClientSkuRegions({ sku }: { sku?: Partial<ClientSku> } = {}) {
                   <tr key={row.id} className="border-b border-border last:border-0 hover:bg-secondary/40">
                     <Td className="text-[var(--sidebar-active-fg)]">{row.regionSystem}</Td>
                     <Td className="text-[var(--sidebar-active-fg)]">{row.region}</Td>
-                    <Td>{row.currency}</Td>
-                    <Td className="font-medium">{fmtMsrp(row.msrp)}</Td>
                     <Td>{row.businessUnit || ""}</Td>
                     <Td>{row.clientCategory || ""}</Td>
                     <Td>
@@ -111,7 +110,13 @@ export function ClientSkuRegions({ sku }: { sku?: Partial<ClientSku> } = {}) {
                     <Td className="text-muted-foreground">{row.createdAt}</Td>
                     <Td className="text-muted-foreground">{row.updatedAt}</Td>
                     <Td>
-                      <RowActionsMenu id={row.id} onDelete={() => handleDelete(row.id)} entityLabel="region" />
+                      <RowActionsMenu
+                        id={row.id}
+                        onEdit={() => openEdit(row)}
+                        onDelete={() => handleDelete(row.id)}
+                        entityLabel="region"
+                        deleteLabel="Unassign"
+                      />
                     </Td>
                   </tr>
                 ))}
@@ -148,10 +153,12 @@ export function ClientSkuRegions({ sku }: { sku?: Partial<ClientSku> } = {}) {
         </>
       )}
 
-      <AssignRegionDialog
+      <RegionDialog
+        key={dlgSeq}
         open={open}
         onOpenChange={setOpen}
-        onSubmit={handleAssign}
+        initial={editRow}
+        onSubmit={handleSubmit}
         regionSystem={catalog.system}
         regions={catalog.regions}
         skuCurrency={skuCurrency}
@@ -167,60 +174,53 @@ function Td({ children, className = "" }: { children?: React.ReactNode; classNam
   return <td className={`px-4 py-3 ${className}`}>{children}</td>;
 }
 
-function AssignRegionDialog({
-  open, onOpenChange, onSubmit, regionSystem, regions, skuCurrency,
+function RegionDialog({
+  open, onOpenChange, initial, onSubmit, regionSystem, regions, skuCurrency,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  initial: SkuRegionRow | null;
   onSubmit: (row: SkuRegionRow) => void;
   regionSystem: string;
   regions: string[];
   skuCurrency: string;
 }) {
-  const [region, setRegion] = useState("");
-  const [msrp, setMsrp] = useState("");
-  const [currency, setCurrency] = useState(skuCurrency);
-  const [businessUnit, setBusinessUnit] = useState("");
-  const [clientCategory, setClientCategory] = useState("");
-  const [activeFrom, setActiveFrom] = useState("");
-  const [activeTo, setActiveTo] = useState("");
-  const [hero, setHero] = useState(false);
+  const isEdit = !!initial;
+  const [region, setRegion] = useState(initial?.region ?? "");
+  const [businessUnit, setBusinessUnit] = useState(initial?.businessUnit ?? "");
+  const [clientCategory, setClientCategory] = useState(initial?.clientCategory ?? "");
+  const [activeFrom, setActiveFrom] = useState(initial?.activeFrom ?? "");
+  const [activeTo, setActiveTo] = useState(initial?.activeTo ?? "");
+  const [hero, setHero] = useState(initial?.hero ?? false);
 
-  const currencyOptions = [...new Set([skuCurrency, "USD", "EUR", "MXN", "GBP"])];
-  const businessUnits = ["Beverages", "Snacks", "Dairy", "Personal care"];
-  const clientCategories = ["Tier 1", "Tier 2", "Tier 3", "Premium"];
-
-  const canSubmit = region !== "" && msrp.trim() !== "";
-
-  const reset = () => {
-    setRegion(""); setMsrp(""); setCurrency(skuCurrency); setBusinessUnit(""); setClientCategory("");
-    setActiveFrom(""); setActiveTo(""); setHero(false);
-  };
+  const buOptions = useMemo(() => getBusinessUnitNames(), []);
+  const catOptions = useMemo(() => getClientCategoryNames(), []);
+  const canSubmit = region !== "";
 
   const submit = () => {
     const now = new Date().toISOString().replace("T", ", ").slice(0, 19);
     onSubmit({
-      id: `r-${Date.now()}`,
+      id: initial?.id ?? `r-${Date.now()}`,
       regionSystem,
       region,
-      currency,
-      msrp: Number(msrp),
+      // MSRP has migrated to the MSRP > Region level; client_sku_region keeps no price.
+      currency: initial?.currency ?? skuCurrency,
+      msrp: initial?.msrp ?? 0,
       businessUnit: businessUnit || undefined,
       clientCategory: clientCategory || undefined,
       hero,
       activeFrom: activeFrom || undefined,
       activeTo: activeTo || undefined,
-      createdAt: now,
+      createdAt: initial?.createdAt ?? now,
       updatedAt: now,
     });
-    reset();
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl">Assign region</DialogTitle>
+          <DialogTitle className="text-xl">{isEdit ? "Edit region" : "Assign region"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <Field label="Region system" required>
@@ -235,34 +235,26 @@ function AssignRegionDialog({
             </Select>
           </Field>
 
-          <Field label="Msrp">
-            <div className="flex gap-2">
-              <Input value={msrp} onChange={(e) => setMsrp(e.target.value)} placeholder="0.00" type="number" className="flex-1" />
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {currencyOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </Field>
-
           <Field label="Business unit">
-            <Select value={businessUnit} onValueChange={setBusinessUnit}>
-              <SelectTrigger><SelectValue placeholder=" " /></SelectTrigger>
-              <SelectContent>
-                {businessUnits.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={businessUnit}
+              onChange={setBusinessUnit}
+              options={buOptions}
+              placeholder="Select a business unit"
+              searchPlaceholder="Search business units…"
+              emptyText="No business unit found."
+            />
           </Field>
 
           <Field label="Client category">
-            <Select value={clientCategory} onValueChange={setClientCategory}>
-              <SelectTrigger><SelectValue placeholder=" " /></SelectTrigger>
-              <SelectContent>
-                {clientCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={clientCategory}
+              onChange={setClientCategory}
+              options={catOptions}
+              placeholder="Select a client category"
+              searchPlaceholder="Search client categories…"
+              emptyText="No client category found."
+            />
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
@@ -289,7 +281,7 @@ function AssignRegionDialog({
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button disabled={!canSubmit} onClick={submit}>Assign region</Button>
+          <Button disabled={!canSubmit} onClick={submit}>{isEdit ? "Save" : "Assign region"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

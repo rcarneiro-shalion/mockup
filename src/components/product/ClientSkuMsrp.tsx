@@ -18,7 +18,7 @@ import {
   fmtMsrp,
   STORE_FACTORS,
   REGION_STORE_FACTORS,
-  simulateSkuRegions,
+  getSkuRegions,
 } from "@/lib/clientSkus";
 
 type Scope = "global" | "region" | "store" | "regionStore";
@@ -68,7 +68,7 @@ function buildData(sku: Partial<ClientSku>): Record<Scope, Row[]> {
   return {
     // The real, migrated global value — a single authoritative row.
     global: [{ id: "g-0", msrp: msrpRound2(base), hero, ...common }],
-    region: simulateSkuRegions(sku),
+    region: getSkuRegions(sku),
     store: stores.map((store, i) => ({
       id: `s-${i}`,
       store,
