@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { toast } from "sonner";
+import type { ClientSku } from "@/lib/clientSkus";
 
 type Scope = "global" | "region" | "store" | "regionStore";
 
@@ -27,42 +28,89 @@ type Row = {
   updatedAt: string;
 };
 
-const baseRows = [
-  { msrp: 28, createdAt: "2025-05-21, 08:52:32", updatedAt: "2025-06-29, 19:25:30" },
-  { msrp: 28, createdAt: "2025-05-21, 09:06:31", updatedAt: "2025-06-29, 20:00:26" },
-  { msrp: 23, createdAt: "2025-05-21, 09:05:44", updatedAt: "2025-06-29, 19:07:22" },
-  { msrp: 28, createdAt: "2025-05-21, 09:06:43", updatedAt: "2026-03-25, 12:37:51" },
-  { msrp: 28, createdAt: "2025-05-21, 09:10:59", updatedAt: "2025-06-29, 19:54:00" },
-  { msrp: 28, createdAt: "2025-05-21, 09:10:14", updatedAt: "2025-06-29, 19:34:02" },
-];
-
-const stores = ["Amazon MX", "Walmart MX", "Bodega MX", "Juarez MX", "Maltez MX", "John's MX"];
-const regions = ["CDF MX", "Rica MX", "Arca MX", "FEMSA MX", "Nogales MX", "Colima MX"];
-const regionSystems = ["MX - Coke Bottlers", "MX - Pepsi Bottlers", "MX - Independent"];
-const businessUnits = ["Beverages", "Snacks", "Dairy", "Personal care"];
-const clientCategories = ["Tier 1", "Tier 2", "Tier 3", "Premium"];
-
-const initialData: Record<Scope, Row[]> = {
-  global: baseRows.map((r, i) => ({ id: `g-${i}`, currency: "MXN", hero: false, ...r })),
-  region: baseRows.map((r, i) => ({
-    id: `r-${i}`,
-    regionSystem: "MX - Coke Bottlers",
-    region: regions[i],
-    currency: "MXN",
-    hero: false,
-    ...r,
-  })),
-  store: baseRows.map((r, i) => ({ id: `s-${i}`, store: stores[i], currency: "MXN", hero: false, ...r })),
-  regionStore: baseRows.map((r, i) => ({
-    id: `rs-${i}`,
-    store: stores[i],
-    region: regions[i],
-    regionSystem: "MX - Coke Bottlers",
-    currency: "MXN",
-    hero: false,
-    ...r,
-  })),
+// --- Region "location catalog" pools ---------------------------------------
+// Real Coca-Cola bottler catalogs for LATAM countries (reused from the live
+// Client-sku-regions sample); a generic catalog is derived for every other
+// country so the migration simulation stays country-aware.
+const LATAM_CATALOG: Record<string, { system: string; regions: string[] }> = {
+  MX: { system: "MX - Coke Bottlers", regions: ["FEMSA MX", "Rica MX", "Arca MX", "CDF MX", "Bepensa MX", "Bebbo MX"] },
+  BR: { system: "BR - Coke Bottlers", regions: ["Andina BR", "Sorocaba BR", "Uberlandia BR", "FEMSA BR"] },
+  CL: { system: "CL - Coke Bottlers", regions: ["Andina CL", "Embonor CL", "Polar CL"] },
+  CO: { system: "CO - Coke Bottlers", regions: ["FEMSA CO", "Andina CO"] },
+  PE: { system: "PE - Coke Bottlers", regions: ["Arca PE", "Lindley PE"] },
+  EC: { system: "EC - Coke Bottlers", regions: ["Arca EC", "Holding EC"] },
+  AR: { system: "AR - Coke Bottlers", regions: ["Andina AR", "Reginald AR"] },
 };
+
+function catalogFor(country: string): { system: string; regions: string[] } {
+  const c = (country || "XX").toUpperCase();
+  if (LATAM_CATALOG[c]) return LATAM_CATALOG[c];
+  return { system: `${c} Distribution`, regions: [`${c} North`, `${c} Central`, `${c} South`, `${c} Metro`] };
+}
+
+const STORE_BRANDS = ["Amazon", "Walmart", "Carrefour", "Mercado Libre", "Auchan", "El Corte Inglés"];
+const storesFor = (country: string) => STORE_BRANDS.map((s) => `${s} ${(country || "XX").toUpperCase()}`);
+
+// deterministic per-SKU value variations (stable across renders, no Math.random)
+const round2 = (n: number) => Math.round(n * 100) / 100;
+const fmtMoney = (n: number) =>
+  Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.?0+$/, "");
+
+const REGION_FACTORS = [0.98, 1.0, 1.0, 1.02, 1.05, 0.96];
+const STORE_FACTORS = [0.95, 1.0, 1.04, 1.08, 0.99, 1.02];
+const REGION_STORE_FACTORS = [0.97, 1.01, 1.05, 0.99, 1.03, 0.94];
+
+const DEFAULT_SKU: Partial<ClientSku> = {
+  id: "demo",
+  msrp: { value: 28, currency: "MXN" },
+  country: "MX",
+  hero: false,
+};
+
+/** Build the four-level MSRP dataset for a SKU: Global = real msrp, the rest simulated. */
+function buildData(sku: Partial<ClientSku>): Record<Scope, Row[]> {
+  const base = sku.msrp?.value ?? 0;
+  const currency = sku.msrp?.currency ?? "USD";
+  const country = sku.country ?? "XX";
+  const hero = !!sku.hero;
+  const businessUnit = sku.businessUnit;
+  const clientCategory = sku.clientCategory;
+  const createdAt = sku.createdAt ?? "2025-05-21, 08:52:32";
+  const updatedAt = sku.updatedAt ?? "2026-06-29, 19:25:30";
+  const common = { currency, businessUnit, clientCategory, createdAt, updatedAt };
+
+  const { system, regions } = catalogFor(country);
+  const stores = storesFor(country);
+
+  return {
+    // The real, migrated global value — a single authoritative row.
+    global: [{ id: "g-0", msrp: round2(base), hero, ...common }],
+    region: regions.map((region, i) => ({
+      id: `r-${i}`,
+      regionSystem: system,
+      region,
+      msrp: round2(base * (REGION_FACTORS[i % REGION_FACTORS.length] ?? 1)),
+      hero,
+      ...common,
+    })),
+    store: stores.map((store, i) => ({
+      id: `s-${i}`,
+      store,
+      msrp: round2(base * (STORE_FACTORS[i % STORE_FACTORS.length] ?? 1)),
+      hero,
+      ...common,
+    })),
+    regionStore: stores.slice(0, regions.length).map((store, i) => ({
+      id: `rs-${i}`,
+      store,
+      regionSystem: system,
+      region: regions[i],
+      msrp: round2(base * (REGION_STORE_FACTORS[i % REGION_STORE_FACTORS.length] ?? 1)),
+      hero,
+      ...common,
+    })),
+  };
+}
 
 const tabs: { key: Scope; label: string; assignLabel: string }[] = [
   { key: "global", label: "Global", assignLabel: "Assign msrp" },
@@ -71,15 +119,20 @@ const tabs: { key: Scope; label: string; assignLabel: string }[] = [
   { key: "regionStore", label: "Region & Store", assignLabel: "Assign store & region" },
 ];
 
-/** Embeddable MSRP module — tabs (Global / Region / Store / Region & Store) + assign dialog. */
-export function ClientSkuMsrp() {
+/** Embeddable MSRP module — tabs (Global / Region / Store / Region & Store) + assign dialog.
+ *  Global shows the SKU's real migrated MSRP; the other tiers are a per-SKU simulation. */
+export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
+  const effSku = sku?.msrp ? sku : DEFAULT_SKU;
   const [active, setActive] = useState<Scope>("global");
   const [collapsed, setCollapsed] = useState(false);
-  const [data, setData] = useState(initialData);
+  const [data, setData] = useState(() => buildData(effSku));
   const [open, setOpen] = useState(false);
 
   const currentTab = tabs.find((t) => t.key === active)!;
   const rows = data[active];
+  const catalog = catalogFor(effSku.country ?? "XX");
+  const stores = storesFor(effSku.country ?? "XX");
+  const skuCurrency = effSku.msrp?.currency ?? "USD";
 
   const handleAssign = (newRow: Row) => {
     setData((prev) => ({ ...prev, [active]: [newRow, ...prev[active]] }));
@@ -150,6 +203,13 @@ export function ClientSkuMsrp() {
                   </tr>
                 </thead>
                 <tbody>
+                  {rows.length === 0 && (
+                    <tr>
+                      <td colSpan={13} className="px-4 py-8 text-center text-muted-foreground">
+                        No MSRP defined at this level.
+                      </td>
+                    </tr>
+                  )}
                   {rows.map((row) => (
                     <tr key={row.id} className="border-b border-border last:border-0 hover:bg-secondary/40">
                       {active === "region" && <Td className="text-[var(--sidebar-active-fg)]">{row.regionSystem}</Td>}
@@ -160,7 +220,7 @@ export function ClientSkuMsrp() {
                         <Td className="text-[var(--sidebar-active-fg)]">{row.store}</Td>
                       )}
                       <Td>{row.currency}</Td>
-                      <Td>{row.msrp}</Td>
+                      <Td className="font-medium">{fmtMoney(row.msrp)}</Td>
                       <Td>{row.businessUnit || ""}</Td>
                       <Td>{row.clientCategory || ""}</Td>
                       <Td>
@@ -217,7 +277,17 @@ export function ClientSkuMsrp() {
         )}
       </div>
 
-      <AssignDialog open={open} onOpenChange={setOpen} scope={active} title={currentTab.assignLabel} onSubmit={handleAssign} />
+      <AssignDialog
+        open={open}
+        onOpenChange={setOpen}
+        scope={active}
+        title={currentTab.assignLabel}
+        onSubmit={handleAssign}
+        skuCurrency={skuCurrency}
+        regionSystem={catalog.system}
+        regions={catalog.regions}
+        stores={stores}
+      />
     </>
   );
 }
@@ -230,16 +300,20 @@ function Td({ children, className = "" }: { children?: React.ReactNode; classNam
 }
 
 function AssignDialog({
-  open, onOpenChange, scope, title, onSubmit,
+  open, onOpenChange, scope, title, onSubmit, skuCurrency, regionSystem, regions, stores,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   scope: Scope;
   title: string;
   onSubmit: (row: Row) => void;
+  skuCurrency: string;
+  regionSystem: string;
+  regions: string[];
+  stores: string[];
 }) {
   const [msrp, setMsrp] = useState("");
-  const [currency, setCurrency] = useState("MXN");
+  const [currency, setCurrency] = useState(skuCurrency);
   const [businessUnit, setBusinessUnit] = useState("");
   const [clientCategory, setClientCategory] = useState("");
   const [activeFrom, setActiveFrom] = useState("");
@@ -247,7 +321,10 @@ function AssignDialog({
   const [hero, setHero] = useState(false);
   const [store, setStore] = useState("");
   const [region, setRegion] = useState("");
-  const [regionSystem, setRegionSystem] = useState("");
+
+  const currencyOptions = [...new Set([skuCurrency, "USD", "EUR", "MXN", "GBP"])];
+  const businessUnits = ["Beverages", "Snacks", "Dairy", "Personal care"];
+  const clientCategories = ["Tier 1", "Tier 2", "Tier 3", "Premium"];
 
   const requiresStore = scope === "store" || scope === "regionStore";
   const requiresRegion = scope === "region" || scope === "regionStore";
@@ -255,12 +332,12 @@ function AssignDialog({
   const canSubmit =
     msrp.trim() !== "" &&
     (!requiresStore || store !== "") &&
-    (!requiresRegion || (region !== "" && regionSystem !== ""));
+    (!requiresRegion || region !== "");
 
   const reset = () => {
-    setMsrp(""); setCurrency("MXN"); setBusinessUnit(""); setClientCategory("");
+    setMsrp(""); setCurrency(skuCurrency); setBusinessUnit(""); setClientCategory("");
     setActiveFrom(""); setActiveTo(""); setHero(false);
-    setStore(""); setRegion(""); setRegionSystem("");
+    setStore(""); setRegion("");
   };
 
   const submit = () => {
@@ -293,12 +370,7 @@ function AssignDialog({
           {requiresRegion && (
             <>
               <Field label="Region system" required>
-                <Select value={regionSystem} onValueChange={setRegionSystem}>
-                  <SelectTrigger><SelectValue placeholder=" " /></SelectTrigger>
-                  <SelectContent>
-                    {regionSystems.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Input value={regionSystem} readOnly className="bg-secondary/40" />
               </Field>
               <Field label="Region" required>
                 <Select value={region} onValueChange={setRegion}>
@@ -323,13 +395,11 @@ function AssignDialog({
 
           <Field label={<span className="flex items-center gap-1">Msrp <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" /></span>}>
             <div className="flex gap-2">
-              <Input value={msrp} onChange={(e) => setMsrp(e.target.value)} placeholder="$" type="number" className="flex-1" />
+              <Input value={msrp} onChange={(e) => setMsrp(e.target.value)} placeholder="0.00" type="number" className="flex-1" />
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MXN">MXN</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
+                  {currencyOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

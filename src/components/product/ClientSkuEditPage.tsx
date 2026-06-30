@@ -39,10 +39,10 @@ export function ClientSkuEditPage({
   );
   const [activeFrom, setActiveFrom] = useState("");
   const [activeTo, setActiveTo] = useState("");
-  const [units, setUnits] = useState("1");
-  const [hasVolume, setHasVolume] = useState(true);
-  const [volumeValue, setVolumeValue] = useState("1000");
-  const [volumeUnits, setVolumeUnits] = useState("ml");
+  const [units, setUnits] = useState(sku?.units != null ? String(sku.units) : "1");
+  const [hasVolume, setHasVolume] = useState(sku ? !!sku.volume : true);
+  const [volumeValue, setVolumeValue] = useState(sku?.volume ? String(sku.volume.value) : "1000");
+  const [volumeUnits, setVolumeUnits] = useState(sku?.volume?.units ?? "ml");
 
   const countryOptions = uniq([country, ...Object.values(COUNTRY_NAMES)]);
   const brandOptions = uniq([brand, "Coca-Cola Light", "Coca-Cola", "Fanta"]);
@@ -213,7 +213,7 @@ export function ClientSkuEditPage({
 
           {/* MSRP */}
           <div className="mt-3">
-            <ClientSkuMsrp />
+            <ClientSkuMsrp key={sku?.id} sku={sku} />
           </div>
 
           <CollapsibleSection title="Image references" />
