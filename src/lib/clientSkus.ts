@@ -3319,15 +3319,34 @@ export type SkuRegionRow = {
 // Real Coca-Cola bottler catalogs for LATAM / Central America; a generic catalog
 // is derived for every other country so the simulation stays country-aware.
 export const REGION_CATALOG: Record<string, { system: string; regions: string[] }> = {
-  MX: { system: "MX - Coke Bottlers", regions: ["FEMSA MX", "Rica MX", "Arca MX", "CDF MX", "Bepensa MX", "Bebbo MX"] },
-  BR: { system: "BR - Coke Bottlers", regions: ["Andina BR", "Sorocaba BR", "Uberlandia BR", "FEMSA BR"] },
-  CL: { system: "CL - Coke Bottlers", regions: ["Andina CL", "Embonor CL", "Polar CL"] },
-  CO: { system: "CO - Coke Bottlers", regions: ["FEMSA CO", "Andina CO"] },
-  PE: { system: "PE - Coke Bottlers", regions: ["Arca PE", "Lindley PE"] },
-  EC: { system: "EC - Coke Bottlers", regions: ["Arca EC", "Holding EC"] },
-  AR: { system: "AR - Coke Bottlers", regions: ["Andina AR", "Reginald AR"] },
-  GT: { system: "GT - Coke Bottlers", regions: ["FEMSA GT"] },
-  CR: { system: "CR - Coke Bottlers", regions: ["FEMSA CR", "Centroamérica CR"] },
+  "AE": { system: "AE - PVM", regions: ["Abu Dhabi and Al Ain", "Dubai", "Sharjah and Northern Emirates"] },
+  "AR": { system: "AR - Coke Bottlers", regions: ["Andina AR", "Arca AR", "FEMSA AR", "Lee AR"] },
+  "AU": { system: "AU - States", regions: ["Australian Capital Territory - ACT", "New South Wales - NSW", "Northern Territory - NT", "Queensland - QLD", "South Australia - SA", "Tasmania - TAS", "Victoria - VIC", "Western Australia - WA"] },
+  "BO": { system: "BO - Coke Bottlers", regions: ["Embol BO"] },
+  "BR": { system: "BR - Coke Bottlers", regions: ["Andina BR", "Bandeirantes BR", "Brasal BR", "FEMSA BR", "Solar BR", "Sorocaba BR", "Uberlandia BR"] },
+  "CA": { system: "CA - Regions", regions: ["Central Canada", "East Canada", "Western Canada"] },
+  "CL": { system: "CL - Coke Bottlers", regions: ["Andina CL", "Embonor CL"] },
+  "CO": { system: "CO - Coke Bottlers", regions: ["FEMSA CO"] },
+  "CR": { system: "CR - Coke Bottlers", regions: ["FEMSA CR"] },
+  "EC": { system: "EC - Coke Bottlers", regions: ["Arca EC"] },
+  "ES": { system: "ES - Provincias", regions: ["A Coruña", "Albacete", "Alicante", "Almería", "Asturias", "Badajoz", "Barcelona", "Bizkaia", "Burgos", "Cantabria"] },
+  "FR": { system: "FR - Département", regions: ["Ain (01)", "Aisne (02)", "Allier (03)", "Alpes-Maritimes (06)", "Alpes-de-Haute-Provence (04)", "Ardennes (08)", "Ardèche (07)", "Ariège (09)", "Aube (10)", "Aude (11)"] },
+  "GB": { system: "UK - McCormick", regions: ["North", "South"] },
+  "GT": { system: "GT - Coke Bottlers", regions: ["FEMSA GT"] },
+  "IE": { system: "Heineken IE", regions: ["Abbeyquarter North", "Ashbourne", "Ballyhooly Rd", "Castlebar", "Centre", "Clondalkin", "Clonmacken Rd", "Clonmel", "County Laois", "Dundalk"] },
+  "KW": { system: "KW - Governorates", regions: ["Al-Ahmadi", "Al-Asima", "Al-Farwaniya", "Al-Jahra", "Hawally", "Mubarak Al-Kabeer"] },
+  "LT": { system: "LT - Administrative Region", regions: ["Alytus", "Kaunas", "Klaipėda", "Marijampolė", "Panevėžys", "Tauragė", "Telšiai", "Utena", "Vilna", "Šiauliai"] },
+  "MX": { system: "MX - Coke Bottlers", regions: ["Arca MX", "Bepensa MX", "CDF MX", "Colima MX", "FEMSA MX", "Nogales MX", "Rica MX", "TepicNayar MX"] },
+  "NI": { system: "NI - Coke Bottlers", regions: ["FEMSA NI"] },
+  "PA": { system: "PA - Coke Bottlers", regions: ["FEMSA PA"] },
+  "PE": { system: "PE - Coke Bottlers", regions: ["Arca PE"] },
+  "QA": { system: "QA - Municipality", regions: ["Al Daayen", "Al Khor", "Al Rayyan", "Al Shamal", "Al Wakrah", "Al-Shahaniya", "Doha", "Umm Salal"] },
+  "SA": { system: "SA - PVM", regions: ["Damam and Eastern Region", "Jeddah and Western Region", "Riyadh and Central Region"] },
+  "US": { system: "US - Coke Bottlers", regions: ["ABARTA Coca-Cola Beverages", "Aberdeen Coca-Cola Bottling Company", "Ada Coca-Cola Bottling Company", "Atlantic Bottling Company", "Binks Coca-Cola Bottling Company", "CCBC of Hot Springs", "CCBC of Yakima & Tri-Cities", "Cedar City Coca-Cola Bottling Company", "Chesterman Company", "Clark Beverage Group"] },
+  "UY": { system: "UY - Coke Bottlers", regions: ["FEMSA Monresa UY"] },
+  "VE": { system: "VE - Coke Bottlers", regions: ["FEMSA VE"] },
+  "VN": { system: "VN - Wards", regions: ["Phường 1", "Phường 10", "Phường 11", "Phường 12", "Phường 14", "Phường 15", "Phường 2", "Phường 25", "Phường 7", "Phường 9"] },
+  "ZA": { system: "ZA - Provinces", regions: ["Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo", "Mpumalanga", "North West", "Northern Cape", "Western Cape"] },
 };
 
 export function regionCatalogFor(country: string): { system: string; regions: string[] } {
@@ -3345,266 +3364,266 @@ export const REGION_FACTORS = [0.98, 1.0, 1.0, 1.02, 1.05, 0.96];
 export const STORE_FACTORS = [0.95, 1.0, 1.04, 1.08, 0.99, 1.02];
 export const REGION_STORE_FACTORS = [0.97, 1.01, 1.05, 0.99, 1.03, 0.94];
 
-export type RealRegionRow = Omit<SkuRegionRow, "regionSystem" | "region">;
+export type RealRegionRow = SkuRegionRow;
 
 export const INITIAL_CLIENT_SKU_REGION_ROWS: Record<string, RealRegionRow[]> = {
   "ed41a000-676e-4660-ba7b-0cf4b449388e": [
-    { "id": "ee110238-f366-46e3-8f0e-f25300a87766", "currency": "BRL", "msrp": 1.4, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "ee110238-f366-46e3-8f0e-f25300a87766", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 1.4, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "e3b13072-6bf3-41e6-9061-8ff80ec68d9d": [
-    { "id": "ba7c1be4-d14a-4e13-b0c3-ab06aa2a1780", "currency": "BRL", "msrp": 7.99, "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "ba7c1be4-d14a-4e13-b0c3-ab06aa2a1780", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 7.99, "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "028c242a-c7de-347f-b715-396b67132d8e": [
-    { "id": "544b040c-3088-352f-b9f1-bb2dbeeb6d01", "currency": "BRL", "msrp": 2.49, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:58 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
-    { "id": "19c3f0ed-3c87-3095-9db1-26fab753b8ea", "currency": "BRL", "msrp": 2.19, "businessUnit": "Limao", "clientCategory": "STILLS - Tea", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:58 PM", "updatedAt": "Thu, Mar 26, 2026 6:29 PM" },
-    { "id": "65d9a302-06db-373a-8411-2b3ebf215e16", "currency": "BRL", "msrp": 4, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:53 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" }
+    { "id": "544b040c-3088-352f-b9f1-bb2dbeeb6d01", "regionSystem": "BR - Coke Bottlers", "region": "Solar BR", "currency": "BRL", "msrp": 2.49, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:58 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
+    { "id": "19c3f0ed-3c87-3095-9db1-26fab753b8ea", "regionSystem": "BR - Coke Bottlers", "region": "Sorocaba BR", "currency": "BRL", "msrp": 2.19, "businessUnit": "Limao", "clientCategory": "STILLS - Tea", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:58 PM", "updatedAt": "Thu, Mar 26, 2026 6:29 PM" },
+    { "id": "65d9a302-06db-373a-8411-2b3ebf215e16", "regionSystem": "BR - Coke Bottlers", "region": "Bandeirantes BR", "currency": "BRL", "msrp": 4, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:53 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" }
   ],
   "03dfde3a-a4eb-3787-8c5e-974d2fd69593": [
-    { "id": "55c8dc02-594f-3ff5-9f3a-4b71cc53fd64", "currency": "BRL", "msrp": 3.49, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Thu, May 22, 2025 2:16 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
-    { "id": "cb25e847-8a9d-3079-a9e7-90a9448071f3", "currency": "BRL", "msrp": 5.99, "businessUnit": "Limão", "clientCategory": "STILLS - Tea", "hero": false, "createdAt": "Fri, Feb 6, 2026 7:31 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
-    { "id": "718b9231-bced-3f88-938d-5ca07464d206", "currency": "BRL", "msrp": 3.49, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Thu, May 22, 2025 2:18 PM", "updatedAt": "Thu, Mar 26, 2026 7:33 PM" },
-    { "id": "d1c09fd8-3070-3757-a0f8-75b8323b8a4f", "currency": "BRL", "msrp": 3.99, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Thu, May 22, 2025 2:13 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" },
-    { "id": "6f25cc45-f684-3848-adb8-ee0f69a371b8", "currency": "BRL", "msrp": 5.99, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Thu, May 22, 2025 2:14 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" },
-    { "id": "4aefa4c2-5706-3e7e-9624-ec58950a9261", "currency": "BRL", "msrp": 4.39, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" }
+    { "id": "55c8dc02-594f-3ff5-9f3a-4b71cc53fd64", "regionSystem": "BR - Coke Bottlers", "region": "Solar BR", "currency": "BRL", "msrp": 3.49, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Thu, May 22, 2025 2:16 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
+    { "id": "cb25e847-8a9d-3079-a9e7-90a9448071f3", "regionSystem": "BR - Coke Bottlers", "region": "Brasal BR", "currency": "BRL", "msrp": 5.99, "businessUnit": "Limão", "clientCategory": "STILLS - Tea", "hero": false, "createdAt": "Fri, Feb 6, 2026 7:31 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
+    { "id": "718b9231-bced-3f88-938d-5ca07464d206", "regionSystem": "BR - Coke Bottlers", "region": "Uberlandia BR", "currency": "BRL", "msrp": 3.49, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Thu, May 22, 2025 2:18 PM", "updatedAt": "Thu, Mar 26, 2026 7:33 PM" },
+    { "id": "d1c09fd8-3070-3757-a0f8-75b8323b8a4f", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 3.99, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Thu, May 22, 2025 2:13 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" },
+    { "id": "6f25cc45-f684-3848-adb8-ee0f69a371b8", "regionSystem": "BR - Coke Bottlers", "region": "Bandeirantes BR", "currency": "BRL", "msrp": 5.99, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Thu, May 22, 2025 2:14 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" },
+    { "id": "4aefa4c2-5706-3e7e-9624-ec58950a9261", "regionSystem": "BR - Coke Bottlers", "region": "FEMSA BR", "currency": "BRL", "msrp": 4.39, "businessUnit": "STILLS", "clientCategory": "Tea_", "hero": false, "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" }
   ],
   "7dcf23d8-21d4-4387-add5-30a55111814f": [
-    { "id": "305a3b33-f94a-408d-989f-4d4dd8b6eab5", "currency": "BRL", "msrp": 2.24, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "305a3b33-f94a-408d-989f-4d4dd8b6eab5", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 2.24, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "dd53e96d-13ca-42af-9578-53fcedca518b": [
-    { "id": "ab6e505b-faa0-4074-971a-8223f7a03159", "currency": "BRL", "msrp": 10.29, "clientCategory": "Tea_", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "ab6e505b-faa0-4074-971a-8223f7a03159", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 10.29, "clientCategory": "Tea_", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "f9761b82-663e-4648-92c0-c8b96d8a233a": [
-    { "id": "8fe45d52-25e9-4202-9d28-9543e1d346d7", "currency": "BRL", "msrp": 10.29, "clientCategory": "Tea_", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "8fe45d52-25e9-4202-9d28-9543e1d346d7", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 10.29, "clientCategory": "Tea_", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "c669585c-b3cc-4896-952c-c79fc4edb62a": [
-    { "id": "cf9e861f-3ddf-4aca-8fc0-81cc53179304", "currency": "BRL", "msrp": 10.29, "clientCategory": "SSDs - FLAVORS", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "cf9e861f-3ddf-4aca-8fc0-81cc53179304", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 10.29, "clientCategory": "SSDs - FLAVORS", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "32a2e6f7-701a-457f-8d51-f471f9a5e410": [
-    { "id": "3898f71f-957d-4547-882c-d328f0c0b1e6", "currency": "BRL", "msrp": 7.99, "clientCategory": "Energético", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "3898f71f-957d-4547-882c-d328f0c0b1e6", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 7.99, "clientCategory": "Energético", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "c67b2e55-2d1d-4742-bc15-239b06fadd74": [
-    { "id": "e266b2b1-dc8b-4fb4-92fa-161778473bc5", "currency": "BRL", "msrp": 10.49, "clientCategory": "Energético", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "e266b2b1-dc8b-4fb4-92fa-161778473bc5", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 10.49, "clientCategory": "Energético", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "575a9dab-fa1b-4be7-bcff-9d621596ea3a": [
-    { "id": "c4069fad-77cf-489a-92d6-d32e6775b23a", "currency": "BRL", "msrp": 10.29, "clientCategory": "Tea_", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "c4069fad-77cf-489a-92d6-d32e6775b23a", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 10.29, "clientCategory": "Tea_", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "81cfc5c1-ee2a-4921-8109-153a4e634edd": [
-    { "id": "145af5f7-4ecd-4825-8b2e-9e511373c227", "currency": "BRL", "msrp": 2.69, "clientCategory": "Energético", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "145af5f7-4ecd-4825-8b2e-9e511373c227", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 2.69, "clientCategory": "Energético", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "0166cdc9-4827-3b88-b859-9f75ae4f8a6d": [
-    { "id": "ddbe0357-123c-3376-a9e2-b13d80ba6ea6", "currency": "BRL", "msrp": 8.99, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Fri, Jul 25, 2025 1:00 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
-    { "id": "6a2f5d65-72cf-3c69-aa70-ca5de2114085", "currency": "BRL", "msrp": 14, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:53 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" },
-    { "id": "8608adab-de2b-3165-9073-4b682a27e797", "currency": "BRL", "msrp": 6.99, "businessUnit": "Guarana", "clientCategory": "SSDs - FLAVORS", "hero": false, "createdAt": "Mon, Feb 9, 2026 1:53 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" }
+    { "id": "ddbe0357-123c-3376-a9e2-b13d80ba6ea6", "regionSystem": "BR - Coke Bottlers", "region": "Brasal BR", "currency": "BRL", "msrp": 8.99, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Fri, Jul 25, 2025 1:00 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
+    { "id": "6a2f5d65-72cf-3c69-aa70-ca5de2114085", "regionSystem": "BR - Coke Bottlers", "region": "Bandeirantes BR", "currency": "BRL", "msrp": 14, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:53 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" },
+    { "id": "8608adab-de2b-3165-9073-4b682a27e797", "regionSystem": "BR - Coke Bottlers", "region": "Solar BR", "currency": "BRL", "msrp": 6.99, "businessUnit": "Guarana", "clientCategory": "SSDs - FLAVORS", "hero": false, "createdAt": "Mon, Feb 9, 2026 1:53 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" }
   ],
   "a7868580-d8dc-46c0-900c-6968aab42c68": [
-    { "id": "a768c9c5-e7a4-4889-b5ae-9f5dffeb2cf0", "currency": "BRL", "msrp": 3.99, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "a768c9c5-e7a4-4889-b5ae-9f5dffeb2cf0", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 3.99, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "83e6b5fb-7ccf-483f-b5b4-e9f6a9d61734": [
-    { "id": "cbca4e96-01c4-4ded-8bcc-4648e22880f7", "currency": "BRL", "msrp": 3.99, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "cbca4e96-01c4-4ded-8bcc-4648e22880f7", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 3.99, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "79e93820-3be9-4909-aee2-956ba067d11e": [
-    { "id": "99cfba45-aa44-4662-a331-af15e385c6a0", "currency": "BRL", "msrp": 9.29, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "99cfba45-aa44-4662-a331-af15e385c6a0", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 9.29, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "f54347ca-c75f-4147-8935-9f3b9267158e": [
-    { "id": "bb855df0-51f3-4ff6-b737-777a59997d6f", "currency": "BRL", "msrp": 9.29, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "bb855df0-51f3-4ff6-b737-777a59997d6f", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 9.29, "clientCategory": "Cervejas", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "562c06cf-21df-3e16-a24f-e7cc582a01f7": [
-    { "id": "843fe5a3-d8f1-3c73-ae1a-c9445519e5e3", "currency": "BRL", "msrp": 5.39, "businessUnit": "STILLS", "clientCategory": "Water", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:59 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" }
+    { "id": "843fe5a3-d8f1-3c73-ae1a-c9445519e5e3", "regionSystem": "BR - Coke Bottlers", "region": "FEMSA BR", "currency": "BRL", "msrp": 5.39, "businessUnit": "STILLS", "clientCategory": "Water", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:59 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" }
   ],
   "53396ad0-60a8-3550-8f0e-e62681dc2c3c": [
-    { "id": "656fc5cf-1486-3faf-80a1-7e559c773a6e", "currency": "BRL", "msrp": 8.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:16 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
-    { "id": "1a638330-b61e-3b7f-b297-cdf69ce4ff6b", "currency": "BRL", "msrp": 14.99, "businessUnit": "Maracuja", "clientCategory": "STILLS - Juices & Juice Drinks", "hero": false, "createdAt": "Fri, Feb 6, 2026 7:31 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
-    { "id": "afc6f8d0-54ba-3284-a257-2452db071574", "currency": "BRL", "msrp": 9.29, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:13 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" },
-    { "id": "9f31dbb7-e51d-3539-a2fe-94356c9ed3ed", "currency": "BRL", "msrp": 14.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:14 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" },
-    { "id": "4ed8da6b-eb56-3631-b020-d0108225a18a", "currency": "BRL", "msrp": 8.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" },
-    { "id": "574dad78-57a2-307d-88df-f344cfbcc15a", "currency": "BRL", "msrp": 6.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:18 PM", "updatedAt": "Thu, Mar 26, 2026 7:33 PM" }
+    { "id": "656fc5cf-1486-3faf-80a1-7e559c773a6e", "regionSystem": "BR - Coke Bottlers", "region": "Solar BR", "currency": "BRL", "msrp": 8.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:16 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
+    { "id": "1a638330-b61e-3b7f-b297-cdf69ce4ff6b", "regionSystem": "BR - Coke Bottlers", "region": "Brasal BR", "currency": "BRL", "msrp": 14.99, "businessUnit": "Maracuja", "clientCategory": "STILLS - Juices & Juice Drinks", "hero": false, "createdAt": "Fri, Feb 6, 2026 7:31 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
+    { "id": "afc6f8d0-54ba-3284-a257-2452db071574", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 9.29, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:13 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" },
+    { "id": "9f31dbb7-e51d-3539-a2fe-94356c9ed3ed", "regionSystem": "BR - Coke Bottlers", "region": "Bandeirantes BR", "currency": "BRL", "msrp": 14.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:14 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" },
+    { "id": "4ed8da6b-eb56-3631-b020-d0108225a18a", "regionSystem": "BR - Coke Bottlers", "region": "FEMSA BR", "currency": "BRL", "msrp": 8.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" },
+    { "id": "574dad78-57a2-307d-88df-f344cfbcc15a", "regionSystem": "BR - Coke Bottlers", "region": "Uberlandia BR", "currency": "BRL", "msrp": 6.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:18 PM", "updatedAt": "Thu, Mar 26, 2026 7:33 PM" }
   ],
   "3226fea2-1db8-39da-a78f-12997edc675c": [
-    { "id": "b4bb8768-b825-3724-837e-7d8f7b578089", "currency": "BRL", "msrp": 3.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:16 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
-    { "id": "6f0028e3-41bf-3136-8167-15996c516a56", "currency": "BRL", "msrp": 3.49, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:18 PM", "updatedAt": "Thu, Mar 26, 2026 7:33 PM" },
-    { "id": "ef92b5d1-207a-3946-82e7-d95647023fbb", "currency": "BRL", "msrp": 3.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:13 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" },
-    { "id": "ac3343bd-cd70-37d0-8f18-081b0b8d5b84", "currency": "BRL", "msrp": 8.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:14 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" },
-    { "id": "88ae7c8b-313c-3f47-baf2-23c9434b7ed0", "currency": "BRL", "msrp": 11.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:14 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
-    { "id": "93a0bfc3-ea09-3e87-b69c-e386b7e94405", "currency": "BRL", "msrp": 4.09, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" },
-    { "id": "edbb66df-4666-3521-9ff2-ea249de4a9ef", "currency": "BRL", "msrp": 4.29, "businessUnit": "Uva", "clientCategory": "STILLS - Juices & Juice Drinks", "hero": false, "createdAt": "Thu, May 22, 2025 2:17 PM", "updatedAt": "Thu, Mar 26, 2026 6:29 PM" }
+    { "id": "b4bb8768-b825-3724-837e-7d8f7b578089", "regionSystem": "BR - Coke Bottlers", "region": "Solar BR", "currency": "BRL", "msrp": 3.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:16 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
+    { "id": "6f0028e3-41bf-3136-8167-15996c516a56", "regionSystem": "BR - Coke Bottlers", "region": "Uberlandia BR", "currency": "BRL", "msrp": 3.49, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:18 PM", "updatedAt": "Thu, Mar 26, 2026 7:33 PM" },
+    { "id": "ef92b5d1-207a-3946-82e7-d95647023fbb", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 3.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:13 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" },
+    { "id": "ac3343bd-cd70-37d0-8f18-081b0b8d5b84", "regionSystem": "BR - Coke Bottlers", "region": "Bandeirantes BR", "currency": "BRL", "msrp": 8.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:14 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" },
+    { "id": "88ae7c8b-313c-3f47-baf2-23c9434b7ed0", "regionSystem": "BR - Coke Bottlers", "region": "Brasal BR", "currency": "BRL", "msrp": 11.99, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:14 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
+    { "id": "93a0bfc3-ea09-3e87-b69c-e386b7e94405", "regionSystem": "BR - Coke Bottlers", "region": "FEMSA BR", "currency": "BRL", "msrp": 4.09, "businessUnit": "STILLS", "clientCategory": "Juice", "hero": false, "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" },
+    { "id": "edbb66df-4666-3521-9ff2-ea249de4a9ef", "regionSystem": "BR - Coke Bottlers", "region": "Sorocaba BR", "currency": "BRL", "msrp": 4.29, "businessUnit": "Uva", "clientCategory": "STILLS - Juices & Juice Drinks", "hero": false, "createdAt": "Thu, May 22, 2025 2:17 PM", "updatedAt": "Thu, Mar 26, 2026 6:29 PM" }
   ],
   "ba8492a1-3b09-45db-8f14-2cb0cd3ab8b4": [
-    { "id": "78a8958b-90db-4e53-8076-a399a3b802d5", "currency": "BRL", "msrp": 3.99, "clientCategory": "STILLS - Active Hydration", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
+    { "id": "78a8958b-90db-4e53-8076-a399a3b802d5", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 3.99, "clientCategory": "STILLS - Active Hydration", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Fri, Jun 26, 2026 3:58 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" }
   ],
   "4a0c46e7-8a3a-3c83-9880-2f276de7bc8d": [
-    { "id": "f5bbde6f-474d-3ffc-8f7d-a2da285ace85", "currency": "BRL", "msrp": 7.99, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Thu, May 22, 2025 2:16 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
-    { "id": "aafd981e-7957-3988-aeef-a665f056b9f2", "currency": "BRL", "msrp": 6.99, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Thu, May 22, 2025 2:13 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" },
-    { "id": "d06febfc-e9ad-3eca-9896-5c7747df06d0", "currency": "BRL", "msrp": 9.99, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
-    { "id": "2521c8d0-4d95-3c83-9a22-1691428bc183", "currency": "BRL", "msrp": 8.99, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" }
+    { "id": "f5bbde6f-474d-3ffc-8f7d-a2da285ace85", "regionSystem": "BR - Coke Bottlers", "region": "Solar BR", "currency": "BRL", "msrp": 7.99, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2050-01-01", "createdAt": "Thu, May 22, 2025 2:16 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
+    { "id": "aafd981e-7957-3988-aeef-a665f056b9f2", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 6.99, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Thu, May 22, 2025 2:13 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" },
+    { "id": "d06febfc-e9ad-3eca-9896-5c7747df06d0", "regionSystem": "BR - Coke Bottlers", "region": "Brasal BR", "currency": "BRL", "msrp": 9.99, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
+    { "id": "2521c8d0-4d95-3c83-9a22-1691428bc183", "regionSystem": "BR - Coke Bottlers", "region": "FEMSA BR", "currency": "BRL", "msrp": 8.99, "businessUnit": "SSD", "clientCategory": "Flavors", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" }
   ],
   "58e007f8-2e45-3715-a2d9-d12e38d89548": [
-    { "id": "838cb388-a3e7-3fc8-b3b8-e73ac654c186", "currency": "BRL", "msrp": 9.99, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Fri, Jul 25, 2025 1:00 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
-    { "id": "2c5d3b1b-32ad-3a3f-98e5-0ddf46d32877", "currency": "BRL", "msrp": 6.99, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Fri, Jul 25, 2025 12:59 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" },
-    { "id": "2999b674-0c0e-3637-9598-fd5e33b29a11", "currency": "BRL", "msrp": 6.99, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-09", "createdAt": "Fri, Jul 25, 2025 12:58 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" }
+    { "id": "838cb388-a3e7-3fc8-b3b8-e73ac654c186", "regionSystem": "BR - Coke Bottlers", "region": "Brasal BR", "currency": "BRL", "msrp": 9.99, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Fri, Jul 25, 2025 1:00 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
+    { "id": "2c5d3b1b-32ad-3a3f-98e5-0ddf46d32877", "regionSystem": "BR - Coke Bottlers", "region": "FEMSA BR", "currency": "BRL", "msrp": 6.99, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Fri, Jul 25, 2025 12:59 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" },
+    { "id": "2999b674-0c0e-3637-9598-fd5e33b29a11", "regionSystem": "BR - Coke Bottlers", "region": "Solar BR", "currency": "BRL", "msrp": 6.99, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-09", "createdAt": "Fri, Jul 25, 2025 12:58 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" }
   ],
   "60bebaa1-6b43-309b-9275-8e7bb4dec094": [
-    { "id": "a1d96e57-c05d-3370-91d4-33433fa46b54", "currency": "BRL", "msrp": 4.29, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:59 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" },
-    { "id": "d25cc49a-2a13-3e7d-bb5d-07f1119ac2f7", "currency": "BRL", "msrp": 3.99, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:58 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
-    { "id": "8440ceb9-1d81-3417-878b-1c9cfe2390d2", "currency": "BRL", "msrp": 5.6, "businessUnit": "Colas", "clientCategory": "SSDs - CCO", "hero": false, "createdAt": "Fri, Feb 6, 2026 7:30 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" }
+    { "id": "a1d96e57-c05d-3370-91d4-33433fa46b54", "regionSystem": "BR - Coke Bottlers", "region": "FEMSA BR", "currency": "BRL", "msrp": 4.29, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:59 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" },
+    { "id": "d25cc49a-2a13-3e7d-bb5d-07f1119ac2f7", "regionSystem": "BR - Coke Bottlers", "region": "Solar BR", "currency": "BRL", "msrp": 3.99, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Fri, Jul 25, 2025 12:58 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
+    { "id": "8440ceb9-1d81-3417-878b-1c9cfe2390d2", "regionSystem": "BR - Coke Bottlers", "region": "Brasal BR", "currency": "BRL", "msrp": 5.6, "businessUnit": "Colas", "clientCategory": "SSDs - CCO", "hero": false, "createdAt": "Fri, Feb 6, 2026 7:30 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" }
   ],
   "6dafceb2-3ae6-3a85-a183-2a7ac4ba757c": [
-    { "id": "eca8e711-366f-3473-b50b-dfd091680543", "currency": "BRL", "msrp": 10.49, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-09", "createdAt": "Fri, Jul 25, 2025 12:59 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" }
+    { "id": "eca8e711-366f-3473-b50b-dfd091680543", "regionSystem": "BR - Coke Bottlers", "region": "Solar BR", "currency": "BRL", "msrp": 10.49, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-09", "createdAt": "Fri, Jul 25, 2025 12:59 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" }
   ],
   "41e9d09f-66ab-3462-9b1b-342790242f98": [
-    { "id": "9c3bfcb1-655d-3714-a2c4-56c33cd5f4e0", "currency": "BRL", "msrp": 5.89, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" },
-    { "id": "f7399e54-6982-3371-b96c-866a2c9fe276", "currency": "BRL", "msrp": 5.69, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Thu, May 22, 2025 2:13 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" },
-    { "id": "ce732778-a47d-324d-a53f-a72669b1168e", "currency": "BRL", "msrp": 10, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Thu, May 22, 2025 2:14 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" },
-    { "id": "0e4c2bb2-5130-3d80-9972-55c67406e3ce", "currency": "BRL", "msrp": 7.99, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
-    { "id": "375bf70c-9e54-36cf-90b0-d8271507a550", "currency": "BRL", "msrp": 4.29, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Thu, May 22, 2025 2:16 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
-    { "id": "42f2da1e-eb92-3162-a224-161041250ae1", "currency": "BRL", "msrp": 6.39, "businessUnit": "Colas", "clientCategory": "SSDs - CCO", "hero": false, "createdAt": "Thu, May 22, 2025 2:17 PM", "updatedAt": "Thu, Mar 26, 2026 6:29 PM" },
-    { "id": "e64dc140-a6ab-35ba-93f2-48e9f7316f44", "currency": "BRL", "msrp": 4.59, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Thu, May 22, 2025 2:18 PM", "updatedAt": "Thu, Mar 26, 2026 7:33 PM" }
+    { "id": "9c3bfcb1-655d-3714-a2c4-56c33cd5f4e0", "regionSystem": "BR - Coke Bottlers", "region": "FEMSA BR", "currency": "BRL", "msrp": 5.89, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Thu, Mar 26, 2026 2:11 PM" },
+    { "id": "f7399e54-6982-3371-b96c-866a2c9fe276", "regionSystem": "BR - Coke Bottlers", "region": "Andina BR", "currency": "BRL", "msrp": 5.69, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Thu, May 22, 2025 2:13 PM", "updatedAt": "Fri, Jun 26, 2026 3:58 PM" },
+    { "id": "ce732778-a47d-324d-a53f-a72669b1168e", "regionSystem": "BR - Coke Bottlers", "region": "Bandeirantes BR", "currency": "BRL", "msrp": 10, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Thu, May 22, 2025 2:14 PM", "updatedAt": "Wed, Mar 25, 2026 6:03 PM" },
+    { "id": "0e4c2bb2-5130-3d80-9972-55c67406e3ce", "regionSystem": "BR - Coke Bottlers", "region": "Brasal BR", "currency": "BRL", "msrp": 7.99, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "activeFrom": "2020-01-01", "activeTo": "2026-02-06", "createdAt": "Thu, May 22, 2025 2:15 PM", "updatedAt": "Wed, Mar 25, 2026 7:02 PM" },
+    { "id": "375bf70c-9e54-36cf-90b0-d8271507a550", "regionSystem": "BR - Coke Bottlers", "region": "Solar BR", "currency": "BRL", "msrp": 4.29, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Thu, May 22, 2025 2:16 PM", "updatedAt": "Tue, Jun 9, 2026 1:45 PM" },
+    { "id": "42f2da1e-eb92-3162-a224-161041250ae1", "regionSystem": "BR - Coke Bottlers", "region": "Sorocaba BR", "currency": "BRL", "msrp": 6.39, "businessUnit": "Colas", "clientCategory": "SSDs - CCO", "hero": false, "createdAt": "Thu, May 22, 2025 2:17 PM", "updatedAt": "Thu, Mar 26, 2026 6:29 PM" },
+    { "id": "e64dc140-a6ab-35ba-93f2-48e9f7316f44", "regionSystem": "BR - Coke Bottlers", "region": "Uberlandia BR", "currency": "BRL", "msrp": 4.59, "businessUnit": "SSD", "clientCategory": "Cola", "hero": false, "createdAt": "Thu, May 22, 2025 2:18 PM", "updatedAt": "Thu, Mar 26, 2026 7:33 PM" }
   ],
   "718f3345-0b13-3341-bbdb-d055f2d7ee7f": [
-    { "id": "2a42b0f7-f778-39dd-9739-fcc0c61149d7", "currency": "CRC", "msrp": 950, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "2a42b0f7-f778-39dd-9739-fcc0c61149d7", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 950, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "c6d47195-d878-36ad-852a-f9aef59cf438": [
-    { "id": "651a077a-11f8-3c20-8b8c-c8a1c347ff79", "currency": "CRC", "msrp": 800, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "651a077a-11f8-3c20-8b8c-c8a1c347ff79", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 800, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "7d84ba1c-c04b-34ad-9889-8d2fde03f829": [
-    { "id": "4b6a1d64-d31f-32eb-bb48-217ca2a669d1", "currency": "CRC", "msrp": 2000, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "4b6a1d64-d31f-32eb-bb48-217ca2a669d1", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 2000, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "16cf89b8-fab6-3287-88c5-0f1768d92a0f": [
-    { "id": "ad5ba61e-3c20-3d57-98b5-fd8c1a2596d0", "currency": "CRC", "msrp": 550, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "ad5ba61e-3c20-3d57-98b5-fd8c1a2596d0", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 550, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "dd7ecb61-6ddc-33c2-8f18-7670632525bc": [
-    { "id": "413a0a27-4271-3b77-a6dd-3179b43d7a02", "currency": "CRC", "msrp": 2400, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "413a0a27-4271-3b77-a6dd-3179b43d7a02", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 2400, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "2adddb19-a779-324d-95a8-ecfde14e1ae1": [
-    { "id": "e2bc57d3-9b32-3288-9063-23850f75938a", "currency": "CRC", "msrp": 550, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "e2bc57d3-9b32-3288-9063-23850f75938a", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 550, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "aea5f2a2-916e-3d6b-b954-25dca53abc41": [
-    { "id": "f0273f22-70cb-3805-af0d-392437f609bc", "currency": "CRC", "msrp": 1200, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "f0273f22-70cb-3805-af0d-392437f609bc", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 1200, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "54020eeb-758f-35f8-a183-91f266167869": [
-    { "id": "cf369ccd-ca1d-3a7b-a39a-f284559d0f1d", "currency": "CRC", "msrp": 1000, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "cf369ccd-ca1d-3a7b-a39a-f284559d0f1d", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 1000, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "8c5a082c-a4af-32bf-ba40-236d91e4033d": [
-    { "id": "bcd898e0-57aa-3d89-8820-414328aaa4df", "currency": "CRC", "msrp": 1000, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "bcd898e0-57aa-3d89-8820-414328aaa4df", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 1000, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "74408d96-5bfe-3630-ad91-07a139f11849": [
-    { "id": "98619e64-34d3-3e55-ad9c-820865e810bb", "currency": "CRC", "msrp": 815, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "98619e64-34d3-3e55-ad9c-820865e810bb", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 815, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "490f376c-c4dd-39ee-8d3b-dbadb3ac46c9": [
-    { "id": "f4310ce5-8ec1-3e17-a662-887ee43d7042", "currency": "CRC", "msrp": 550, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "f4310ce5-8ec1-3e17-a662-887ee43d7042", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 550, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "1959d73c-871f-3dba-acd2-7dc2180a79b6": [
-    { "id": "3c739573-a4e9-3ff9-a1b3-5109802fe13a", "currency": "CRC", "msrp": 2400, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "3c739573-a4e9-3ff9-a1b3-5109802fe13a", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 2400, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "9d495a7e-eb23-3f58-8805-42c22cfc9aac": [
-    { "id": "0d296a79-52cd-3692-aff1-5f0f1d58a563", "currency": "CRC", "msrp": 900, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "0d296a79-52cd-3692-aff1-5f0f1d58a563", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 900, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "fcc0d478-71b2-3efe-997f-926d8131ec34": [
-    { "id": "8f128a80-5f15-3d35-8e49-b1448c8da112", "currency": "CRC", "msrp": 1490, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "8f128a80-5f15-3d35-8e49-b1448c8da112", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 1490, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "7446cc4d-1fc0-31ae-b82b-546cfda655c2": [
-    { "id": "fe2d012b-c34f-3c17-a02b-b33a83a4ca45", "currency": "CRC", "msrp": 400, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "fe2d012b-c34f-3c17-a02b-b33a83a4ca45", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 400, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "1df0eb76-d3da-3eaf-8764-4153081fa9bf": [
-    { "id": "9cb4394f-9adb-37fe-ac84-9d2ca42ac2e9", "currency": "CRC", "msrp": 2000, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "9cb4394f-9adb-37fe-ac84-9d2ca42ac2e9", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 2000, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "dccbca79-68e8-32ea-b7a7-3d3cb3533495": [
-    { "id": "a11c1666-1d71-3506-a538-b768a07a5592", "currency": "CRC", "msrp": 900, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "a11c1666-1d71-3506-a538-b768a07a5592", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 900, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "d2e76b83-26db-333b-8828-bc589ea0f9dc": [
-    { "id": "436d6d7c-2eba-3e7a-802d-0fccf130f9ca", "currency": "CRC", "msrp": 2000, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "436d6d7c-2eba-3e7a-802d-0fccf130f9ca", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 2000, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "12614547-83e3-327a-a1f8-449fba280a43": [
-    { "id": "549d9376-0d2b-3449-b8d2-525ae412d5e3", "currency": "CRC", "msrp": 1400, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "549d9376-0d2b-3449-b8d2-525ae412d5e3", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 1400, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "2fc1e40d-9362-314d-af94-75b31a6dfe77": [
-    { "id": "33fe9c6a-1f9a-3561-a9e6-b66956f9bb4c", "currency": "CRC", "msrp": 500, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "33fe9c6a-1f9a-3561-a9e6-b66956f9bb4c", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 500, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "4091f600-4e6c-30bd-abff-e9d521a7df36": [
-    { "id": "594f2dd1-6d1d-36dc-942e-a8395c7f9ba4", "currency": "CRC", "msrp": 1100, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "594f2dd1-6d1d-36dc-942e-a8395c7f9ba4", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 1100, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "d9adacee-39a2-3638-aee6-b60ba30c460a": [
-    { "id": "1a7d59b7-d7fc-342e-9ce7-34051e812194", "currency": "CRC", "msrp": 540, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "1a7d59b7-d7fc-342e-9ce7-34051e812194", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 540, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "7bb0a2b7-1c29-3a76-8a4f-a04b2bc51808": [
-    { "id": "3d706158-acc1-3902-ad50-4fddc82bbaaf", "currency": "CRC", "msrp": 1200, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
+    { "id": "3d706158-acc1-3902-ad50-4fddc82bbaaf", "regionSystem": "CR - Coke Bottlers", "region": "FEMSA CR", "currency": "CRC", "msrp": 1200, "hero": false, "createdAt": "Tue, Sep 30, 2025 10:27 AM", "updatedAt": "Tue, Sep 30, 2025 10:27 AM" }
   ],
   "f0a91977-7108-3bfa-a722-96216db3d814": [
-    { "id": "f0c4ad09-4427-340a-afea-871c29bf436d", "currency": "VEF", "msrp": 178.739, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "f0c4ad09-4427-340a-afea-871c29bf436d", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 178.739, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "f9bf0fa3-425a-31d6-873f-91d1d2de1d0d": [
-    { "id": "98f62be8-5020-34e8-9d8f-232cace96388", "currency": "VEF", "msrp": 433.36, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "98f62be8-5020-34e8-9d8f-232cace96388", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 433.36, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "2b9ff81c-7fdc-3058-8798-0d046a12afd6": [
-    { "id": "7aa1bf11-923e-3d6a-acde-e5923091292a", "currency": "VEF", "msrp": 842.66, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "7aa1bf11-923e-3d6a-acde-e5923091292a", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 842.66, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "38e3a69d-c9ea-372b-81cb-6314bd16b512": [
-    { "id": "b0053d6f-98c7-34af-9547-a5bbef897a83", "currency": "VEF", "msrp": 227.486, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "b0053d6f-98c7-34af-9547-a5bbef897a83", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 227.486, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "776a0f6e-5788-3cd7-a4e2-59e4de698b69": [
-    { "id": "8b9e1945-040e-346a-809c-7e245469fed9", "currency": "VEF", "msrp": 842.66, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "8b9e1945-040e-346a-809c-7e245469fed9", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 842.66, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "20af1eae-051f-33fe-88a3-79c179cbf302": [
-    { "id": "f9bf446d-f389-3783-84d9-ea9f2fa1f141", "currency": "VEF", "msrp": 227.486, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "f9bf446d-f389-3783-84d9-ea9f2fa1f141", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 227.486, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "20b4e439-1802-3203-a8c9-86d68a863ebf": [
-    { "id": "f1ca7aee-df2e-3853-9cc5-8d91f3502a1a", "currency": "VEF", "msrp": 722.28, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "f1ca7aee-df2e-3853-9cc5-8d91f3502a1a", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 722.28, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "04a96314-7377-3c83-866b-89097dfd809a": [
-    { "id": "508a013a-bb52-3dbe-a038-c79fb9dec7ca", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "508a013a-bb52-3dbe-a038-c79fb9dec7ca", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "cfafd34a-df71-37db-b7c0-dc290257378c": [
-    { "id": "c6d7f101-c90c-3425-9f2f-7b7ee7a29c4a", "currency": "VEF", "msrp": 902.85, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "c6d7f101-c90c-3425-9f2f-7b7ee7a29c4a", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 902.85, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "c883f423-b22d-3aef-88b0-35b0d92267e1": [
-    { "id": "0e1243a4-9bd7-3a4b-a451-65abba81a915", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "0e1243a4-9bd7-3a4b-a451-65abba81a915", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "fda4305b-a6de-3b80-96f1-dc264ca96656": [
-    { "id": "2232c24e-fae4-3c8b-9097-6bd5cdb20b4c", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "2232c24e-fae4-3c8b-9097-6bd5cdb20b4c", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "9b918693-7afc-3d38-bcfc-b34a82c671f5": [
-    { "id": "cc9b403f-1028-3452-812b-99b2c03f6fbf", "currency": "VEF", "msrp": 722.28, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "cc9b403f-1028-3452-812b-99b2c03f6fbf", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 722.28, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "9cda00e8-2767-3217-a1ce-33db1fa76d99": [
-    { "id": "286eaba7-81cb-318c-81cf-9beb8f17348a", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "286eaba7-81cb-318c-81cf-9beb8f17348a", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "4572115d-ded6-32e6-ab8a-791c3561ed46": [
-    { "id": "3014c0e1-730e-3470-b92e-aa3ece1eeadb", "currency": "VEF", "msrp": 902.85, "hero": false, "createdAt": "Tue, Apr 7, 2026 11:54 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "3014c0e1-730e-3470-b92e-aa3ece1eeadb", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 902.85, "hero": false, "createdAt": "Tue, Apr 7, 2026 11:54 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "91b668c0-3b9c-37cd-8f9f-1f6c54e0af19": [
-    { "id": "163d0294-df65-39c1-9c94-d7698c3a1e96", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "163d0294-df65-39c1-9c94-d7698c3a1e96", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "4aa510af-1564-36f9-a7e7-1aa472b8aac2": [
-    { "id": "336480b9-b371-3c13-b725-78ca1549cb63", "currency": "VEF", "msrp": 421.33, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "336480b9-b371-3c13-b725-78ca1549cb63", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 421.33, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "1037c29b-0283-38cd-a871-8a521a5601ad": [
-    { "id": "c4584407-b92c-3eab-bd5d-54338ea0c179", "currency": "VEF", "msrp": 902.85, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "c4584407-b92c-3eab-bd5d-54338ea0c179", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 902.85, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "118d7644-22c4-331c-a47a-1343386ed570": [
-    { "id": "87d74adf-6bbc-3998-b8b2-d71f4b3455d9", "currency": "VEF", "msrp": 421.33, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "87d74adf-6bbc-3998-b8b2-d71f4b3455d9", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 421.33, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "bad5a74d-c36f-3517-a089-03ec35a3833c": [
-    { "id": "80b488b0-eea0-391b-9d9e-769d5d2a824e", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "80b488b0-eea0-391b-9d9e-769d5d2a824e", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "093c30da-5d24-3c5a-99ed-35bb8588fb8f": [
-    { "id": "66a49b88-f05a-3b71-8555-906553f33e7f", "currency": "VEF", "msrp": 902.85, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "66a49b88-f05a-3b71-8555-906553f33e7f", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 902.85, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "7b232395-2822-3250-97ba-d758281f3af7": [
-    { "id": "3e8027ed-8e3b-3cb3-aa3e-14e80069f09e", "currency": "VEF", "msrp": 227.486, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "3e8027ed-8e3b-3cb3-aa3e-14e80069f09e", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 227.486, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "150dae35-5efb-30de-b2c1-8272efa6d0d9": [
-    { "id": "74e5cfdd-a4f8-306a-9db7-d476ced19563", "currency": "VEF", "msrp": 454.972, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "74e5cfdd-a4f8-306a-9db7-d476ced19563", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 454.972, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "14806c60-3a9f-39a1-bcb9-565201c5257e": [
-    { "id": "cd468ca4-613c-3942-862a-88f7aa0174ac", "currency": "VEF", "msrp": 227.486, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "cd468ca4-613c-3942-862a-88f7aa0174ac", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 227.486, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "5af8383d-6dcd-3b45-b3b2-03eb689f2ddf": [
-    { "id": "70a8174c-4612-3d0e-aa9e-4b6eda4a4f1d", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "70a8174c-4612-3d0e-aa9e-4b6eda4a4f1d", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 601.9, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "7c191821-0bec-3627-917c-aec39836d07b": [
-    { "id": "ea550d67-7fa1-3eb8-9fff-75c6c190a773", "currency": "VEF", "msrp": 782.47, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "ea550d67-7fa1-3eb8-9fff-75c6c190a773", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 782.47, "hero": false, "createdAt": "Mon, Sep 29, 2025 9:14 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
   "1078c968-ace1-3ed5-921f-07fa79fbf5e5": [
-    { "id": "8cc6cb5a-f9f5-33d2-8ee6-525bfb944cae", "currency": "VEF", "msrp": 1023.23, "hero": false, "createdAt": "Tue, Apr 7, 2026 11:54 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
+    { "id": "8cc6cb5a-f9f5-33d2-8ee6-525bfb944cae", "regionSystem": "VE - Coke Bottlers", "region": "FEMSA VE", "currency": "VEF", "msrp": 1023.23, "hero": false, "createdAt": "Tue, Apr 7, 2026 11:54 AM", "updatedAt": "Wed, Jun 17, 2026 2:20 PM" }
   ],
 };
 
@@ -3612,8 +3631,6 @@ export const INITIAL_CLIENT_SKU_REGION_ROWS: Record<string, RealRegionRow[]> = {
  *  only region_id, so region system / name are assigned from the SKU's country catalog at
  *  render. Used by BOTH the MSRP > Region tab and the Client sku regions grid. */
 export function getSkuRegions(sku: Partial<ClientSku>): SkuRegionRow[] {
-  const rows = INITIAL_CLIENT_SKU_REGION_ROWS[sku.id ?? ""] ?? [];
-  const { system, regions } = regionCatalogFor(sku.country ?? "XX");
-  return rows.map((r, i) => ({ ...r, regionSystem: system, region: regions[i % regions.length] }));
+  return INITIAL_CLIENT_SKU_REGION_ROWS[sku.id ?? ""] ?? [];
 }
 
