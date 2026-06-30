@@ -20,11 +20,11 @@ export function TopBar() {
 
   return (
     <header className="relative flex h-14 items-center justify-between border-b border-[var(--topbar-border)] bg-background px-5">
-      {/* Persistent "Mockup" legend — centered, visible on every section. */}
-      <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 justify-center">
+      {/* Persistent "Mockup" legend — a banner hanging from the top edge, visible on every section. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center">
         <span
           title="This is a mockup / prototype of the Ecometry console — not the production system."
-          className="pointer-events-auto rounded-2xl bg-[#f8e4e2] px-14 py-1.5 text-sm font-medium text-slate-600"
+          className="pointer-events-auto rounded-b-2xl bg-[#f8e4e2] px-16 pb-2 pt-1.5 text-sm font-medium text-slate-600"
         >
           Mockup
         </span>
