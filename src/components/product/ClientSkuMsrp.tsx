@@ -211,11 +211,11 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
                       <Td>{row.clientCategory || ""}</Td>
                       <Td>
                         {row.hero ? (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                          <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
                             ✓ Yes
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-xs text-red-600">
+                          <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-xs text-red-600">
                             ✕ No
                           </span>
                         )}
