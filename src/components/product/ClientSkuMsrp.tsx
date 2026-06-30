@@ -99,6 +99,8 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
   const [collapsed, setCollapsed] = useState(false);
   const [data, setData] = useState(() => buildData(effSku));
   const [open, setOpen] = useState(false);
+  const [editRow, setEditRow] = useState<Row | null>(null);
+  const [dlgSeq, setDlgSeq] = useState(0);
 
   const currentTab = tabs.find((t) => t.key === active)!;
   const rows = data[active];
@@ -106,14 +108,22 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
   const stores = storesForCountry(effSku.country ?? "XX");
   const skuCurrency = effSku.msrp?.currency ?? "USD";
 
-  const handleAssign = (newRow: Row) => {
-    setData((prev) => ({ ...prev, [active]: [newRow, ...prev[active]] }));
+  const openAssign = () => { setEditRow(null); setDlgSeq((s) => s + 1); setOpen(true); };
+  const openEdit = (row: Row) => { setEditRow(row); setDlgSeq((s) => s + 1); setOpen(true); };
+
+  const handleSubmit = (row: Row) => {
+    setData((prev) => ({
+      ...prev,
+      [active]: editRow
+        ? prev[active].map((r) => (r.id === row.id ? row : r))
+        : [row, ...prev[active]],
+    }));
     setOpen(false);
-    toast.success(`${currentTab.assignLabel} created`);
+    toast.success(editRow ? "MSRP updated" : `${currentTab.assignLabel} created`);
   };
   const handleDelete = (id: string) => {
     setData((prev) => ({ ...prev, [active]: prev[active].filter((r) => r.id !== id) }));
-    toast.success("Entry deleted");
+    toast.success("MSRP unassigned");
   };
 
   return (
@@ -130,7 +140,7 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
             </span>
             MSRP
           </button>
-          <Button variant="outline" onClick={() => setOpen(true)} className="rounded-full gap-1.5">
+          <Button variant="outline" onClick={openAssign} className="rounded-full gap-1.5">
             <Plus className="h-4 w-4" />
             {currentTab.assignLabel}
           </Button>
@@ -211,7 +221,13 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
                       <Td className="text-muted-foreground">{row.createdAt}</Td>
                       <Td className="text-muted-foreground">{row.updatedAt}</Td>
                       <Td>
-                        <RowActionsMenu id={row.id} onDelete={() => handleDelete(row.id)} entityLabel="MSRP entry" />
+                        <RowActionsMenu
+                          id={row.id}
+                          onEdit={() => openEdit(row)}
+                          onDelete={() => handleDelete(row.id)}
+                          entityLabel="MSRP entry"
+                          deleteLabel="Unassign"
+                        />
                       </Td>
                     </tr>
                   ))}
@@ -250,11 +266,14 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
       </div>
 
       <AssignDialog
+        key={dlgSeq}
         open={open}
         onOpenChange={setOpen}
         scope={active}
-        title={currentTab.assignLabel}
-        onSubmit={handleAssign}
+        scopeLabel={currentTab.label}
+        assignLabel={currentTab.assignLabel}
+        initial={editRow}
+        onSubmit={handleSubmit}
         skuCurrency={skuCurrency}
         regionSystem={catalog.system}
         regions={catalog.regions}
@@ -272,27 +291,31 @@ function Td({ children, className = "" }: { children?: React.ReactNode; classNam
 }
 
 function AssignDialog({
-  open, onOpenChange, scope, title, onSubmit, skuCurrency, regionSystem, regions, stores,
+  open, onOpenChange, scope, scopeLabel, assignLabel, initial, onSubmit, skuCurrency, regionSystem, regions, stores,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   scope: Scope;
-  title: string;
+  scopeLabel: string;
+  assignLabel: string;
+  initial: Row | null;
   onSubmit: (row: Row) => void;
   skuCurrency: string;
   regionSystem: string;
   regions: string[];
   stores: string[];
 }) {
-  const [msrp, setMsrp] = useState("");
-  const [currency, setCurrency] = useState(skuCurrency);
-  const [businessUnit, setBusinessUnit] = useState("");
-  const [clientCategory, setClientCategory] = useState("");
-  const [activeFrom, setActiveFrom] = useState("");
-  const [activeTo, setActiveTo] = useState("");
-  const [hero, setHero] = useState(false);
-  const [store, setStore] = useState("");
-  const [region, setRegion] = useState("");
+  const isEdit = !!initial;
+  const title = isEdit ? `Edit ${scopeLabel} MSRP` : assignLabel;
+  const [msrp, setMsrp] = useState(initial ? String(initial.msrp) : "");
+  const [currency, setCurrency] = useState(initial?.currency ?? skuCurrency);
+  const [businessUnit, setBusinessUnit] = useState(initial?.businessUnit ?? "");
+  const [clientCategory, setClientCategory] = useState(initial?.clientCategory ?? "");
+  const [activeFrom, setActiveFrom] = useState(initial?.activeFrom ?? "");
+  const [activeTo, setActiveTo] = useState(initial?.activeTo ?? "");
+  const [hero, setHero] = useState(initial?.hero ?? false);
+  const [store, setStore] = useState(initial?.store ?? "");
+  const [region, setRegion] = useState(initial?.region ?? "");
 
   const currencyOptions = [...new Set([skuCurrency, "USD", "EUR", "MXN", "GBP"])];
   const businessUnits = ["Beverages", "Snacks", "Dairy", "Personal care"];
@@ -315,7 +338,7 @@ function AssignDialog({
   const submit = () => {
     const now = new Date().toISOString().replace("T", ", ").slice(0, 19);
     onSubmit({
-      id: `${scope}-${Date.now()}`,
+      id: initial?.id ?? `${scope}-${Date.now()}`,
       currency,
       msrp: Number(msrp),
       businessUnit: businessUnit || undefined,
@@ -323,7 +346,7 @@ function AssignDialog({
       hero,
       activeFrom: activeFrom || undefined,
       activeTo: activeTo || undefined,
-      createdAt: now,
+      createdAt: initial?.createdAt ?? now,
       updatedAt: now,
       store: requiresStore ? store : undefined,
       region: requiresRegion ? region : undefined,
@@ -418,7 +441,7 @@ function AssignDialog({
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button disabled={!canSubmit} onClick={submit}>{title}</Button>
+          <Button disabled={!canSubmit} onClick={submit}>{isEdit ? "Save" : assignLabel}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

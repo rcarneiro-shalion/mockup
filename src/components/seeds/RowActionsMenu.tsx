@@ -27,6 +27,7 @@ export function RowActionsMenu({
   onEdit,
   onDelete,
   entityLabel = "item",
+  deleteLabel = "Delete",
 }: {
   /** The row id copied to the clipboard. */
   id: string;
@@ -36,6 +37,8 @@ export function RowActionsMenu({
   onDelete?: () => void;
   /** Used in the confirmation copy, e.g. "data group". */
   entityLabel?: string;
+  /** The destructive-action verb shown in the menu + confirmation (e.g. "Unassign"). */
+  deleteLabel?: string;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -70,7 +73,7 @@ export function RowActionsMenu({
           {onDelete && (
             <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setConfirmOpen(true)}>
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              {deleteLabel}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
@@ -79,9 +82,9 @@ export function RowActionsMenu({
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {entityLabel}</AlertDialogTitle>
+            <AlertDialogTitle>{deleteLabel} {entityLabel}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this {entityLabel}? This action cannot be undone.
+              Are you sure you want to {deleteLabel.toLowerCase()} this {entityLabel}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -90,7 +93,7 @@ export function RowActionsMenu({
               onClick={() => { onDelete?.(); setConfirmOpen(false); }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {deleteLabel}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
