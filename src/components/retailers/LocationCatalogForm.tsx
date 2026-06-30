@@ -130,7 +130,7 @@ export function LocationCatalogForm({
                       ) : sets.map((ls) => (
                         <tr key={ls.id} className="border-t border-border hover:bg-secondary/40">
                           <Td><LinkText onClick={() => setSelectedSetId(ls.id)}>{ls.name}</LinkText></Td>
-                          <Td className="tabular-nums text-foreground/70">{(ls.locations ?? []).length}</Td>
+                          <Td className="tabular-nums text-foreground/70">{(ls.locationCount ?? (ls.locations ?? []).length).toLocaleString()}</Td>
                           <Td>
                             <button onClick={() => removeSet(ls.id)} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive" aria-label={`Remove ${ls.name}`}>
                               <Trash2 className="h-4 w-4" />
