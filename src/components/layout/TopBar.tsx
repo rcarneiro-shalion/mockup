@@ -19,7 +19,16 @@ export function TopBar() {
       : "/";
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-[var(--topbar-border)] bg-background px-5">
+    <header className="relative flex h-14 items-center justify-between border-b border-[var(--topbar-border)] bg-background px-5">
+      {/* Persistent "Mockup" legend — centered, visible on every section. */}
+      <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 justify-center">
+        <span
+          title="This is a mockup / prototype of the Ecometry console — not the production system."
+          className="pointer-events-auto rounded-full border border-red-200 bg-red-50 px-3 py-0.5 text-xs font-semibold text-red-600"
+        >
+          Mockup
+        </span>
+      </div>
       <div className="flex items-center gap-10">
         <Link to="/" className="flex items-center gap-2">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
