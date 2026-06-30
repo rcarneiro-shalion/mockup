@@ -55,6 +55,8 @@ function buildData(sku: Partial<ClientSku>): Record<Scope, Row[]> {
     currency: sku.msrp?.currency ?? "USD",
     businessUnit: sku.businessUnit,
     clientCategory: sku.clientCategory,
+    activeFrom: sku.activeFrom,
+    activeTo: sku.activeTo,
     createdAt: sku.createdAt ?? "2025-05-21, 08:52:32",
     updatedAt: sku.updatedAt ?? "2026-06-29, 19:25:30",
   };
