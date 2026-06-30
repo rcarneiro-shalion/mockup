@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronUp, Plus, HelpCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
+import { SearchableSelect } from "@/components/common/SearchableSelect";
+import { getBusinessUnitNames, getClientCategoryNames } from "@/lib/productEntities";
 import { toast } from "sonner";
 import type { ClientSku } from "@/lib/clientSkus";
 import {
@@ -320,8 +322,8 @@ function AssignDialog({
   const [region, setRegion] = useState(initial?.region ?? "");
 
   const currencyOptions = [...new Set([skuCurrency, "USD", "EUR", "MXN", "GBP"])];
-  const businessUnits = ["Beverages", "Snacks", "Dairy", "Personal care"];
-  const clientCategories = ["Tier 1", "Tier 2", "Tier 3", "Premium"];
+  const buOptions = useMemo(() => getBusinessUnitNames(), []);
+  const catOptions = useMemo(() => getClientCategoryNames(), []);
 
   const requiresStore = scope === "store" || scope === "regionStore";
   const requiresRegion = scope === "region" || scope === "regionStore";
@@ -403,21 +405,25 @@ function AssignDialog({
           </Field>
 
           <Field label="Business unit">
-            <Select value={businessUnit} onValueChange={setBusinessUnit}>
-              <SelectTrigger><SelectValue placeholder=" " /></SelectTrigger>
-              <SelectContent>
-                {businessUnits.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={businessUnit}
+              onChange={setBusinessUnit}
+              options={buOptions}
+              placeholder="Select a business unit"
+              searchPlaceholder="Search business units…"
+              emptyText="No business unit found."
+            />
           </Field>
 
           <Field label="Client category">
-            <Select value={clientCategory} onValueChange={setClientCategory}>
-              <SelectTrigger><SelectValue placeholder=" " /></SelectTrigger>
-              <SelectContent>
-                {clientCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              value={clientCategory}
+              onChange={setClientCategory}
+              options={catOptions}
+              placeholder="Select a client category"
+              searchPlaceholder="Search client categories…"
+              emptyText="No client category found."
+            />
           </Field>
 
           <Field label="Active from">
