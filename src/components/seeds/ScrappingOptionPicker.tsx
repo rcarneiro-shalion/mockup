@@ -23,7 +23,7 @@ function optionsSummary(o: ScrappingOptionValues): string {
   return parts.join(", ");
 }
 
-const taskGroup = (o: ScrappingOptionValues) => (o.timeframes ?? []).join(", ");
+const taskGroup = (o: ScrappingOptionValues) => (o.taskGroups ?? []).join(", ");
 
 /** The compact meta string: "extraction type, taskgroup, scrapping options". */
 const meta = (o: ScrappingOptionValues) =>

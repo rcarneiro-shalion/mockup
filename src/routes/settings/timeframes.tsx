@@ -5,7 +5,7 @@ import { usePersistentState } from "@/hooks/usePersistentState";
 import { SETTINGS_TIMEFRAMES_KEY, INITIAL_SETTINGS_TIMEFRAMES, type SettingTimeframe } from "@/lib/settings";
 
 export const Route = createFileRoute("/settings/timeframes")({
-  head: () => ({ meta: [{ title: "Timeframes — Shalion" }] }),
+  head: () => ({ meta: [{ title: "Timeframes (legacy) — Shalion" }] }),
   component: TimeframesPage,
 });
 
@@ -21,7 +21,7 @@ function TimeframesPage() {
   ];
   return (
     <SettingsList
-      title="Timeframes"
+      title="Timeframes (legacy)"
       newLabel="New timeframe"
       searchPlaceholder="Search timeframes by name"
       searchText={(r) => r.name}

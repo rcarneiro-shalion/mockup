@@ -50,7 +50,7 @@ export const LOCATION_FREQUENCY_OPTIONS = ["NO_ROTATE_DAILY", "ROTATE_MONTHLY"];
 
 // --- Scrapping Options / Stuff (2026 reframe) ---
 
-// Timeframes a scrapping option can run under (mock values).
+/** @deprecated TaskGroup options now come from the Settings › TaskGroup catalog (settings.ts getTaskGroups). Kept for reference only. */
 export const TIMEFRAME_OPTIONS = [
   "All Day (1 x day)",
   "Morning (1 x day)",

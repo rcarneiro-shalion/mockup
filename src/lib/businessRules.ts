@@ -247,7 +247,7 @@ const subscriptions: RulePage = {
       category: "Relationships",
       rules: [
         "A subscription belongs to one project, and its clients are inherited from that project.",
-        "The scraping option it points to defines how data is extracted (type, stores, timeframes, pagination, sorting, modalities).",
+        "The scraping option it points to defines how data is extracted (type, stores, task groups, pagination, sorting, modalities).",
       ],
     },
     {
@@ -301,7 +301,7 @@ const scrappingOptions: RulePage = {
       category: "Creating & editing",
       rules: [
         "Each scraping option has a unique name and exactly one extraction type (Search, Shelf, Ad, Digital Shelf PLP, Digital Shelf PDP or Media).",
-        "It must target one or more stores/retailers and run on one or more timeframes.",
+        "It must target one or more stores/retailers and run on one or more task groups.",
         "It defaults to Active and can be set Inactive.",
       ],
     },
@@ -350,29 +350,29 @@ const tags: RulePage = {
   ],
 };
 
-const seedsTimeframes: RulePage = {
-  key: "timeframes",
-  label: "Timeframes",
-  match: "/seeds-api/timeframes",
+const settingsTaskGroups: RulePage = {
+  key: "task-groups",
+  label: "TaskGroup",
+  match: "/settings/task-groups",
   groups: [
     {
       category: "Creating & editing",
       rules: [
-        "A timeframe needs a unique name.",
-        "It must set how often its location rotates (no daily rotation, or monthly) and how often its seed content rotates (no daily rotation, weekly or monthly).",
-        "It can optionally belong to a timeframe group and a product.",
+        "A task group needs a name and a unique slug (max 5 characters, uppercased).",
+        "Task groups are referenced 1:N by scraping options — a scraping option runs on one or more task groups.",
+      ],
+    },
+    {
+      category: "Deleting",
+      rules: [
+        "A task group can't be deleted while any scraping option still uses it.",
       ],
     },
     {
       category: "Search & listing",
       rules: [
-        "Each timeframe can be toggled active or inactive.",
-        "The list can be searched by name and filtered by location frequency, seed frequency, group and product.",
+        "Searchable by name or slug; edit from the row menu or by clicking the name.",
       ],
-    },
-    {
-      category: "Good to know",
-      rules: ["Each timeframe records who created and updated it, and when."],
     },
   ],
 };
@@ -556,7 +556,7 @@ const settingsTargets: RulePage = {
 
 const settingsTimeframes: RulePage = {
   key: "timeframes",
-  label: "Timeframes",
+  label: "Timeframes (legacy)",
   match: "/settings/timeframes",
   groups: [
     {
@@ -1132,8 +1132,8 @@ export const RULE_SECTIONS: RuleSection[] = [
   {
     section: "Seeds API",
     intro:
-      "The Seeds API is what we monitor across the web and how that work is organised — projects, subscriptions, the seeds themselves, scraping options, tags and timeframes.",
-    pages: [projects, subscriptions, seeds, scrappingOptions, tags, seedsTimeframes],
+      "The Seeds API is what we monitor across the web and how that work is organised — projects, subscriptions, the seeds themselves, scraping options and tags.",
+    pages: [projects, subscriptions, seeds, scrappingOptions, tags],
   },
   {
     section: "Codification",
@@ -1179,16 +1179,17 @@ export const RULE_SECTIONS: RuleSection[] = [
   {
     section: "Settings",
     intro:
-      "Settings is the shared configuration the rest of the platform relies on: dashboard applications, targets, timeframes, categories, country groups and the AI query-builder rules.",
+      "Settings is the shared configuration the rest of the platform relies on: dashboard applications, targets, task groups, categories, country groups, the AI query-builder rules — and the legacy timeframes.",
     pages: [
       dashboardApplications,
       settingsTargets,
-      settingsTimeframes,
+      settingsTaskGroups,
       settingsCategories,
       settingsCountryGroups,
       AP["settings-cubes"],
       AP["settings-scopes"],
       settingsRules,
+      settingsTimeframes,
     ],
   },
   {

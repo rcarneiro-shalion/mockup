@@ -123,6 +123,20 @@ export const INITIAL_RULES: SettingRule[] = [
   RL("r7", "RMM/CMI/ASM/DSM Insights Extra Context", "+ Never mix products (SKUs, titles, ...) with placements.", "", "", "Thu, May 21, 2026 9:00 AM", "Thu, May 21, 2026 9:00 AM"),
 ];
 
+// ---------- Task groups ----------
+// The reviewed replacement for the legacy "timeframe" tag on scraping options. A scraping
+// option references one or MANY task groups (1:N). `slug` is a short code (≤5 chars), unique.
+// Managed via Settings › TaskGroup; a task group can't be deleted while a scraping option uses it.
+export type SettingTaskGroup = { id: string; name: string; slug: string; createdAt: string; updatedAt: string };
+export const TASK_GROUPS_KEY = "settings:task-groups";
+const TG = (id: string, name: string, slug: string, createdAt: string, updatedAt: string): SettingTaskGroup =>
+  ({ id, name, slug, createdAt, updatedAt });
+export const INITIAL_TASK_GROUPS: SettingTaskGroup[] = [
+  TG("tg-1", "group_1", "grp1", "Thu, Oct 26, 2023 3:30 PM", "Thu, Oct 26, 2023 3:30 PM"),
+  TG("tg-2", "group_2", "grp2", "Thu, Oct 26, 2023 3:30 PM", "Thu, Oct 26, 2023 3:30 PM"),
+  TG("tg-3", "group_3", "grp3", "Thu, Oct 26, 2023 3:30 PM", "Thu, Oct 26, 2023 3:30 PM"),
+];
+
 // ---------- Subscription types ----------
 // The catalog of subscription types (e.g. Select Assortment, Matching) referenced when
 // editing a subscription. Maintained from Settings › Subscription type.
@@ -154,3 +168,4 @@ export const getCategories = () => read(CATEGORIES_KEY, INITIAL_CATEGORIES);
 export const getCountryGroups = () => read(COUNTRY_GROUPS_KEY, INITIAL_COUNTRY_GROUPS);
 export const getRules = () => read(RULES_KEY, INITIAL_RULES);
 export const getSubscriptionTypes = () => read(SUBSCRIPTION_TYPES_KEY, INITIAL_SUBSCRIPTION_TYPES);
+export const getTaskGroups = () => read(TASK_GROUPS_KEY, INITIAL_TASK_GROUPS);

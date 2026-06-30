@@ -75,6 +75,8 @@ export function EditRecordDialog({
   fields,
   onSave,
   onDelete,
+  hideDelete,
+  validate,
   width = 780,
 }: {
   open: boolean;
@@ -84,6 +86,10 @@ export function EditRecordDialog({
   fields: FieldDef[];
   onSave: (values: Record<string, string | boolean>) => void;
   onDelete?: () => void;
+  /** Hide the in-dialog delete button (e.g. when deletion is guarded elsewhere). */
+  hideDelete?: boolean;
+  /** Return an error message to block the save (shown as a toast); null/undefined = ok. */
+  validate?: (values: Record<string, string | boolean>) => string | null;
   width?: number;
 }) {
   const [formValues, setFormValues] = useState<Record<string, string | boolean>>({});
@@ -107,6 +113,8 @@ export function EditRecordDialog({
   }, [open, fields]);
 
   const handleSave = async () => {
+    const err = validate?.(formValues);
+    if (err) { toast.error(err); return; }
     setIsSaving(true);
     try {
       await new Promise((resolve, reject) =>
@@ -136,14 +144,16 @@ export function EditRecordDialog({
             <DialogTitle className="font-mono text-base font-semibold tracking-tight">
               {title}
             </DialogTitle>
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="mr-6 rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-destructive"
-              aria-label="Delete"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            {!hideDelete && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="mr-6 rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-destructive"
+                aria-label="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
           <div className="grid max-h-[60vh] grid-cols-2 gap-x-4 gap-y-5 overflow-auto px-6 py-5">

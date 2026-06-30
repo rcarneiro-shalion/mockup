@@ -64,6 +64,7 @@ export function AddRecordDialog({
   saveLabel,
   fields,
   onSave,
+  validate,
   width = 780,
 }: {
   open: boolean;
@@ -72,6 +73,8 @@ export function AddRecordDialog({
   saveLabel: string;
   fields: AddFieldDef[];
   onSave: (values: Record<string, string | boolean>) => void;
+  /** Return an error message to block the save (shown as a toast); null/undefined = ok. */
+  validate?: (values: Record<string, string | boolean>) => string | null;
   width?: number;
 }) {
   const [formValues, setFormValues] = useState<Record<string, string | boolean>>({});
@@ -93,6 +96,8 @@ export function AddRecordDialog({
   }, [open, fields]);
 
   const handleSave = async () => {
+    const err = validate?.(formValues);
+    if (err) { toast.error(err); return; }
     setIsSaving(true);
     try {
       await new Promise((resolve, reject) =>

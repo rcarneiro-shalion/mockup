@@ -60,7 +60,6 @@ const ecometryNav: NavItem[] = [
       { label: "Seeds", to: "/seeds-api/seeds" },
       { label: "Scraping options", to: "/seeds-api/scrapping-options" },
       { label: "Tags", to: "/seeds-api/tags" },
-      { label: "TaskGroup", to: "/seeds-api/timeframes" },
       { label: "Value Stream Map", to: "/seeds-api/planner" },
       { label: "Scenario simulator", to: "/seeds-api/scenario-generator" },
     ],
@@ -116,13 +115,14 @@ const ecometryNav: NavItem[] = [
     children: [
       { label: "Dashboard applications", to: "/settings/dashboard-applications" },
       { label: "Targets", to: "/settings/targets" },
-      { label: "Timeframes", to: "/settings/timeframes" },
+      { label: "Timeframes (legacy)", to: "/settings/timeframes" },
       { label: "Categories", to: "/settings/categories" },
       { label: "Country groups", to: "/settings/country-groups" },
       { label: "Cubes", to: "/settings/cubes" },
       { label: "Scopes", to: "/settings/scopes" },
       { label: "Rules", to: "/settings/rules" },
       { label: "Subscription type", to: "/settings/subscription-types" },
+      { label: "TaskGroup", to: "/settings/task-groups" },
     ],
   },
 ];

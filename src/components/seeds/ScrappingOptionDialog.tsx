@@ -26,12 +26,12 @@ import { ChipMultiSelect } from "@/components/seeds/ChipMultiSelect";
 import { Pill, Th, Td, LinkText } from "@/components/seeds/ListPrimitives";
 import {
   EXTRACTION_TYPE_OPTIONS,
-  TIMEFRAME_OPTIONS,
   MODALITY_OPTIONS,
   SORT_OPTIONS,
   FREQUENCY_OPTIONS,
   TIMES_PER_DAY_OPTIONS,
 } from "@/lib/seedOptions";
+import { getTaskGroups } from "@/lib/settings";
 import { getSubscriptions, subProjects } from "@/lib/subscriptions";
 import { getProjects } from "@/lib/projects";
 import { getClientsForProject } from "@/lib/clients";
@@ -45,7 +45,7 @@ export type ScrappingOptionValues = {
   name: string;
   status: string;
   extractionType: string;
-  timeframes: string[];
+  taskGroups: string[]; // 1:N → Settings TaskGroup catalog (renamed from the legacy "timeframes")
   // How often the option re-runs (moved here from the subscription). "Custom" → a simple
   // Days field + times-per-day selector. Daily/Weekly/Monthly carry no extra config.
   frequency: string;
@@ -72,7 +72,7 @@ export const EMPTY_SCRAPPING_OPTION: ScrappingOptionValues = {
   name: "",
   status: "Active",
   extractionType: "MEDIA",
-  timeframes: ["All Day (1 x day)"],
+  taskGroups: ["group_1"],
   frequency: "Daily",
   customDays: "",
   customTimesPerDay: "1x",
@@ -192,6 +192,8 @@ export function ScrappingOptionDialog({
   const removeModality = (m: string) =>
     set("modalityValues", v.modalityValues.filter((x) => x !== m));
   const availableModalities = MODALITY_OPTIONS.filter((m) => !v.modalityValues.includes(m));
+  // TaskGroup options come from the Settings › TaskGroup catalog (1:N). Replaces the legacy static timeframe list.
+  const taskGroupOptions = getTaskGroups().map((t) => t.name);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -251,9 +253,9 @@ export function ScrappingOptionDialog({
               {/* TaskGroup — 1:N multi-select (shared ChipMultiSelect) */}
               <Field label="TaskGroup" required className="sm:col-span-2">
                 <ChipMultiSelect
-                  value={v.timeframes}
-                  onChange={(arr) => set("timeframes", arr)}
-                  options={TIMEFRAME_OPTIONS}
+                  value={v.taskGroups}
+                  onChange={(arr) => set("taskGroups", arr)}
+                  options={taskGroupOptions}
                   addLabel="Add task group"
                   emptyLabel="No task groups selected"
                 />

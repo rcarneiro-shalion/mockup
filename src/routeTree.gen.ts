@@ -20,13 +20,13 @@ import { Route as BulkIndexRouteImport } from './routes/bulk/index'
 import { Route as StoresNewRouteImport } from './routes/stores/new'
 import { Route as StoresStoreIdRouteImport } from './routes/stores/$storeId'
 import { Route as SettingsTimeframesRouteImport } from './routes/settings/timeframes'
+import { Route as SettingsTaskGroupsRouteImport } from './routes/settings/task-groups'
 import { Route as SettingsTargetsRouteImport } from './routes/settings/targets'
 import { Route as SettingsSubscriptionTypesRouteImport } from './routes/settings/subscription-types'
 import { Route as SettingsRulesRouteImport } from './routes/settings/rules'
 import { Route as SettingsDashboardApplicationsRouteImport } from './routes/settings/dashboard-applications'
 import { Route as SettingsCountryGroupsRouteImport } from './routes/settings/country-groups'
 import { Route as SettingsCategoriesRouteImport } from './routes/settings/categories'
-import { Route as SeedsApiTimeframesRouteImport } from './routes/seeds-api/timeframes'
 import { Route as SeedsApiTagsRouteImport } from './routes/seeds-api/tags'
 import { Route as SeedsApiSubscriptionsRouteImport } from './routes/seeds-api/subscriptions'
 import { Route as SeedsApiScrappingOptionsRouteImport } from './routes/seeds-api/scrapping-options'
@@ -247,6 +247,11 @@ const SettingsTimeframesRoute = SettingsTimeframesRouteImport.update({
   path: '/settings/timeframes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsTaskGroupsRoute = SettingsTaskGroupsRouteImport.update({
+  id: '/settings/task-groups',
+  path: '/settings/task-groups',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsTargetsRoute = SettingsTargetsRouteImport.update({
   id: '/settings/targets',
   path: '/settings/targets',
@@ -277,11 +282,6 @@ const SettingsCountryGroupsRoute = SettingsCountryGroupsRouteImport.update({
 const SettingsCategoriesRoute = SettingsCategoriesRouteImport.update({
   id: '/settings/categories',
   path: '/settings/categories',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SeedsApiTimeframesRoute = SeedsApiTimeframesRouteImport.update({
-  id: '/seeds-api/timeframes',
-  path: '/seeds-api/timeframes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SeedsApiTagsRoute = SeedsApiTagsRouteImport.update({
@@ -1215,13 +1215,13 @@ export interface FileRoutesByFullPath {
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
-  '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
   '/settings/categories': typeof SettingsCategoriesRouteWithChildren
   '/settings/country-groups': typeof SettingsCountryGroupsRouteWithChildren
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRouteWithChildren
   '/settings/rules': typeof SettingsRulesRouteWithChildren
   '/settings/subscription-types': typeof SettingsSubscriptionTypesRoute
   '/settings/targets': typeof SettingsTargetsRoute
+  '/settings/task-groups': typeof SettingsTaskGroupsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
   '/stores/new': typeof StoresNewRoute
@@ -1397,9 +1397,9 @@ export interface FileRoutesByTo {
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
-  '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
   '/settings/subscription-types': typeof SettingsSubscriptionTypesRoute
   '/settings/targets': typeof SettingsTargetsRoute
+  '/settings/task-groups': typeof SettingsTaskGroupsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
   '/stores/new': typeof StoresNewRoute
@@ -1576,13 +1576,13 @@ export interface FileRoutesById {
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
   '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
-  '/seeds-api/timeframes': typeof SeedsApiTimeframesRoute
   '/settings/categories': typeof SettingsCategoriesRouteWithChildren
   '/settings/country-groups': typeof SettingsCountryGroupsRouteWithChildren
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRouteWithChildren
   '/settings/rules': typeof SettingsRulesRouteWithChildren
   '/settings/subscription-types': typeof SettingsSubscriptionTypesRoute
   '/settings/targets': typeof SettingsTargetsRoute
+  '/settings/task-groups': typeof SettingsTaskGroupsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
   '/stores/$storeId': typeof StoresStoreIdRoute
   '/stores/new': typeof StoresNewRoute
@@ -1762,13 +1762,13 @@ export interface FileRouteTypes {
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
-    | '/seeds-api/timeframes'
     | '/settings/categories'
     | '/settings/country-groups'
     | '/settings/dashboard-applications'
     | '/settings/rules'
     | '/settings/subscription-types'
     | '/settings/targets'
+    | '/settings/task-groups'
     | '/settings/timeframes'
     | '/stores/$storeId'
     | '/stores/new'
@@ -1944,9 +1944,9 @@ export interface FileRouteTypes {
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
-    | '/seeds-api/timeframes'
     | '/settings/subscription-types'
     | '/settings/targets'
+    | '/settings/task-groups'
     | '/settings/timeframes'
     | '/stores/$storeId'
     | '/stores/new'
@@ -2122,13 +2122,13 @@ export interface FileRouteTypes {
     | '/seeds-api/scrapping-options'
     | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
-    | '/seeds-api/timeframes'
     | '/settings/categories'
     | '/settings/country-groups'
     | '/settings/dashboard-applications'
     | '/settings/rules'
     | '/settings/subscription-types'
     | '/settings/targets'
+    | '/settings/task-groups'
     | '/settings/timeframes'
     | '/stores/$storeId'
     | '/stores/new'
@@ -2307,13 +2307,13 @@ export interface RootRouteChildren {
   SeedsApiScrappingOptionsRoute: typeof SeedsApiScrappingOptionsRoute
   SeedsApiSubscriptionsRoute: typeof SeedsApiSubscriptionsRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
-  SeedsApiTimeframesRoute: typeof SeedsApiTimeframesRoute
   SettingsCategoriesRoute: typeof SettingsCategoriesRouteWithChildren
   SettingsCountryGroupsRoute: typeof SettingsCountryGroupsRouteWithChildren
   SettingsDashboardApplicationsRoute: typeof SettingsDashboardApplicationsRouteWithChildren
   SettingsRulesRoute: typeof SettingsRulesRouteWithChildren
   SettingsSubscriptionTypesRoute: typeof SettingsSubscriptionTypesRoute
   SettingsTargetsRoute: typeof SettingsTargetsRoute
+  SettingsTaskGroupsRoute: typeof SettingsTaskGroupsRoute
   SettingsTimeframesRoute: typeof SettingsTimeframesRoute
   StoresStoreIdRoute: typeof StoresStoreIdRoute
   StoresNewRoute: typeof StoresNewRoute
@@ -2532,6 +2532,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsTimeframesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/task-groups': {
+      id: '/settings/task-groups'
+      path: '/settings/task-groups'
+      fullPath: '/settings/task-groups'
+      preLoaderRoute: typeof SettingsTaskGroupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/targets': {
       id: '/settings/targets'
       path: '/settings/targets'
@@ -2572,13 +2579,6 @@ declare module '@tanstack/react-router' {
       path: '/settings/categories'
       fullPath: '/settings/categories'
       preLoaderRoute: typeof SettingsCategoriesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/seeds-api/timeframes': {
-      id: '/seeds-api/timeframes'
-      path: '/seeds-api/timeframes'
-      fullPath: '/seeds-api/timeframes'
-      preLoaderRoute: typeof SeedsApiTimeframesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seeds-api/tags': {
@@ -3890,7 +3890,6 @@ const rootRouteChildren: RootRouteChildren = {
   SeedsApiScrappingOptionsRoute: SeedsApiScrappingOptionsRoute,
   SeedsApiSubscriptionsRoute: SeedsApiSubscriptionsRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
-  SeedsApiTimeframesRoute: SeedsApiTimeframesRoute,
   SettingsCategoriesRoute: SettingsCategoriesRouteWithChildren,
   SettingsCountryGroupsRoute: SettingsCountryGroupsRouteWithChildren,
   SettingsDashboardApplicationsRoute:
@@ -3898,6 +3897,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRulesRoute: SettingsRulesRouteWithChildren,
   SettingsSubscriptionTypesRoute: SettingsSubscriptionTypesRoute,
   SettingsTargetsRoute: SettingsTargetsRoute,
+  SettingsTaskGroupsRoute: SettingsTaskGroupsRoute,
   SettingsTimeframesRoute: SettingsTimeframesRoute,
   StoresStoreIdRoute: StoresStoreIdRoute,
   StoresNewRoute: StoresNewRoute,

@@ -157,7 +157,7 @@ function PlannerPage() {
         body: (
           <div className="space-y-1">
             <Pill tone="amber">{o.extractionType}</Pill>
-            {(o.timeframes ?? []).length > 0 && <InfoLine icon={CalendarClock}>{(o.timeframes ?? []).join(", ")}</InfoLine>}
+            {(o.taskGroups ?? []).length > 0 && <InfoLine icon={CalendarClock}>{(o.taskGroups ?? []).join(", ")}</InfoLine>}
             {sum && <InfoLine>{sum}</InfoLine>}
           </div>
         ),

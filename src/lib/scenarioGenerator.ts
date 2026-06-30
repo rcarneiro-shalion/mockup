@@ -394,8 +394,8 @@ export function estimateTasks(sub: Subscription, opt?: ScrappingOptionValues, st
   const count = storeLocCount ?? STORE_LOCATIONS[sub.store] ?? 0;
   const locations = sub.geo === "MANUAL" ? (count > 0 ? count : LOC_VOLUME_TBD) : 1;
   const modalities = opt?.modalities && opt.modalityValues?.length ? opt.modalityValues.length : 1;
-  const timeframes = opt?.timeframes?.length || 1;
-  return seeds * locations * modalities * timeframes;
+  const taskGroups = opt?.taskGroups?.length || 1;
+  return seeds * locations * modalities * taskGroups;
 }
 
 // ---- validation: surfaces the gap-analysis rules per scenario -------------------
