@@ -9,6 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { toast } from "sonner";
 import type { ClientSku } from "@/lib/clientSkus";
+import {
+  regionCatalogFor,
+  storesForCountry,
+  msrpRound2,
+  fmtMsrp,
+  STORE_FACTORS,
+  REGION_STORE_FACTORS,
+  simulateSkuRegions,
+} from "@/lib/clientSkus";
 
 type Scope = "global" | "region" | "store" | "regionStore";
 
@@ -28,38 +37,6 @@ type Row = {
   updatedAt: string;
 };
 
-// --- Region "location catalog" pools ---------------------------------------
-// Real Coca-Cola bottler catalogs for LATAM countries (reused from the live
-// Client-sku-regions sample); a generic catalog is derived for every other
-// country so the migration simulation stays country-aware.
-const LATAM_CATALOG: Record<string, { system: string; regions: string[] }> = {
-  MX: { system: "MX - Coke Bottlers", regions: ["FEMSA MX", "Rica MX", "Arca MX", "CDF MX", "Bepensa MX", "Bebbo MX"] },
-  BR: { system: "BR - Coke Bottlers", regions: ["Andina BR", "Sorocaba BR", "Uberlandia BR", "FEMSA BR"] },
-  CL: { system: "CL - Coke Bottlers", regions: ["Andina CL", "Embonor CL", "Polar CL"] },
-  CO: { system: "CO - Coke Bottlers", regions: ["FEMSA CO", "Andina CO"] },
-  PE: { system: "PE - Coke Bottlers", regions: ["Arca PE", "Lindley PE"] },
-  EC: { system: "EC - Coke Bottlers", regions: ["Arca EC", "Holding EC"] },
-  AR: { system: "AR - Coke Bottlers", regions: ["Andina AR", "Reginald AR"] },
-};
-
-function catalogFor(country: string): { system: string; regions: string[] } {
-  const c = (country || "XX").toUpperCase();
-  if (LATAM_CATALOG[c]) return LATAM_CATALOG[c];
-  return { system: `${c} Distribution`, regions: [`${c} North`, `${c} Central`, `${c} South`, `${c} Metro`] };
-}
-
-const STORE_BRANDS = ["Amazon", "Walmart", "Carrefour", "Mercado Libre", "Auchan", "El Corte Inglés"];
-const storesFor = (country: string) => STORE_BRANDS.map((s) => `${s} ${(country || "XX").toUpperCase()}`);
-
-// deterministic per-SKU value variations (stable across renders, no Math.random)
-const round2 = (n: number) => Math.round(n * 100) / 100;
-const fmtMoney = (n: number) =>
-  Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.?0+$/, "");
-
-const REGION_FACTORS = [0.98, 1.0, 1.0, 1.02, 1.05, 0.96];
-const STORE_FACTORS = [0.95, 1.0, 1.04, 1.08, 0.99, 1.02];
-const REGION_STORE_FACTORS = [0.97, 1.01, 1.05, 0.99, 1.03, 0.94];
-
 const DEFAULT_SKU: Partial<ClientSku> = {
   id: "demo",
   msrp: { value: 28, currency: "MXN" },
@@ -67,36 +44,31 @@ const DEFAULT_SKU: Partial<ClientSku> = {
   hero: false,
 };
 
-/** Build the four-level MSRP dataset for a SKU: Global = real msrp, the rest simulated. */
+/** Build the four-level MSRP dataset for a SKU: Global = real msrp, the rest simulated.
+ *  Region rows reuse simulateSkuRegions() so the MSRP › Region tab and the
+ *  "Client sku regions" grid always show the same values. */
 function buildData(sku: Partial<ClientSku>): Record<Scope, Row[]> {
   const base = sku.msrp?.value ?? 0;
-  const currency = sku.msrp?.currency ?? "USD";
   const country = sku.country ?? "XX";
   const hero = !!sku.hero;
-  const businessUnit = sku.businessUnit;
-  const clientCategory = sku.clientCategory;
-  const createdAt = sku.createdAt ?? "2025-05-21, 08:52:32";
-  const updatedAt = sku.updatedAt ?? "2026-06-29, 19:25:30";
-  const common = { currency, businessUnit, clientCategory, createdAt, updatedAt };
-
-  const { system, regions } = catalogFor(country);
-  const stores = storesFor(country);
+  const common = {
+    currency: sku.msrp?.currency ?? "USD",
+    businessUnit: sku.businessUnit,
+    clientCategory: sku.clientCategory,
+    createdAt: sku.createdAt ?? "2025-05-21, 08:52:32",
+    updatedAt: sku.updatedAt ?? "2026-06-29, 19:25:30",
+  };
+  const { system, regions } = regionCatalogFor(country);
+  const stores = storesForCountry(country);
 
   return {
     // The real, migrated global value — a single authoritative row.
-    global: [{ id: "g-0", msrp: round2(base), hero, ...common }],
-    region: regions.map((region, i) => ({
-      id: `r-${i}`,
-      regionSystem: system,
-      region,
-      msrp: round2(base * (REGION_FACTORS[i % REGION_FACTORS.length] ?? 1)),
-      hero,
-      ...common,
-    })),
+    global: [{ id: "g-0", msrp: msrpRound2(base), hero, ...common }],
+    region: simulateSkuRegions(sku),
     store: stores.map((store, i) => ({
       id: `s-${i}`,
       store,
-      msrp: round2(base * (STORE_FACTORS[i % STORE_FACTORS.length] ?? 1)),
+      msrp: msrpRound2(base * (STORE_FACTORS[i % STORE_FACTORS.length] ?? 1)),
       hero,
       ...common,
     })),
@@ -105,7 +77,7 @@ function buildData(sku: Partial<ClientSku>): Record<Scope, Row[]> {
       store,
       regionSystem: system,
       region: regions[i],
-      msrp: round2(base * (REGION_STORE_FACTORS[i % REGION_STORE_FACTORS.length] ?? 1)),
+      msrp: msrpRound2(base * (REGION_STORE_FACTORS[i % REGION_STORE_FACTORS.length] ?? 1)),
       hero,
       ...common,
     })),
@@ -130,8 +102,8 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
 
   const currentTab = tabs.find((t) => t.key === active)!;
   const rows = data[active];
-  const catalog = catalogFor(effSku.country ?? "XX");
-  const stores = storesFor(effSku.country ?? "XX");
+  const catalog = regionCatalogFor(effSku.country ?? "XX");
+  const stores = storesForCountry(effSku.country ?? "XX");
   const skuCurrency = effSku.msrp?.currency ?? "USD";
 
   const handleAssign = (newRow: Row) => {
@@ -220,7 +192,7 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
                         <Td className="text-[var(--sidebar-active-fg)]">{row.store}</Td>
                       )}
                       <Td>{row.currency}</Td>
-                      <Td className="font-medium">{fmtMoney(row.msrp)}</Td>
+                      <Td className="font-medium">{fmtMsrp(row.msrp)}</Td>
                       <Td>{row.businessUnit || ""}</Td>
                       <Td>{row.clientCategory || ""}</Td>
                       <Td>

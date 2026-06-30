@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toaster } from "@/components/ui/sonner";
 import { ClientSkuMsrp } from "@/components/product/ClientSkuMsrp";
+import { ClientSkuRegions } from "@/components/product/ClientSkuRegions";
 import { COUNTRY_NAMES } from "@/lib/retailers";
 import { getClientNames } from "@/lib/clients";
 import type { ClientSku } from "@/lib/clientSkus";
@@ -209,7 +210,7 @@ export function ClientSkuEditPage({
 
           {/* Collapsible sections */}
           <CollapsibleSection title="Attribute options" />
-          <CollapsibleSection title="Client sku regions" />
+          <ClientSkuRegions key={sku?.id} sku={sku} />
 
           {/* MSRP */}
           <div className="mt-3">

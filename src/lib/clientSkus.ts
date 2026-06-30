@@ -2855,3 +2855,75 @@ export function getClientSkuRegions(): ClientSkuRegion[] {
 /** Display totals shown in the paginators (sampled rows are a small subset). */
 export const CLIENT_SKUS_TOTAL = 42327;
 export const CLIENT_SKU_REGIONS_TOTAL = 6153;
+
+// ---------------------------------------------------------------------------
+// Region / MSRP simulation — shared by the per-SKU "Client sku regions" grid
+// (ClientSkuRegions) and the MSRP › Region tab (ClientSkuMsrp) so the two views
+// stay consistent. Global price is the SKU's REAL msrp; the per-region rows are
+// a deterministic simulation (fixed factors off the base, no Math.random).
+// ---------------------------------------------------------------------------
+
+export type SkuRegionRow = {
+  id: string;
+  regionSystem: string;
+  region: string;
+  currency: string;
+  msrp: number;
+  businessUnit?: string;
+  clientCategory?: string;
+  hero: boolean;
+  activeFrom?: string;
+  activeTo?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// Real Coca-Cola bottler catalogs for LATAM / Central America; a generic catalog
+// is derived for every other country so the simulation stays country-aware.
+export const REGION_CATALOG: Record<string, { system: string; regions: string[] }> = {
+  MX: { system: "MX - Coke Bottlers", regions: ["FEMSA MX", "Rica MX", "Arca MX", "CDF MX", "Bepensa MX", "Bebbo MX"] },
+  BR: { system: "BR - Coke Bottlers", regions: ["Andina BR", "Sorocaba BR", "Uberlandia BR", "FEMSA BR"] },
+  CL: { system: "CL - Coke Bottlers", regions: ["Andina CL", "Embonor CL", "Polar CL"] },
+  CO: { system: "CO - Coke Bottlers", regions: ["FEMSA CO", "Andina CO"] },
+  PE: { system: "PE - Coke Bottlers", regions: ["Arca PE", "Lindley PE"] },
+  EC: { system: "EC - Coke Bottlers", regions: ["Arca EC", "Holding EC"] },
+  AR: { system: "AR - Coke Bottlers", regions: ["Andina AR", "Reginald AR"] },
+  GT: { system: "GT - Coke Bottlers", regions: ["FEMSA GT"] },
+  CR: { system: "CR - Coke Bottlers", regions: ["FEMSA CR", "Centroamérica CR"] },
+};
+
+export function regionCatalogFor(country: string): { system: string; regions: string[] } {
+  const c = (country || "XX").toUpperCase();
+  return REGION_CATALOG[c] ?? { system: `${c} Distribution`, regions: [`${c} North`, `${c} Central`, `${c} South`, `${c} Metro`] };
+}
+
+export const STORE_BRANDS = ["Amazon", "Walmart", "Carrefour", "Mercado Libre", "Auchan", "El Corte Inglés"];
+export const storesForCountry = (country: string) => STORE_BRANDS.map((s) => `${s} ${(country || "XX").toUpperCase()}`);
+
+export const msrpRound2 = (n: number) => Math.round(n * 100) / 100;
+export const fmtMsrp = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.?0+$/, ""));
+
+export const REGION_FACTORS = [0.98, 1.0, 1.0, 1.02, 1.05, 0.96];
+export const STORE_FACTORS = [0.95, 1.0, 1.04, 1.08, 0.99, 1.02];
+export const REGION_STORE_FACTORS = [0.97, 1.01, 1.05, 0.99, 1.03, 0.94];
+
+/** Per-SKU simulated regional override rows (one per region in the SKU's catalog). */
+export function simulateSkuRegions(sku: Partial<ClientSku>): SkuRegionRow[] {
+  const base = sku.msrp?.value ?? 0;
+  const currency = sku.msrp?.currency ?? "USD";
+  const { system, regions } = regionCatalogFor(sku.country ?? "XX");
+  const createdAt = sku.createdAt ?? "2025-05-21, 08:52:32";
+  const updatedAt = sku.updatedAt ?? "2026-06-29, 19:25:30";
+  return regions.map((region, i) => ({
+    id: `r-${i}`,
+    regionSystem: system,
+    region,
+    currency,
+    msrp: msrpRound2(base * (REGION_FACTORS[i % REGION_FACTORS.length] ?? 1)),
+    businessUnit: sku.businessUnit,
+    clientCategory: sku.clientCategory,
+    hero: !!sku.hero,
+    createdAt,
+    updatedAt,
+  }));
+}
