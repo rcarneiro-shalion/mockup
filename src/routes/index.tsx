@@ -87,7 +87,7 @@ const SECTIONS: Section[] = [
     icon: Settings,
     summary: "The control room.",
     detail:
-      "The shared configuration everything else relies on: dashboard applications, targets, timeframes, categories, country groups and the business rules that keep results consistent.",
+      "The shared configuration everything else relies on: dashboard applications, targets, task groups, categories, country groups, the business rules that keep results consistent — and the legacy timeframes.",
   },
 ];
 
