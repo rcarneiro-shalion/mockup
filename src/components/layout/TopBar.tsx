@@ -24,7 +24,8 @@ export function TopBar() {
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center">
         <span
           title="This is a mockup / prototype of the Ecometry console — not the production system."
-          className="pointer-events-auto rounded-b-2xl bg-[#f8e4e2] px-16 pb-2 pt-1.5 text-sm font-medium text-slate-600"
+          className="pointer-events-auto rounded-b-2xl bg-[#f8e4e2] px-16 pb-2 pt-1.5 text-slate-600"
+          style={{ lineHeight: "5px", fontWeight: 200, fontSize: "small" }}
         >
           Mockup
         </span>
