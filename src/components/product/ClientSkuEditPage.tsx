@@ -58,7 +58,7 @@ export function ClientSkuEditPage({
     <AppShell>
       <Toaster position="top-right" richColors />
       <div className="h-full overflow-auto">
-        <div className="mx-auto max-w-7xl px-6 py-6">
+        <div className="mx-auto max-w-3xl px-6 py-6">
           {/* Breadcrumb / title */}
           <div className="mb-4 flex items-start justify-between">
             <div>
@@ -77,8 +77,8 @@ export function ClientSkuEditPage({
             </Button>
           </div>
 
-          {/* Main details card — kept narrow; the wide MSRP / regions grids below use the full width. */}
-          <section className="max-w-3xl rounded-xl border border-border bg-card p-5 shadow-sm">
+          {/* Main details card */}
+          <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
             <div className="space-y-4">
               <FieldGroup label="Title" required>
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} />
