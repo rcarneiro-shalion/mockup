@@ -288,10 +288,10 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
 }
 
 function Th({ children, className = "" }: { children?: React.ReactNode; className?: string }) {
-  return <th className={`px-4 py-3 text-xs font-normal ${className}`}>{children}</th>;
+  return <th className={`whitespace-nowrap px-4 py-3 text-xs font-normal ${className}`}>{children}</th>;
 }
 function Td({ children, className = "" }: { children?: React.ReactNode; className?: string }) {
-  return <td className={`px-4 py-3 ${className}`}>{children}</td>;
+  return <td className={`whitespace-nowrap px-4 py-3 ${className}`}>{children}</td>;
 }
 
 function AssignDialog({
