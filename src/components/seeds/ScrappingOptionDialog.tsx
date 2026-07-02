@@ -46,9 +46,9 @@ export type ScrappingOptionValues = {
   name: string;
   status: string;
   extractionType: string;
-  taskGroups: string[]; // 1:N → Settings TaskGroup catalog (renamed from the legacy "timeframes") — v2/v3
-  // V1 phase: the taskGroup concept is out — the option references Settings › Timeframes
-  // directly (1:N). v2/v3 keep taskGroups; both fields coexist on the record.
+  taskGroups: string[]; // 1:N → Settings TaskGroup catalog (renamed from the legacy "timeframes") — v3
+  // V1/V2 phase: the taskGroup concept is out — the option references Settings ›
+  // Timeframes directly (1:N). v3 keeps taskGroups; both fields coexist on the record.
   timeframes?: string[];
   // How often the option re-runs (moved here from the subscription). "Custom" → a simple
   // Days field + times-per-day selector. Daily/Weekly/Monthly carry no extra config.
@@ -200,8 +200,10 @@ export function ScrappingOptionDialog({
   const removeModality = (m: string) =>
     set("modalityValues", v.modalityValues.filter((x) => x !== m));
   const availableModalities = MODALITY_OPTIONS.filter((m) => !v.modalityValues.includes(m));
-  // V1 phase: taskGroup is out — the option references Settings › Timeframes directly.
-  // v2/v3: TaskGroup options come from the Settings › TaskGroup catalog (1:N).
+  // V1/V2 phase: taskGroup is out — the option references Settings › Timeframes directly.
+  // v3: TaskGroup options come from the Settings › TaskGroup catalog (1:N).
+  const useTimeframes = getAppVersion() <= 2;
+  // V1 alone additionally drops Frequency and the "Scraping options and values" box.
   const isV1 = getAppVersion() === 1;
   const taskGroupOptions = getTaskGroups().map((t) => t.name);
   const timeframeOptions = getSettingsTimeframes().map((t) => t.name);
@@ -261,8 +263,8 @@ export function ScrappingOptionDialog({
               <Field label="Extraction type" required className="sm:col-span-2">
                 <SelectBox value={v.extractionType} onChange={(x) => set("extractionType", x)} options={EXTRACTION_TYPE_OPTIONS} />
               </Field>
-              {isV1 ? (
-                /* V1 phase: Timeframe — 1:N multi-select over the Settings › Timeframes catalog. */
+              {useTimeframes ? (
+                /* V1/V2 phase: Timeframe — 1:N multi-select over the Settings › Timeframes catalog. */
                 <Field label="Timeframe" required className="sm:col-span-2">
                   <ChipMultiSelect
                     value={v.timeframes ?? []}

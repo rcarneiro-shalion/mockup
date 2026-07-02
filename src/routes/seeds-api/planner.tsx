@@ -151,10 +151,10 @@ function PlannerPage() {
       });
     }
     for (const o of baseScraps) {
-      // V1 drops the options/values summary and surfaces Timeframes; v2/v3 keep
-      // the summary and surface TaskGroups.
+      // V1 drops the options/values summary (V2/v3 keep it); V1+V2 surface
+      // Timeframes, v3 surfaces TaskGroups.
       const sum = getAppVersion() === 1 ? "" : scrapSummary(o);
-      const tags = getAppVersion() === 1 ? (o.timeframes ?? []) : (o.taskGroups ?? []);
+      const tags = getAppVersion() <= 2 ? (o.timeframes ?? []) : (o.taskGroups ?? []);
       nodes.set(`o:${o.name}`, {
         key: `o:${o.name}`, kind: "scrap", title: o.name,
         go: () => navigate({ to: "/seeds-api/scrapping-options", search: { edit: o.name } }),

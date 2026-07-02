@@ -5,9 +5,9 @@ import { usePersistentState } from "@/hooks/usePersistentState";
 import { SETTINGS_TIMEFRAMES_KEY, INITIAL_SETTINGS_TIMEFRAMES, type SettingTimeframe } from "@/lib/settings";
 import { getAppVersion } from "@/lib/appVersion";
 
-// V1 phase reinstates Timeframes as the active scraping-option axis — no "(legacy)"
-// tag there; v2/v3 keep it (superseded by TaskGroup).
-const pageTitle = () => (getAppVersion() === 1 ? "Timeframes" : "Timeframes (legacy)");
+// The V1/V2 phase reinstates Timeframes as the active scraping-option axis — no
+// "(legacy)" tag there; v3 keeps it (superseded by TaskGroup).
+const pageTitle = () => (getAppVersion() <= 2 ? "Timeframes" : "Timeframes (legacy)");
 
 export const Route = createFileRoute("/settings/timeframes")({
   head: () => ({ meta: [{ title: `${pageTitle()} — Shalion` }] }),

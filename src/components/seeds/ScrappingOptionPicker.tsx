@@ -24,9 +24,9 @@ function optionsSummary(o: ScrappingOptionValues): string {
   return parts.join(", ");
 }
 
-// V1 phase surfaces Timeframes (Settings › Timeframes); v2/v3 surface TaskGroups.
+// V1/V2 phase surfaces Timeframes (Settings › Timeframes); v3 surfaces TaskGroups.
 const taskGroup = (o: ScrappingOptionValues) =>
-  (getAppVersion() === 1 ? (o.timeframes ?? []) : (o.taskGroups ?? [])).join(", ");
+  (getAppVersion() <= 2 ? (o.timeframes ?? []) : (o.taskGroups ?? [])).join(", ");
 
 /** The compact meta string: "extraction type, taskgroup/timeframe, scrapping options".
  *  V1 drops the options/values summary — that box is out of the V1 phase. */
@@ -40,7 +40,7 @@ const tooltip = (o: ScrappingOptionValues) =>
   [
     `Name: ${o.name}`,
     `Extraction type: ${o.extractionType || "—"}`,
-    `${getAppVersion() === 1 ? "Timeframe" : "TaskGroup"}: ${taskGroup(o) || "—"}`,
+    `${getAppVersion() <= 2 ? "Timeframe" : "TaskGroup"}: ${taskGroup(o) || "—"}`,
     ...(getAppVersion() === 1 ? [] : [`Scraping options: ${optionsSummary(o) || "—"}`]),
   ].join("\n");
 

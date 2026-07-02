@@ -100,17 +100,17 @@ export function SubscriptionDialog({
   // Store options come from the Stores entity (Retailers › Stores), deduped by name.
   const storeOptions = [...new Set(getStores().map((s) => s.name))].sort((a, b) => a.localeCompare(b));
 
-  // V1 phase keeps the subscription lean: no Selection parameters section, and the
-  // Location-set reference is simplified to a direct "Locations" multi-select
-  // (same MANUAL-only gating). v2/v3 keep the full As-Is form.
-  const isV1 = getAppVersion() === 1;
+  // The V1/V2 phase cut keeps the subscription lean: no Selection parameters section,
+  // and the Location-set reference is simplified to a direct "Locations" multi-select
+  // (same MANUAL-only gating). v3 keeps the full As-Is form.
+  const lean = getAppVersion() <= 2;
 
   const locationEnabled = v.geo === "MANUAL";
   // Real location set behind the selected label (real records pulled from backoffice).
   const realSet = REAL_LOCATION_SETS.find((s) => s.name === v.locationSet);
-  // V1 "Locations" choices: the locations that belong to the store picked in THIS form
+  // Lean-phase "Locations" choices: the locations that belong to the store picked in THIS form
   // (real samples, topped up with deterministic simulated ones when a store has <5).
-  const v1LocationOptions = isV1 ? getStoreLocationNames(v.store) : [];
+  const leanLocationOptions = lean ? getStoreLocationNames(v.store) : [];
   // Business rule: VIRTUAL_STORE geolocation is ONLY available for a PDP scrapping
   // option; for every other extraction type it stays visible but disabled.
   const isPdp = selectedExtraction === "DIGITAL_SHELF_PDP";
@@ -130,10 +130,10 @@ export function SubscriptionDialog({
     : ["KEYWORD", "URL", "API"];
 
   // --- Selection parameters (replaces Rotation): independent seed + location axes. ---
-  // Not part of the V1 phase — all axes off in v1 (skips their validations too).
-  const isStateful = !isV1 && v.seedSelection === "Stateful freshness";
+  // Not part of the V1/V2 phase — all axes off there (skips their validations too).
+  const isStateful = !lean && v.seedSelection === "Stateful freshness";
   const showFreshnessDays = isStateful && (v.freshnessWindow || "Last days") === "Last days";
-  const locSelEnabled = !isV1 && (v.geo === "AUTOMATIC" || v.geo === "MANUAL");
+  const locSelEnabled = !lean && (v.geo === "AUTOMATIC" || v.geo === "MANUAL");
   const showCycleLength = locSelEnabled && v.locationSelection === "N-day rotation";
 
   const handleSave = async () => {
@@ -164,9 +164,9 @@ export function SubscriptionDialog({
         destinationOptions: showDestination ? (v.destinationOptions ?? []) : [],
         destinationOption: undefined,
         rotation: undefined, // drop the legacy field
-        ...(isV1
+        ...(lean
           ? {
-              // V1 phase: direct Locations (MANUAL only); selection parameters and the
+              // V1/V2 phase: direct Locations (MANUAL only); selection parameters and the
               // Location-set reference are out of scope — stored values pass through.
               locations: locationEnabled ? (v.locations ?? []) : [],
             }
@@ -257,8 +257,8 @@ export function SubscriptionDialog({
                     setV((prev) => ({
                       ...prev,
                       store: x,
-                      // V1: locations belong to the store — a store switch invalidates them.
-                      ...(isV1 && x !== prev.store ? { locations: [] } : {}),
+                      // Lean phase: locations belong to the store — a store switch invalidates them.
+                      ...(lean && x !== prev.store ? { locations: [] } : {}),
                     }))
                   }
                   options={storeOptions}
@@ -302,13 +302,13 @@ export function SubscriptionDialog({
                   <p className="mt-1 text-xs text-muted-foreground">Virtual store is only available for a PDP scraping option.</p>
                 )}
               </Field>
-              {isV1 ? (
-                /* V1 phase: plain "Locations" — pick locations directly, same MANUAL-only gating. */
+              {lean ? (
+                /* V1/V2 phase: plain "Locations" — pick locations directly, same MANUAL-only gating. */
                 <Field label="Locations">
                   <MultiSelectPopover
                     value={locationEnabled ? (v.locations ?? []) : []}
                     onChange={(arr) => set("locations", arr)}
-                    options={v1LocationOptions}
+                    options={leanLocationOptions}
                     noun="location"
                     placeholder={locationEnabled ? "Select locations" : "Enabled when Geolocation mode is MANUAL"}
                     searchPlaceholder="Search locations…"
@@ -347,8 +347,8 @@ export function SubscriptionDialog({
 
             </section>
 
-            {/* Selection parameters — not part of the V1 phase. */}
-            {!isV1 && (
+            {/* Selection parameters — not part of the V1/V2 phase. */}
+            {!lean && (
             <section className="mt-6 border-t border-border pt-5">
               <h3 className="text-sm font-semibold text-foreground">Selection parameters</h3>
               <p className="mt-0.5 text-xs text-muted-foreground">

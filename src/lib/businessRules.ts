@@ -557,10 +557,10 @@ const settingsTargets: RulePage = {
 
 const settingsTimeframes: RulePage = {
   key: "timeframes",
-  // V1 reinstates Timeframes as the active axis (no "(legacy)"); v2/v3 keep the tag.
+  // V1/V2 reinstate Timeframes as the active axis (no "(legacy)"); v3 keeps the tag.
   // Module-scope compute is safe: the manual renders client-side only, where the
   // version is fixed per page load.
-  label: getAppVersion() === 1 ? "Timeframes" : "Timeframes (legacy)",
+  label: getAppVersion() <= 2 ? "Timeframes" : "Timeframes (legacy)",
   match: "/settings/timeframes",
   groups: [
     {

@@ -34,8 +34,9 @@ export type Subscription = {
   scrappingOption: string;
   geo: string; // NONE | AUTOMATIC | MANUAL | VIRTUAL_STORE
   locationSet: string;
-  // V1 phase: direct location selection (plural "Locations") — same MANUAL-only gating,
-  // without the intermediate Location-set entity. v2/v3 keep locationSet; both coexist.
+  // V1/V2 phase: direct location selection (plural "Locations") — same MANUAL-only
+  // gating, without the intermediate Location-set entity. v3 keeps locationSet;
+  // both fields coexist.
   locations?: string[];
   /** @deprecated Frequency moved to the scrapping option (`ScrappingOptionValues.frequency`). Kept optional for back-compat with persisted data. */
   frequency?: string;

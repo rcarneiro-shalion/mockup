@@ -181,9 +181,9 @@ function navForPath(pathname: string): NavItem[] {
 export function Sidebar() {
   // Compare on the version-agnostic path ("/v2/iam" → "/iam") — see lib/appVersion.
   const pathname = stripVersionPrefix(useLocation().pathname);
-  // V1 phase reinstates Timeframes as the active concept — no "(legacy)" tag there.
+  // The V1/V2 phase reinstates Timeframes as the active concept — no "(legacy)" tag there.
   const nav =
-    getAppVersion() === 1
+    getAppVersion() <= 2
       ? navForPath(pathname).map((item) => ({
           ...item,
           children: item.children?.map((c) =>
