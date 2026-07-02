@@ -46,29 +46,46 @@ function hash(s: string): number {
   return h;
 }
 
-/** Simulated "City - postal" names for a store, ≥5, stable across renders/reloads. */
-function simulatedLocationNames(store: string): string[] {
+/** A store location as rendered by the Assigned-locations grid (Job-style columns). */
+export type StoreLocation = { name: string; city: string; address: string; postal: string };
+
+/** Simulated locations for a store, ≥5, stable across renders/reloads. */
+function simulatedLocations(store: string): StoreLocation[] {
   const country = getStores().find((s) => s.name === store)?.country?.toUpperCase() ?? "";
   const pool = CITY_POOL[country] ?? GENERIC_POOL;
   const h = hash(store);
   return pool.slice(0, 6).map((city, i) => {
-    const postal = 10000 + ((h * (i + 7) + i * 131) % 89000);
-    return `${city} - ${postal}`;
+    const postal = String(10000 + ((h * (i + 7) + i * 131) % 89000));
+    return { name: `${city} - ${postal}`, city, address: country ? `${city}, ${country}` : city, postal };
   });
 }
 
-/** Location choices for a store: its real sampled locations, topped up with
+/** Location records for a store: its real sampled locations, topped up with
  *  simulated ones when fewer than 5 real samples exist. Empty until a store is set. */
-export function getStoreLocationNames(store: string): string[] {
+export function getStoreLocations(store: string): StoreLocation[] {
   if (!store) return [];
-  const real = [
-    ...new Set(
-      REAL_LOCATION_SETS.filter((s) => s.store === store).flatMap((s) =>
-        s.locations.map((l) => l.name),
-      ),
-    ),
-  ];
+  const seen = new Set<string>();
+  const real: StoreLocation[] = [];
+  for (const set of REAL_LOCATION_SETS.filter((s) => s.store === store)) {
+    for (const l of set.locations) {
+      if (seen.has(l.name)) continue;
+      seen.add(l.name);
+      real.push({ name: l.name, city: l.city ?? "", address: l.address ?? "", postal: l.postal ?? "" });
+    }
+  }
   if (real.length >= 5) return real;
-  const sim = simulatedLocationNames(store).filter((n) => !real.includes(n));
+  const sim = simulatedLocations(store).filter((l) => !seen.has(l.name));
   return [...real, ...sim];
+}
+
+/** Names-only convenience over {@link getStoreLocations}. */
+export function getStoreLocationNames(store: string): string[] {
+  return getStoreLocations(store).map((l) => l.name);
+}
+
+/** The Job-style "Locator" descriptor for a location ({"zipcode":"60618"}). */
+export function locationLocator(l: StoreLocation): string {
+  if (l.postal) return `{"zipcode":"${l.postal}"}`;
+  if (l.city) return `{"city":"${l.city}"}`;
+  return "—";
 }

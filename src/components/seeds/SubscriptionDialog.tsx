@@ -40,12 +40,12 @@ import {
   type SubscriptionStatus,
 } from "@/lib/subscriptions";
 import { AssignedSeeds } from "@/components/seeds/AssignedSeeds";
+import { AssignedLocations } from "@/components/seeds/AssignedLocations";
 import type { SeedType } from "@/lib/seeds";
 import { getAppVersion } from "@/lib/appVersion";
-import { getStoreLocationNames } from "@/lib/storeLocations";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { MapPin, Sprout, Trash2 } from "lucide-react";
 
 export function SubscriptionDialog({
   open,
@@ -65,6 +65,8 @@ export function SubscriptionDialog({
   const [v, setV] = useState<Subscription>(emptySubscription());
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // V1/V2 bottom tabs (Seeds | Locations) — the Locations tab needs MANUAL geolocation.
+  const [bottomTab, setBottomTab] = useState<"seeds" | "locations">("seeds");
 
   useEffect(() => {
     if (open) {
@@ -78,8 +80,14 @@ export function SubscriptionDialog({
       setV(merged);
       setIsSaving(false);
       setShowDeleteConfirm(false);
+      setBottomTab("seeds");
     }
   }, [open, initial]);
+
+  // Leaving MANUAL invalidates the Locations tab — snap back to Seeds.
+  useEffect(() => {
+    if (v.geo !== "MANUAL") setBottomTab("seeds");
+  }, [v.geo]);
 
   const set = <K extends keyof Subscription>(k: K, val: Subscription[K]) =>
     setV((prev) => ({ ...prev, [k]: val }));
@@ -108,9 +116,6 @@ export function SubscriptionDialog({
   const locationEnabled = v.geo === "MANUAL";
   // Real location set behind the selected label (real records pulled from backoffice).
   const realSet = REAL_LOCATION_SETS.find((s) => s.name === v.locationSet);
-  // Lean-phase "Locations" choices: the locations that belong to the store picked in THIS form
-  // (real samples, topped up with deterministic simulated ones when a store has <5).
-  const leanLocationOptions = lean ? getStoreLocationNames(v.store) : [];
   // Business rule: VIRTUAL_STORE geolocation is ONLY available for a PDP scrapping
   // option; for every other extraction type it stays visible but disabled.
   const isPdp = selectedExtraction === "DIGITAL_SHELF_PDP";
@@ -301,22 +306,14 @@ export function SubscriptionDialog({
                 {!isPdp && (
                   <p className="mt-1 text-xs text-muted-foreground">Virtual store is only available for a PDP scraping option.</p>
                 )}
+                {/* V1/V2: MANUAL locations live in the Locations tab below (Job-style grid). */}
+                {lean && locationEnabled && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Assign the scraping locations in the <span className="font-medium text-foreground/80">Locations</span> tab below.
+                  </p>
+                )}
               </Field>
-              {lean ? (
-                /* V1/V2 phase: plain "Locations" — pick locations directly, same MANUAL-only gating. */
-                <Field label="Locations">
-                  <MultiSelectPopover
-                    value={locationEnabled ? (v.locations ?? []) : []}
-                    onChange={(arr) => set("locations", arr)}
-                    options={leanLocationOptions}
-                    noun="location"
-                    placeholder={locationEnabled ? "Select locations" : "Enabled when Geolocation mode is MANUAL"}
-                    searchPlaceholder="Search locations…"
-                    emptyText="No locations found."
-                    disabled={!locationEnabled}
-                  />
-                </Field>
-              ) : (
+              {!lean && (
               <Field label="Location set">
                 <SelectBox
                   value={locationEnabled ? v.locationSet : ""}
@@ -409,7 +406,54 @@ export function SubscriptionDialog({
             )}
 
             <section className="mt-6 border-t border-border pt-5">
-              <AssignedSeeds seeds={v.seeds} onChange={(next) => set("seeds", next)} allowedTypes={allowedSeedTypes} />
+              {lean ? (
+                <>
+                  {/* V1/V2: Seeds | Locations tabs (Job-style) — Locations only for MANUAL geolocation. */}
+                  <div className="mb-4 flex items-center gap-5 border-b border-border">
+                    <button
+                      type="button"
+                      onClick={() => setBottomTab("seeds")}
+                      className={cn(
+                        "flex items-center gap-1.5 border-b-2 px-0.5 pb-2 text-sm transition-colors",
+                        bottomTab === "seeds"
+                          ? "border-primary font-medium text-foreground"
+                          : "border-transparent text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <Sprout className="h-4 w-4" /> Seeds
+                      <span className="rounded-full bg-secondary px-1.5 text-[11px] text-muted-foreground">{v.seeds.length}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!locationEnabled}
+                      title={locationEnabled ? undefined : "Enabled when Geolocation mode is MANUAL"}
+                      onClick={() => locationEnabled && setBottomTab("locations")}
+                      className={cn(
+                        "flex items-center gap-1.5 border-b-2 px-0.5 pb-2 text-sm transition-colors",
+                        !locationEnabled
+                          ? "cursor-not-allowed border-transparent text-muted-foreground/40"
+                          : bottomTab === "locations"
+                          ? "border-primary font-medium text-foreground"
+                          : "border-transparent text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <MapPin className="h-4 w-4" /> Locations
+                      <span className="rounded-full bg-secondary px-1.5 text-[11px] text-muted-foreground">{(v.locations ?? []).length}</span>
+                    </button>
+                  </div>
+                  {bottomTab === "locations" && locationEnabled ? (
+                    <AssignedLocations
+                      store={v.store}
+                      assigned={v.locations ?? []}
+                      onChange={(next) => set("locations", next)}
+                    />
+                  ) : (
+                    <AssignedSeeds seeds={v.seeds} onChange={(next) => set("seeds", next)} allowedTypes={allowedSeedTypes} />
+                  )}
+                </>
+              ) : (
+                <AssignedSeeds seeds={v.seeds} onChange={(next) => set("seeds", next)} allowedTypes={allowedSeedTypes} />
+              )}
             </section>
           </div>
 
