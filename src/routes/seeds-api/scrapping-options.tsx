@@ -66,8 +66,10 @@ function ScrappingOptionsPage() {
   const [fDisjoints, setFDisjoints] = useState<string[]>([]);
   const sort = useSort("scrapping-options", "updatedAt", "desc");
   const navigate = useNavigate();
-  // V1 phase: the frequency + options/values concepts are out — the list shows the
-  // option's Timeframes instead, and the Joints/Disjoints filters are hidden.
+  // V1/V2 phase: Frequency is out — the list shows the option's Timeframes instead.
+  const lean = getAppVersion() <= 2;
+  // V1 alone also drops the options/values concept (Options column + Joints/Disjoints
+  // filters); V2 keeps them.
   const isV1 = getAppVersion() === 1;
 
   // Open the edit dialog when arriving with ?edit=<name>, then strip the param.
@@ -150,14 +152,12 @@ function ScrappingOptionsPage() {
             <tr>
               <SortTh label="Name" sortKey="name" sort={sort} />
               <SortTh label="Extraction type" sortKey="extractionType" sort={sort} />
-              {isV1 ? (
+              {lean ? (
                 <SortTh label="Timeframe" sortKey="timeframes" sort={sort} />
               ) : (
-                <>
-                  <SortTh label="Frequency" sortKey="frequency" sort={sort} />
-                  <SortTh label="Options" sortKey="options" sort={sort} />
-                </>
+                <SortTh label="Frequency" sortKey="frequency" sort={sort} />
               )}
+              {!isV1 && <SortTh label="Options" sortKey="options" sort={sort} />}
               <SortTh label="Subscriptions" sortKey="subscriptions" sort={sort} />
               <SortTh label="Created at" sortKey="createdAt" sort={sort} />
               <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
@@ -172,23 +172,23 @@ function ScrappingOptionsPage() {
               <tr key={i} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
                 <Td><Pill tone="slate">{r.extractionType}</Pill></Td>
-                {isV1 ? (
+                {lean ? (
                   <Td><GroupedPills items={r.timeframes ?? []} noun="timeframe" tone="slate" /></Td>
                 ) : (
-                  <>
-                    <Td>{r.frequency ? <Pill tone="slate">{r.frequency === "Custom" ? `Custom · ${r.customDays || "?"}d · ${r.customTimesPerDay || "1x"}` : r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
-                    <Td>
-                      <div className="flex flex-wrap gap-1">
-                        {summaryPills(r).length ? (
-                          summaryPills(r).map((p, j) => (
-                            <Pill key={j} tone={p.tone}>{p.label}</Pill>
-                          ))
-                        ) : (
-                          <span className="text-muted-foreground">No options</span>
-                        )}
-                      </div>
-                    </Td>
-                  </>
+                  <Td>{r.frequency ? <Pill tone="slate">{r.frequency === "Custom" ? `Custom · ${r.customDays || "?"}d · ${r.customTimesPerDay || "1x"}` : r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
+                )}
+                {!isV1 && (
+                  <Td>
+                    <div className="flex flex-wrap gap-1">
+                      {summaryPills(r).length ? (
+                        summaryPills(r).map((p, j) => (
+                          <Pill key={j} tone={p.tone}>{p.label}</Pill>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground">No options</span>
+                      )}
+                    </div>
+                  </Td>
                 )}
                 <Td><GroupedPills items={subNames} noun="subscription" tone="slate" /></Td>
                 <Td className="whitespace-nowrap text-muted-foreground">{r.createdAt || "—"}</Td>

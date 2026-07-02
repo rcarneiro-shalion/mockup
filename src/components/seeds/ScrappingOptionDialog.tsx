@@ -123,14 +123,14 @@ const MODALITY_ABBR: Record<string, string> = {
 };
 
 export function suggestScrapingName(v: ScrappingOptionValues): string {
-  // V1 phase drops frequency/multivariants/modalities from the option — the
-  // suggested convention shrinks to the extraction prefix.
-  if (getAppVersion() === 1) return EXTRACTION_ABBR[v.extractionType] ?? "EXT";
-  const parts = [
-    EXTRACTION_ABBR[v.extractionType] ?? "EXT",
-    FREQUENCY_ABBR[v.frequency] ?? "FREQ",
-    v.multivariants ? "MULTI" : "MONO",
-  ];
+  const ver = getAppVersion();
+  // V1 drops frequency/multivariants/modalities from the option — the suggested
+  // convention shrinks to the extraction prefix.
+  if (ver === 1) return EXTRACTION_ABBR[v.extractionType] ?? "EXT";
+  const parts = [EXTRACTION_ABBR[v.extractionType] ?? "EXT"];
+  // Frequency is out of the V1/V2 phase — its segment belongs to v3 only.
+  if (ver > 2) parts.push(FREQUENCY_ABBR[v.frequency] ?? "FREQ");
+  parts.push(v.multivariants ? "MULTI" : "MONO");
   if (v.modalities && v.modalityValues?.length) {
     parts.push(v.modalityValues.map((m) => MODALITY_ABBR[m] ?? m.toUpperCase()).join("-"));
   }
@@ -200,10 +200,10 @@ export function ScrappingOptionDialog({
   const removeModality = (m: string) =>
     set("modalityValues", v.modalityValues.filter((x) => x !== m));
   const availableModalities = MODALITY_OPTIONS.filter((m) => !v.modalityValues.includes(m));
-  // V1/V2 phase: taskGroup is out — the option references Settings › Timeframes directly.
-  // v3: TaskGroup options come from the Settings › TaskGroup catalog (1:N).
-  const useTimeframes = getAppVersion() <= 2;
-  // V1 alone additionally drops Frequency and the "Scraping options and values" box.
+  // V1/V2 phase: taskGroup is out (the option references Settings › Timeframes
+  // directly) and Frequency is gone. v3 keeps TaskGroup + Frequency.
+  const lean = getAppVersion() <= 2;
+  // V1 alone additionally drops the "Scraping options and values" box.
   const isV1 = getAppVersion() === 1;
   const taskGroupOptions = getTaskGroups().map((t) => t.name);
   const timeframeOptions = getSettingsTimeframes().map((t) => t.name);
@@ -263,7 +263,7 @@ export function ScrappingOptionDialog({
               <Field label="Extraction type" required className="sm:col-span-2">
                 <SelectBox value={v.extractionType} onChange={(x) => set("extractionType", x)} options={EXTRACTION_TYPE_OPTIONS} />
               </Field>
-              {useTimeframes ? (
+              {lean ? (
                 /* V1/V2 phase: Timeframe — 1:N multi-select over the Settings › Timeframes catalog. */
                 <Field label="Timeframe" required className="sm:col-span-2">
                   <ChipMultiSelect
@@ -289,8 +289,8 @@ export function ScrappingOptionDialog({
               )}
 
               {/* Frequency — moved here from the subscription. Custom = Days + times/day.
-                  Not part of the V1 phase (stored values pass through untouched). */}
-              {!isV1 && (
+                  Not part of the V1/V2 phase (stored values pass through untouched). */}
+              {!lean && (
               <Field label="Frequency" required className="sm:col-span-2">
                 <div className="flex flex-wrap items-end gap-4">
                   <SelectBox value={v.frequency} onChange={(x) => set("frequency", x)} options={FREQUENCY_OPTIONS} className="w-40" />
