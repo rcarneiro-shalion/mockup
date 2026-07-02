@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
+import { versionedKey } from "@/lib/appVersion";
 
 /** Distinct, sorted, non-empty values for a column — used to populate filter dropdowns. */
 export function distinct<T>(rows: T[], get: (r: T) => string | undefined | null): string[] {
@@ -23,7 +24,7 @@ export type SortState = { key: string | null; dir: "asc" | "desc"; toggle: (k: s
  *  Pass `persistKey` to remember the chosen column + direction across navigation
  *  and reloads (localStorage, keyed per table). Omit it for ephemeral sorting. */
 export function useSort(persistKey?: string, initialKey: string | null = null, initialDir: "asc" | "desc" = "asc"): SortState {
-  const storageKey = persistKey ? `pref:sort:${persistKey}` : null;
+  const storageKey = persistKey ? versionedKey(`pref:sort:${persistKey}`) : null;
   const [state, setState] = useState<{ key: string | null; dir: "asc" | "desc" }>(() => {
     if (storageKey && typeof window !== "undefined") {
       try {

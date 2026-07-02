@@ -1,6 +1,7 @@
 import { nowStamp } from "./clients";
 import { STORE_LOCATIONS, REAL_LOCATION_SETS } from "./scenarioSeedData";
 import { BULK_STORES } from "./storesBulk";
+import { versionedKey } from "./appVersion";
 
 // ---------- shared options ----------
 
@@ -1628,7 +1629,8 @@ export function emptyLocationCatalog(): LocationCatalog {
 function readList<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(key);
+    // Persistence is namespaced per app version (/v1 | /v2 | /v3) — see lib/appVersion.
+    const raw = window.localStorage.getItem(versionedKey(key));
     return raw ? (JSON.parse(raw) as T[]) : [];
   } catch {
     return [];

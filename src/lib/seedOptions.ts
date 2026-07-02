@@ -1,4 +1,5 @@
 import { REAL_LOCATION_SETS } from "./scenarioSeedData";
+import { versionedKey } from "./appVersion";
 
 export const STORE_OPTIONS = [
   "Amazon US",
@@ -115,7 +116,8 @@ export const PAGE_TYPE_OPTIONS = ["SUBCATEGORY", "CATEGORY", "HOME", "OFFERS", "
 export function readPersistedList<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(key);
+    // Persistence is namespaced per app version (/v1 | /v2 | /v3) — see lib/appVersion.
+    const raw = window.localStorage.getItem(versionedKey(key));
     return raw ? (JSON.parse(raw) as T[]) : [];
   } catch {
     return [];

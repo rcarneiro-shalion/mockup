@@ -15,6 +15,7 @@ import { getSeeds, INITIAL_SEEDS, BULK_SEEDS_EXTRA, SEEDS_KEY, type Seed, type S
 import { getScrappingOptions, SCRAPPING_OPTIONS_KEY } from "./scrappingOptions";
 import { EMPTY_SCRAPPING_OPTION, type ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import { REAL_JOBS, CLIENT_LABELS, STORE_LOCATIONS, CLIENT_KEYWORDS, CLIENT_CATEGORY, REAL_LOCATION_SETS, type RealJob } from "./scenarioSeedData";
+import { versionedKey } from "./appVersion";
 
 const SIM_KEY = "seeds-api:sim:index";
 const LOC_VOLUME_TBD = 10;
@@ -35,7 +36,7 @@ const emptyIndex = (): SimIndex => ({ batches: [] });
 const readIndex = (): SimIndex => {
   if (typeof window === "undefined") return emptyIndex();
   try {
-    const raw = JSON.parse(window.localStorage.getItem(SIM_KEY) || "{}");
+    const raw = JSON.parse(window.localStorage.getItem(versionedKey(SIM_KEY)) || "{}");
     if (Array.isArray(raw.batches)) return { batches: raw.batches };
     // migrate the legacy flat shape into a single (slug-less) batch
     if (raw.projectIds || raw.subIds || raw.seedIds) {
@@ -44,8 +45,8 @@ const readIndex = (): SimIndex => {
     return emptyIndex();
   } catch { return emptyIndex(); }
 };
-const writeIndex = (ix: SimIndex) => { if (typeof window !== "undefined") window.localStorage.setItem(SIM_KEY, JSON.stringify(ix)); };
-const write = (key: string, list: unknown) => { if (typeof window !== "undefined") window.localStorage.setItem(key, JSON.stringify(list)); };
+const writeIndex = (ix: SimIndex) => { if (typeof window !== "undefined") window.localStorage.setItem(versionedKey(SIM_KEY), JSON.stringify(ix)); };
+const write = (key: string, list: unknown) => { if (typeof window !== "undefined") window.localStorage.setItem(versionedKey(key), JSON.stringify(list)); };
 
 // ---- extraction-type → seed-type + scrapping-option preset --------------------
 export const extractionToSeedType = (ext: string): SeedType => {
@@ -266,7 +267,9 @@ export function persistScenario(b: BuiltScenario): void {
   // orphaned project without its subscriptions. On failure we rethrow so the caller
   // (Generate / Generate-all) records it and warns — with no half-written scenario.
   const KEYS = [CLIENTS_KEY, PROJECTS_KEY, SUBSCRIPTIONS_KEY, SCRAPPING_OPTIONS_KEY, SEEDS_KEY, SIM_KEY];
-  const snapshot = KEYS.map((k) => [k, window.localStorage.getItem(k)] as const);
+  // Snapshot the VERSIONED keys (write() namespaces on the way in) so the rollback
+  // below restores exactly the entries this version's writes touched.
+  const snapshot = KEYS.map(versionedKey).map((k) => [k, window.localStorage.getItem(k)] as const);
   try {
     // client (upsert) FIRST so setProjectClients sees it
     if (b.clientIsNew) write(CLIENTS_KEY, [...getClients(), b.client]);

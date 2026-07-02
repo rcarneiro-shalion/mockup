@@ -15,7 +15,7 @@
 //
 // ⇒ BUMP APP_SCHEMA_VERSION whenever you change a persisted shape or an INITIAL_*
 //   fixture (new seed bulk, new entity fields, renamed keys, …).
-export const APP_SCHEMA_VERSION = 17;
+export const APP_SCHEMA_VERSION = 18;
 
 const VERSION_KEY = "app:schemaVersion";
 
@@ -38,9 +38,14 @@ const APP_KEY_PREFIXES = [
 // The lone un-namespaced data key (CLIENTS_KEY) — a prefix sweep would miss it.
 const APP_EXACT_KEYS = ["clients"];
 
-const isAppDataKey = (k: string): boolean =>
-  !PRESERVE_PREFIXES.some((p) => k.startsWith(p)) &&
-  (APP_EXACT_KEYS.includes(k) || APP_KEY_PREFIXES.some((p) => k.startsWith(p)));
+const isAppDataKey = (k: string): boolean => {
+  if (PRESERVE_PREFIXES.some((p) => k.startsWith(p))) return false;
+  // Data keys live under a per-app-version namespace ("v2:clients" — see
+  // lib/appVersion). Strip it before the prefix sweep so all three versions'
+  // copies (and any legacy unprefixed key) are reset together.
+  const base = k.replace(/^v[123]:/, "");
+  return APP_EXACT_KEYS.includes(base) || APP_KEY_PREFIXES.some((p) => base.startsWith(p));
+};
 
 /**
  * Run ONCE on the client, before any reader touches localStorage. If the stored schema

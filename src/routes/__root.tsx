@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { getAppVersion } from "../lib/appVersion";
 
 function NotFoundComponent() {
   return (
@@ -60,8 +61,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             Try again
           </button>
+          {/* Raw <a> on purpose (survives a broken router) — but keep the user's
+              app version instead of letting the server 302 drop them into /v1. */}
           <a
-            href="/"
+            href={`/v${getAppVersion()}`}
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Go home

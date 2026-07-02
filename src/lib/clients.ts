@@ -1,4 +1,5 @@
 import { readPersistedList } from "./seedOptions";
+import { versionedKey } from "./appVersion";
 import type { UseCase } from "./retailers";
 
 // client-project relationship: a project assigned to a client for a date range.
@@ -334,7 +335,7 @@ export function setProjectClients(
   if (typeof window === "undefined") return;
   const next = withProjectClients(getClients(), project, links);
   try {
-    window.localStorage.setItem(CLIENTS_KEY, JSON.stringify(next));
+    window.localStorage.setItem(versionedKey(CLIENTS_KEY), JSON.stringify(next));
   } catch {
     /* ignore quota / serialization errors */
   }

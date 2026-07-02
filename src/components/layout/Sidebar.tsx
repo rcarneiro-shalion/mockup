@@ -24,6 +24,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { stripVersionPrefix } from "@/lib/appVersion";
 
 type NavChild = { label: string; to: string; legacy?: boolean };
 
@@ -178,7 +179,8 @@ function navForPath(pathname: string): NavItem[] {
 }
 
 export function Sidebar() {
-  const { pathname } = useLocation();
+  // Compare on the version-agnostic path ("/v2/iam" → "/iam") — see lib/appVersion.
+  const pathname = stripVersionPrefix(useLocation().pathname);
   const nav = navForPath(pathname);
   const [collapsed, setCollapsed] = useState(false);
 

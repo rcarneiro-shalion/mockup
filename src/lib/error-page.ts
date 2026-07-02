@@ -22,9 +22,16 @@ export function renderErrorPage(): string {
       <p>Something went wrong on our end. You can try refreshing or head back home.</p>
       <div class="actions">
         <button class="primary" onclick="location.reload()">Try again</button>
-        <a class="secondary" href="/">Go home</a>
+        <a class="secondary" href="/" id="go-home">Go home</a>
       </div>
     </div>
+    <script>
+      // Keep the user's app version (/v1 | /v2 | /v3) — a bare "/" would 302 to /v1.
+      (function () {
+        var m = location.pathname.match(/^\\/v[123](?=\\/|$)/);
+        if (m) document.getElementById("go-home").href = m[0];
+      })();
+    </script>
   </body>
 </html>`;
 }

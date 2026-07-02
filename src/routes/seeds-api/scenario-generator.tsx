@@ -13,6 +13,7 @@ import { REAL_JOBS, CLIENT_LABELS, SCENARIO_CLIENTS, type RealJob } from "@/lib/
 import { generateForClient, clearSimulated, clearSimulatedForClient, hasSimulated, simulatedSlugs, estimateTasks, validateScenario, extractionToSeedType, pruneInvalidSimProjects, type BuiltScenario } from "@/lib/scenarioGenerator";
 import { buildQueryMatch } from "@/lib/textMatch";
 import { storeLocationCounts } from "@/lib/retailers";
+import { versionedKey } from "@/lib/appVersion";
 
 export const Route = createFileRoute("/seeds-api/scenario-generator")({
   head: () => ({ meta: [{ title: "Scenario simulator — Shalion" }] }),
@@ -95,7 +96,7 @@ function ScenarioGeneratorPage() {
     setSimSlugs(new Set(simulatedSlugs()));
     // Restore the per-use-case checkbox state persisted from the last generation.
     try {
-      const raw = localStorage.getItem(SEL_KEY);
+      const raw = localStorage.getItem(versionedKey(SEL_KEY));
       if (raw) {
         const obj = JSON.parse(raw) as Record<string, string[]>;
         setSel(Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, new Set(v)])));
@@ -108,7 +109,7 @@ function ScenarioGeneratorPage() {
   useEffect(() => {
     if (!mounted) return;
     try {
-      localStorage.setItem(SEL_KEY, JSON.stringify(Object.fromEntries(Object.entries(sel).map(([k, v]) => [k, [...v]]))));
+      localStorage.setItem(versionedKey(SEL_KEY), JSON.stringify(Object.fromEntries(Object.entries(sel).map(([k, v]) => [k, [...v]]))));
     } catch { /* ignore */ }
   }, [sel, mounted]);
 

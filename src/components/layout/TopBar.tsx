@@ -2,6 +2,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { BusinessRulesTrigger } from "@/components/common/BusinessRulesModal";
 import { DevTokensTrigger } from "@/components/common/DevTokensDialog";
+import { stripVersionPrefix } from "@/lib/appVersion";
 
 const sections = [
   { label: "Ecometry", to: "/" },
@@ -10,7 +11,8 @@ const sections = [
 ];
 
 export function TopBar() {
-  const { pathname } = useLocation();
+  // Compare on the version-agnostic path ("/v2/iam" → "/iam") — see lib/appVersion.
+  const pathname = stripVersionPrefix(useLocation().pathname);
   const activeSection =
     pathname.startsWith("/data-collector")
       ? "/data-collector"

@@ -22,6 +22,7 @@ import { DASHBOARD_PRODUCTS, DASHBOARD_CONFIG_GROUPS } from "@/lib/dashboardGuid
 import { BulkMethodsCatalogue } from "@/components/bulk/BulkMethodsModal";
 import { DashboardGuideContent } from "@/components/settings/DashboardGuideModal";
 import { cn } from "@/lib/utils";
+import { stripVersionPrefix } from "@/lib/appVersion";
 
 // Combined navigation: every rules section, then the two appendices.
 type NavEntry = { kind: "section" | "appendix"; key: string; label: string };
@@ -105,7 +106,8 @@ const SEARCH_INDEX: SearchHit[] = (() => {
  * Shown on pages with registered rules and on Home.
  */
 export function BusinessRulesTrigger() {
-  const { pathname } = useLocation();
+  // Compare on the version-agnostic path ("/v2/clients" → "/clients") — see lib/appVersion.
+  const pathname = stripVersionPrefix(useLocation().pathname);
   const found = rulesForPath(pathname);
   const isHome = pathname === "/";
   const [open, setOpen] = useState(false);
