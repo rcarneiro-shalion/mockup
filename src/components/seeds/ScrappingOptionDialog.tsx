@@ -123,6 +123,9 @@ const MODALITY_ABBR: Record<string, string> = {
 };
 
 export function suggestScrapingName(v: ScrappingOptionValues): string {
+  // V1 phase drops frequency/multivariants/modalities from the option — the
+  // suggested convention shrinks to the extraction prefix.
+  if (getAppVersion() === 1) return EXTRACTION_ABBR[v.extractionType] ?? "EXT";
   const parts = [
     EXTRACTION_ABBR[v.extractionType] ?? "EXT",
     FREQUENCY_ABBR[v.frequency] ?? "FREQ",
@@ -283,7 +286,9 @@ export function ScrappingOptionDialog({
                 </Field>
               )}
 
-              {/* Frequency — moved here from the subscription. Custom = Days + times/day. */}
+              {/* Frequency — moved here from the subscription. Custom = Days + times/day.
+                  Not part of the V1 phase (stored values pass through untouched). */}
+              {!isV1 && (
               <Field label="Frequency" required className="sm:col-span-2">
                 <div className="flex flex-wrap items-end gap-4">
                   <SelectBox value={v.frequency} onChange={(x) => set("frequency", x)} options={FREQUENCY_OPTIONS} className="w-40" />
@@ -301,9 +306,11 @@ export function ScrappingOptionDialog({
                   )}
                 </div>
               </Field>
+              )}
             </section>
 
-            {/* Scrapping options and values */}
+            {/* Scrapping options and values — not part of the V1 phase. */}
+            {!isV1 && (
             <section className="rounded-xl border border-border bg-secondary/30 p-5">
               <h3 className="text-sm font-semibold text-foreground">Scraping options and values</h3>
 
@@ -416,6 +423,7 @@ export function ScrappingOptionDialog({
                 />
               </div>
             </section>
+            )}
 
             {/* Meta properties — mirrors the Clients form edit */}
             <section className="rounded-xl border border-border bg-card p-5">

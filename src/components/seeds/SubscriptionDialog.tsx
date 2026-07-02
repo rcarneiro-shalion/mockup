@@ -42,6 +42,7 @@ import {
 import { AssignedSeeds } from "@/components/seeds/AssignedSeeds";
 import type { SeedType } from "@/lib/seeds";
 import { getAppVersion } from "@/lib/appVersion";
+import { getStoreLocationNames } from "@/lib/storeLocations";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
@@ -107,14 +108,9 @@ export function SubscriptionDialog({
   const locationEnabled = v.geo === "MANUAL";
   // Real location set behind the selected label (real records pulled from backoffice).
   const realSet = REAL_LOCATION_SETS.find((s) => s.name === v.locationSet);
-  // V1 "Locations" choices: the selected store's real locations; fall back to the
-  // whole sampled pool (deduped, capped) so the control is never empty.
-  const storeLocationNames = isV1
-    ? [...new Set(REAL_LOCATION_SETS.filter((s) => s.store === v.store).flatMap((s) => s.locations.map((l) => l.name)))]
-    : [];
-  const v1LocationOptions = storeLocationNames.length
-    ? storeLocationNames
-    : [...new Set(REAL_LOCATION_SETS.flatMap((s) => s.locations.map((l) => l.name)))].slice(0, 80);
+  // V1 "Locations" choices: the locations that belong to the store picked in THIS form
+  // (real samples, topped up with deterministic simulated ones when a store has <5).
+  const v1LocationOptions = isV1 ? getStoreLocationNames(v.store) : [];
   // Business rule: VIRTUAL_STORE geolocation is ONLY available for a PDP scrapping
   // option; for every other extraction type it stays visible but disabled.
   const isPdp = selectedExtraction === "DIGITAL_SHELF_PDP";
@@ -255,7 +251,18 @@ export function SubscriptionDialog({
                 />
               </Field>
               <Field label="Store" required>
-                <SelectBox value={v.store} onChange={(x) => set("store", x)} options={storeOptions} />
+                <SelectBox
+                  value={v.store}
+                  onChange={(x) =>
+                    setV((prev) => ({
+                      ...prev,
+                      store: x,
+                      // V1: locations belong to the store — a store switch invalidates them.
+                      ...(isV1 && x !== prev.store ? { locations: [] } : {}),
+                    }))
+                  }
+                  options={storeOptions}
+                />
               </Field>
 
               <Field label="Scraping option" required className="sm:col-span-2">

@@ -151,8 +151,9 @@ function PlannerPage() {
       });
     }
     for (const o of baseScraps) {
-      const sum = scrapSummary(o);
-      // V1 phase surfaces the option's Timeframes; v2/v3 surface TaskGroups.
+      // V1 drops the options/values summary and surfaces Timeframes; v2/v3 keep
+      // the summary and surface TaskGroups.
+      const sum = getAppVersion() === 1 ? "" : scrapSummary(o);
       const tags = getAppVersion() === 1 ? (o.timeframes ?? []) : (o.taskGroups ?? []);
       nodes.set(`o:${o.name}`, {
         key: `o:${o.name}`, kind: "scrap", title: o.name,

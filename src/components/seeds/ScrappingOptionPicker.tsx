@@ -28,9 +28,12 @@ function optionsSummary(o: ScrappingOptionValues): string {
 const taskGroup = (o: ScrappingOptionValues) =>
   (getAppVersion() === 1 ? (o.timeframes ?? []) : (o.taskGroups ?? [])).join(", ");
 
-/** The compact meta string: "extraction type, taskgroup/timeframe, scrapping options". */
+/** The compact meta string: "extraction type, taskgroup/timeframe, scrapping options".
+ *  V1 drops the options/values summary — that box is out of the V1 phase. */
 const meta = (o: ScrappingOptionValues) =>
-  [o.extractionType, taskGroup(o), optionsSummary(o)].filter(Boolean).join(", ");
+  [o.extractionType, taskGroup(o), getAppVersion() === 1 ? "" : optionsSummary(o)]
+    .filter(Boolean)
+    .join(", ");
 
 /** Multi-line summary shown as a hover tooltip. */
 const tooltip = (o: ScrappingOptionValues) =>
@@ -38,7 +41,7 @@ const tooltip = (o: ScrappingOptionValues) =>
     `Name: ${o.name}`,
     `Extraction type: ${o.extractionType || "—"}`,
     `${getAppVersion() === 1 ? "Timeframe" : "TaskGroup"}: ${taskGroup(o) || "—"}`,
-    `Scraping options: ${optionsSummary(o) || "—"}`,
+    ...(getAppVersion() === 1 ? [] : [`Scraping options: ${optionsSummary(o) || "—"}`]),
   ].join("\n");
 
 /** Single-line "name (meta)" descriptor — bold name + muted parenthetical. */

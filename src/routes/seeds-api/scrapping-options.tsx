@@ -29,6 +29,7 @@ import { Switch } from "@/components/ui/switch";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { getSubscriptions } from "@/lib/subscriptions";
 import { nowStamp } from "@/lib/clients";
+import { getAppVersion } from "@/lib/appVersion";
 import { Calendar, Layers, PlayCircle } from "lucide-react";
 
 export const Route = createFileRoute("/seeds-api/scrapping-options")({
@@ -65,6 +66,9 @@ function ScrappingOptionsPage() {
   const [fDisjoints, setFDisjoints] = useState<string[]>([]);
   const sort = useSort("scrapping-options", "updatedAt", "desc");
   const navigate = useNavigate();
+  // V1 phase: the frequency + options/values concepts are out — the list shows the
+  // option's Timeframes instead, and the Joints/Disjoints filters are hidden.
+  const isV1 = getAppVersion() === 1;
 
   // Open the edit dialog when arriving with ?edit=<name>, then strip the param.
   const { edit } = Route.useSearch();
@@ -115,6 +119,7 @@ function ScrappingOptionsPage() {
   );
   const sorted = sortRows(filtered, sort, {
     options: (r) => summaryPills(r).length,
+    timeframes: (r) => (r.timeframes ?? []).join(", "),
     subscriptions: (r) => (subsByOption.get(r.name) ?? []).join(", "),
     createdAt: (r) => parseListDate(r.createdAt),
     updatedAt: (r) => parseListDate(r.updatedAt),
@@ -131,8 +136,12 @@ function ScrappingOptionsPage() {
         <FilterBar search="Search by Scraping option name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Extraction types" icon={PlayCircle} options={distinct(rows, (r) => r.extractionType)} value={fExtraction} onChange={setFExtraction} />
           <FilterChip label="Subscriptions" icon={Layers} options={allSubs.map((s) => s.name)} value={fSub} onChange={setFSub} searchable />
-          <FilterChip label="Joints" options={["Multivariants", "Pagination", "Limited discovery"]} value={fJoints} onChange={setFJoints} />
-          <FilterChip label="Disjoints" options={["Modalities", "Sorting"]} value={fDisjoints} onChange={setFDisjoints} />
+          {!isV1 && (
+            <>
+              <FilterChip label="Joints" options={["Multivariants", "Pagination", "Limited discovery"]} value={fJoints} onChange={setFJoints} />
+              <FilterChip label="Disjoints" options={["Modalities", "Sorting"]} value={fDisjoints} onChange={setFDisjoints} />
+            </>
+          )}
           <FilterChip label="Created at" icon={Calendar} />
           <FilterChip label="Updated at" icon={Calendar} />
         </FilterBar>
@@ -141,8 +150,14 @@ function ScrappingOptionsPage() {
             <tr>
               <SortTh label="Name" sortKey="name" sort={sort} />
               <SortTh label="Extraction type" sortKey="extractionType" sort={sort} />
-              <SortTh label="Frequency" sortKey="frequency" sort={sort} />
-              <SortTh label="Options" sortKey="options" sort={sort} />
+              {isV1 ? (
+                <SortTh label="Timeframe" sortKey="timeframes" sort={sort} />
+              ) : (
+                <>
+                  <SortTh label="Frequency" sortKey="frequency" sort={sort} />
+                  <SortTh label="Options" sortKey="options" sort={sort} />
+                </>
+              )}
               <SortTh label="Subscriptions" sortKey="subscriptions" sort={sort} />
               <SortTh label="Created at" sortKey="createdAt" sort={sort} />
               <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
@@ -157,18 +172,24 @@ function ScrappingOptionsPage() {
               <tr key={i} className="border-t border-border hover:bg-secondary/40">
                 <Td><LinkText onClick={() => setSelected(r)}>{r.name}</LinkText></Td>
                 <Td><Pill tone="slate">{r.extractionType}</Pill></Td>
-                <Td>{r.frequency ? <Pill tone="slate">{r.frequency === "Custom" ? `Custom · ${r.customDays || "?"}d · ${r.customTimesPerDay || "1x"}` : r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
-                <Td>
-                  <div className="flex flex-wrap gap-1">
-                    {summaryPills(r).length ? (
-                      summaryPills(r).map((p, j) => (
-                        <Pill key={j} tone={p.tone}>{p.label}</Pill>
-                      ))
-                    ) : (
-                      <span className="text-muted-foreground">No options</span>
-                    )}
-                  </div>
-                </Td>
+                {isV1 ? (
+                  <Td><GroupedPills items={r.timeframes ?? []} noun="timeframe" tone="slate" /></Td>
+                ) : (
+                  <>
+                    <Td>{r.frequency ? <Pill tone="slate">{r.frequency === "Custom" ? `Custom · ${r.customDays || "?"}d · ${r.customTimesPerDay || "1x"}` : r.frequency}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
+                    <Td>
+                      <div className="flex flex-wrap gap-1">
+                        {summaryPills(r).length ? (
+                          summaryPills(r).map((p, j) => (
+                            <Pill key={j} tone={p.tone}>{p.label}</Pill>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground">No options</span>
+                        )}
+                      </div>
+                    </Td>
+                  </>
+                )}
                 <Td><GroupedPills items={subNames} noun="subscription" tone="slate" /></Td>
                 <Td className="whitespace-nowrap text-muted-foreground">{r.createdAt || "—"}</Td>
                 <Td className="whitespace-nowrap text-muted-foreground">{r.updatedAt || "—"}</Td>
