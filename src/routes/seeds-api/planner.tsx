@@ -14,6 +14,7 @@ import { getProjects } from "@/lib/projects";
 import { getSubscriptions, subDestinationOptions, subProjects } from "@/lib/subscriptions";
 import { getScrappingOptions } from "@/lib/scrappingOptions";
 import { storeLocationCounts } from "@/lib/retailers";
+import { getAppVersion } from "@/lib/appVersion";
 import { useSessionState } from "@/hooks/usePersistentState";
 import type { ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 import { cn } from "@/lib/utils";
@@ -151,13 +152,15 @@ function PlannerPage() {
     }
     for (const o of baseScraps) {
       const sum = scrapSummary(o);
+      // V1 phase surfaces the option's Timeframes; v2/v3 surface TaskGroups.
+      const tags = getAppVersion() === 1 ? (o.timeframes ?? []) : (o.taskGroups ?? []);
       nodes.set(`o:${o.name}`, {
         key: `o:${o.name}`, kind: "scrap", title: o.name,
         go: () => navigate({ to: "/seeds-api/scrapping-options", search: { edit: o.name } }),
         body: (
           <div className="space-y-1">
             <Pill tone="amber">{o.extractionType}</Pill>
-            {(o.taskGroups ?? []).length > 0 && <InfoLine icon={CalendarClock}>{(o.taskGroups ?? []).join(", ")}</InfoLine>}
+            {tags.length > 0 && <InfoLine icon={CalendarClock}>{tags.join(", ")}</InfoLine>}
             {sum && <InfoLine>{sum}</InfoLine>}
           </div>
         ),

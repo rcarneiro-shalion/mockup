@@ -25,6 +25,7 @@ export function MultiSelectPopover({
   searchPlaceholder = "Search…",
   emptyText = "No matches found.",
   noun = "item",
+  disabled = false,
 }: {
   value: string[];
   onChange: (v: string[]) => void;
@@ -33,6 +34,7 @@ export function MultiSelectPopover({
   searchPlaceholder?: string;
   emptyText?: string;
   noun?: string;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const toggle = (name: string) => {
@@ -43,12 +45,13 @@ export function MultiSelectPopover({
 
   return (
     <div className="flex flex-col gap-2">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={disabled ? false : open} onOpenChange={(o) => !disabled && setOpen(o)}>
         <PopoverTrigger asChild>
           <button
             type="button"
             role="combobox"
-            className="flex h-9 w-full items-center justify-between gap-1 whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
+            disabled={disabled}
+            className="flex h-9 w-full items-center justify-between gap-1 whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span className={cn("min-w-0 flex-1 truncate text-left", !value.length && "text-muted-foreground")}>
               {value.length ? `${value.length} ${noun}${value.length === 1 ? "" : "s"} selected` : placeholder}

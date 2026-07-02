@@ -41,6 +41,7 @@ import {
 } from "@/lib/subscriptions";
 import { AssignedSeeds } from "@/components/seeds/AssignedSeeds";
 import type { SeedType } from "@/lib/seeds";
+import { getAppVersion } from "@/lib/appVersion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
@@ -98,9 +99,22 @@ export function SubscriptionDialog({
   // Store options come from the Stores entity (Retailers › Stores), deduped by name.
   const storeOptions = [...new Set(getStores().map((s) => s.name))].sort((a, b) => a.localeCompare(b));
 
+  // V1 phase keeps the subscription lean: no Selection parameters section, and the
+  // Location-set reference is simplified to a direct "Locations" multi-select
+  // (same MANUAL-only gating). v2/v3 keep the full As-Is form.
+  const isV1 = getAppVersion() === 1;
+
   const locationEnabled = v.geo === "MANUAL";
   // Real location set behind the selected label (real records pulled from backoffice).
   const realSet = REAL_LOCATION_SETS.find((s) => s.name === v.locationSet);
+  // V1 "Locations" choices: the selected store's real locations; fall back to the
+  // whole sampled pool (deduped, capped) so the control is never empty.
+  const storeLocationNames = isV1
+    ? [...new Set(REAL_LOCATION_SETS.filter((s) => s.store === v.store).flatMap((s) => s.locations.map((l) => l.name)))]
+    : [];
+  const v1LocationOptions = storeLocationNames.length
+    ? storeLocationNames
+    : [...new Set(REAL_LOCATION_SETS.flatMap((s) => s.locations.map((l) => l.name)))].slice(0, 80);
   // Business rule: VIRTUAL_STORE geolocation is ONLY available for a PDP scrapping
   // option; for every other extraction type it stays visible but disabled.
   const isPdp = selectedExtraction === "DIGITAL_SHELF_PDP";
@@ -120,9 +134,10 @@ export function SubscriptionDialog({
     : ["KEYWORD", "URL", "API"];
 
   // --- Selection parameters (replaces Rotation): independent seed + location axes. ---
-  const isStateful = v.seedSelection === "Stateful freshness";
+  // Not part of the V1 phase — all axes off in v1 (skips their validations too).
+  const isStateful = !isV1 && v.seedSelection === "Stateful freshness";
   const showFreshnessDays = isStateful && (v.freshnessWindow || "Last days") === "Last days";
-  const locSelEnabled = v.geo === "AUTOMATIC" || v.geo === "MANUAL";
+  const locSelEnabled = !isV1 && (v.geo === "AUTOMATIC" || v.geo === "MANUAL");
   const showCycleLength = locSelEnabled && v.locationSelection === "N-day rotation";
 
   const handleSave = async () => {
@@ -150,17 +165,25 @@ export function SubscriptionDialog({
         ...v,
         project: undefined, // drop the legacy single field
         geo: v.geo === "VIRTUAL_STORE" && !isPdp ? "NONE" : v.geo,
-        locationSet: locationEnabled ? v.locationSet : "",
         destinationOptions: showDestination ? (v.destinationOptions ?? []) : [],
         destinationOption: undefined,
-        // Selection parameters — clear conditional axes that don't apply.
-        seedSelection: v.seedSelection || "All seeds",
-        freshnessWindow: isStateful ? (v.freshnessWindow || "Last days") : "",
-        lastOfferDays: showFreshnessDays ? (v.lastOfferDays || "") : "",
-        locationSelection: locSelEnabled ? (v.locationSelection || "All locations") : "",
-        cycleLength: showCycleLength ? (v.cycleLength || "") : "",
-        volumeCap: v.volumeCap || "Full coverage",
         rotation: undefined, // drop the legacy field
+        ...(isV1
+          ? {
+              // V1 phase: direct Locations (MANUAL only); selection parameters and the
+              // Location-set reference are out of scope — stored values pass through.
+              locations: locationEnabled ? (v.locations ?? []) : [],
+            }
+          : {
+              locationSet: locationEnabled ? v.locationSet : "",
+              // Selection parameters — clear conditional axes that don't apply.
+              seedSelection: v.seedSelection || "All seeds",
+              freshnessWindow: isStateful ? (v.freshnessWindow || "Last days") : "",
+              lastOfferDays: showFreshnessDays ? (v.lastOfferDays || "") : "",
+              locationSelection: locSelEnabled ? (v.locationSelection || "All locations") : "",
+              cycleLength: showCycleLength ? (v.cycleLength || "") : "",
+              volumeCap: v.volumeCap || "Full coverage",
+            }),
       });
       toast.success(`Subscription ${mode === "add" ? "created" : "saved"} successfully`);
       onOpenChange(false);
@@ -272,6 +295,21 @@ export function SubscriptionDialog({
                   <p className="mt-1 text-xs text-muted-foreground">Virtual store is only available for a PDP scraping option.</p>
                 )}
               </Field>
+              {isV1 ? (
+                /* V1 phase: plain "Locations" — pick locations directly, same MANUAL-only gating. */
+                <Field label="Locations">
+                  <MultiSelectPopover
+                    value={locationEnabled ? (v.locations ?? []) : []}
+                    onChange={(arr) => set("locations", arr)}
+                    options={v1LocationOptions}
+                    noun="location"
+                    placeholder={locationEnabled ? "Select locations" : "Enabled when Geolocation mode is MANUAL"}
+                    searchPlaceholder="Search locations…"
+                    emptyText="No locations found."
+                    disabled={!locationEnabled}
+                  />
+                </Field>
+              ) : (
               <Field label="Location set">
                 <SelectBox
                   value={locationEnabled ? v.locationSet : ""}
@@ -298,9 +336,12 @@ export function SubscriptionDialog({
                   </div>
                 )}
               </Field>
+              )}
 
             </section>
 
+            {/* Selection parameters — not part of the V1 phase. */}
+            {!isV1 && (
             <section className="mt-6 border-t border-border pt-5">
               <h3 className="text-sm font-semibold text-foreground">Selection parameters</h3>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -358,6 +399,7 @@ export function SubscriptionDialog({
                 </Field>
               </div>
             </section>
+            )}
 
             <section className="mt-6 border-t border-border pt-5">
               <AssignedSeeds seeds={v.seeds} onChange={(next) => set("seeds", next)} allowedTypes={allowedSeedTypes} />

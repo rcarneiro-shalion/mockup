@@ -11,6 +11,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import type { ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
+import { getAppVersion } from "@/lib/appVersion";
 
 // The joints/disjoints, summarised the same way as the scrapping options listing.
 function optionsSummary(o: ScrappingOptionValues): string {
@@ -23,9 +24,11 @@ function optionsSummary(o: ScrappingOptionValues): string {
   return parts.join(", ");
 }
 
-const taskGroup = (o: ScrappingOptionValues) => (o.taskGroups ?? []).join(", ");
+// V1 phase surfaces Timeframes (Settings › Timeframes); v2/v3 surface TaskGroups.
+const taskGroup = (o: ScrappingOptionValues) =>
+  (getAppVersion() === 1 ? (o.timeframes ?? []) : (o.taskGroups ?? [])).join(", ");
 
-/** The compact meta string: "extraction type, taskgroup, scrapping options". */
+/** The compact meta string: "extraction type, taskgroup/timeframe, scrapping options". */
 const meta = (o: ScrappingOptionValues) =>
   [o.extractionType, taskGroup(o), optionsSummary(o)].filter(Boolean).join(", ");
 
@@ -34,7 +37,7 @@ const tooltip = (o: ScrappingOptionValues) =>
   [
     `Name: ${o.name}`,
     `Extraction type: ${o.extractionType || "—"}`,
-    `TaskGroup: ${taskGroup(o) || "—"}`,
+    `${getAppVersion() === 1 ? "Timeframe" : "TaskGroup"}: ${taskGroup(o) || "—"}`,
     `Scraping options: ${optionsSummary(o) || "—"}`,
   ].join("\n");
 

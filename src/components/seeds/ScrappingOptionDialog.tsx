@@ -31,7 +31,8 @@ import {
   FREQUENCY_OPTIONS,
   TIMES_PER_DAY_OPTIONS,
 } from "@/lib/seedOptions";
-import { getTaskGroups } from "@/lib/settings";
+import { getTaskGroups, getSettingsTimeframes } from "@/lib/settings";
+import { getAppVersion } from "@/lib/appVersion";
 import { getSubscriptions, subProjects } from "@/lib/subscriptions";
 import { getProjects } from "@/lib/projects";
 import { getClientsForProject } from "@/lib/clients";
@@ -45,7 +46,10 @@ export type ScrappingOptionValues = {
   name: string;
   status: string;
   extractionType: string;
-  taskGroups: string[]; // 1:N → Settings TaskGroup catalog (renamed from the legacy "timeframes")
+  taskGroups: string[]; // 1:N → Settings TaskGroup catalog (renamed from the legacy "timeframes") — v2/v3
+  // V1 phase: the taskGroup concept is out — the option references Settings › Timeframes
+  // directly (1:N). v2/v3 keep taskGroups; both fields coexist on the record.
+  timeframes?: string[];
   // How often the option re-runs (moved here from the subscription). "Custom" → a simple
   // Days field + times-per-day selector. Daily/Weekly/Monthly carry no extra config.
   frequency: string;
@@ -73,6 +77,7 @@ export const EMPTY_SCRAPPING_OPTION: ScrappingOptionValues = {
   status: "Active",
   extractionType: "MEDIA",
   taskGroups: ["group_1"],
+  timeframes: [],
   frequency: "Daily",
   customDays: "",
   customTimesPerDay: "1x",
@@ -192,8 +197,11 @@ export function ScrappingOptionDialog({
   const removeModality = (m: string) =>
     set("modalityValues", v.modalityValues.filter((x) => x !== m));
   const availableModalities = MODALITY_OPTIONS.filter((m) => !v.modalityValues.includes(m));
-  // TaskGroup options come from the Settings › TaskGroup catalog (1:N). Replaces the legacy static timeframe list.
+  // V1 phase: taskGroup is out — the option references Settings › Timeframes directly.
+  // v2/v3: TaskGroup options come from the Settings › TaskGroup catalog (1:N).
+  const isV1 = getAppVersion() === 1;
   const taskGroupOptions = getTaskGroups().map((t) => t.name);
+  const timeframeOptions = getSettingsTimeframes().map((t) => t.name);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -250,16 +258,30 @@ export function ScrappingOptionDialog({
               <Field label="Extraction type" required className="sm:col-span-2">
                 <SelectBox value={v.extractionType} onChange={(x) => set("extractionType", x)} options={EXTRACTION_TYPE_OPTIONS} />
               </Field>
-              {/* TaskGroup — 1:N multi-select (shared ChipMultiSelect) */}
-              <Field label="TaskGroup" required className="sm:col-span-2">
-                <ChipMultiSelect
-                  value={v.taskGroups}
-                  onChange={(arr) => set("taskGroups", arr)}
-                  options={taskGroupOptions}
-                  addLabel="Add task group"
-                  emptyLabel="No task groups selected"
-                />
-              </Field>
+              {isV1 ? (
+                /* V1 phase: Timeframe — 1:N multi-select over the Settings › Timeframes catalog. */
+                <Field label="Timeframe" required className="sm:col-span-2">
+                  <ChipMultiSelect
+                    value={v.timeframes ?? []}
+                    onChange={(arr) => set("timeframes", arr)}
+                    options={timeframeOptions}
+                    addLabel="Add timeframe"
+                    emptyLabel="No timeframes selected"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">Managed in Settings › Timeframes.</p>
+                </Field>
+              ) : (
+                /* TaskGroup — 1:N multi-select (shared ChipMultiSelect) */
+                <Field label="TaskGroup" required className="sm:col-span-2">
+                  <ChipMultiSelect
+                    value={v.taskGroups}
+                    onChange={(arr) => set("taskGroups", arr)}
+                    options={taskGroupOptions}
+                    addLabel="Add task group"
+                    emptyLabel="No task groups selected"
+                  />
+                </Field>
+              )}
 
               {/* Frequency — moved here from the subscription. Custom = Days + times/day. */}
               <Field label="Frequency" required className="sm:col-span-2">
