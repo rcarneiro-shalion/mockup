@@ -3,9 +3,14 @@ import { SettingsList, type SettingsColumn } from "@/components/settings/Setting
 import { LinkText } from "@/components/seeds/ListPrimitives";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { SETTINGS_TIMEFRAMES_KEY, INITIAL_SETTINGS_TIMEFRAMES, type SettingTimeframe } from "@/lib/settings";
+import { getAppVersion } from "@/lib/appVersion";
+
+// V1 phase reinstates Timeframes as the active scraping-option axis — no "(legacy)"
+// tag there; v2/v3 keep it (superseded by TaskGroup).
+const pageTitle = () => (getAppVersion() === 1 ? "Timeframes" : "Timeframes (legacy)");
 
 export const Route = createFileRoute("/settings/timeframes")({
-  head: () => ({ meta: [{ title: "Timeframes (legacy) — Shalion" }] }),
+  head: () => ({ meta: [{ title: `${pageTitle()} — Shalion` }] }),
   component: TimeframesPage,
 });
 
@@ -21,7 +26,7 @@ function TimeframesPage() {
   ];
   return (
     <SettingsList
-      title="Timeframes (legacy)"
+      title={pageTitle()}
       newLabel="New timeframe"
       searchPlaceholder="Search timeframes by name"
       searchText={(r) => r.name}

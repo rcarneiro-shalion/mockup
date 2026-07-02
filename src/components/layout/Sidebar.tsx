@@ -24,7 +24,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { stripVersionPrefix } from "@/lib/appVersion";
+import { getAppVersion, stripVersionPrefix } from "@/lib/appVersion";
 
 type NavChild = { label: string; to: string; legacy?: boolean };
 
@@ -181,7 +181,16 @@ function navForPath(pathname: string): NavItem[] {
 export function Sidebar() {
   // Compare on the version-agnostic path ("/v2/iam" → "/iam") — see lib/appVersion.
   const pathname = stripVersionPrefix(useLocation().pathname);
-  const nav = navForPath(pathname);
+  // V1 phase reinstates Timeframes as the active concept — no "(legacy)" tag there.
+  const nav =
+    getAppVersion() === 1
+      ? navForPath(pathname).map((item) => ({
+          ...item,
+          children: item.children?.map((c) =>
+            c.label === "Timeframes (legacy)" ? { ...c, label: "Timeframes" } : c,
+          ),
+        }))
+      : navForPath(pathname);
   const [collapsed, setCollapsed] = useState(false);
 
   // Accordion behaviour: only one group is expanded at a time, so a long group

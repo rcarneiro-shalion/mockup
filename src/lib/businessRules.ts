@@ -15,6 +15,7 @@ export type RuleSection = { section: string; intro: string; pages: RulePage[] };
 
 // Auto-generated rule pages for the promoted entities (rules mined from console-frontend).
 import { APPROX_RULE_PAGES as AP } from "./approxRules";
+import { getAppVersion } from "./appVersion";
 
 // ---------- Clients --------------------------------------------------------
 
@@ -556,7 +557,10 @@ const settingsTargets: RulePage = {
 
 const settingsTimeframes: RulePage = {
   key: "timeframes",
-  label: "Timeframes (legacy)",
+  // V1 reinstates Timeframes as the active axis (no "(legacy)"); v2/v3 keep the tag.
+  // Module-scope compute is safe: the manual renders client-side only, where the
+  // version is fixed per page load.
+  label: getAppVersion() === 1 ? "Timeframes" : "Timeframes (legacy)",
   match: "/settings/timeframes",
   groups: [
     {
