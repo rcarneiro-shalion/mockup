@@ -1220,19 +1220,11 @@ export function SectionsGridPage() {
                   )}
                 </Section>
 
-                {/* section_config raw jsonb */}
-                <Section title="section_config">
-                  {cfg ? (
-                    <pre className="max-h-56 overflow-auto rounded-md border border-border bg-secondary/30 p-3 font-mono text-xs text-foreground/80">{cfg}</pre>
-                  ) : (
-                    <Empty>No section_config.</Empty>
-                  )}
-                </Section>
-
-                {/* Section tabs (parsed from section_config) */}
-                <Section title="Section tabs" count={cfgTabs.length}>
+                {/* section_config → fully parsed into the Section tabs table below
+                    (in the real model section_config carries only `tabs`). */}
+                <Section title="section_config › tabs" count={cfgTabs.length}>
                   {cfgTabs.length === 0 ? (
-                    <Empty>No tabs.</Empty>
+                    <Empty>{cfg ? "No tabs in section_config." : "No section_config."}</Empty>
                   ) : (
                     <div className="overflow-auto rounded-md border border-border">
                       <table className="w-full text-sm">
@@ -1242,6 +1234,8 @@ export function SectionsGridPage() {
                             <th className="px-3 py-1.5 font-medium">Slug</th>
                             <th className="px-3 py-1.5 font-medium">Description</th>
                             <th className="px-3 py-1.5 font-medium">Dashboard Id</th>
+                            <th className="px-3 py-1.5 font-medium">Looker Id</th>
+                            <th className="px-3 py-1.5 font-medium">Filter Set</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1249,8 +1243,10 @@ export function SectionsGridPage() {
                             <tr key={t.id} className="border-t border-border">
                               <td className="whitespace-nowrap px-3 py-1.5 text-foreground/90">{t.label || "—"}</td>
                               <td className="whitespace-nowrap px-3 py-1.5 font-mono text-xs text-foreground/70">{t.slug || "—"}</td>
-                              <td className="px-3 py-1.5 text-foreground/70"><span className="block max-w-[220px] truncate" title={t.description}>{t.description || "—"}</span></td>
+                              <td className="px-3 py-1.5 text-foreground/70"><span className="block max-w-[200px] truncate" title={t.description}>{t.description || "—"}</span></td>
                               <td className="whitespace-nowrap px-3 py-1.5 font-mono text-xs text-foreground/70">{t.dashboardId || "—"}</td>
+                              <td className="whitespace-nowrap px-3 py-1.5 font-mono text-xs text-foreground/70">{t.lookerId || "—"}</td>
+                              <td className="whitespace-nowrap px-3 py-1.5 text-foreground/70">{t.filterSet || "—"}</td>
                             </tr>
                           ))}
                         </tbody>
