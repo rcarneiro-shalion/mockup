@@ -18,6 +18,9 @@ export type DashSection = {
   label: string;
   type: "BUILT_IN" | "CUSTOM";
   definition: DashDefinitionVar[];
+  // Raw `section_config` jsonb as a JSON string ("" / absent when the row has none).
+  // Read-only in the Sections editor; used by the jsonb filters.
+  sectionConfig?: string;
   tabs: DashTab[];
   createdAt: string;
   updatedAt: string;
@@ -40,9 +43,9 @@ export type DashboardApp = {
   updatedAt: string;
 };
 
-// v3: richer DSM groups/sections (with varied definitions + tabs) for the bulk
-// sections editor. Older data under v1/v2 keys is abandoned.
-export const DASHBOARD_APPS_KEY = "settings:dashboard-applications:v5";
+// v6: sectionConfig (jsonb) samples on a few sections for the editor's jsonb
+// filters. Older data under previous keys is abandoned.
+export const DASHBOARD_APPS_KEY = "settings:dashboard-applications:v6";
 
 /** Timestamp stamped onto created/updated fields when editing in-memory. */
 export const nowStamp = () => new Date().toDateString();
@@ -53,6 +56,7 @@ const SECTION_BENCHMARK_BRAND: DashSection = {
   label: "Benchmark-Brand",
   type: "CUSTOM",
   definition: [{ key: "embeddable_id", value: "29545e16-bfba-4a9d-ac31-9667c8335f87" }],
+  sectionConfig: '{"showFilters":true,"defaultTab":"overview","export":{"enabled":true,"formats":["csv","xlsx"]}}',
   tabs: [],
   createdAt: "Fri, Jun 5, 2026 9:26",
   updatedAt: "Fri, Jun 5, 2026 9:26",
@@ -231,10 +235,11 @@ const DSM_GROUPS: DashGroup[] = [
 const RMMS_TS = "Fri, May 29, 2026 2:18";
 const RMMS_GROUPS: DashGroup[] = [
   G("rmms-g-cat", "Category", "PieChartOutlined", [
-    SEC("sec-rmms-cat", "/rmms-category", "Category", "BUILT_IN", [{ key: "label", value: "Category" }], [], RMMS_TS, RMMS_TS),
+    // sectionConfig samples so the editor's jsonb filters are demonstrable offline.
+    { ...SEC("sec-rmms-cat", "/rmms-category", "Category", "BUILT_IN", [{ key: "label", value: "Category" }], [], RMMS_TS, RMMS_TS), sectionConfig: '{"showFilters":true,"defaultTab":"category","drilldown":{"enabled":false}}' },
   ], RMMS_TS, RMMS_TS),
   G("rmms-g-brand", "Brand", "LineChartOutlined", [
-    SEC("sec-rmms-brand", "/rmms-brand", "Brand", "BUILT_IN", [{ key: "label", value: "Brand" }], [], RMMS_TS, RMMS_TS),
+    { ...SEC("sec-rmms-brand", "/rmms-brand", "Brand", "BUILT_IN", [{ key: "label", value: "Brand" }], [], RMMS_TS, RMMS_TS), sectionConfig: '{"showFilters":false,"hero":{"pinned":true}}' },
   ], RMMS_TS, RMMS_TS),
   G("rmms-g-kw", "Keyword", "SearchOutlined", [
     SEC("sec-rmms-kw", "/rmms-keyword", "Keyword", "BUILT_IN", [{ key: "label", value: "Keyword" }], [], RMMS_TS, RMMS_TS),

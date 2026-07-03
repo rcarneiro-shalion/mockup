@@ -38,6 +38,7 @@ import {
   FlaskConical,
   Check,
   Trash2,
+  Braces,
 } from "lucide-react";
 import {
   DASHBOARD_APPS_KEY,
@@ -92,6 +93,17 @@ function toDefinition(raw: unknown): DashDefinitionVar[] {
   return [];
 }
 
+/** Raw jsonb → canonical JSON string ("" when the column is null/absent). */
+function toJsonString(raw: unknown): string {
+  if (raw == null) return "";
+  if (typeof raw === "string") return raw;
+  try {
+    return JSON.stringify(raw);
+  } catch {
+    return String(raw);
+  }
+}
+
 function toDashSection(s: Record<string, unknown>): DashSection {
   const rawTabs = (s.dashboardSectionTabs ?? s.tabs ?? []) as unknown;
   const tabs: DashTab[] = pickArr(rawTabs).map((t) => ({
@@ -110,6 +122,7 @@ function toDashSection(s: Record<string, unknown>): DashSection {
     label: str(s.label),
     type: str(s.type) === "CUSTOM" ? "CUSTOM" : "BUILT_IN",
     definition: toDefinition(s.definition),
+    sectionConfig: toJsonString(s.sectionConfig ?? s.section_config),
     tabs,
     createdAt: str(s.createdAt),
     updatedAt: str(s.updatedAt),
@@ -153,6 +166,100 @@ function toApiBody(s: DashSection) {
     type: s.type,
     definition: Object.fromEntries(s.definition.filter((v) => v.key).map((v) => [v.key, v.value])),
   };
+}
+
+// ---- jsonb filters (definition / section_config) ---------------------------
+// "Intelligent" contains / not-contains filters over the two jsonb columns: find
+// the dashboard_section rows where a specific value IS (or is NOT) present.
+type JsonbFilter = { mode: "contains" | "not"; q: string };
+const EMPTY_JSONB_FILTER: JsonbFilter = { mode: "contains", q: "" };
+
+/** Searchable text for the `definition` jsonb: key:value pairs + the raw JSON. */
+const definitionHay = (s: DashSection) => {
+  const pairs = s.definition.map((v) => `${v.key}:${v.value}`).join(" ");
+  return `${pairs} ${JSON.stringify(Object.fromEntries(s.definition.map((v) => [v.key, v.value])))}`;
+};
+
+function JsonbFilterChip({
+  column,
+  value,
+  onChange,
+}: {
+  column: string;
+  value: JsonbFilter;
+  onChange: (v: JsonbFilter) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const active = value.q.trim() !== "";
+  return (
+    <span className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((s) => !s)}
+        className={cn(
+          "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-sm",
+          active
+            ? "border-[var(--sidebar-active-fg)]/40 bg-primary/5 font-medium text-foreground"
+            : "border-border text-muted-foreground hover:text-foreground",
+        )}
+        title={`Filter rows by the ${column} jsonb`}
+      >
+        <Braces className="h-3.5 w-3.5" />
+        <span className="font-mono text-xs">{column}</span>
+        {active && (
+          <span className="max-w-[160px] truncate text-xs text-muted-foreground">
+            {value.mode === "contains" ? "has" : "not"} “{value.q}”
+          </span>
+        )}
+        {active && (
+          <X
+            className="h-3 w-3 text-muted-foreground hover:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange(EMPTY_JSONB_FILTER);
+            }}
+          />
+        )}
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-9 z-50 w-72 rounded-md border border-border bg-card p-3 shadow-md">
+            <p className="mb-2 text-xs text-muted-foreground">
+              Show sections where <span className="font-mono text-foreground/80">{column}</span>…
+            </p>
+            <div className="mb-2 flex items-center gap-1 rounded-md border border-border bg-secondary/40 p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => onChange({ ...value, mode: "contains" })}
+                className={cn("flex-1 rounded px-2 py-1", value.mode === "contains" ? "bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+              >
+                contains the value
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ ...value, mode: "not" })}
+                className={cn("flex-1 rounded px-2 py-1", value.mode === "not" ? "bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+              >
+                does NOT contain
+              </button>
+            </div>
+            <input
+              autoFocus
+              value={value.q}
+              onChange={(e) => onChange({ ...value, q: e.target.value })}
+              onKeyDown={(e) => e.key === "Enter" && setOpen(false)}
+              placeholder={`value to look for — % = wildcard`}
+              className="h-8 w-full rounded-md border border-border bg-background px-2.5 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Matches keys and values inside the jsonb, case-insensitive. “does NOT contain” also matches rows with an empty {column}.
+            </p>
+          </div>
+        </>
+      )}
+    </span>
+  );
 }
 
 /** Borderless, full-cell input — the Excel-style editable cell. */
@@ -212,6 +319,9 @@ export function SectionsGridPage() {
   const [fApps, setFApps] = useState<string[]>([]);
   const [fGroups, setFGroups] = useState<string[]>([]);
   const [query, setQuery] = useState("");
+  // jsonb filters: contains / not-contains a value inside definition / section_config.
+  const [fDef, setFDef] = useState<JsonbFilter>(EMPTY_JSONB_FILTER);
+  const [fCfg, setFCfg] = useState<JsonbFilter>(EMPTY_JSONB_FILTER);
   const [extraCols, setExtraCols] = useState<string[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [addingCol, setAddingCol] = useState(false);
@@ -232,6 +342,8 @@ export function SectionsGridPage() {
   // --- dialogs ---------------------------------------------------------------
   const [historyForId, setHistoryForId] = useState<string | null>(null);
   const [confirmSave, setConfirmSave] = useState<FlatRow | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<FlatRow | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Flatten the app → group → section tree into editable rows.
   const allRows: FlatRow[] = useMemo(() => {
@@ -259,11 +371,18 @@ export function SectionsGridPage() {
   }, [apps, fApps]);
 
   const matchQuery = useMemo(() => buildQueryMatch(query), [query]);
+  const matchDef = useMemo(() => buildQueryMatch(fDef.q), [fDef.q]);
+  const matchCfg = useMemo(() => buildQueryMatch(fCfg.q), [fCfg.q]);
+  // contains → keep on hit; not-contains → keep on miss (incl. rows with an empty jsonb).
+  const jsonbPass = (f: JsonbFilter, match: (hay: string) => boolean, hay: string) =>
+    !f.q.trim() || (f.mode === "contains") === match(hay);
   const rows = allRows.filter(
     (r) =>
       (!fApps.length || fApps.includes(r.appId)) &&
       (!fGroups.length || fGroups.includes(r.groupId)) &&
-      matchQuery(`${r.section.label} ${r.section.path}`),
+      matchQuery(`${r.section.label} ${r.section.path}`) &&
+      jsonbPass(fDef, matchDef, definitionHay(r.section)) &&
+      jsonbPass(fCfg, matchCfg, r.section.sectionConfig ?? ""),
   );
 
   const defKeys = useMemo(() => {
@@ -505,7 +624,64 @@ export function SectionsGridPage() {
     }
   };
 
-  const colCount = 1 + 5 + defKeys.length + 2; // expander + fixed(5) + dyn + Tabs + Actions
+  // --- delete a section row (live DELETE or local removal) -------------------
+  const removeSectionFromState = (appId: string, groupId: string, sectionId: string) => {
+    setApps((prev) =>
+      prev.map((a) =>
+        a.id !== appId
+          ? a
+          : { ...a, groups: a.groups.map((g) => (g.id !== groupId ? g : { ...g, sections: g.sections.filter((s) => s.id !== sectionId) })) },
+      ),
+    );
+    setDirty((prev) => {
+      if (!prev.has(sectionId)) return prev;
+      const n = new Set(prev);
+      n.delete(sectionId);
+      return n;
+    });
+    setExpanded((prev) => {
+      if (!prev.has(sectionId)) return prev;
+      const n = new Set(prev);
+      n.delete(sectionId);
+      return n;
+    });
+  };
+
+  const deleteSection = async (row: FlatRow) => {
+    setConfirmDelete(null);
+    backup(row.section, "Before delete"); // safety snapshot — restorable from history
+    if (!live) {
+      removeSectionFromState(row.appId, row.groupId, row.section.id);
+      toast.success(`Deleted "${row.section.label || row.section.path}" (local mockup) — a backup is in the version history.`);
+      return;
+    }
+    const saved = getDevTokens();
+    setDeletingId(row.section.id);
+    try {
+      const res = await mutateLive({
+        data: {
+          service: "visualization",
+          env: loadedEnv,
+          method: "DELETE",
+          path: `/v1.0/admin/dashboardsections/${row.section.id}`,
+          token: (token || saved.token) || undefined,
+          idToken: (idToken || saved.idToken) || undefined,
+        },
+      });
+      if (res.ok) {
+        removeSectionFromState(row.appId, row.groupId, row.section.id);
+        toast.success(`Deleted "${row.section.label || row.section.path}" from ${loadedEnv.toUpperCase()} — a backup snapshot is in the version history.`);
+      } else {
+        toast.error(res.error || `Delete failed (${res.status}).`);
+      }
+    } catch (e) {
+      toast.error(`Delete failed: ${(e as Error).message}`);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const colCount = 1 + 5 + defKeys.length + 3; // expander + fixed(5) + dyn + section_config + Tabs + Actions
   const historyRow = historyForId ? allRows.find((r) => r.section.id === historyForId) : null;
   const historyList = historyForId ? versions[historyForId] ?? [] : [];
 
@@ -634,6 +810,8 @@ export function SectionsGridPage() {
               searchable
             />
           )}
+          <JsonbFilterChip column="definition" value={fDef} onChange={setFDef} />
+          <JsonbFilterChip column="section_config" value={fCfg} onChange={setFCfg} />
           {addingCol ? (
             <span className="inline-flex items-center gap-1">
               <input
@@ -659,13 +837,15 @@ export function SectionsGridPage() {
               <Plus className="h-3.5 w-3.5" /> Add field
             </Button>
           )}
-          {(fApps.length > 0 || fGroups.length > 0 || query) && (
+          {(fApps.length > 0 || fGroups.length > 0 || query || fDef.q || fCfg.q) && (
             <button
               type="button"
               onClick={() => {
                 setFApps([]);
                 setFGroups([]);
                 setQuery("");
+                setFDef(EMPTY_JSONB_FILTER);
+                setFCfg(EMPTY_JSONB_FILTER);
               }}
               className="text-xs font-medium text-muted-foreground hover:text-foreground"
             >
@@ -717,6 +897,9 @@ export function SectionsGridPage() {
                       </span>
                     </th>
                   ))}
+                  <th className={th} title="Raw section_config jsonb (read-only)">
+                    <span className="font-mono normal-case tracking-normal text-foreground/70">section_config</span>
+                  </th>
                   <th className={th}>Tabs</th>
                   <th className={cn(th, "text-right")}>Actions</th>
                 </tr>
@@ -769,6 +952,15 @@ export function SectionsGridPage() {
                             <Cell value={getVar(r.section, k)} onChange={(v) => setVar(r, k, v)} placeholder="—" mono />
                           </td>
                         ))}
+                        <td className={cn(cellTd, "max-w-[220px] px-2")}>
+                          {r.section.sectionConfig ? (
+                            <span className="block truncate font-mono text-xs text-foreground/70" title={r.section.sectionConfig}>
+                              {r.section.sectionConfig}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
                         <td className={cn(cellTd, "whitespace-nowrap px-2 text-center")}>
                           <button
                             type="button"
@@ -822,6 +1014,15 @@ export function SectionsGridPage() {
                                   {vCount}
                                 </span>
                               )}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={deletingId === r.section.id}
+                              onClick={() => setConfirmDelete(r)}
+                              title={live ? `Delete this section from ${loadedEnv.toUpperCase()}` : "Delete this section (local)"}
+                              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
+                            >
+                              {deletingId === r.section.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                             </button>
                           </div>
                         </td>
@@ -965,6 +1166,46 @@ export function SectionsGridPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirm */}
+      <AlertDialog open={confirmDelete !== null} onOpenChange={(v) => !v && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-4 w-4" /> Delete section{live ? ` from ${loadedEnv.toUpperCase()}` : ""}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {live ? (
+                <>
+                  This <strong>DELETEs</strong> the dashboard_section row{" "}
+                  <strong>{confirmDelete?.section.label || confirmDelete?.section.path}</strong> on the live{" "}
+                  <strong>{loadedEnv}</strong> environment. A version is snapshotted first (restorable content, but the
+                  row itself must be re-created by hand).
+                  {loadedEnv === "prod" && (
+                    <span className="mt-2 block font-medium text-rose-700">
+                      This is PRODUCTION — the section disappears from the real client dashboard.
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  This removes <strong>{confirmDelete?.section.label || confirmDelete?.section.path}</strong> from the
+                  local mockup data. A version is snapshotted first.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmDelete && void deleteSection(confirmDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" /> Delete{live ? ` from ${loadedEnv}` : ""}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Save-to-live confirm */}
       <AlertDialog open={confirmSave !== null} onOpenChange={(v) => !v && setConfirmSave(null)}>

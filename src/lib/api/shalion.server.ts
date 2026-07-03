@@ -335,8 +335,14 @@ const JUNCTION_WRITE_PREFIXES = [
 // (confirmed from the Visualization Swagger).
 const CREATE_POST_PATHS = ["/v1.0/admin/user-datagroups"];
 const BARE_ID_RE = /^[A-Za-z0-9_-]+$/;
+// DELETE of ONE dashboard SECTION row (Sections editor) — gated to exactly
+// /v1.0/admin/dashboardsections/{id} with a single bare id (no subtree). The UI
+// snapshots the section into the version history first and gates the call behind
+// a confirm dialog (red warning on prod).
+const SECTION_DELETE_RE = /^\/v1\.0\/admin\/dashboardsections\/[A-Za-z0-9_-]+$/;
 function junctionWriteAllowed(method: LiveMethod, pathOnly: string): boolean {
   if (method === "POST" && CREATE_POST_PATHS.includes(pathOnly)) return true;
+  if (method === "DELETE" && SECTION_DELETE_RE.test(pathOnly)) return true;
   for (const p of JUNCTION_WRITE_PREFIXES) {
     if (method === "POST" && pathOnly === `${p}/batch`) return true;
     if (method === "DELETE" && pathOnly.startsWith(`${p}/`)) {
