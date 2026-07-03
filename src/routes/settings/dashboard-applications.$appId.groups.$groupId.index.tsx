@@ -10,12 +10,10 @@ import {
   NotFound,
   TranslationChips,
 } from "@/components/settings/DashboardAppPrimitives";
-import { usePersistentState } from "@/hooks/usePersistentState";
 import { toast } from "sonner";
 import { Plus, X } from "lucide-react";
 import {
-  DASHBOARD_APPS_KEY,
-  INITIAL_DASHBOARD_APPS,
+  useDashboardApps,
   nowStamp,
   type DashboardApp,
   type DashGroup,
@@ -31,9 +29,7 @@ export const Route = createFileRoute(
 
 function GroupEditPage() {
   const { appId, groupId } = Route.useParams();
-  const [apps, setApps] = usePersistentState<DashboardApp[]>(
-    DASHBOARD_APPS_KEY,
-    INITIAL_DASHBOARD_APPS,
+  const [apps, setApps] = useDashboardApps(
   );
   const navigate = useNavigate();
   const goApp = () =>

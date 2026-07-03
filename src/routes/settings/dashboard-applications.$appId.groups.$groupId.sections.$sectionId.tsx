@@ -12,12 +12,10 @@ import {
   TranslationChips,
 } from "@/components/settings/DashboardAppPrimitives";
 import { AddTabDialog } from "@/components/settings/AddTabDialog";
-import { usePersistentState } from "@/hooks/usePersistentState";
 import { cn } from "@/lib/utils";
 import { Plus, X } from "lucide-react";
 import {
-  DASHBOARD_APPS_KEY,
-  INITIAL_DASHBOARD_APPS,
+  useDashboardApps,
   nowStamp,
   type DashboardApp,
   type DashSection,
@@ -41,10 +39,7 @@ function SectionEditPage() {
   const { appId, groupId, sectionId } = useParams({
     from: "/settings/dashboard-applications/$appId/groups/$groupId/sections/$sectionId",
   });
-  const [apps, setApps] = usePersistentState<DashboardApp[]>(
-    DASHBOARD_APPS_KEY,
-    INITIAL_DASHBOARD_APPS,
-  );
+  const [apps, setApps] = useDashboardApps();
   const navigate = useNavigate();
   const [tabOpen, setTabOpen] = useState(false);
 

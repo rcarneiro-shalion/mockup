@@ -3,9 +3,8 @@ import { SettingsList, type SettingsColumn } from "@/components/settings/Setting
 import { LinkText } from "@/components/seeds/ListPrimitives";
 import { Button } from "@/components/ui/button";
 import { Layers } from "lucide-react";
-import { usePersistentState } from "@/hooks/usePersistentState";
 import { toast } from "sonner";
-import { DASHBOARD_APPS_KEY, INITIAL_DASHBOARD_APPS, type DashboardApp } from "@/lib/dashboardApps";
+import { useDashboardApps, type DashboardApp } from "@/lib/dashboardApps";
 
 export const Route = createFileRoute("/settings/dashboard-applications/")({
   head: () => ({ meta: [{ title: "Dashboard applications — Shalion" }] }),
@@ -13,10 +12,7 @@ export const Route = createFileRoute("/settings/dashboard-applications/")({
 });
 
 function DashboardApplicationsPage() {
-  const [rows, setRows] = usePersistentState<DashboardApp[]>(
-    DASHBOARD_APPS_KEY,
-    INITIAL_DASHBOARD_APPS,
-  );
+  const [rows, setRows] = useDashboardApps();
   const navigate = useNavigate();
 
   const columns: SettingsColumn<DashboardApp>[] = [

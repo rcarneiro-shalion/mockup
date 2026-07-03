@@ -40,8 +40,7 @@ import {
   Pencil,
 } from "lucide-react";
 import {
-  DASHBOARD_APPS_KEY,
-  INITIAL_DASHBOARD_APPS,
+  useDashboardApps,
   nowStamp,
   type DashboardApp,
   type DashGroup,
@@ -338,7 +337,7 @@ function prettyJson(raw: string): string {
 
 export function SectionsGridPage() {
   // --- data source: local (mockup) persisted vs live working copy -----------
-  const [localApps, setLocalApps] = usePersistentState<DashboardApp[]>(DASHBOARD_APPS_KEY, INITIAL_DASHBOARD_APPS);
+  const [localApps, setLocalApps] = useDashboardApps();
   const [liveApps, setLiveApps] = useState<DashboardApp[] | null>(null);
   const live = liveApps !== null;
   const apps = live ? (liveApps as DashboardApp[]) : localApps;
