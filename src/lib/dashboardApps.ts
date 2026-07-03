@@ -19,8 +19,11 @@ export type DashSection = {
   type: "BUILT_IN" | "CUSTOM";
   definition: DashDefinitionVar[];
   // Raw `section_config` jsonb as a JSON string ("" / absent when the row has none).
-  // Read-only in the Sections editor; used by the jsonb filters.
+  // In the real model the section's tabs live inside this jsonb (SectionConfig.tabs);
+  // the mockup also keeps them parsed on `tabs` for editing.
   sectionConfig?: string;
+  // `label_translation` jsonb — locale code → translated label (e.g. { es, pt }).
+  labelTranslation?: Record<string, string>;
   tabs: DashTab[];
   createdAt: string;
   updatedAt: string;
@@ -43,9 +46,9 @@ export type DashboardApp = {
   updatedAt: string;
 };
 
-// v6: sectionConfig (jsonb) samples on a few sections for the editor's jsonb
-// filters. Older data under previous keys is abandoned.
-export const DASHBOARD_APPS_KEY = "settings:dashboard-applications:v6";
+// v7: labelTranslation (jsonb) samples for the Sections editor's raw jsonb
+// columns + detail modal. Older data under previous keys is abandoned.
+export const DASHBOARD_APPS_KEY = "settings:dashboard-applications:v7";
 
 /** Timestamp stamped onto created/updated fields when editing in-memory. */
 export const nowStamp = () => new Date().toDateString();
@@ -57,6 +60,7 @@ const SECTION_BENCHMARK_BRAND: DashSection = {
   type: "CUSTOM",
   definition: [{ key: "embeddable_id", value: "29545e16-bfba-4a9d-ac31-9667c8335f87" }],
   sectionConfig: '{"showFilters":true,"defaultTab":"overview","export":{"enabled":true,"formats":["csv","xlsx"]}}',
+  labelTranslation: { es: "Marca de referencia", pt: "Marca de referência" },
   tabs: [],
   createdAt: "Fri, Jun 5, 2026 9:26",
   updatedAt: "Fri, Jun 5, 2026 9:26",
@@ -236,10 +240,10 @@ const RMMS_TS = "Fri, May 29, 2026 2:18";
 const RMMS_GROUPS: DashGroup[] = [
   G("rmms-g-cat", "Category", "PieChartOutlined", [
     // sectionConfig samples so the editor's jsonb filters are demonstrable offline.
-    { ...SEC("sec-rmms-cat", "/rmms-category", "Category", "BUILT_IN", [{ key: "label", value: "Category" }], [], RMMS_TS, RMMS_TS), sectionConfig: '{"showFilters":true,"defaultTab":"category","drilldown":{"enabled":false}}' },
+    { ...SEC("sec-rmms-cat", "/rmms-category", "Category", "BUILT_IN", [{ key: "label", value: "Category" }], [], RMMS_TS, RMMS_TS), sectionConfig: '{"showFilters":true,"defaultTab":"category","drilldown":{"enabled":false}}', labelTranslation: { es: "Categoría", pt: "Categoria" } },
   ], RMMS_TS, RMMS_TS),
   G("rmms-g-brand", "Brand", "LineChartOutlined", [
-    { ...SEC("sec-rmms-brand", "/rmms-brand", "Brand", "BUILT_IN", [{ key: "label", value: "Brand" }], [], RMMS_TS, RMMS_TS), sectionConfig: '{"showFilters":false,"hero":{"pinned":true}}' },
+    { ...SEC("sec-rmms-brand", "/rmms-brand", "Brand", "BUILT_IN", [{ key: "label", value: "Brand" }], [], RMMS_TS, RMMS_TS), sectionConfig: '{"showFilters":false,"hero":{"pinned":true}}', labelTranslation: { es: "Marca" } },
   ], RMMS_TS, RMMS_TS),
   G("rmms-g-kw", "Keyword", "SearchOutlined", [
     SEC("sec-rmms-kw", "/rmms-keyword", "Keyword", "BUILT_IN", [{ key: "label", value: "Keyword" }], [], RMMS_TS, RMMS_TS),

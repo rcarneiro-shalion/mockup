@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,7 @@ import { buildQueryMatch } from "@/lib/textMatch";
 import {
   ArrowLeft,
   Search,
-  Plus,
   X,
-  ChevronRight,
   Layers,
   Building2,
   Sheet,
@@ -39,6 +37,7 @@ import {
   Check,
   Trash2,
   Braces,
+  Pencil,
 } from "lucide-react";
 import {
   DASHBOARD_APPS_KEY,
@@ -116,6 +115,11 @@ function toDashSection(s: Record<string, unknown>): DashSection {
     filterSet: str(t.filterSet ?? t.filter_set),
     panels: [],
   }));
+  const rawLt = (s.labelTranslation ?? s.label_translation) as unknown;
+  const labelTranslation: Record<string, string> =
+    rawLt && typeof rawLt === "object" && !Array.isArray(rawLt)
+      ? Object.fromEntries(Object.entries(rawLt as Record<string, unknown>).map(([k, v]) => [k, str(v)]))
+      : {};
   return {
     id: str(s.id),
     path: str(s.path),
@@ -123,11 +127,18 @@ function toDashSection(s: Record<string, unknown>): DashSection {
     type: str(s.type) === "CUSTOM" ? "CUSTOM" : "BUILT_IN",
     definition: toDefinition(s.definition),
     sectionConfig: toJsonString(s.sectionConfig ?? s.section_config),
+    labelTranslation,
     tabs,
     createdAt: str(s.createdAt),
     updatedAt: str(s.updatedAt),
   };
 }
+
+/** definition var-list → the raw jsonb object string ({"key":"value",…}). */
+function definitionJson(defs: DashDefinitionVar[]): string {
+  return defs.length ? JSON.stringify(Object.fromEntries(defs.filter((d) => d.key).map((d) => [d.key, d.value]))) : "";
+}
+const LOCALE_FLAG: Record<string, string> = { es: "🇪🇸", pt: "🇧🇷", en: "🇺🇸", fr: "🇫🇷", de: "🇩🇪", it: "🇮🇹" };
 
 /** Assemble live app/group/section rows into the editor's nested shape. */
 function toDashApps(appsJson: unknown, groupRows: Record<string, unknown>[], sectionRows: Record<string, unknown>[]): DashboardApp[] {
@@ -295,6 +306,36 @@ function Cell({
 const th = "whitespace-nowrap border-b border-border px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 const cellTd = "border-b border-border/70 align-middle";
 
+/** Compact, read-only preview of a raw jsonb value; click opens the detail modal. */
+function JsonbCell({ value, onOpen }: { value: string; onOpen: () => void }) {
+  return (
+    <td className={cn(cellTd, "max-w-[240px] bg-primary/[0.02] px-2")}>
+      {value ? (
+        <button
+          type="button"
+          onClick={onOpen}
+          title={value}
+          className="block max-w-full truncate text-left font-mono text-xs text-foreground/70 hover:text-[var(--sidebar-active-fg)] hover:underline"
+        >
+          {value}
+        </button>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      )}
+    </td>
+  );
+}
+
+/** Pretty-print a raw JSON string for the detail modal; passthrough if unparseable. */
+function prettyJson(raw: string): string {
+  if (!raw) return "";
+  try {
+    return JSON.stringify(JSON.parse(raw), null, 2);
+  } catch {
+    return raw;
+  }
+}
+
 export function SectionsGridPage() {
   // --- data source: local (mockup) persisted vs live working copy -----------
   const [localApps, setLocalApps] = usePersistentState<DashboardApp[]>(DASHBOARD_APPS_KEY, INITIAL_DASHBOARD_APPS);
@@ -322,10 +363,6 @@ export function SectionsGridPage() {
   // jsonb filters: contains / not-contains a value inside definition / section_config.
   const [fDef, setFDef] = useState<JsonbFilter>(EMPTY_JSONB_FILTER);
   const [fCfg, setFCfg] = useState<JsonbFilter>(EMPTY_JSONB_FILTER);
-  const [extraCols, setExtraCols] = useState<string[]>([]);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [addingCol, setAddingCol] = useState(false);
-  const [newCol, setNewCol] = useState("");
 
   // --- live connect ----------------------------------------------------------
   const [token, setToken] = usePersistentState<string>("shalion:devToken", "");
@@ -344,6 +381,9 @@ export function SectionsGridPage() {
   const [confirmSave, setConfirmSave] = useState<FlatRow | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<FlatRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Read-only "view all" modal — the row's fields parsed from the jsonb columns
+  // (mirrors the real dashboard-section detail page).
+  const [editRow, setEditRow] = useState<FlatRow | null>(null);
 
   // Flatten the app → group → section tree into editable rows.
   const allRows: FlatRow[] = useMemo(() => {
@@ -385,13 +425,6 @@ export function SectionsGridPage() {
       jsonbPass(fCfg, matchCfg, r.section.sectionConfig ?? ""),
   );
 
-  const defKeys = useMemo(() => {
-    const set = new Set<string>();
-    for (const r of rows) for (const v of r.section.definition) if (v.key) set.add(v.key);
-    for (const k of extraCols) if (k) set.add(k);
-    return [...set].sort((a, b) => a.localeCompare(b));
-  }, [rows, extraCols]);
-
   // --- patch helpers ---------------------------------------------------------
   const patchSection = (appId: string, groupId: string, sectionId: string, patch: Partial<DashSection>) => {
     if (live) markDirty(sectionId);
@@ -415,59 +448,6 @@ export function SectionsGridPage() {
       ),
     );
   };
-
-  const getVar = (s: DashSection, key: string) => s.definition.find((v) => v.key === key)?.value ?? "";
-  const setVar = (r: FlatRow, key: string, value: string) => {
-    const def = r.section.definition;
-    const idx = def.findIndex((v) => v.key === key);
-    let next: DashDefinitionVar[];
-    if (value === "") next = idx >= 0 ? def.filter((_, i) => i !== idx) : def;
-    else if (idx >= 0) next = def.map((v, i) => (i === idx ? { ...v, value } : v));
-    else next = [...def, { key, value }];
-    patchSection(r.appId, r.groupId, r.section.id, { definition: next });
-  };
-
-  const addColumn = () => {
-    const k = newCol.trim();
-    setNewCol("");
-    setAddingCol(false);
-    if (!k) return;
-    setExtraCols((prev) => [...new Set([...prev, k])]);
-  };
-  const removeColumn = (key: string) => {
-    setApps((prev) =>
-      prev.map((a) => ({
-        ...a,
-        groups: a.groups.map((g) => ({
-          ...g,
-          sections: g.sections.map((s) => {
-            if (live && s.definition.some((v) => v.key === key)) markDirty(s.id);
-            return { ...s, definition: s.definition.filter((v) => v.key !== key) };
-          }),
-        })),
-      })),
-    );
-    setExtraCols((prev) => prev.filter((k) => k !== key));
-    toast.success(`Removed field "${key}" from all sections`);
-  };
-
-  // --- tabs ------------------------------------------------------------------
-  const setTabs = (r: FlatRow, tabs: DashTab[]) => patchSection(r.appId, r.groupId, r.section.id, { tabs });
-  const patchTab = (r: FlatRow, tabId: string, patch: Partial<DashTab>) =>
-    setTabs(r, r.section.tabs.map((t) => (t.id === tabId ? { ...t, ...patch } : t)));
-  const addTab = (r: FlatRow) =>
-    setTabs(r, [
-      ...r.section.tabs,
-      { id: `tab-${newId()}`, label: "", slug: "", description: "", dashboardId: "", lookerId: "", filterSet: "", panels: [] },
-    ]);
-  const removeTab = (r: FlatRow, tabId: string) => setTabs(r, r.section.tabs.filter((t) => t.id !== tabId));
-
-  const toggleExpand = (id: string) =>
-    setExpanded((prev) => {
-      const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
 
   // --- version history actions ----------------------------------------------
   const restoreVersion = (sectionId: string, v: SectionVersion) => {
@@ -531,7 +511,6 @@ export function SectionsGridPage() {
       setLiveApps(mapped);
       setLoadedEnv(env);
       setDirty(new Set());
-      setExpanded(new Set());
       setShowConnect(false);
       // Surface what actually came back so partial loads are visible (not silent).
       const msg = `Live (${env}): ${mapped.length} apps · ${groupCount} groups · ${sectionCount} sections.`;
@@ -584,7 +563,6 @@ export function SectionsGridPage() {
   const disconnect = () => {
     setLiveApps(null);
     setDirty(new Set());
-    setExpanded(new Set());
   };
 
   // --- save a single section to live (PATCH) ---------------------------------
@@ -639,12 +617,6 @@ export function SectionsGridPage() {
       n.delete(sectionId);
       return n;
     });
-    setExpanded((prev) => {
-      if (!prev.has(sectionId)) return prev;
-      const n = new Set(prev);
-      n.delete(sectionId);
-      return n;
-    });
   };
 
   const deleteSection = async (row: FlatRow) => {
@@ -681,7 +653,7 @@ export function SectionsGridPage() {
     }
   };
 
-  const colCount = 1 + 5 + defKeys.length + 3; // expander + fixed(5) + dyn + section_config + Tabs + Actions
+  const colCount = 5 + 3 + 1; // fixed(App/Group/Path/Label/Type) + 3 jsonb + Actions
   const historyRow = historyForId ? allRows.find((r) => r.section.id === historyForId) : null;
   const historyList = historyForId ? versions[historyForId] ?? [] : [];
 
@@ -702,7 +674,8 @@ export function SectionsGridPage() {
               <h1 className="text-xl font-semibold tracking-tight text-foreground">Dashboard sections — bulk edit</h1>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Edit section parameters inline. Definition (jsonb) becomes columns; expand a row to edit tabs. Every row
+              Edit Path, Label and Type inline; the <strong>definition</strong>, <strong>section_config</strong> and{" "}
+              <strong>label_translation</strong> jsonb show raw — open <strong>Edit</strong> for the full parsed view. Every row
               keeps a <strong>version history</strong> — back up &amp; restore from the <History className="inline h-3.5 w-3.5" /> menu.
             </p>
           </div>
@@ -812,31 +785,6 @@ export function SectionsGridPage() {
           )}
           <JsonbFilterChip column="definition" value={fDef} onChange={setFDef} />
           <JsonbFilterChip column="section_config" value={fCfg} onChange={setFCfg} />
-          {addingCol ? (
-            <span className="inline-flex items-center gap-1">
-              <input
-                autoFocus
-                value={newCol}
-                onChange={(e) => setNewCol(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") addColumn();
-                  if (e.key === "Escape") {
-                    setAddingCol(false);
-                    setNewCol("");
-                  }
-                }}
-                placeholder="field key"
-                className="h-8 w-32 rounded-md border border-border bg-background px-2 font-mono text-xs lowercase focus:outline-none focus:ring-1 focus:ring-ring"
-              />
-              <Button size="sm" variant="outline" className="h-8" onClick={addColumn}>
-                Add
-              </Button>
-            </span>
-          ) : (
-            <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setAddingCol(true)}>
-              <Plus className="h-3.5 w-3.5" /> Add field
-            </Button>
-          )}
           {(fApps.length > 0 || fGroups.length > 0 || query || fDef.q || fCfg.q) && (
             <button
               type="button"
@@ -876,31 +824,21 @@ export function SectionsGridPage() {
             <table className="border-collapse text-sm">
               <thead className="bg-secondary/60">
                 <tr>
-                  <th className={cn(th, "w-8")} />
                   <th className={th}>Application</th>
                   <th className={th}>Group</th>
                   <th className={th}>Path</th>
                   <th className={th}>Label</th>
                   <th className={th}>Type</th>
-                  {defKeys.map((k) => (
-                    <th key={k} className={cn(th, "bg-primary/5")}>
-                      <span className="inline-flex items-center gap-1">
-                        <span className="font-mono normal-case tracking-normal text-foreground/70">{k}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeColumn(k)}
-                          title={`Remove field "${k}" from all sections`}
-                          className="rounded p-0.5 text-muted-foreground hover:bg-secondary hover:text-destructive"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    </th>
-                  ))}
-                  <th className={th} title="Raw section_config jsonb (read-only)">
+                  {/* Raw jsonb columns — full parsed view is in the Edit modal. */}
+                  <th className={cn(th, "bg-primary/5")}>
+                    <span className="font-mono normal-case tracking-normal text-foreground/70">definition</span>
+                  </th>
+                  <th className={cn(th, "bg-primary/5")}>
                     <span className="font-mono normal-case tracking-normal text-foreground/70">section_config</span>
                   </th>
-                  <th className={th}>Tabs</th>
+                  <th className={cn(th, "bg-primary/5")}>
+                    <span className="font-mono normal-case tracking-normal text-foreground/70">label_translation</span>
+                  </th>
                   <th className={cn(th, "text-right")}>Actions</th>
                 </tr>
               </thead>
@@ -913,192 +851,102 @@ export function SectionsGridPage() {
                   </tr>
                 )}
                 {rows.map((r) => {
-                  const open = expanded.has(r.section.id);
                   const isDirty = dirty.has(r.section.id);
                   const vCount = versions[r.section.id]?.length ?? 0;
+                  const defStr = definitionJson(r.section.definition);
+                  const ltStr =
+                    r.section.labelTranslation && Object.keys(r.section.labelTranslation).length
+                      ? JSON.stringify(r.section.labelTranslation)
+                      : "";
                   return (
-                    <Fragment key={r.section.id}>
-                      <tr className={cn("hover:bg-secondary/30", isDirty && "bg-amber-50/60")}>
-                        <td className={cn(cellTd, "px-1 text-center")}>
+                    <tr key={r.section.id} className={cn("hover:bg-secondary/30", isDirty && "bg-amber-50/60")}>
+                      <td className={cn(cellTd, "whitespace-nowrap px-2 font-medium text-foreground/70")} title={r.appLabel}>{r.appShort}</td>
+                      <td className={cn(cellTd, "whitespace-nowrap px-2 text-foreground/70")}>{r.groupLabel}</td>
+                      <td className={cellTd}>
+                        <Cell value={r.section.path} onChange={(v) => patchSection(r.appId, r.groupId, r.section.id, { path: v })} mono grow />
+                      </td>
+                      <td className={cn(cellTd, "min-w-[140px]")}>
+                        <Cell value={r.section.label} onChange={(v) => patchSection(r.appId, r.groupId, r.section.id, { label: v })} />
+                      </td>
+                      <td className={cn(cellTd, "min-w-[110px]")}>
+                        <select
+                          value={r.section.type}
+                          onChange={(e) => patchSection(r.appId, r.groupId, r.section.id, { type: e.target.value as DashSection["type"] })}
+                          className="w-full cursor-pointer rounded bg-transparent px-2 py-1.5 text-sm outline-none focus:bg-primary/5 focus:ring-1 focus:ring-inset focus:ring-ring"
+                        >
+                          <option value="BUILT_IN">Built in</option>
+                          <option value="CUSTOM">Custom</option>
+                        </select>
+                      </td>
+                      {/* Raw jsonb previews — click Edit for the full parsed view. */}
+                      <JsonbCell value={defStr} onOpen={() => setEditRow(r)} />
+                      <JsonbCell value={r.section.sectionConfig ?? ""} onOpen={() => setEditRow(r)} />
+                      <JsonbCell value={ltStr} onOpen={() => setEditRow(r)} />
+                      <td className={cn(cellTd, "whitespace-nowrap px-2")}>
+                        <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
-                            onClick={() => toggleExpand(r.section.id)}
-                            title={open ? "Collapse tabs" : "Expand tabs"}
+                            onClick={() => setEditRow(r)}
+                            title="View / edit all fields"
+                            className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium text-foreground/80 hover:bg-secondary"
+                          >
+                            <Pencil className="h-3.5 w-3.5" /> Edit
+                          </button>
+                          {live && (
+                            <button
+                              type="button"
+                              disabled={!isDirty || savingId === r.section.id}
+                              onClick={() => setConfirmSave(r)}
+                              title={isDirty ? `Save to ${loadedEnv.toUpperCase()}` : "No unsaved changes"}
+                              className={cn(
+                                "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium",
+                                isDirty
+                                  ? loadedEnv === "prod"
+                                    ? "bg-rose-600 text-white hover:bg-rose-700"
+                                    : "bg-primary text-primary-foreground hover:bg-primary/90"
+                                  : "cursor-not-allowed text-muted-foreground/50",
+                              )}
+                            >
+                              {savingId === r.section.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                              Save
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              backup(r.section, "Manual backup");
+                              toast.success("Backup created");
+                            }}
+                            title="Back up this section's current state"
                             className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
                           >
-                            <ChevronRight className={cn("h-4 w-4 transition-transform", open && "rotate-90")} />
+                            <Save className="h-4 w-4" />
                           </button>
-                        </td>
-                        <td className={cn(cellTd, "whitespace-nowrap px-2 font-medium text-foreground/70")} title={r.appLabel}>{r.appShort}</td>
-                        <td className={cn(cellTd, "whitespace-nowrap px-2 text-foreground/70")}>{r.groupLabel}</td>
-                        <td className={cellTd}>
-                          <Cell value={r.section.path} onChange={(v) => patchSection(r.appId, r.groupId, r.section.id, { path: v })} mono grow />
-                        </td>
-                        <td className={cn(cellTd, "min-w-[140px]")}>
-                          <Cell value={r.section.label} onChange={(v) => patchSection(r.appId, r.groupId, r.section.id, { label: v })} />
-                        </td>
-                        <td className={cn(cellTd, "min-w-[110px]")}>
-                          <select
-                            value={r.section.type}
-                            onChange={(e) => patchSection(r.appId, r.groupId, r.section.id, { type: e.target.value as DashSection["type"] })}
-                            className="w-full cursor-pointer rounded bg-transparent px-2 py-1.5 text-sm outline-none focus:bg-primary/5 focus:ring-1 focus:ring-inset focus:ring-ring"
-                          >
-                            <option value="BUILT_IN">Built in</option>
-                            <option value="CUSTOM">Custom</option>
-                          </select>
-                        </td>
-                        {defKeys.map((k) => (
-                          <td key={k} className={cn(cellTd, "min-w-[160px] bg-primary/[0.02]")}>
-                            <Cell value={getVar(r.section, k)} onChange={(v) => setVar(r, k, v)} placeholder="—" mono />
-                          </td>
-                        ))}
-                        <td className={cn(cellTd, "max-w-[220px] px-2")}>
-                          {r.section.sectionConfig ? (
-                            <span className="block truncate font-mono text-xs text-foreground/70" title={r.section.sectionConfig}>
-                              {r.section.sectionConfig}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </td>
-                        <td className={cn(cellTd, "whitespace-nowrap px-2 text-center")}>
                           <button
                             type="button"
-                            onClick={() => toggleExpand(r.section.id)}
-                            className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground hover:bg-secondary/70"
+                            onClick={() => setHistoryForId(r.section.id)}
+                            title="Version history"
+                            className="relative rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
                           >
-                            {r.section.tabs.length} tab{r.section.tabs.length === 1 ? "" : "s"}
-                          </button>
-                        </td>
-                        <td className={cn(cellTd, "whitespace-nowrap px-2")}>
-                          <div className="flex items-center justify-end gap-1">
-                            {live && (
-                              <button
-                                type="button"
-                                disabled={!isDirty || savingId === r.section.id}
-                                onClick={() => setConfirmSave(r)}
-                                title={isDirty ? `Save to ${loadedEnv.toUpperCase()}` : "No unsaved changes"}
-                                className={cn(
-                                  "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium",
-                                  isDirty
-                                    ? loadedEnv === "prod"
-                                      ? "bg-rose-600 text-white hover:bg-rose-700"
-                                      : "bg-primary text-primary-foreground hover:bg-primary/90"
-                                    : "cursor-not-allowed text-muted-foreground/50",
-                                )}
-                              >
-                                {savingId === r.section.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                                Save
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                backup(r.section, "Manual backup");
-                                toast.success("Backup created");
-                              }}
-                              title="Back up this section's current state"
-                              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                            >
-                              <Save className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setHistoryForId(r.section.id)}
-                              title="Version history"
-                              className="relative rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                            >
-                              <History className="h-4 w-4" />
-                              {vCount > 0 && (
-                                <span className="absolute -right-0.5 -top-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-[var(--sidebar-active-fg)] px-0.5 text-[9px] font-semibold text-white">
-                                  {vCount}
-                                </span>
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={deletingId === r.section.id}
-                              onClick={() => setConfirmDelete(r)}
-                              title={live ? `Delete this section from ${loadedEnv.toUpperCase()}` : "Delete this section (local)"}
-                              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
-                            >
-                              {deletingId === r.section.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                      {open && (
-                        <tr>
-                          <td />
-                          <td colSpan={colCount - 1} className="border-b border-border bg-secondary/20 p-3">
-                            <div className="mb-2 flex items-center justify-between">
-                              <span className="text-xs font-semibold text-foreground">
-                                Tabs — <span className="text-muted-foreground">{r.section.label || r.section.path}</span>
+                            <History className="h-4 w-4" />
+                            {vCount > 0 && (
+                              <span className="absolute -right-0.5 -top-0.5 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-[var(--sidebar-active-fg)] px-0.5 text-[9px] font-semibold text-white">
+                                {vCount}
                               </span>
-                              <Button variant="outline" size="sm" className="h-7 gap-1.5" onClick={() => addTab(r)}>
-                                <Plus className="h-3.5 w-3.5" /> Add tab
-                              </Button>
-                            </div>
-                            <div className="overflow-hidden rounded-md border border-border bg-card">
-                              <table className="w-full border-collapse text-sm">
-                                <thead className="bg-secondary/50">
-                                  <tr>
-                                    <th className={th}>Label</th>
-                                    <th className={th}>Slug</th>
-                                    <th className={th}>Description</th>
-                                    <th className={th}>Dashboard Id</th>
-                                    <th className={th}>Looker Id</th>
-                                    <th className={th}>Filter Set</th>
-                                    <th className={cn(th, "w-8")} />
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {r.section.tabs.length === 0 && (
-                                    <tr>
-                                      <td colSpan={7} className="px-3 py-3 text-center text-xs text-muted-foreground">
-                                        No tabs — add one.
-                                      </td>
-                                    </tr>
-                                  )}
-                                  {r.section.tabs.map((t) => (
-                                    <tr key={t.id} className="hover:bg-secondary/30">
-                                      <td className={cn(cellTd, "min-w-[130px]")}>
-                                        <Cell value={t.label} onChange={(v) => patchTab(r, t.id, { label: v })} />
-                                      </td>
-                                      <td className={cn(cellTd, "min-w-[120px]")}>
-                                        <Cell value={t.slug} onChange={(v) => patchTab(r, t.id, { slug: v })} mono />
-                                      </td>
-                                      <td className={cn(cellTd, "min-w-[160px]")}>
-                                        <Cell value={t.description} onChange={(v) => patchTab(r, t.id, { description: v })} />
-                                      </td>
-                                      <td className={cn(cellTd, "min-w-[230px]")}>
-                                        <Cell value={t.dashboardId} onChange={(v) => patchTab(r, t.id, { dashboardId: v })} mono />
-                                      </td>
-                                      <td className={cn(cellTd, "min-w-[120px]")}>
-                                        <Cell value={t.lookerId} onChange={(v) => patchTab(r, t.id, { lookerId: v })} mono />
-                                      </td>
-                                      <td className={cn(cellTd, "min-w-[110px]")}>
-                                        <Cell value={t.filterSet} onChange={(v) => patchTab(r, t.id, { filterSet: v })} />
-                                      </td>
-                                      <td className={cn(cellTd, "px-1 text-center")}>
-                                        <button
-                                          type="button"
-                                          onClick={() => removeTab(r, t.id)}
-                                          className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
-                                          aria-label={`Delete tab ${t.label}`}
-                                        >
-                                          <X className="h-3.5 w-3.5" />
-                                        </button>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={deletingId === r.section.id}
+                            onClick={() => setConfirmDelete(r)}
+                            title={live ? `Delete this section from ${loadedEnv.toUpperCase()}` : "Delete this section (local)"}
+                            className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
+                          >
+                            {deletingId === r.section.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -1164,6 +1012,122 @@ export function SectionsGridPage() {
               </div>
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Section detail — all fields parsed from the jsonb columns (mirrors the
+          real dashboard-section detail page). Read-only viewer. */}
+      <Dialog open={editRow !== null} onOpenChange={(v) => !v && setEditRow(null)}>
+        <DialogContent className="max-h-[88vh] w-[min(760px,94vw)] max-w-none overflow-auto">
+          {editRow && (() => {
+            const s = editRow.section;
+            const lt = Object.entries(s.labelTranslation ?? {});
+            const cfg = prettyJson(s.sectionConfig ?? "");
+            return (
+              <div className="space-y-5">
+                <div>
+                  <DialogTitle className="text-lg font-semibold tracking-tight">{s.label || s.path}</DialogTitle>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {editRow.appLabel} › {editRow.groupLabel}
+                    <span className="ml-2 rounded-full bg-secondary px-1.5 py-0.5 font-mono">{s.id}</span>
+                  </p>
+                </div>
+
+                {/* Base fields */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Detail label="Path"><span className="font-mono text-sm">{s.path || "—"}</span></Detail>
+                  <Detail label="Type">
+                    <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+                      {s.type === "CUSTOM" ? "Custom" : "Built in"}
+                    </span>
+                  </Detail>
+                  <Detail label="Label" className="sm:col-span-2">
+                    <span className="inline-flex items-center gap-1.5">{LOCALE_FLAG.en} {s.label || "—"}</span>
+                  </Detail>
+                </div>
+
+                {/* label_translation */}
+                <Section title="label_translation" count={lt.length}>
+                  {lt.length === 0 ? (
+                    <Empty>No translations.</Empty>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {lt.map(([loc, val]) => (
+                        <div key={loc} className="flex items-center gap-2 text-sm">
+                          <span className="w-14 shrink-0 font-mono text-xs text-muted-foreground">{LOCALE_FLAG[loc] ?? ""} {loc}</span>
+                          <span className="text-foreground/90">{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Section>
+
+                {/* definition */}
+                <Section title="definition" count={s.definition.length}>
+                  {s.definition.length === 0 ? (
+                    <Empty>No definition variables.</Empty>
+                  ) : (
+                    <div className="overflow-hidden rounded-md border border-border">
+                      <table className="w-full text-sm">
+                        <thead className="bg-secondary/50 text-left text-xs text-muted-foreground">
+                          <tr><th className="px-3 py-1.5 font-medium">Key</th><th className="px-3 py-1.5 font-medium">Value</th></tr>
+                        </thead>
+                        <tbody>
+                          {s.definition.map((v) => (
+                            <tr key={v.key} className="border-t border-border">
+                              <td className="px-3 py-1.5 font-mono text-xs text-foreground/80">{v.key}</td>
+                              <td className="px-3 py-1.5 font-mono text-xs text-foreground/70">
+                                <span className="block max-w-[420px] truncate" title={v.value}>{v.value}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </Section>
+
+                {/* section_config raw jsonb */}
+                <Section title="section_config">
+                  {cfg ? (
+                    <pre className="max-h-56 overflow-auto rounded-md border border-border bg-secondary/30 p-3 font-mono text-xs text-foreground/80">{cfg}</pre>
+                  ) : (
+                    <Empty>No section_config.</Empty>
+                  )}
+                </Section>
+
+                {/* Section tabs (parsed) */}
+                <Section title="Section tabs" count={s.tabs.length}>
+                  {s.tabs.length === 0 ? (
+                    <Empty>No tabs.</Empty>
+                  ) : (
+                    <div className="overflow-auto rounded-md border border-border">
+                      <table className="w-full text-sm">
+                        <thead className="bg-secondary/50 text-left text-xs text-muted-foreground">
+                          <tr>
+                            <th className="px-3 py-1.5 font-medium">Label</th>
+                            <th className="px-3 py-1.5 font-medium">Slug</th>
+                            <th className="px-3 py-1.5 font-medium">Description</th>
+                            <th className="px-3 py-1.5 font-medium">Dashboard Id</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {s.tabs.map((t) => (
+                            <tr key={t.id} className="border-t border-border">
+                              <td className="whitespace-nowrap px-3 py-1.5 text-foreground/90">{t.label || "—"}</td>
+                              <td className="whitespace-nowrap px-3 py-1.5 font-mono text-xs text-foreground/70">{t.slug || "—"}</td>
+                              <td className="px-3 py-1.5 text-foreground/70"><span className="block max-w-[220px] truncate" title={t.description}>{t.description || "—"}</span></td>
+                              <td className="whitespace-nowrap px-3 py-1.5 font-mono text-xs text-foreground/70">{t.dashboardId || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </Section>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
@@ -1236,4 +1200,30 @@ export function SectionsGridPage() {
       </AlertDialog>
     </AppShell>
   );
+}
+
+// ---- detail-modal presentational helpers -----------------------------------
+function Detail({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
+  return (
+    <div className={className}>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-0.5">{children}</div>
+    </div>
+  );
+}
+function Section({ title, count, children }: { title: string; count?: number; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center gap-2">
+        <span className="font-mono text-xs font-semibold text-foreground/80">{title}</span>
+        {count !== undefined && (
+          <span className="rounded-full bg-secondary px-1.5 text-[11px] text-muted-foreground">{count}</span>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+function Empty({ children }: { children: React.ReactNode }) {
+  return <p className="rounded-md border border-dashed border-border px-3 py-3 text-center text-xs text-muted-foreground">{children}</p>;
 }
