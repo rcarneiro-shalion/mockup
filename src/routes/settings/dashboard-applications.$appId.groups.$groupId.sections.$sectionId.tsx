@@ -12,6 +12,7 @@ import {
   TranslationChips,
 } from "@/components/settings/DashboardAppPrimitives";
 import { AddTabDialog } from "@/components/settings/AddTabDialog";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { cn } from "@/lib/utils";
 import { Plus, X } from "lucide-react";
 import {
@@ -42,6 +43,8 @@ function SectionEditPage() {
   const [apps, setApps] = useDashboardApps();
   const navigate = useNavigate();
   const [tabOpen, setTabOpen] = useState(false);
+  // The tab being edited via the row ⋮ menu; null = the Add flow.
+  const [editTab, setEditTab] = useState<DashTab | null>(null);
 
   const goList = () => navigate({ to: "/settings/dashboard-applications" });
   const goApp = () =>
@@ -89,7 +92,16 @@ function SectionEditPage() {
   const removeVariable = (idx: number) =>
     setDefinition(section.definition.filter((_, i) => i !== idx));
 
-  const addTab = (tab: DashTab) => patchSection({ tabs: [...section.tabs, tab] });
+  // One Save handler for both flows: replace by id when editing, else append.
+  const saveTab = (tab: DashTab) =>
+    patchSection({
+      tabs: section.tabs.some((t) => t.id === tab.id)
+        ? section.tabs.map((t) => (t.id === tab.id ? tab : t))
+        : [...section.tabs, tab],
+    });
+  const removeTab = (id: string) => patchSection({ tabs: section.tabs.filter((t) => t.id !== id) });
+  const openAddTab = () => { setEditTab(null); setTabOpen(true); };
+  const openEditTab = (tab: DashTab) => { setEditTab(tab); setTabOpen(true); };
 
   return (
     <AppShell>
@@ -214,7 +226,7 @@ function SectionEditPage() {
                 variant="outline"
                 size="sm"
                 className="h-8 gap-1.5"
-                onClick={() => setTabOpen(true)}
+                onClick={openAddTab}
               >
                 <Plus className="h-3.5 w-3.5" /> Add tab
               </Button>
@@ -226,10 +238,8 @@ function SectionEditPage() {
                   <tr>
                     <Th>Label</Th>
                     <Th>Slug</Th>
+                    <Th>Description</Th>
                     <Th>Dashboard Id</Th>
-                    <Th>Looker Id</Th>
-                    <Th>Filter Set</Th>
-                    <Th>Panels</Th>
                     <Th className="w-10" />
                   </tr>
                 </thead>
@@ -243,28 +253,23 @@ function SectionEditPage() {
                       <Td />
                       <Td />
                       <Td />
-                      <Td />
-                      <Td />
                     </tr>
                   ) : (
                     section.tabs.map((t) => (
                       <tr key={t.id} className="border-t border-border hover:bg-secondary/40">
                         <Td className="text-foreground/90">{t.label}</Td>
                         <Td className="text-foreground/80">{t.slug}</Td>
-                        <Td className="text-muted-foreground">{t.dashboardId}</Td>
-                        <Td className="text-muted-foreground">{t.lookerId || "-"}</Td>
-                        <Td className="text-muted-foreground">{t.filterSet}</Td>
-                        <Td className="text-muted-foreground">{t.panels.length}</Td>
+                        <Td className="text-muted-foreground">
+                          <span className="block max-w-[280px] truncate" title={t.description}>{t.description || "-"}</span>
+                        </Td>
+                        <Td className="whitespace-nowrap text-muted-foreground">{t.dashboardId}</Td>
                         <Td>
-                          <button
-                            onClick={() =>
-                              patchSection({ tabs: section.tabs.filter((x) => x.id !== t.id) })
-                            }
-                            className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
-                            aria-label={`Delete ${t.label}`}
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
+                          <RowActionsMenu
+                            id={t.id}
+                            onEdit={() => openEditTab(t)}
+                            onDelete={() => removeTab(t.id)}
+                            entityLabel="tab"
+                          />
                         </Td>
                       </tr>
                     ))
@@ -277,7 +282,7 @@ function SectionEditPage() {
         </div>
       </div>
 
-      <AddTabDialog open={tabOpen} onOpenChange={setTabOpen} onSave={addTab} />
+      <AddTabDialog open={tabOpen} onOpenChange={setTabOpen} onSave={saveTab} initial={editTab} />
     </AppShell>
   );
 }

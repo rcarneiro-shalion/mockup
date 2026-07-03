@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -29,15 +29,19 @@ const emptyPanel = (): DashTabPanel => ({
   dashboardId: "",
 });
 
-/** Modal that builds a new section tab (with inline-editable panels) and emits it on Save. */
+/** Modal that builds a NEW section tab or edits an existing one (with inline-editable
+ *  panels) and emits it on Save. Pass `initial` to open in edit mode (id is preserved). */
 export function AddTabDialog({
   open,
   onOpenChange,
   onSave,
+  initial = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (tab: DashTab) => void;
+  /** The tab being edited; omit / null for the add flow. */
+  initial?: DashTab | null;
 }) {
   const [label, setLabel] = useState("");
   const [slug, setSlug] = useState("");
@@ -47,19 +51,24 @@ export function AddTabDialog({
   const [filterSet, setFilterSet] = useState(FILTER_SETS[0]);
   const [panels, setPanels] = useState<DashTabPanel[]>([]);
 
-  const reset = () => {
-    setLabel("");
-    setSlug("");
-    setDescription("");
-    setDashboardId("");
-    setLookerId("");
-    setFilterSet(FILTER_SETS[0]);
-    setPanels([]);
-  };
+  // Seed the form from `initial` (edit) or blanks (add) each time the modal opens.
+  useEffect(() => {
+    if (!open) return;
+    setLabel(initial?.label ?? "");
+    setSlug(initial?.slug ?? "");
+    setDescription(initial?.description ?? "");
+    setDashboardId(initial?.dashboardId ?? "");
+    setLookerId(initial?.lookerId ?? "");
+    setFilterSet(initial?.filterSet || FILTER_SETS[0]);
+    // clone panels so edits don't mutate the stored tab until Save
+    setPanels((initial?.panels ?? []).map((p) => ({ ...p })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial?.id]);
+
+  const isEdit = !!initial;
 
   const close = () => {
     onOpenChange(false);
-    reset();
   };
 
   const panelsInvalid = panels.some(
@@ -73,7 +82,7 @@ export function AddTabDialog({
   const handleSave = () => {
     if (!canSave) return;
     onSave({
-      id: crypto.randomUUID(),
+      id: initial?.id ?? crypto.randomUUID(),
       label: label.trim(),
       slug: slug.trim(),
       description: description.trim(),
@@ -89,7 +98,7 @@ export function AddTabDialog({
     <Dialog open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Add tab</DialogTitle>
+          <DialogTitle>{isEdit ? `Edit tab ${initial?.label}` : "Add tab"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
