@@ -103,7 +103,15 @@ function toJsonString(raw: unknown): string {
 }
 
 function toDashSection(s: Record<string, unknown>): DashSection {
-  const rawTabs = (s.dashboardSectionTabs ?? s.tabs ?? []) as unknown;
+  const cfgStr = toJsonString(s.sectionConfig ?? s.section_config);
+  // Tabs live inside section_config.tabs in the real model; fall back to any
+  // top-level tabs/dashboardSectionTabs a payload might expose.
+  let cfgObj: Record<string, unknown> | null = null;
+  try {
+    const parsed = cfgStr ? JSON.parse(cfgStr) : null;
+    if (parsed && typeof parsed === "object") cfgObj = parsed as Record<string, unknown>;
+  } catch { /* not json */ }
+  const rawTabs = (cfgObj?.tabs ?? s.dashboardSectionTabs ?? s.tabs ?? []) as unknown;
   const tabs: DashTab[] = pickArr(rawTabs).map((t) => ({
     id: str(t.id) || `tab-${newId()}`,
     label: str(t.label),
@@ -125,7 +133,7 @@ function toDashSection(s: Record<string, unknown>): DashSection {
     label: str(s.label),
     type: str(s.type) === "CUSTOM" ? "CUSTOM" : "BUILT_IN",
     definition: toDefinition(s.definition),
-    sectionConfig: toJsonString(s.sectionConfig ?? s.section_config),
+    sectionConfig: cfgStr,
     labelTranslation,
     tabs,
     createdAt: str(s.createdAt),
@@ -323,6 +331,30 @@ function JsonbCell({ value, onOpen }: { value: string; onOpen: () => void }) {
       )}
     </td>
   );
+}
+
+/** Parse the section's tabs from the raw `section_config` jsonb — the canonical
+ *  source of truth (the real model nests tabs under section_config.tabs). */
+function tabsFromConfig(cfg: string): DashTab[] {
+  if (!cfg) return [];
+  try {
+    const o = JSON.parse(cfg) as { tabs?: unknown };
+    if (!Array.isArray(o?.tabs)) return [];
+    return o.tabs
+      .filter((t): t is Record<string, unknown> => !!t && typeof t === "object")
+      .map((t) => ({
+        id: str(t.id) || `tab-${newId()}`,
+        label: str(t.label),
+        slug: str(t.slug),
+        description: str(t.description),
+        dashboardId: str(t.dashboardId ?? t.dashboard_id),
+        lookerId: str(t.lookerId ?? t.looker_id),
+        filterSet: str(t.filterSet ?? t.filter_set),
+        panels: [],
+      }));
+  } catch {
+    return [];
+  }
 }
 
 /** Pretty-print a raw JSON string for the detail modal; passthrough if unparseable. */
@@ -1121,6 +1153,9 @@ export function SectionsGridPage() {
             const s = editRow.section;
             const lt = Object.entries(s.labelTranslation ?? {});
             const cfg = prettyJson(s.sectionConfig ?? "");
+            // Tabs live inside section_config in the real model — parse from there
+            // (canonical), falling back to the section's own tabs array.
+            const cfgTabs = s.tabs.length ? s.tabs : tabsFromConfig(s.sectionConfig ?? "");
             return (
               <div className="space-y-5">
                 <div>
@@ -1194,9 +1229,9 @@ export function SectionsGridPage() {
                   )}
                 </Section>
 
-                {/* Section tabs (parsed) */}
-                <Section title="Section tabs" count={s.tabs.length}>
-                  {s.tabs.length === 0 ? (
+                {/* Section tabs (parsed from section_config) */}
+                <Section title="Section tabs" count={cfgTabs.length}>
+                  {cfgTabs.length === 0 ? (
                     <Empty>No tabs.</Empty>
                   ) : (
                     <div className="overflow-auto rounded-md border border-border">
@@ -1210,7 +1245,7 @@ export function SectionsGridPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {s.tabs.map((t) => (
+                          {cfgTabs.map((t) => (
                             <tr key={t.id} className="border-t border-border">
                               <td className="whitespace-nowrap px-3 py-1.5 text-foreground/90">{t.label || "—"}</td>
                               <td className="whitespace-nowrap px-3 py-1.5 font-mono text-xs text-foreground/70">{t.slug || "—"}</td>
