@@ -380,6 +380,10 @@ export function SectionsGridPage() {
   const [confirmSave, setConfirmSave] = useState<FlatRow | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<FlatRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Bulk selection → delete-many with a count-confirmation modal.
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmBulk, setConfirmBulk] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   // Read-only "view all" modal — the row's fields parsed from the jsonb columns
   // (mirrors the real dashboard-section detail page).
   const [editRow, setEditRow] = useState<FlatRow | null>(null);
@@ -618,16 +622,15 @@ export function SectionsGridPage() {
     });
   };
 
-  const deleteSection = async (row: FlatRow) => {
-    setConfirmDelete(null);
+  // Core delete: snapshot first, then local removal or a live DELETE. Returns ok so
+  // both the single-row and bulk flows can report their own toasts.
+  const deleteOne = async (row: FlatRow): Promise<boolean> => {
     backup(row.section, "Before delete"); // safety snapshot — restorable from history
     if (!live) {
       removeSectionFromState(row.appId, row.groupId, row.section.id);
-      toast.success(`Deleted "${row.section.label || row.section.path}" (local mockup) — a backup is in the version history.`);
-      return;
+      return true;
     }
     const saved = getDevTokens();
-    setDeletingId(row.section.id);
     try {
       const res = await mutateLive({
         data: {
@@ -641,18 +644,68 @@ export function SectionsGridPage() {
       });
       if (res.ok) {
         removeSectionFromState(row.appId, row.groupId, row.section.id);
-        toast.success(`Deleted "${row.section.label || row.section.path}" from ${loadedEnv.toUpperCase()} — a backup snapshot is in the version history.`);
-      } else {
-        toast.error(res.error || `Delete failed (${res.status}).`);
+        return true;
       }
-    } catch (e) {
-      toast.error(`Delete failed: ${(e as Error).message}`);
-    } finally {
-      setDeletingId(null);
+      return false;
+    } catch {
+      return false;
     }
   };
 
-  const colCount = 5 + 3 + 1; // fixed(App/Group/Path/Label/Type) + 3 jsonb + Actions
+  const deleteSection = async (row: FlatRow) => {
+    setConfirmDelete(null);
+    setDeletingId(row.section.id);
+    const ok = await deleteOne(row);
+    setDeletingId(null);
+    setSelected((prev) => {
+      if (!prev.has(row.section.id)) return prev;
+      const n = new Set(prev);
+      n.delete(row.section.id);
+      return n;
+    });
+    if (ok)
+      toast.success(`Deleted "${row.section.label || row.section.path}"${live ? ` from ${loadedEnv.toUpperCase()}` : " (local)"} — backup in the version history.`);
+    else toast.error(`Delete failed for "${row.section.label || row.section.path}".`);
+  };
+
+  // --- bulk delete (selected rows) -------------------------------------------
+  const toggleRow = (id: string) =>
+    setSelected((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  const rowIds = rows.map((r) => r.section.id);
+  const allShownSelected = rowIds.length > 0 && rowIds.every((id) => selected.has(id));
+  const someShownSelected = rowIds.some((id) => selected.has(id));
+  const toggleAll = () =>
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (allShownSelected) rowIds.forEach((id) => n.delete(id));
+      else rowIds.forEach((id) => n.add(id));
+      return n;
+    });
+
+  const bulkDelete = async () => {
+    setConfirmBulk(false);
+    const targets = allRows.filter((r) => selected.has(r.section.id));
+    if (!targets.length) return;
+    setBulkDeleting(true);
+    let ok = 0;
+    let fail = 0;
+    // Sequential so each live DELETE + snapshot is ordered and atomic-per-row.
+    for (const row of targets) {
+      // eslint-disable-next-line no-await-in-loop
+      (await deleteOne(row)) ? ok++ : fail++;
+    }
+    setBulkDeleting(false);
+    setSelected(new Set());
+    if (fail === 0)
+      toast.success(`Deleted ${ok} section${ok === 1 ? "" : "s"}${live ? ` from ${loadedEnv.toUpperCase()}` : " (local)"} — backups in the version history.`);
+    else toast.warning(`Deleted ${ok} of ${ok + fail} — ${fail} failed. Backups saved for every attempt.`);
+  };
+
+  const colCount = 1 + 5 + 3 + 1; // select + fixed(5) + 3 jsonb + Actions
   const historyRow = historyForId ? allRows.find((r) => r.section.id === historyForId) : null;
   const historyList = historyForId ? versions[historyForId] ?? [] : [];
 
@@ -817,12 +870,48 @@ export function SectionsGridPage() {
           </span>
         </div>
 
+        {/* Bulk action bar — appears once rows are selected. */}
+        {selected.size > 0 && (
+          <div className="mx-6 mb-3 flex items-center gap-3 rounded-lg border border-[var(--sidebar-active-fg)]/40 bg-primary/5 px-4 py-2.5">
+            <span className="text-sm font-medium text-foreground">
+              {selected.size} section{selected.size === 1 ? "" : "s"} selected
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              className="text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              Clear selection
+            </button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="ml-auto h-8 gap-1.5"
+              disabled={bulkDeleting}
+              onClick={() => setConfirmBulk(true)}
+            >
+              {bulkDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              Delete selected
+            </Button>
+          </div>
+        )}
+
         {/* Grid */}
         <div className="min-h-0 flex-1 overflow-auto px-6 pb-6">
           <div className="inline-block min-w-full overflow-hidden rounded-lg border border-border align-top">
             <table className="border-collapse text-sm">
               <thead className="bg-secondary/60">
                 <tr>
+                  <th className={cn(th, "w-8 text-center")}>
+                    <input
+                      type="checkbox"
+                      aria-label="Select all shown"
+                      checked={allShownSelected}
+                      ref={(el) => { if (el) el.indeterminate = someShownSelected && !allShownSelected; }}
+                      onChange={toggleAll}
+                      className="h-4 w-4 cursor-pointer rounded border-border align-middle"
+                    />
+                  </th>
                   <th className={th}>Application</th>
                   <th className={th}>Group</th>
                   <th className={th}>Path</th>
@@ -857,8 +946,18 @@ export function SectionsGridPage() {
                     r.section.labelTranslation && Object.keys(r.section.labelTranslation).length
                       ? JSON.stringify(r.section.labelTranslation)
                       : "";
+                  const isSelected = selected.has(r.section.id);
                   return (
-                    <tr key={r.section.id} className={cn("hover:bg-secondary/30", isDirty && "bg-amber-50/60")}>
+                    <tr key={r.section.id} className={cn("hover:bg-secondary/30", isDirty && "bg-amber-50/60", isSelected && "bg-primary/5")}>
+                      <td className={cn(cellTd, "px-2 text-center")}>
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${r.section.label || r.section.path}`}
+                          checked={isSelected}
+                          onChange={() => toggleRow(r.section.id)}
+                          className="h-4 w-4 cursor-pointer rounded border-border align-middle"
+                        />
+                      </td>
                       <td className={cn(cellTd, "whitespace-nowrap px-2 font-medium text-foreground/70")} title={r.appLabel}>{r.appShort}</td>
                       <td className={cn(cellTd, "whitespace-nowrap px-2 text-foreground/70")}>{r.groupLabel}</td>
                       <td className={cellTd}>
@@ -1129,6 +1228,45 @@ export function SectionsGridPage() {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Bulk-delete confirm — states how many rows are affected. */}
+      <AlertDialog open={confirmBulk} onOpenChange={(v) => !v && setConfirmBulk(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-4 w-4" /> Delete {selected.size} section{selected.size === 1 ? "" : "s"}
+              {live ? ` from ${loadedEnv.toUpperCase()}` : ""}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to delete <strong>{selected.size}</strong> selected dashboard section
+              {selected.size === 1 ? "" : "s"}
+              {live ? (
+                <>
+                  {" "}on the live <strong>{loadedEnv}</strong> environment. Each is DELETEd one by one; a version
+                  snapshot is taken for every row first (content is restorable from that row's history, but the rows
+                  themselves must be re-created by hand).
+                  {loadedEnv === "prod" && (
+                    <span className="mt-2 block font-medium text-rose-700">
+                      This is PRODUCTION — they disappear from the real client dashboards.
+                    </span>
+                  )}
+                </>
+              ) : (
+                <> from the local mockup data. A version snapshot is taken for every row first.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void bulkDelete()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" /> Delete {selected.size} section{selected.size === 1 ? "" : "s"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete confirm */}
       <AlertDialog open={confirmDelete !== null} onOpenChange={(v) => !v && setConfirmDelete(null)}>
