@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Interactive "Delivery map" — the Seeds API field-level transition sankey.
@@ -36,16 +37,47 @@ export function SeedsDeliveryMap() {
   const fOp = (k: Phase) => (vis[k] ? 1 : 0.06);
   const rOp = (k: Phase) => (vis[k] ? 0.42 : 0.05);
 
+  // Full-screen the whole map region (title + chips + diagram) so the phase
+  // toggles stay usable while presenting.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [isFs, setIsFs] = useState(false);
+  useEffect(() => {
+    const onChange = () => setIsFs(document.fullscreenElement === wrapRef.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+  const toggleFs = () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else wrapRef.current?.requestFullscreen?.().catch(() => {});
+  };
+
   return (
     <div className="h-full overflow-auto">
-      <div className="mx-auto max-w-[1240px] px-6 py-6">
+      <div
+        ref={wrapRef}
+        className={cn(
+          "mx-auto bg-background px-6 py-6",
+          isFs ? "flex min-h-full max-w-[1600px] flex-col justify-center overflow-auto" : "max-w-[1240px]",
+        )}
+      >
         {/* Header */}
-        <div className="mb-1">
-          <h1 className="text-[17px] font-semibold text-foreground">Delivery map</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Field-level transition from the legacy Tasks model to the Seeds API — colour marks the phase each field
-            lands or moves. Click a phase to show/hide its connections &amp; fields.
-          </p>
+        <div className="mb-1 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[17px] font-semibold text-foreground">Delivery map</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Field-level transition from the legacy Tasks model to the Seeds API — colour marks the phase each field
+              lands or moves. Click a phase to show/hide its connections &amp; fields.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={toggleFs}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm hover:bg-secondary"
+            title={isFs ? "Exit full screen" : "Full screen"}
+          >
+            {isFs ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            {isFs ? "Exit full screen" : "Full screen"}
+          </button>
         </div>
 
         {/* Phase controls */}
