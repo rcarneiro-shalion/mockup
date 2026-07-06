@@ -16,6 +16,11 @@ const ENV_SUFFIX: Record<LiveEnv, string> = {
   prod: "-prod.v2.shalion.com",
 };
 
+// Identifies THIS mockup as the caller on every outbound Shalion API request
+// (reads and writes, dev or prod). Sent as `x-caller-id` so the platform can
+// distinguish traffic originating from the mockup builder from the real console.
+const CALLER_ID = "mockup";
+
 // Caller service key → real API slug (from the URL map).
 const SERVICE_SLUGS: Record<string, string> = {
   iam: "iam-api",
@@ -109,7 +114,7 @@ export async function aggregateAssignments(args: {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
     Accept: "application/json",
-    "x-caller-id": "console",
+    "x-caller-id": CALLER_ID,
     ...(idToken ? { "x-id-token": idToken } : {}),
   };
   const rec = (r: Record<string, unknown>): AssignmentPair => {
@@ -216,7 +221,7 @@ export async function aggregateSectionPositions(args: {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
     Accept: "application/json",
-    "x-caller-id": "console",
+    "x-caller-id": CALLER_ID,
     ...(idToken ? { "x-id-token": idToken } : {}),
   };
 
@@ -442,7 +447,7 @@ export async function mutateShalion(args: {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
-        "x-caller-id": "console",
+        "x-caller-id": CALLER_ID,
         ...(idToken ? { "x-id-token": idToken } : {}),
         ...(args.method === "POST" || args.method === "PATCH" || args.method === "PUT" ? { "Content-Type": "application/json" } : {}),
       },
@@ -519,6 +524,7 @@ export async function fetchShalion(args: {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
+        "x-caller-id": CALLER_ID,
         ...(idToken ? { "x-id-token": idToken } : {}),
       },
       signal: AbortSignal.timeout(20000),
