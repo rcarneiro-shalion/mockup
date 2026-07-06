@@ -32,6 +32,7 @@ import { Route as SeedsApiSubscriptionsRouteImport } from './routes/seeds-api/su
 import { Route as SeedsApiScrappingOptionsRouteImport } from './routes/seeds-api/scrapping-options'
 import { Route as SeedsApiScenarioGeneratorRouteImport } from './routes/seeds-api/scenario-generator'
 import { Route as SeedsApiPlannerRouteImport } from './routes/seeds-api/planner'
+import { Route as SeedsApiDeliveryMapRouteImport } from './routes/seeds-api/delivery-map'
 import { Route as RetailersNewRouteImport } from './routes/retailers/new'
 import { Route as RetailersRetailerIdRouteImport } from './routes/retailers/$retailerId'
 import { Route as ProductClientSkusRouteImport } from './routes/product/client-skus'
@@ -309,6 +310,11 @@ const SeedsApiScenarioGeneratorRoute =
 const SeedsApiPlannerRoute = SeedsApiPlannerRouteImport.update({
   id: '/seeds-api/planner',
   path: '/seeds-api/planner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SeedsApiDeliveryMapRoute = SeedsApiDeliveryMapRouteImport.update({
+  id: '/seeds-api/delivery-map',
+  path: '/seeds-api/delivery-map',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RetailersNewRoute = RetailersNewRouteImport.update({
@@ -1210,6 +1216,7 @@ export interface FileRoutesByFullPath {
   '/product/client-skus': typeof ProductClientSkusRouteWithChildren
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
+  '/seeds-api/delivery-map': typeof SeedsApiDeliveryMapRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
   '/seeds-api/scenario-generator': typeof SeedsApiScenarioGeneratorRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
@@ -1392,6 +1399,7 @@ export interface FileRoutesByTo {
   '/location-catalogs/new': typeof LocationCatalogsNewRoute
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
+  '/seeds-api/delivery-map': typeof SeedsApiDeliveryMapRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
   '/seeds-api/scenario-generator': typeof SeedsApiScenarioGeneratorRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
@@ -1571,6 +1579,7 @@ export interface FileRoutesById {
   '/product/client-skus': typeof ProductClientSkusRouteWithChildren
   '/retailers/$retailerId': typeof RetailersRetailerIdRoute
   '/retailers/new': typeof RetailersNewRoute
+  '/seeds-api/delivery-map': typeof SeedsApiDeliveryMapRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
   '/seeds-api/scenario-generator': typeof SeedsApiScenarioGeneratorRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
@@ -1757,6 +1766,7 @@ export interface FileRouteTypes {
     | '/product/client-skus'
     | '/retailers/$retailerId'
     | '/retailers/new'
+    | '/seeds-api/delivery-map'
     | '/seeds-api/planner'
     | '/seeds-api/scenario-generator'
     | '/seeds-api/scrapping-options'
@@ -1939,6 +1949,7 @@ export interface FileRouteTypes {
     | '/location-catalogs/new'
     | '/retailers/$retailerId'
     | '/retailers/new'
+    | '/seeds-api/delivery-map'
     | '/seeds-api/planner'
     | '/seeds-api/scenario-generator'
     | '/seeds-api/scrapping-options'
@@ -2117,6 +2128,7 @@ export interface FileRouteTypes {
     | '/product/client-skus'
     | '/retailers/$retailerId'
     | '/retailers/new'
+    | '/seeds-api/delivery-map'
     | '/seeds-api/planner'
     | '/seeds-api/scenario-generator'
     | '/seeds-api/scrapping-options'
@@ -2302,6 +2314,7 @@ export interface RootRouteChildren {
   ProductClientSkusRoute: typeof ProductClientSkusRouteWithChildren
   RetailersRetailerIdRoute: typeof RetailersRetailerIdRoute
   RetailersNewRoute: typeof RetailersNewRoute
+  SeedsApiDeliveryMapRoute: typeof SeedsApiDeliveryMapRoute
   SeedsApiPlannerRoute: typeof SeedsApiPlannerRoute
   SeedsApiScenarioGeneratorRoute: typeof SeedsApiScenarioGeneratorRoute
   SeedsApiScrappingOptionsRoute: typeof SeedsApiScrappingOptionsRoute
@@ -2614,6 +2627,13 @@ declare module '@tanstack/react-router' {
       path: '/seeds-api/planner'
       fullPath: '/seeds-api/planner'
       preLoaderRoute: typeof SeedsApiPlannerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seeds-api/delivery-map': {
+      id: '/seeds-api/delivery-map'
+      path: '/seeds-api/delivery-map'
+      fullPath: '/seeds-api/delivery-map'
+      preLoaderRoute: typeof SeedsApiDeliveryMapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/retailers/new': {
@@ -3885,6 +3905,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductClientSkusRoute: ProductClientSkusRouteWithChildren,
   RetailersRetailerIdRoute: RetailersRetailerIdRoute,
   RetailersNewRoute: RetailersNewRoute,
+  SeedsApiDeliveryMapRoute: SeedsApiDeliveryMapRoute,
   SeedsApiPlannerRoute: SeedsApiPlannerRoute,
   SeedsApiScenarioGeneratorRoute: SeedsApiScenarioGeneratorRoute,
   SeedsApiScrappingOptionsRoute: SeedsApiScrappingOptionsRoute,

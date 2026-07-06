@@ -1,4 +1,5 @@
-import { useLocation, useRouter } from "@tanstack/react-router";
+import { Link, useLocation, useRouter } from "@tanstack/react-router";
+import { Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { APP_VERSIONS, getAppVersion, stripVersionPrefix, versionLabel, type VersionRewrite } from "@/lib/appVersion";
 
@@ -19,26 +20,46 @@ export function VersionTabs() {
   // sibling version must land on the SAME page state, matching the server redirect.
   const suffix = `${searchStr ?? ""}${hash ? `#${hash}` : ""}`;
 
+  // Whether we're on the Delivery-map page (highlight the button).
+  const onDeliveryMap = subPath.startsWith("/seeds-api/delivery-map");
+
   return (
-    <div className="flex items-end gap-1 border-b border-border bg-secondary/50 px-3 pt-1.5">
-      {APP_VERSIONS.map((v) => {
-        const active = v === current;
-        return (
-          <a
-            key={v}
-            href={`/v${v}${subPath === "/" ? "" : subPath}${suffix}`}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "-mb-px rounded-t-lg border border-b-0 px-4 py-1.5 text-xs transition-colors",
-              active
-                ? "border-border bg-card font-semibold text-[var(--sidebar-active-fg)] shadow-sm"
-                : "border-transparent font-medium text-muted-foreground hover:bg-secondary hover:text-foreground",
-            )}
-          >
-            {versionLabel(v)}
-          </a>
-        );
-      })}
+    <div className="flex items-end justify-between border-b border-border bg-secondary/50 px-3 pt-1.5">
+      <div className="flex items-end gap-1">
+        {APP_VERSIONS.map((v) => {
+          const active = v === current;
+          return (
+            <a
+              key={v}
+              href={`/v${v}${subPath === "/" ? "" : subPath}${suffix}`}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "-mb-px rounded-t-lg border border-b-0 px-4 py-1.5 text-xs transition-colors",
+                active
+                  ? "border-border bg-card font-semibold text-[var(--sidebar-active-fg)] shadow-sm"
+                  : "border-transparent font-medium text-muted-foreground hover:bg-secondary hover:text-foreground",
+              )}
+            >
+              {versionLabel(v)}
+            </a>
+          );
+        })}
+      </div>
+
+      {/* Delivery map — opens the interactive Seeds API transition sankey. */}
+      <Link
+        to="/seeds-api/delivery-map"
+        aria-current={onDeliveryMap ? "page" : undefined}
+        className={cn(
+          "mb-1 inline-flex items-center gap-1.5 rounded-md border px-3 py-1 text-xs font-medium shadow-sm transition-colors",
+          onDeliveryMap
+            ? "border-[var(--sidebar-active-fg)] bg-card text-[var(--sidebar-active-fg)]"
+            : "border-border bg-card text-foreground hover:bg-secondary",
+        )}
+      >
+        <Map className="h-3.5 w-3.5" />
+        Delivery map
+      </Link>
     </div>
   );
 }
