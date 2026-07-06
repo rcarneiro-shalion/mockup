@@ -38,7 +38,10 @@ import {
   Trash2,
   Braces,
   Pencil,
+  Plus,
 } from "lucide-react";
+import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
+import { AddTabDialog } from "@/components/settings/AddTabDialog";
 import {
   useDashboardApps,
   nowStamp,
@@ -175,14 +178,24 @@ function toDashApps(appsJson: unknown, groupRows: Record<string, unknown>[], sec
   }));
 }
 
-/** DashSection → PATCH body (definition back to a jsonb object). Tabs are NOT
- *  pushed (separate endpoint/shape) — only section-level content. */
+/** DashSection → PATCH body: all editable section content back to jsonb shapes
+ *  (definition + label_translation as objects, section_config as a parsed object). */
 function toApiBody(s: DashSection) {
+  let sectionConfig: unknown = null;
+  if (s.sectionConfig) {
+    try {
+      sectionConfig = JSON.parse(s.sectionConfig);
+    } catch {
+      sectionConfig = null;
+    }
+  }
   return {
     path: s.path,
     label: s.label,
     type: s.type,
+    labelTranslation: s.labelTranslation ?? {},
     definition: Object.fromEntries(s.definition.filter((v) => v.key).map((v) => [v.key, v.value])),
+    sectionConfig,
   };
 }
 
@@ -393,16 +406,6 @@ function tabsFromConfig(cfg: string): DashTab[] {
   }
 }
 
-/** Pretty-print a raw JSON string for the detail modal; passthrough if unparseable. */
-function prettyJson(raw: string): string {
-  if (!raw) return "";
-  try {
-    return JSON.stringify(JSON.parse(raw), null, 2);
-  } catch {
-    return raw;
-  }
-}
-
 export function SectionsGridPage() {
   // --- data source: local (mockup) persisted vs live working copy -----------
   const [localApps, setLocalApps] = useDashboardApps();
@@ -452,9 +455,12 @@ export function SectionsGridPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
-  // Read-only "view all" modal — the row's fields parsed from the jsonb columns
-  // (mirrors the real dashboard-section detail page).
+  // "Edit all" modal — the row's fields parsed from the jsonb columns, editable
+  // on the fly (mirrors the real dashboard-section detail page).
   const [editRow, setEditRow] = useState<FlatRow | null>(null);
+  // The tab add/edit dialog launched from inside the section-edit modal.
+  const [secTabOpen, setSecTabOpen] = useState(false);
+  const [secTabInitial, setSecTabInitial] = useState<DashTab | null>(null);
 
   // Flatten the app → group → section tree into editable rows.
   const allRows: FlatRow[] = useMemo(() => {
@@ -522,6 +528,37 @@ export function SectionsGridPage() {
             },
       ),
     );
+  };
+
+  // --- section-edit modal helpers --------------------------------------------
+  // The live section for the open modal (re-read from apps so inline edits show
+  // immediately; null if it was deleted while open).
+  const editSection = editRow ? allRows.find((r) => r.section.id === editRow.section.id) ?? null : null;
+  const patchEdit = (patch: Partial<DashSection>) => {
+    if (editSection) patchSection(editSection.appId, editSection.groupId, editSection.section.id, patch);
+  };
+  // Writing tabs keeps section.tabs and section_config.tabs in sync (canonical source).
+  const writeTabs = (tabs: DashTab[]) => {
+    const cur = editSection?.section;
+    if (!cur) return;
+    let cfgObj: Record<string, unknown> = {};
+    try {
+      const p = cur.sectionConfig ? JSON.parse(cur.sectionConfig) : null;
+      if (p && typeof p === "object" && !Array.isArray(p)) cfgObj = p as Record<string, unknown>;
+    } catch { /* ignore */ }
+    patchEdit({ tabs, sectionConfig: JSON.stringify({ ...cfgObj, tabs }) });
+  };
+  const saveSectionTab = (tab: DashTab) => {
+    const cur = editSection?.section;
+    if (!cur) return;
+    const curTabs = cur.tabs.length ? cur.tabs : tabsFromConfig(cur.sectionConfig ?? "");
+    writeTabs(curTabs.some((t) => t.id === tab.id) ? curTabs.map((t) => (t.id === tab.id ? tab : t)) : [...curTabs, tab]);
+  };
+  const deleteSectionTab = (id: string) => {
+    const cur = editSection?.section;
+    if (!cur) return;
+    const curTabs = cur.tabs.length ? cur.tabs : tabsFromConfig(cur.sectionConfig ?? "");
+    writeTabs(curTabs.filter((t) => t.id !== id));
   };
 
   // --- version history actions ----------------------------------------------
@@ -1185,86 +1222,111 @@ export function SectionsGridPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Section detail — all fields parsed from the jsonb columns (mirrors the
-          real dashboard-section detail page). Read-only viewer. */}
+      {/* Section detail — all fields parsed from the jsonb columns, editable on the
+          fly (mirrors the real dashboard-section detail page). */}
       <Dialog open={editRow !== null} onOpenChange={(v) => !v && setEditRow(null)}>
         <DialogContent className="max-h-[88vh] w-[min(760px,94vw)] max-w-none overflow-auto">
-          {editRow && (() => {
-            const s = editRow.section;
-            const lt = Object.entries(s.labelTranslation ?? {});
-            const cfg = prettyJson(s.sectionConfig ?? "");
-            // Tabs live inside section_config in the real model — parse from there
-            // (canonical), falling back to the section's own tabs array.
+          {editSection && (() => {
+            const s = editSection.section;
+            const lt = s.labelTranslation ?? {};
+            const ltEntries = Object.entries(lt);
             const cfgTabs = s.tabs.length ? s.tabs : tabsFromConfig(s.sectionConfig ?? "");
+            const setLt = (next: Record<string, string>) => patchEdit({ labelTranslation: next });
+            const removeLt = (loc: string) => { const n = { ...lt }; delete n[loc]; setLt(n); };
+            const addableLocales = ["es", "pt", "en", "fr", "de", "it"].filter((l) => !(l in lt));
+            const setDefs = (next: DashDefinitionVar[]) => patchEdit({ definition: next });
+            const inputCls = "h-8 w-full rounded-md border border-input bg-background px-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring";
             return (
               <div className="space-y-5">
                 <div>
                   <DialogTitle className="text-lg font-semibold tracking-tight">{s.label || s.path}</DialogTitle>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {editRow.appLabel} › {editRow.groupLabel}
+                    {editSection.appLabel} › {editSection.groupLabel}
                     <span className="ml-2 rounded-full bg-secondary px-1.5 py-0.5 font-mono">{s.id}</span>
                   </p>
                 </div>
 
                 {/* Base fields */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Detail label="Path"><span className="font-mono text-sm">{s.path || "—"}</span></Detail>
+                  <Detail label="Path">
+                    <input className={cn(inputCls, "font-mono")} value={s.path} onChange={(e) => patchEdit({ path: e.target.value })} />
+                  </Detail>
                   <Detail label="Type">
-                    <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                      {s.type === "CUSTOM" ? "Custom" : "Built in"}
-                    </span>
+                    <div className="flex items-center gap-1 rounded-md border border-border bg-secondary/40 p-0.5 text-xs">
+                      {(["BUILT_IN", "CUSTOM"] as const).map((ty) => (
+                        <button
+                          key={ty}
+                          type="button"
+                          onClick={() => patchEdit({ type: ty })}
+                          className={cn("flex-1 rounded px-2 py-1.5", s.type === ty ? "bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                        >
+                          {ty === "CUSTOM" ? "Custom" : "Built in"}
+                        </button>
+                      ))}
+                    </div>
                   </Detail>
                   <Detail label="Label" className="sm:col-span-2">
-                    <span className="inline-flex items-center gap-1.5">{LOCALE_FLAG.en} {s.label || "—"}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span>{LOCALE_FLAG.en}</span>
+                      <input className={inputCls} value={s.label} onChange={(e) => patchEdit({ label: e.target.value })} />
+                    </div>
                   </Detail>
                 </div>
 
-                {/* label_translation */}
-                <Section title="label_translation" count={lt.length}>
-                  {lt.length === 0 ? (
-                    <Empty>No translations.</Empty>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {lt.map(([loc, val]) => (
-                        <div key={loc} className="flex items-center gap-2 text-sm">
-                          <span className="w-14 shrink-0 font-mono text-xs text-muted-foreground">{LOCALE_FLAG[loc] ?? ""} {loc}</span>
-                          <span className="text-foreground/90">{val}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                {/* label_translation — editable */}
+                <Section title="label_translation" count={ltEntries.length}>
+                  <div className="space-y-1.5">
+                    {ltEntries.map(([loc, val]) => (
+                      <div key={loc} className="flex items-center gap-2">
+                        <span className="w-16 shrink-0 font-mono text-xs text-muted-foreground">{LOCALE_FLAG[loc] ?? ""} {loc}</span>
+                        <input className={inputCls} value={val} onChange={(e) => setLt({ ...lt, [loc]: e.target.value })} />
+                        <button type="button" onClick={() => removeLt(loc)} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive" aria-label={`Remove ${loc}`}>
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    {ltEntries.length === 0 && <Empty>No translations.</Empty>}
+                    {addableLocales.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1 pt-1">
+                        <span className="text-xs text-muted-foreground">Add:</span>
+                        {addableLocales.map((loc) => (
+                          <button key={loc} type="button" onClick={() => setLt({ ...lt, [loc]: "" })} className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-xs text-foreground/80 hover:bg-secondary">
+                            {LOCALE_FLAG[loc] ?? ""} {loc}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </Section>
 
-                {/* definition */}
+                {/* definition — editable key/value rows */}
                 <Section title="definition" count={s.definition.length}>
-                  {s.definition.length === 0 ? (
-                    <Empty>No definition variables.</Empty>
-                  ) : (
-                    <div className="overflow-hidden rounded-md border border-border">
-                      <table className="w-full text-sm">
-                        <thead className="bg-secondary/50 text-left text-xs text-muted-foreground">
-                          <tr><th className="px-3 py-1.5 font-medium">Key</th><th className="px-3 py-1.5 font-medium">Value</th></tr>
-                        </thead>
-                        <tbody>
-                          {s.definition.map((v) => (
-                            <tr key={v.key} className="border-t border-border">
-                              <td className="px-3 py-1.5 font-mono text-xs text-foreground/80">{v.key}</td>
-                              <td className="px-3 py-1.5 font-mono text-xs text-foreground/70">
-                                <span className="block max-w-[420px] truncate" title={v.value}>{v.value}</span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                  <div className="space-y-1.5">
+                    {s.definition.map((v, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input className={cn(inputCls, "flex-1 font-mono text-xs")} placeholder="key" value={v.key} onChange={(e) => setDefs(s.definition.map((x, j) => (j === i ? { ...x, key: e.target.value } : x)))} />
+                        <input className={cn(inputCls, "flex-1 font-mono text-xs")} placeholder="value" value={v.value} onChange={(e) => setDefs(s.definition.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))} />
+                        <button type="button" onClick={() => setDefs(s.definition.filter((_, j) => j !== i))} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive" aria-label="Remove variable">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    {s.definition.length === 0 && <Empty>No definition variables.</Empty>}
+                    <button type="button" onClick={() => setDefs([...s.definition, { key: "", value: "" }])} className="mt-1 inline-flex items-center gap-1.5 text-sm text-[var(--sidebar-active-fg)] hover:underline">
+                      <Plus className="h-3.5 w-3.5" /> Add variable
+                    </button>
+                  </div>
                 </Section>
 
-                {/* section_config → fully parsed into the Section tabs table below
-                    (in the real model section_config carries only `tabs`). */}
+                {/* section_config › tabs — editable (add / edit / delete) */}
                 <Section title="section_config › tabs" count={cfgTabs.length}>
+                  <div className="mb-2 flex justify-end">
+                    <button type="button" onClick={() => { setSecTabInitial(null); setSecTabOpen(true); }} className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground/80 hover:bg-secondary">
+                      <Plus className="h-3.5 w-3.5" /> Add tab
+                    </button>
+                  </div>
                   {cfgTabs.length === 0 ? (
-                    <Empty>{cfg ? "No tabs in section_config." : "No section_config."}</Empty>
+                    <Empty>No tabs.</Empty>
                   ) : (
                     <div className="overflow-auto rounded-md border border-border">
                       <table className="w-full text-sm">
@@ -1274,8 +1336,8 @@ export function SectionsGridPage() {
                             <th className="px-3 py-1.5 font-medium">Slug</th>
                             <th className="px-3 py-1.5 font-medium">Description</th>
                             <th className="px-3 py-1.5 font-medium">Dashboard Id</th>
-                            <th className="px-3 py-1.5 font-medium">Looker Id</th>
                             <th className="px-3 py-1.5 font-medium">Filter Set</th>
+                            <th className="w-10 px-3 py-1.5" />
                           </tr>
                         </thead>
                         <tbody>
@@ -1283,10 +1345,12 @@ export function SectionsGridPage() {
                             <tr key={t.id} className="border-t border-border">
                               <td className="whitespace-nowrap px-3 py-1.5 text-foreground/90">{t.label || "—"}</td>
                               <td className="whitespace-nowrap px-3 py-1.5 font-mono text-xs text-foreground/70">{t.slug || "—"}</td>
-                              <td className="px-3 py-1.5 text-foreground/70"><span className="block max-w-[200px] truncate" title={t.description}>{t.description || "—"}</span></td>
+                              <td className="px-3 py-1.5 text-foreground/70"><span className="block max-w-[180px] truncate" title={t.description}>{t.description || "—"}</span></td>
                               <td className="whitespace-nowrap px-3 py-1.5 font-mono text-xs text-foreground/70">{t.dashboardId || "—"}</td>
-                              <td className="whitespace-nowrap px-3 py-1.5 font-mono text-xs text-foreground/70">{t.lookerId || "—"}</td>
                               <td className="whitespace-nowrap px-3 py-1.5 text-foreground/70">{t.filterSet || "—"}</td>
+                              <td className="px-3 py-1.5 text-right">
+                                <RowActionsMenu id={t.id} entityLabel="tab" onEdit={() => { setSecTabInitial(t); setSecTabOpen(true); }} onDelete={() => deleteSectionTab(t.id)} />
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -1299,6 +1363,8 @@ export function SectionsGridPage() {
           })()}
         </DialogContent>
       </Dialog>
+
+      <AddTabDialog open={secTabOpen} onOpenChange={setSecTabOpen} onSave={saveSectionTab} initial={secTabInitial} />
 
       {/* Bulk-delete confirm — states how many rows are affected. */}
       <AlertDialog open={confirmBulk} onOpenChange={(v) => !v && setConfirmBulk(false)}>
