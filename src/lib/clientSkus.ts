@@ -41,6 +41,7 @@ export type ClientSkuRegion = {
   businessUnit?: string;
   clientCategory?: string;
   activeFrom?: string;
+  activeTo?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -3243,6 +3244,7 @@ const R = (
   createdAt: string,
   updatedAt: string,
   hero = false,
+  activeTo: string | undefined = undefined,
 ): ClientSkuRegion => ({
   id,
   title,
@@ -3254,6 +3256,7 @@ const R = (
   businessUnit,
   clientCategory,
   activeFrom,
+  activeTo,
   createdAt,
   updatedAt,
 });
@@ -3266,12 +3269,12 @@ export const INITIAL_CLIENT_SKU_REGIONS: ClientSkuRegion[] = [
   R("csr-5", "FLASHLYTE REGULAR COCO-LIMÓN BOTELLA 500ML", "MX", "MX - Coke Bottlers", "FEMSA MX", undefined, undefined, undefined, "Wed, May 21, 2025 9:10 AM", "Sun, Jun 29, 2025 7:54 PM"),
   R("csr-6", "AGUA NATURAL CIEL 600ML", "MX", "MX - Coke Bottlers", "FEMSA MX", undefined, undefined, undefined, "Wed, May 21, 2025 9:10 AM", "Sun, Jun 29, 2025 7:34 PM"),
   R("csr-7", "Coca-Cola Bacardí 355 Mililiter", "MX", "MX - Coke Bottlers", "Bepensa MX", undefined, undefined, undefined, "Tue, May 20, 2025 1:30 PM", "Mon, Jun 9, 2025 9:00 AM"),
-  R("csr-8", "Agua Saborizada Brisa Con Gas Maracuyá 600ml", "CO", "CO - Coke Bottlers", "FEMSA CO", undefined, undefined, "Fri, May 2, 2025", "Tue, May 20, 2025 2:18 PM", "Fri, May 2, 2025 1:34 PM"),
+  R("csr-8", "Agua Saborizada Brisa Con Gas Maracuyá 600ml", "CO", "CO - Coke Bottlers", "FEMSA CO", undefined, undefined, "Fri, May 2, 2025", "Tue, May 20, 2025 2:18 PM", "Fri, May 2, 2025 1:34 PM", false, "Fri, May 1, 2026"),
   R("csr-9", "COCA COLA COLA 2LT PET RET 9PK", "MX", "MX - Coke Bottlers", "FEMSA MX", undefined, undefined, undefined, "Tue, May 20, 2025 2:09 PM", "Thu, Apr 30, 2025 2:20 PM"),
   R("csr-10", "SCHWEPPES GINGER ALE 1.5 L", "PE", "PE - Coke Bottlers", "Arca PE", undefined, undefined, undefined, "Tue, May 20, 2025 1:53 PM", "Thu, Apr 30, 2025 2:20 PM"),
   R("csr-11", "Santa Clara 27 Pack Leche Entera 180 ml c/u", "MX", "MX - Coke Bottlers", "FEMSA MX", undefined, undefined, undefined, "Mon, May 19, 2025 3:30 PM", "Fri, Jul 19, 2024 12:41 PM"),
   R("csr-12", "Refrigerante Uva Fanta Lata 350ml", "BR", "BR - Coke Bottlers", "Andina BR", "SSD", "Flavors", undefined, "Mon, May 19, 2025 2:00 PM", "Fri, Jun 5, 2026 9:48 AM"),
-  R("csr-13", "Refrigerante Coca-Cola Original Garrafa 3l PET", "BR", "BR - Coke Bottlers", "Sorocaba BR", "SSD", "Cola", "Wed, Jan 8, 2025", "Mon, May 19, 2025 9:20 AM", "Wed, Jan 8, 2025 3:00 PM", true),
+  R("csr-13", "Refrigerante Coca-Cola Original Garrafa 3l PET", "BR", "BR - Coke Bottlers", "Sorocaba BR", "SSD", "Cola", "Wed, Jan 8, 2025", "Mon, May 19, 2025 9:20 AM", "Wed, Jan 8, 2025 3:00 PM", true, "Wed, Jan 7, 2026"),
   R("csr-14", "DEL VALLE PET BEBIDA SABOR MANZANA 1.5L", "MX", "MX - Coke Bottlers", "Rica MX", undefined, undefined, undefined, "Thu, May 15, 2025 3:50 PM", "Fri, Jun 5, 2026 3:50 PM"),
   R("csr-15", "REFRESCO COCA-COLA ORIGINAL 355ML LATA", "MX", "MX - Coke Bottlers", "Rica MX", undefined, undefined, undefined, "Tue, Apr 14, 2025 1:29 PM", "Wed, May 13, 2026 7:00 PM"),
   R("csr-16", "Jugo Del Valle Frugos Manzana 1.45Lt x1", "PE", "PE - Coke Bottlers", "Arca PE", undefined, undefined, undefined, "Tue, Apr 28, 2025 9:20 AM", "Tue, May 26, 2026 2:00 PM"),

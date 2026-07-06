@@ -15,7 +15,7 @@
 //
 // ⇒ BUMP APP_SCHEMA_VERSION whenever you change a persisted shape or an INITIAL_*
 //   fixture (new seed bulk, new entity fields, renamed keys, …).
-export const APP_SCHEMA_VERSION = 21;
+export const APP_SCHEMA_VERSION = 22;
 
 const VERSION_KEY = "app:schemaVersion";
 

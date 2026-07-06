@@ -320,6 +320,7 @@ function RegionsTab({
             <SortTh label="Region system" sortKey="regionSystem" sort={sort} />
             <SortTh label="Region" sortKey="region" sort={sort} />
             <SortTh label="Active from" sortKey="activeFrom" sort={sort} />
+            <SortTh label="Active to" sortKey="activeTo" sort={sort} />
             <Th className="w-10" />
           </tr>
         </thead>
@@ -354,6 +355,7 @@ function RegionsTab({
                 <span className="text-[var(--sidebar-active-fg)]">{r.region}</span>
               </Td>
               <Td className="whitespace-nowrap text-muted-foreground">{r.activeFrom ?? "-"}</Td>
+              <Td className="whitespace-nowrap text-muted-foreground">{r.activeTo ?? "-"}</Td>
               <Td>
                 <RowActionsMenu
                   id={r.id}
