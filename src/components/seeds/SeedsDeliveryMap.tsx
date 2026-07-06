@@ -125,7 +125,7 @@ export function SeedsDeliveryMap() {
 
         {/* Diagram */}
         <div className="overflow-x-auto rounded-xl border border-border bg-card p-2 shadow-sm">
-          <svg viewBox="0 0 1600 800" className="h-auto w-full min-w-[960px]" role="img" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 1600 830" className="h-auto w-full min-w-[960px]" role="img" xmlns="http://www.w3.org/2000/svg">
             <title>Seeds API — field-level transition by phase</title>
             <desc>
               Legacy Tasks-model fields and relationships flow to their new homes in the Seeds API, coloured and
@@ -163,15 +163,17 @@ export function SeedsDeliveryMap() {
               <text x={66} y={132} fontSize={17} fontWeight={600}>Project ⇄ Job</text>
               <text x={66} y={156} fill={MUT}>1:N · grouped via Store Package</text>
 
-              <rect x={48} y={228} width={440} height={258} rx={8} fill="#f6f7f9" stroke="#dcdcdc" />
+              <rect x={48} y={228} width={440} height={290} rx={8} fill="#f6f7f9" stroke="#dcdcdc" />
               <text x={66} y={256} fontSize={17} fontWeight={600}>Job</text>
               <text x={66} y={286}>businessUnit</text>
               <text x={66} y={316}>storeId · geolocMode</text>
               <text x={66} y={346}>extractionType</text>
               <text x={66} y={376}>timeframeId</text>
-              <text className="phrem" x={66} y={406} fontSize={11} letterSpacing="0.04em" fill={MUT} opacity={fOp("rem")} style={T}>OBSOLETE — TO BE REMOVED</text>
-              <text className="phrem" x={66} y={436} fill={RED} textDecoration="line-through" opacity={fOp("rem")} style={T}>isQaCandidate</text>
-              <text className="phrem" x={66} y={466} fill={RED} textDecoration="line-through" opacity={fOp("rem")} style={T}>boxIds · storePackage</text>
+              <text className="phrem" x={66} y={404} fontSize={11} letterSpacing="0.04em" fill={MUT} opacity={fOp("rem")} style={T}>OBSOLETE — TO BE REMOVED</text>
+              <text className="phrem" x={66} y={428} fill={RED} opacity={fOp("rem")} style={T}>isQaCandidate</text>
+              <text className="phrem" x={66} y={452} fill={RED} opacity={fOp("rem")} style={T}>boxIds · storePackage</text>
+              <text className="phrem" x={66} y={476} fill={RED} opacity={fOp("rem")} style={T}>Definition method (seed / box)</text>
+              <text className="phrem" x={66} y={500} fill={RED} opacity={fOp("rem")} style={T}>Job extension</text>
 
               <rect x={48} y={528} width={440} height={150} rx={8} fill="#f6f7f9" stroke="#dcdcdc" />
               <text x={66} y={556} fontSize={17} fontWeight={600}>Seed (legacy)</text>
@@ -218,11 +220,13 @@ export function SeedsDeliveryMap() {
               <text x={1130} y={629} fontSize={17} fontWeight={600} fill={INK}>Location Catalog / Set</text>
               <text className="ph3" x={1130} y={650} fill={BLUE} opacity={fOp("p3")} style={T}>rename + useCases (per client)</text>
 
-              <rect x={1112} y={667} width={440} height={94} rx={8} fill="#fdeceb" stroke={RED} />
+              <rect x={1112} y={667} width={440} height={150} rx={8} fill="#fdeceb" stroke={RED} />
               <text x={1130} y={691} fontSize={17} fontWeight={600} fill={INK}>Removed</text>
               <text className="phrem" x={1130} y={713} fill={RED} opacity={fOp("rem")} style={T}>isQaCandidate</text>
               <text className="phrem" x={1130} y={734} fill={RED} opacity={fOp("rem")} style={T}>Box / Box Subscription</text>
               <text className="phrem" x={1130} y={755} fill={RED} opacity={fOp("rem")} style={T}>storePackage · retailerPackage</text>
+              <text className="phrem" x={1130} y={776} fill={RED} opacity={fOp("rem")} style={T}>Definition method (seed / box)</text>
+              <text className="phrem" x={1130} y={797} fill={RED} opacity={fOp("rem")} style={T}>Job extension</text>
             </g>
           </svg>
         </div>
