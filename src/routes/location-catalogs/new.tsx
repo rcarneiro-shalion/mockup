@@ -2,9 +2,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { LocationCatalogForm } from "@/components/retailers/LocationCatalogForm";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { LOCATION_CATALOGS_KEY, INITIAL_LOCATION_CATALOGS, emptyLocationCatalog, type LocationCatalog } from "@/lib/retailers";
+import { catalogTerms } from "@/lib/catalogTerms";
 
 export const Route = createFileRoute("/location-catalogs/new")({
-  head: () => ({ meta: [{ title: "Add location catalog — Shalion" }] }),
+  head: () => ({ meta: [{ title: `${catalogTerms().addRoot} — Shalion` }] }),
   component: AddLocationCatalogPage,
 });
 

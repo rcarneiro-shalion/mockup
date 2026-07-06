@@ -6,15 +6,17 @@ import { FilterBar, TableShell, Th, Td, Pagination, LinkText, SortTh, useSort, s
 import { Button } from "@/components/ui/button";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { LOCATION_CATALOGS_KEY, INITIAL_LOCATION_CATALOGS, flag, COUNTRY_OPTIONS, countryLabel, type LocationCatalog } from "@/lib/retailers";
+import { catalogTerms } from "@/lib/catalogTerms";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { Plus, Calendar, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/location-catalogs/")({
-  head: () => ({ meta: [{ title: "Location Catalog — Shalion" }] }),
+  head: () => ({ meta: [{ title: `${catalogTerms().title} — Shalion` }] }),
   component: LocationCatalogsListPage,
 });
 
 function LocationCatalogsListPage() {
+  const t = catalogTerms();
   const [rows, setRows] = usePersistentState<LocationCatalog[]>(LOCATION_CATALOGS_KEY, INITIAL_LOCATION_CATALOGS);
   const [query, setQuery] = useState("");
   const [fCountry, setFCountry] = useState<string[]>([]);
@@ -32,9 +34,9 @@ function LocationCatalogsListPage() {
     <AppShell>
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between px-6 pt-5">
-          <h1 className="text-[17px] font-semibold text-foreground">Location Catalog</h1>
+          <h1 className="text-[17px] font-semibold text-foreground">{t.title}</h1>
           <Button asChild size="sm" className="h-8 gap-1.5">
-            <Link to="/location-catalogs/new"><Plus className="h-4 w-4" /> New location catalog</Link>
+            <Link to="/location-catalogs/new"><Plus className="h-4 w-4" /> {t.newRoot}</Link>
           </Button>
         </div>
         <FilterBar search="Search by catalog name" searchValue={query} onSearchChange={setQuery}>
@@ -47,7 +49,7 @@ function LocationCatalogsListPage() {
             <tr>
               <SortTh label="Name" sortKey="name" sort={sort} />
               <SortTh label="Country" sortKey="country" sort={sort} />
-              <SortTh label="Location sets" sortKey="sets" sort={sort} />
+              <SortTh label={t.sets} sortKey="sets" sort={sort} />
               <SortTh label="Created at" sortKey="createdAt" sort={sort} />
               <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <Th className="w-10" />
@@ -61,7 +63,7 @@ function LocationCatalogsListPage() {
                 <Td className="tabular-nums text-foreground/70">{(r.sets ?? []).length}</Td>
                 <Td className="text-muted-foreground">{r.createdAt}</Td>
                 <Td className="text-muted-foreground">{r.updatedAt}</Td>
-                <Td><RowActionsMenu id={r.id} onDelete={() => setRows((prev) => prev.filter((y) => y.id !== r.id))} entityLabel="location catalog" /></Td>
+                <Td><RowActionsMenu id={r.id} onDelete={() => setRows((prev) => prev.filter((y) => y.id !== r.id))} entityLabel={t.rootLower} /></Td>
               </tr>
             ))}
           </tbody>

@@ -2,12 +2,13 @@ import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router"
 import { LocationCatalogForm } from "@/components/retailers/LocationCatalogForm";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { LOCATION_CATALOGS_KEY, INITIAL_LOCATION_CATALOGS, type LocationCatalog } from "@/lib/retailers";
+import { catalogTerms } from "@/lib/catalogTerms";
 import { nowStamp } from "@/lib/clients";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/location-catalogs/$catalogId")({
-  head: () => ({ meta: [{ title: "Edit location catalog — Shalion" }] }),
+  head: () => ({ meta: [{ title: `Edit ${catalogTerms().rootLower} — Shalion` }] }),
   component: EditLocationCatalogPage,
 });
 
@@ -17,13 +18,14 @@ function EditLocationCatalogPage() {
   const navigate = useNavigate();
   const goBack = () => navigate({ to: "/location-catalogs" });
   const c = rows.find((x) => x.id === catalogId);
+  const t = catalogTerms();
 
   if (!c) {
     return (
       <AppShell>
         <div className="flex h-full flex-col items-center justify-center gap-3 px-6">
-          <p className="text-sm text-muted-foreground">Location catalog not found.</p>
-          <Button variant="outline" onClick={goBack}>Back to Location Catalog</Button>
+          <p className="text-sm text-muted-foreground">{t.rootNotFound}</p>
+          <Button variant="outline" onClick={goBack}>Back to {t.title}</Button>
         </div>
       </AppShell>
     );

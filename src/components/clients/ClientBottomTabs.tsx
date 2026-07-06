@@ -5,6 +5,7 @@ import { FilterChip } from "@/components/seeds/FilterChip";
 import { LinkText, Pagination, Th, Td, Pill, FilterBar } from "@/components/seeds/ListPrimitives";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { flag } from "@/lib/retailers";
+import { catalogTerms } from "@/lib/catalogTerms";
 import { readPersistedList } from "@/lib/seedOptions";
 import { getAllSeeds, type Seed, type SeedType } from "@/lib/seeds";
 import type { Client } from "@/lib/clients";
@@ -38,6 +39,7 @@ export function ClientBottomTabs({
   onAddDataGroup?: () => void;
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("data-groups");
+  const terms = catalogTerms();
 
   const dataGroups = client.dataGroups ?? [];
   const locationCatalogs = client.locationCatalogs ?? [];
@@ -61,7 +63,7 @@ export function ClientBottomTabs({
                 on ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <Icon className="h-4 w-4" /> {t.label}
+              <Icon className="h-4 w-4" /> {t.key === "location-catalogs" ? terms.clientTab : t.label}
               {on && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-foreground" />}
             </button>
           );
@@ -95,11 +97,11 @@ export function ClientBottomTabs({
 
           {tab === "location-catalogs" && (
             <CardTable
-              title="Location catalogs"
-              addLabel="Enable location catalog"
-              headers={["Name", "Country", "Use cases"]}
+              title={terms.clientTab}
+              addLabel={terms.clientAdd}
+              headers={terms.showPurpose ? ["Name", "Country", "Use cases"] : ["Name", "Country"]}
               rows={locationCatalogs}
-              empty="No location catalogs enabled yet."
+              empty={terms.clientEmpty}
               renderRow={(lc) => (
                 <>
                   <Td><LinkText>{lc.name}</LinkText></Td>
@@ -109,13 +111,15 @@ export function ClientBottomTabs({
                       <span className="text-foreground/80">{lc.country}</span>
                     </span>
                   </Td>
-                  <Td>
-                    <div className="flex flex-wrap gap-1">
-                      {(lc.useCases ?? []).length
-                        ? lc.useCases.map((u) => <Pill key={u} tone="blue">{u}</Pill>)
-                        : <span className="text-muted-foreground">—</span>}
-                    </div>
-                  </Td>
+                  {terms.showPurpose && (
+                    <Td>
+                      <div className="flex flex-wrap gap-1">
+                        {(lc.useCases ?? []).length
+                          ? lc.useCases.map((u) => <Pill key={u} tone="blue">{u}</Pill>)
+                          : <span className="text-muted-foreground">—</span>}
+                      </div>
+                    </Td>
+                  )}
                   <Td><RemoveBtn label={lc.name} onClick={() => set("locationCatalogs", locationCatalogs.filter((x) => x.id !== lc.id))} /></Td>
                 </>
               )}

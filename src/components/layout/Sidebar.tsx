@@ -181,13 +181,18 @@ function navForPath(pathname: string): NavItem[] {
 export function Sidebar() {
   // Compare on the version-agnostic path ("/v2/iam" → "/iam") — see lib/appVersion.
   const pathname = stripVersionPrefix(useLocation().pathname);
-  // The V1/V2 phase reinstates Timeframes as the active concept — no "(legacy)" tag there.
+  // The V1/V2 phase reinstates the legacy concepts under their original names:
+  // Timeframes (no "(legacy)" tag) and "Region systems" (before the Location Catalog rename).
   const nav =
     getAppVersion() <= 2
       ? navForPath(pathname).map((item) => ({
           ...item,
           children: item.children?.map((c) =>
-            c.label === "Timeframes (legacy)" ? { ...c, label: "Timeframes" } : c,
+            c.label === "Timeframes (legacy)"
+              ? { ...c, label: "Timeframes" }
+              : c.label === "Location Catalog"
+                ? { ...c, label: "Region systems" }
+                : c,
           ),
         }))
       : navForPath(pathname);
