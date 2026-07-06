@@ -107,17 +107,21 @@ export function SeedsDeliveryMap() {
               SEEDS API · NEW HOME
             </text>
 
-            {/* ribbons — colour = phase */}
+            {/* ribbons — colour = phase (only true cross-entity migrations get a ribbon) */}
             <g fill="none">
+              {/* Project ⇄ Job → Subscription.proj[] (P1) */}
               <path className="ph1" d="M488 132 C800 132,800 150,1112 150" stroke={GREEN} strokeWidth={14} opacity={rOp("p1")} style={T} />
-              <path className="ph1" d="M488 300 C800 300,800 205,1112 205" stroke={GREEN} strokeWidth={24} opacity={rOp("p1")} style={T} />
-              <path className="ph3" d="M488 320 C800 320,800 262,1112 262" stroke={BLUE} strokeWidth={14} opacity={rOp("p3")} style={T} />
+              {/* Job → Subscription — businessUnit · storeId · geolocMode (P1) */}
+              <path className="ph1" d="M488 300 C800 300,800 205,1112 205" stroke={GREEN} strokeWidth={22} opacity={rOp("p1")} style={T} />
+              {/* Job → Scrapping option — extractionType · timeframeId (P1) */}
               <path className="ph1" d="M488 356 C800 356,800 348,1112 348" stroke={GREEN} strokeWidth={20} opacity={rOp("p1")} style={T} />
-              <path className="ph2" d="M488 406 C800 406,800 401,1112 401" stroke={AMBER} strokeWidth={14} opacity={rOp("p2")} style={T} />
-              <path className="ph3" d="M488 436 C800 436,800 440,1112 440" stroke={BLUE} strokeWidth={14} opacity={rOp("p3")} style={T} />
+              {/* Job → Removed — obsolete fields */}
               <path className="phrem" d="M488 466 C800 466,800 734,1112 734" stroke={RED} strokeWidth={16} opacity={rOp("rem")} style={T} />
+              {/* Seed → Seed (P1) */}
               <path className="ph1" d="M488 600 C800 600,800 547,1112 547" stroke={GREEN} strokeWidth={20} opacity={rOp("p1")} style={T} />
+              {/* Seed fine-tuning attrs (maxPages · maxRank) → Scrapping option Joints/Disjoints (P2) */}
               <path className="ph2" d="M488 650 C800 650,800 415,1112 415" stroke={AMBER} strokeWidth={14} opacity={rOp("p2")} style={T} />
+              {/* Region System → Location Catalog (P3) */}
               <path className="ph3" d="M488 728 C800 728,800 650,1112 650" stroke={BLUE} strokeWidth={14} opacity={rOp("p3")} style={T} />
             </g>
 
@@ -129,20 +133,20 @@ export function SeedsDeliveryMap() {
 
               <rect x={48} y={228} width={440} height={258} rx={8} fill="#f6f7f9" stroke="#dcdcdc" />
               <text x={66} y={256} fontSize={17} fontWeight={600}>Job</text>
-              <text x={66} y={286}>status · businessUnit</text>
+              <text x={66} y={286}>businessUnit</text>
               <text x={66} y={316}>storeId · geolocMode</text>
               <text x={66} y={346}>extractionType</text>
               <text x={66} y={376}>timeframeId</text>
-              <text x={66} y={406}>frequency · maxPages</text>
-              <text x={66} y={436}>isQaCandidate</text>
-              <text x={66} y={466}>boxIds · storePackage</text>
+              <text className="phrem" x={66} y={406} fontSize={11} letterSpacing="0.04em" fill={MUT} opacity={fOp("rem")} style={T}>OBSOLETE — TO BE REMOVED</text>
+              <text className="phrem" x={66} y={436} fill={RED} textDecoration="line-through" opacity={fOp("rem")} style={T}>isQaCandidate</text>
+              <text className="phrem" x={66} y={466} fill={RED} textDecoration="line-through" opacity={fOp("rem")} style={T}>boxIds · storePackage</text>
 
               <rect x={48} y={528} width={440} height={150} rx={8} fill="#f6f7f9" stroke="#dcdcdc" />
               <text x={66} y={556} fontSize={17} fontWeight={600}>Seed (legacy)</text>
               <text x={66} y={586}>type: keyword / url / api</text>
               <text x={66} y={616}>keyword / url  (value)</text>
               <text x={66} y={646}>pageType · keywordType</text>
-              <text x={66} y={676}>maxRank · destination</text>
+              <text x={66} y={676}>maxRank · maxPages · destination</text>
 
               <rect x={48} y={700} width={440} height={58} rx={8} fill="#f6f7f9" stroke="#dcdcdc" />
               <text x={66} y={726} fontSize={17} fontWeight={600}>Region System</text>
@@ -168,7 +172,7 @@ export function SeedsDeliveryMap() {
               <text className="ph3" x={1130} y={380} fill={BLUE} opacity={fOp("p3")} style={T}>→ taskGroups[]  (P3)</text>
               <text className="ph2" x={1130} y={401} fill={AMBER} opacity={fOp("p2")} style={T}>Joints: multivariants · maxPage · maxRank</text>
               <text className="ph2" x={1130} y={422} fill={AMBER} opacity={fOp("p2")} style={T}>Disjoints: modalities · sorting</text>
-              <text className="ph3" x={1130} y={443} fill={BLUE} opacity={fOp("p3")} style={T}>frequency — Daily/Weekly/Monthly/Custom (P3)</text>
+              <text className="ph3" x={1130} y={443} fill={BLUE} opacity={fOp("p3")} style={T}>frequency — new · Daily/Weekly/Monthly/Custom</text>
               <text className="ph1" x={1130} y={464} fill={GREEN} opacity={fOp("p1")} style={T}>meta (JSON)</text>
 
               <rect x={1112} y={480} width={440} height={115} rx={8} fill="#eaf6ef" stroke={GREEN} />
