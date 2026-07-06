@@ -21,9 +21,13 @@ import { flag, countryLabel } from "@/lib/retailers";
 import { getClients } from "@/lib/clients";
 import {
   CLIENT_SKUS_KEY,
+  CLIENT_SKU_REGIONS_KEY,
   CLIENT_SKUS_TOTAL,
+  CLIENT_SKU_REGIONS_TOTAL,
   INITIAL_CLIENT_SKUS,
+  INITIAL_CLIENT_SKU_REGIONS,
   type ClientSku,
+  type ClientSkuRegion,
 } from "@/lib/clientSkus";
 import { cn } from "@/lib/utils";
 
@@ -32,9 +36,16 @@ export const Route = createFileRoute("/product/client-skus/")({
   component: ClientSkusListPage,
 });
 
+type Tab = "skus" | "region";
+
 function ClientSkusListPage() {
   const navigate = useNavigate();
+  const [tab, setTab] = useState<Tab>("skus");
   const [skus, setSkus] = usePersistentState<ClientSku[]>(CLIENT_SKUS_KEY, INITIAL_CLIENT_SKUS);
+  const [regions, setRegions] = usePersistentState<ClientSkuRegion[]>(
+    CLIENT_SKU_REGIONS_KEY,
+    INITIAL_CLIENT_SKU_REGIONS,
+  );
 
   // client name → id, so the Client column links to the client edit page.
   const clientId = useMemo(() => {
@@ -68,14 +79,54 @@ function ClientSkusListPage() {
           </div>
         </div>
 
-        <div className="mt-3 border-b border-border" />
+        {/* Tabs */}
+        <div className="mt-3 flex gap-6 border-b border-border px-6">
+          <TabButton active={tab === "skus"} onClick={() => setTab("skus")}>
+            Client skus
+          </TabButton>
+          <TabButton active={tab === "region"} onClick={() => setTab("region")}>
+            Client skus by region
+          </TabButton>
+        </div>
 
-        <SkusTab rows={skus} setRows={setSkus} goClient={goClient} goDetail={goDetail} />
+        {tab === "skus" ? (
+          <SkusTab rows={skus} setRows={setSkus} goClient={goClient} goDetail={goDetail} />
+        ) : (
+          <RegionsTab rows={regions} setRows={setRegions} goClient={goClient} goDetail={goDetail} />
+        )}
       </div>
     </AppShell>
   );
 }
 
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "-mb-px border-b-2 px-1 pb-3 pt-1 text-sm font-medium transition-colors",
+        active
+          ? "border-[var(--sidebar-active-fg)] text-foreground"
+          : "border-transparent text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tab 1 — Client skus
+// ---------------------------------------------------------------------------
 
 function SkusTab({
   rows,
@@ -212,6 +263,133 @@ function CodeCell({ codes }: { codes: { type: string; value: string }[] }) {
         </span>
       ))}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tab 2 — Client skus by region
+// ---------------------------------------------------------------------------
+
+function RegionsTab({
+  rows,
+  setRows,
+  goClient,
+  goDetail,
+}: {
+  rows: ClientSkuRegion[];
+  setRows: React.Dispatch<React.SetStateAction<ClientSkuRegion[]>>;
+  goClient: (name: string) => void;
+  goDetail: (id: string) => void;
+}) {
+  const sort = useSort("product-client-sku-regions");
+  const [client, setClient] = useState<string[]>([]);
+  const [region, setRegion] = useState<string[]>([]);
+  const [country, setCountry] = useState<string[]>([]);
+  const [bu, setBu] = useState<string[]>([]);
+  const [cc, setCc] = useState<string[]>([]);
+  const [hero, setHero] = useState<string[]>([]);
+
+  const inSel = (sel: string[], v?: string) => sel.length === 0 || (!!v && sel.includes(v));
+
+  const filtered = rows.filter(
+    (r) =>
+      inSel(client, r.client) &&
+      inSel(region, r.region) &&
+      inSel(country, r.country) &&
+      inSel(bu, r.businessUnit) &&
+      inSel(cc, r.clientCategory) &&
+      inSel(hero, r.hero ? "Yes" : "No"),
+  );
+  const sorted = sortRows(filtered, sort);
+
+  return (
+    <>
+      <FilterBar>
+        <FilterChip label="Clients" icon={Briefcase} options={distinct(rows, (r) => r.client)} value={client} onChange={setClient} />
+        <FilterChip label="Client skus" icon={Box} />
+        <FilterChip label="Regions" icon={Layers} options={distinct(rows, (r) => r.region)} value={region} onChange={setRegion} />
+        <FilterChip label="Countries" icon={Flag} options={distinct(rows, (r) => r.country)} value={country} onChange={setCountry} getLabel={countryLabel} />
+        <FilterChip label="Business units" options={distinct(rows, (r) => r.businessUnit)} value={bu} onChange={setBu} />
+        <FilterChip label="Client categories" options={distinct(rows, (r) => r.clientCategory)} value={cc} onChange={setCc} />
+        <FilterChip label="Hero" icon={Star} options={["Yes", "No"]} value={hero} onChange={setHero} />
+        <FilterChip label="Active at" icon={Calendar} />
+        <FilterChip label="Created at" icon={Calendar} />
+        <FilterChip label="Updated at" icon={Calendar} />
+      </FilterBar>
+
+      <TableShell>
+        <thead className="bg-secondary/60">
+          <tr>
+            <SortTh label="Title" sortKey="title" sort={sort} />
+            <SortTh label="Client" sortKey="client" sort={sort} />
+            <SortTh label="Country" sortKey="country" sort={sort} />
+            <SortTh label="Region system" sortKey="regionSystem" sort={sort} />
+            <SortTh label="Region" sortKey="region" sort={sort} />
+            <SortTh label="Business unit" sortKey="businessUnit" sort={sort} />
+            <SortTh label="Client category" sortKey="clientCategory" sort={sort} />
+            <SortTh label="Active from" sortKey="activeFrom" sort={sort} />
+            <Th className="w-10" />
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((r) => (
+            <tr key={r.id} className="border-t border-border hover:bg-secondary/40">
+              <Td className="max-w-[260px]">
+                <span className="flex items-center gap-2">
+                  <LinkText onClick={() => goDetail(r.id)}>
+                    <span className="line-clamp-2">{r.title}</span>
+                  </LinkText>
+                  {r.hero && (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-500" /> Hero
+                    </span>
+                  )}
+                </span>
+              </Td>
+              <Td>
+                <LinkText onClick={() => goClient(r.client)}>{r.client}</LinkText>
+              </Td>
+              <Td>
+                <span className="inline-flex items-center gap-1.5">
+                  <span>{flag(r.country)}</span>
+                  <span className="text-foreground/80">{r.country}</span>
+                </span>
+              </Td>
+              <Td>
+                <span className="text-[var(--sidebar-active-fg)]">{r.regionSystem}</span>
+              </Td>
+              <Td>
+                <span className="text-[var(--sidebar-active-fg)]">{r.region}</span>
+              </Td>
+              <Td>
+                {r.businessUnit ? (
+                  <span className="text-[var(--sidebar-active-fg)]">{r.businessUnit}</span>
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </Td>
+              <Td>
+                {r.clientCategory ? (
+                  <span className="text-[var(--sidebar-active-fg)]">{r.clientCategory}</span>
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
+              </Td>
+              <Td className="whitespace-nowrap text-muted-foreground">{r.activeFrom ?? "-"}</Td>
+              <Td>
+                <RowActionsMenu
+                  id={r.id}
+                  entityLabel="client sku region"
+                  onDelete={() => setRows((prev) => prev.filter((x) => x.id !== r.id))}
+                />
+              </Td>
+            </tr>
+          ))}
+        </tbody>
+      </TableShell>
+
+      <BigPagination shown={sorted.length} total={CLIENT_SKU_REGIONS_TOTAL} pages={62} />
+    </>
   );
 }
 
