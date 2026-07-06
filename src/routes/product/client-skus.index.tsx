@@ -285,8 +285,6 @@ function RegionsTab({
   const [client, setClient] = useState<string[]>([]);
   const [region, setRegion] = useState<string[]>([]);
   const [country, setCountry] = useState<string[]>([]);
-  const [bu, setBu] = useState<string[]>([]);
-  const [cc, setCc] = useState<string[]>([]);
   const [hero, setHero] = useState<string[]>([]);
 
   const inSel = (sel: string[], v?: string) => sel.length === 0 || (!!v && sel.includes(v));
@@ -296,8 +294,6 @@ function RegionsTab({
       inSel(client, r.client) &&
       inSel(region, r.region) &&
       inSel(country, r.country) &&
-      inSel(bu, r.businessUnit) &&
-      inSel(cc, r.clientCategory) &&
       inSel(hero, r.hero ? "Yes" : "No"),
   );
   const sorted = sortRows(filtered, sort);
@@ -309,8 +305,6 @@ function RegionsTab({
         <FilterChip label="Client skus" icon={Box} />
         <FilterChip label="Regions" icon={Layers} options={distinct(rows, (r) => r.region)} value={region} onChange={setRegion} />
         <FilterChip label="Countries" icon={Flag} options={distinct(rows, (r) => r.country)} value={country} onChange={setCountry} getLabel={countryLabel} />
-        <FilterChip label="Business units" options={distinct(rows, (r) => r.businessUnit)} value={bu} onChange={setBu} />
-        <FilterChip label="Client categories" options={distinct(rows, (r) => r.clientCategory)} value={cc} onChange={setCc} />
         <FilterChip label="Hero" icon={Star} options={["Yes", "No"]} value={hero} onChange={setHero} />
         <FilterChip label="Active at" icon={Calendar} />
         <FilterChip label="Created at" icon={Calendar} />
@@ -325,8 +319,6 @@ function RegionsTab({
             <SortTh label="Country" sortKey="country" sort={sort} />
             <SortTh label="Region system" sortKey="regionSystem" sort={sort} />
             <SortTh label="Region" sortKey="region" sort={sort} />
-            <SortTh label="Business unit" sortKey="businessUnit" sort={sort} />
-            <SortTh label="Client category" sortKey="clientCategory" sort={sort} />
             <SortTh label="Active from" sortKey="activeFrom" sort={sort} />
             <Th className="w-10" />
           </tr>
@@ -360,20 +352,6 @@ function RegionsTab({
               </Td>
               <Td>
                 <span className="text-[var(--sidebar-active-fg)]">{r.region}</span>
-              </Td>
-              <Td>
-                {r.businessUnit ? (
-                  <span className="text-[var(--sidebar-active-fg)]">{r.businessUnit}</span>
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
-              </Td>
-              <Td>
-                {r.clientCategory ? (
-                  <span className="text-[var(--sidebar-active-fg)]">{r.clientCategory}</span>
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
               </Td>
               <Td className="whitespace-nowrap text-muted-foreground">{r.activeFrom ?? "-"}</Td>
               <Td>

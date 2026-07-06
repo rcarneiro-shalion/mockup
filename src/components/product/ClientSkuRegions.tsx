@@ -1,14 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ChevronUp, Plus, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
-import { SearchableSelect } from "@/components/common/SearchableSelect";
-import { getBusinessUnitNames, getClientCategoryNames } from "@/lib/productEntities";
 import { toast } from "sonner";
 import type { ClientSku, SkuRegionRow } from "@/lib/clientSkus";
 import { regionCatalogFor, getSkuRegions } from "@/lib/clientSkus";
@@ -16,9 +13,10 @@ import { regionCatalogFor, getSkuRegions } from "@/lib/clientSkus";
 const DEFAULT_SKU: Partial<ClientSku> = { id: "demo", msrp: { value: 28, currency: "MXN" }, country: "MX", hero: false };
 
 /** Per-SKU "Client sku regions" grid — the regional override entity. MSRP (currency +
- *  value) has migrated to the MSRP › Region level, so this grid carries only the
- *  non-price overrides (business unit, client category, hero, active window). Rows are
- *  the real imported client_sku_region data (shared with the MSRP › Region tab). */
+ *  value) has migrated to the MSRP › Region level, and business unit / client category /
+ *  hero were dropped from this view, so the grid now carries just the region + active
+ *  window. Rows are the real imported client_sku_region data (shared with the MSRP ›
+ *  Region tab, which still shows the full payload). */
 export function ClientSkuRegions({ sku }: { sku?: Partial<ClientSku> } = {}) {
   const effSku = sku?.msrp ? sku : DEFAULT_SKU;
   const [collapsed, setCollapsed] = useState(false);
@@ -70,9 +68,6 @@ export function ClientSkuRegions({ sku }: { sku?: Partial<ClientSku> } = {}) {
                 <tr className="border-b border-border text-left text-muted-foreground">
                   <Th>Region system</Th>
                   <Th>Region</Th>
-                  <Th>Business unit</Th>
-                  <Th>Client category</Th>
-                  <Th>Hero</Th>
                   <Th>Active from</Th>
                   <Th>Active to</Th>
                   <Th>Created at</Th>
@@ -83,7 +78,7 @@ export function ClientSkuRegions({ sku }: { sku?: Partial<ClientSku> } = {}) {
               <tbody>
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                       No regions assigned to this SKU.
                     </td>
                   </tr>
@@ -92,19 +87,6 @@ export function ClientSkuRegions({ sku }: { sku?: Partial<ClientSku> } = {}) {
                   <tr key={row.id} className="border-b border-border last:border-0 hover:bg-secondary/40">
                     <Td className="text-[var(--sidebar-active-fg)]">{row.regionSystem}</Td>
                     <Td className="text-[var(--sidebar-active-fg)]">{row.region}</Td>
-                    <Td>{row.businessUnit || ""}</Td>
-                    <Td>{row.clientCategory || ""}</Td>
-                    <Td>
-                      {row.hero ? (
-                        <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
-                          ✓ Yes
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-xs text-red-600">
-                          ✕ No
-                        </span>
-                      )}
-                    </Td>
                     <Td className="text-muted-foreground">{row.activeFrom || "-"}</Td>
                     <Td className="text-muted-foreground">{row.activeTo || "-"}</Td>
                     <Td className="text-muted-foreground">{row.createdAt}</Td>
@@ -187,14 +169,8 @@ function RegionDialog({
 }) {
   const isEdit = !!initial;
   const [region, setRegion] = useState(initial?.region ?? "");
-  const [businessUnit, setBusinessUnit] = useState(initial?.businessUnit ?? "");
-  const [clientCategory, setClientCategory] = useState(initial?.clientCategory ?? "");
   const [activeFrom, setActiveFrom] = useState(initial?.activeFrom ?? "");
   const [activeTo, setActiveTo] = useState(initial?.activeTo ?? "");
-  const [hero, setHero] = useState(initial?.hero ?? false);
-
-  const buOptions = useMemo(() => getBusinessUnitNames(), []);
-  const catOptions = useMemo(() => getClientCategoryNames(), []);
   const canSubmit = region !== "";
 
   const submit = () => {
@@ -206,9 +182,11 @@ function RegionDialog({
       // MSRP has migrated to the MSRP > Region level; client_sku_region keeps no price.
       currency: initial?.currency ?? skuCurrency,
       msrp: initial?.msrp ?? 0,
-      businessUnit: businessUnit || undefined,
-      clientCategory: clientCategory || undefined,
-      hero,
+      // Business unit / client category / hero were removed from this view; keep any
+      // existing value from the row rather than clearing the real imported data.
+      businessUnit: initial?.businessUnit,
+      clientCategory: initial?.clientCategory,
+      hero: initial?.hero ?? false,
       activeFrom: activeFrom || undefined,
       activeTo: activeTo || undefined,
       createdAt: initial?.createdAt ?? now,
@@ -235,28 +213,6 @@ function RegionDialog({
             </Select>
           </Field>
 
-          <Field label="Business unit">
-            <SearchableSelect
-              value={businessUnit}
-              onChange={setBusinessUnit}
-              options={buOptions}
-              placeholder="Select a business unit"
-              searchPlaceholder="Search business units…"
-              emptyText="No business unit found."
-            />
-          </Field>
-
-          <Field label="Client category">
-            <SearchableSelect
-              value={clientCategory}
-              onChange={setClientCategory}
-              options={catOptions}
-              placeholder="Select a client category"
-              searchPlaceholder="Search client categories…"
-              emptyText="No client category found."
-            />
-          </Field>
-
           <div className="grid grid-cols-2 gap-4">
             <Field label="Active from">
               <div className="relative">
@@ -270,11 +226,6 @@ function RegionDialog({
                 <CalendarIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
             </Field>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Checkbox id="csr-hero" checked={hero} onCheckedChange={(v) => setHero(Boolean(v))} />
-            <Label htmlFor="csr-hero" className="cursor-pointer">Hero</Label>
           </div>
         </div>
         <DialogFooter className="pt-2">
