@@ -227,14 +227,14 @@ export function SeedsDeliveryMap() {
               <text x={598} y={171} fill={INK}>name · status · store</text>
               <text x={598} y={192} fill={GREEN} opacity={fOp("p1")} style={T}>geo → NONE / AUTO / MANUAL / VIRTUAL_STORE</text>
               <text x={598} y={213} fill={GREEN} opacity={fOp("p1")} style={T}>destinationOptions[] · Discovery</text>
-              <text x={598} y={234} fill={GREEN} textDecoration="line-through" opacity={fOp("p1")} style={T}>locations[] (MANUAL — direct)</text>
+              <text x={598} y={234} fill={GREEN} textDecoration={vis.p3 ? "line-through" : "none"} opacity={fOp("p1")} style={T}>locations[] (MANUAL — direct)</text>
               <text x={598} y={255} fill={BLUE} opacity={fOp("p3")} style={T}>→ locationSet reference  (P3)</text>
               <text x={598} y={276} fill={BLUE} opacity={fOp("p3")} style={T}>Selection parameters  (P3)</text>
 
               <rect x={580} y={292} width={385} height={178} rx={8} fill="#eaf6ef" stroke={GREEN} />
               <text x={598} y={316} fontSize={16} fontWeight={600} fill={INK}>Scrapping option  ·  new</text>
               <text x={598} y={338} fill={GREEN} opacity={fOp("p1")} style={T}>name · status · extractionType</text>
-              <text x={598} y={359} fill={GREEN} textDecoration="line-through" opacity={fOp("p1")} style={T}>timeframes[]  (multi)</text>
+              <text x={598} y={359} fill={GREEN} textDecoration={vis.p3 ? "line-through" : "none"} opacity={fOp("p1")} style={T}>timeframes[]  (multi)</text>
               <text x={598} y={380} fill={BLUE} opacity={fOp("p3")} style={T}>→ taskGroups[]  (P3)</text>
               <text x={598} y={401} fill={AMBER} opacity={fOp("p2")} style={T}>Joints: multivariants · maxPage · maxRank</text>
               <text x={598} y={422} fill={AMBER} opacity={fOp("p2")} style={T}>Disjoints: modalities · sorting</text>
