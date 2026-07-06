@@ -350,7 +350,7 @@ export function assignableLocationsForCountry(country: string, cap = 150): SetLo
 
 export const LOCATION_CATALOGS_KEY = "retailers:location-catalogs";
 
-export const INITIAL_LOCATION_CATALOGS: LocationCatalog[] = [
+const RAW_LOCATION_CATALOGS: LocationCatalog[] = [
   {
     id: "52e04543-c791-35a2-bd61-19d05c2de847",
     name: "AE - PVM",
@@ -1614,6 +1614,25 @@ export const INITIAL_LOCATION_CATALOGS: LocationCatalog[] = [
   ],
   },
 ];
+
+// Deterministic demo assignment of catalog "purposes" (use-case tags) so the v3
+// Location Catalog list can show + filter by Purpose. The real region_system dump
+// carries no purpose; this is a stable, index-keyed simulation (no randomness) that
+// spreads all four use-cases across the catalogs. v1/v2 (Region system) ignore it.
+const PURPOSE_CYCLE: Purpose[][] = [
+  ["DASHBOARD"],
+  ["DASHBOARD", "MSRP"],
+  ["MSRP", "ASSORTMENT"],
+  ["SCRAPING"],
+  ["DASHBOARD", "SCRAPING"],
+  ["ASSORTMENT"],
+  ["MSRP", "SCRAPING"],
+  ["DASHBOARD", "MSRP", "ASSORTMENT", "SCRAPING"],
+];
+export const INITIAL_LOCATION_CATALOGS: LocationCatalog[] = RAW_LOCATION_CATALOGS.map((c, i) => ({
+  ...c,
+  purposes: c.purposes?.length ? c.purposes : PURPOSE_CYCLE[i % PURPOSE_CYCLE.length],
+}));
 
 export function getLocationCatalogs(): LocationCatalog[] {
   const list = readList<LocationCatalog>(LOCATION_CATALOGS_KEY);
