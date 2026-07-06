@@ -187,10 +187,30 @@ function toApiBody(s: DashSection) {
 }
 
 // ---- jsonb filters (definition / section_config) ---------------------------
-// "Intelligent" contains / not-contains filters over the two jsonb columns: find
-// the dashboard_section rows where a specific value IS (or is NOT) present.
-type JsonbFilter = { mode: "contains" | "not"; q: string };
+// "Intelligent" filters over the two jsonb columns: rows where a value IS / is NOT
+// present, or where the whole column is empty / null (no config) or NOT empty.
+type JsonbMode = "contains" | "not" | "empty" | "notEmpty";
+type JsonbFilter = { mode: JsonbMode; q: string };
 const EMPTY_JSONB_FILTER: JsonbFilter = { mode: "contains", q: "" };
+
+/** True when a raw jsonb string is null / absent / an empty object or array. */
+const isBlankJsonb = (raw: string): boolean => {
+  const t = (raw ?? "").trim();
+  if (!t || t === "null") return true;
+  try {
+    const o = JSON.parse(t);
+    if (o == null) return true;
+    if (Array.isArray(o)) return o.length === 0;
+    if (typeof o === "object") return Object.keys(o).length === 0;
+    return false;
+  } catch {
+    return false;
+  }
+};
+
+/** A jsonb filter is "on" for the empty/notEmpty modes, or when a query is typed. */
+const jsonbActive = (f: JsonbFilter): boolean =>
+  f.mode === "empty" || f.mode === "notEmpty" || f.q.trim() !== "";
 
 /** Searchable text for the `definition` jsonb: key:value pairs + the raw JSON. */
 const definitionHay = (s: DashSection) => {
@@ -208,7 +228,22 @@ function JsonbFilterChip({
   onChange: (v: JsonbFilter) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const active = value.q.trim() !== "";
+  const active = jsonbActive(value);
+  const needsQuery = value.mode === "contains" || value.mode === "not";
+  const summary =
+    value.mode === "empty"
+      ? "is empty / null"
+      : value.mode === "notEmpty"
+      ? "is not empty"
+      : value.mode === "not"
+      ? `not “${value.q}”`
+      : `has “${value.q}”`;
+  const MODES: { mode: JsonbMode; label: string }[] = [
+    { mode: "contains", label: "contains the value" },
+    { mode: "not", label: "does NOT contain" },
+    { mode: "empty", label: "is empty / null" },
+    { mode: "notEmpty", label: "is not empty" },
+  ];
   return (
     <span className="relative">
       <button
@@ -225,9 +260,7 @@ function JsonbFilterChip({
         <Braces className="h-3.5 w-3.5" />
         <span className="font-mono text-xs">{column}</span>
         {active && (
-          <span className="max-w-[160px] truncate text-xs text-muted-foreground">
-            {value.mode === "contains" ? "has" : "not"} “{value.q}”
-          </span>
+          <span className="max-w-[160px] truncate text-xs text-muted-foreground">{summary}</span>
         )}
         {active && (
           <X
@@ -246,32 +279,35 @@ function JsonbFilterChip({
             <p className="mb-2 text-xs text-muted-foreground">
               Show sections where <span className="font-mono text-foreground/80">{column}</span>…
             </p>
-            <div className="mb-2 flex items-center gap-1 rounded-md border border-border bg-secondary/40 p-0.5 text-xs">
-              <button
-                type="button"
-                onClick={() => onChange({ ...value, mode: "contains" })}
-                className={cn("flex-1 rounded px-2 py-1", value.mode === "contains" ? "bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
-              >
-                contains the value
-              </button>
-              <button
-                type="button"
-                onClick={() => onChange({ ...value, mode: "not" })}
-                className={cn("flex-1 rounded px-2 py-1", value.mode === "not" ? "bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
-              >
-                does NOT contain
-              </button>
+            <div className="mb-2 grid grid-cols-2 gap-1 rounded-md border border-border bg-secondary/40 p-0.5 text-xs">
+              {MODES.map((m) => (
+                <button
+                  key={m.mode}
+                  type="button"
+                  onClick={() => onChange({ ...value, mode: m.mode })}
+                  className={cn(
+                    "rounded px-2 py-1",
+                    value.mode === m.mode ? "bg-card font-medium text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {m.label}
+                </button>
+              ))}
             </div>
-            <input
-              autoFocus
-              value={value.q}
-              onChange={(e) => onChange({ ...value, q: e.target.value })}
-              onKeyDown={(e) => e.key === "Enter" && setOpen(false)}
-              placeholder={`value to look for — % = wildcard`}
-              className="h-8 w-full rounded-md border border-border bg-background px-2.5 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-            />
+            {needsQuery && (
+              <input
+                autoFocus
+                value={value.q}
+                onChange={(e) => onChange({ ...value, q: e.target.value })}
+                onKeyDown={(e) => e.key === "Enter" && setOpen(false)}
+                placeholder={`value to look for — % = wildcard`}
+                className="h-8 w-full rounded-md border border-border bg-background px-2.5 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            )}
             <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Matches keys and values inside the jsonb, case-insensitive. “does NOT contain” also matches rows with an empty {column}.
+              {needsQuery
+                ? `Matches keys and values inside the jsonb, case-insensitive. “does NOT contain” also matches rows with an empty ${column}.`
+                : `“is empty / null” matches rows with no ${column} (null, “{}” or “[]”); no value needed.`}
             </p>
           </div>
         </>
@@ -448,9 +484,13 @@ export function SectionsGridPage() {
   const matchQuery = useMemo(() => buildQueryMatch(query), [query]);
   const matchDef = useMemo(() => buildQueryMatch(fDef.q), [fDef.q]);
   const matchCfg = useMemo(() => buildQueryMatch(fCfg.q), [fCfg.q]);
-  // contains → keep on hit; not-contains → keep on miss (incl. rows with an empty jsonb).
-  const jsonbPass = (f: JsonbFilter, match: (hay: string) => boolean, hay: string) =>
-    !f.q.trim() || (f.mode === "contains") === match(hay);
+  // contains → keep on hit; not → keep on miss; empty/notEmpty → test blank-ness.
+  const jsonbPass = (f: JsonbFilter, match: (hay: string) => boolean, hay: string) => {
+    if (f.mode === "empty") return isBlankJsonb(hay);
+    if (f.mode === "notEmpty") return !isBlankJsonb(hay);
+    if (!f.q.trim()) return true; // contains / not with no query → inactive
+    return (f.mode === "contains") === match(hay);
+  };
   const rows = allRows.filter(
     (r) =>
       (!fApps.length || fApps.includes(r.appId)) &&
@@ -869,7 +909,7 @@ export function SectionsGridPage() {
           )}
           <JsonbFilterChip column="definition" value={fDef} onChange={setFDef} />
           <JsonbFilterChip column="section_config" value={fCfg} onChange={setFCfg} />
-          {(fApps.length > 0 || fGroups.length > 0 || query || fDef.q || fCfg.q) && (
+          {(fApps.length > 0 || fGroups.length > 0 || query || jsonbActive(fDef) || jsonbActive(fCfg)) && (
             <button
               type="button"
               onClick={() => {
