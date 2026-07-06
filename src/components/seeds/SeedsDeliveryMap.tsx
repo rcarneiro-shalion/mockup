@@ -125,7 +125,7 @@ export function SeedsDeliveryMap() {
 
         {/* Diagram */}
         <div className="overflow-x-auto rounded-xl border border-border bg-card p-2 shadow-sm">
-          <svg viewBox="0 0 1600 830" className="h-auto w-full min-w-[960px]" role="img" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 1600 1010" className="h-auto w-full min-w-[960px]" role="img" xmlns="http://www.w3.org/2000/svg">
             <title>Seeds API — field-level transition by phase</title>
             <desc>
               Legacy Tasks-model fields and relationships flow to their new homes in the Seeds API, coloured and
@@ -147,8 +147,6 @@ export function SeedsDeliveryMap() {
               <path className="ph1" d="M488 300 C800 300,800 205,1112 205" stroke={GREEN} strokeWidth={22} opacity={rOp("p1")} style={T} />
               {/* Job → Scrapping option — extractionType · timeframeId (P1) */}
               <path className="ph1" d="M488 356 C800 356,800 348,1112 348" stroke={GREEN} strokeWidth={20} opacity={rOp("p1")} style={T} />
-              {/* Job → Removed — obsolete fields */}
-              <path className="phrem" d="M488 466 C800 466,800 734,1112 734" stroke={RED} strokeWidth={16} opacity={rOp("rem")} style={T} />
               {/* Seed → Seed (P1) */}
               <path className="ph1" d="M488 600 C800 600,800 547,1112 547" stroke={GREEN} strokeWidth={20} opacity={rOp("p1")} style={T} />
               {/* Seed fine-tuning attrs (maxPages · maxRank) → Scrapping option Joints/Disjoints (P2) */}
@@ -171,7 +169,7 @@ export function SeedsDeliveryMap() {
               <text x={66} y={376}>timeframeId</text>
               <text className="phrem" x={66} y={404} fontSize={11} letterSpacing="0.04em" fill={MUT} opacity={fOp("rem")} style={T}>OBSOLETE — TO BE REMOVED</text>
               <text className="phrem" x={66} y={428} fill={RED} opacity={fOp("rem")} style={T}>isQaCandidate</text>
-              <text className="phrem" x={66} y={452} fill={RED} opacity={fOp("rem")} style={T}>boxIds · storePackage</text>
+              <text className="phrem" x={66} y={452} fill={RED} opacity={fOp("rem")} style={T}>Box</text>
               <text className="phrem" x={66} y={476} fill={RED} opacity={fOp("rem")} style={T}>Definition method (seed / box)</text>
               <text className="phrem" x={66} y={500} fill={RED} opacity={fOp("rem")} style={T}>Job extension</text>
 
@@ -220,13 +218,58 @@ export function SeedsDeliveryMap() {
               <text x={1130} y={629} fontSize={17} fontWeight={600} fill={INK}>Location Catalog / Set</text>
               <text className="ph3" x={1130} y={650} fill={BLUE} opacity={fOp("p3")} style={T}>rename + useCases (per client)</text>
 
-              <rect x={1112} y={667} width={440} height={150} rx={8} fill="#fdeceb" stroke={RED} />
-              <text x={1130} y={691} fontSize={17} fontWeight={600} fill={INK}>Removed</text>
-              <text className="phrem" x={1130} y={713} fill={RED} opacity={fOp("rem")} style={T}>isQaCandidate</text>
-              <text className="phrem" x={1130} y={734} fill={RED} opacity={fOp("rem")} style={T}>Box / Box Subscription</text>
-              <text className="phrem" x={1130} y={755} fill={RED} opacity={fOp("rem")} style={T}>storePackage · retailerPackage</text>
-              <text className="phrem" x={1130} y={776} fill={RED} opacity={fOp("rem")} style={T}>Definition method (seed / box)</text>
-              <text className="phrem" x={1130} y={797} fill={RED} opacity={fOp("rem")} style={T}>Job extension</text>
+            </g>
+
+            {/* Seeds-api refactor — seed-type merge (14 → 4+1) + retired legacy entities.
+                A reference panel below the sankey; its obsolete list toggles with Removed. */}
+            <g>
+              <rect x={48} y={770} width={1504} height={222} rx={10} fill="#f6f7f9" stroke="#cfcfcf" />
+              <text x={66} y={800} fontSize={17} fontWeight={600} fill={INK}>Seeds-api refactor</text>
+              <text x={66} y={822} fontSize={13} fill={MUT}>Seed merge — 14 legacy types → 4 seed types (KEYWORD / URL / API) + PDP</text>
+
+              {/* column dividers */}
+              <g stroke="#e5e7eb" strokeWidth={1}>
+                <line x1={298} y1={846} x2={298} y2={926} />
+                <line x1={546} y1={846} x2={546} y2={926} />
+                <line x1={794} y1={846} x2={794} y2={926} />
+                <line x1={1042} y1={846} x2={1042} y2={926} />
+                <line x1={1290} y1={846} x2={1290} y2={926} />
+              </g>
+
+              {/* 6 extraction-type columns; items are the seed-type variants that merge */}
+              <g fontSize={12.5} fill={MUT}>
+                <text x={66} y={862} fontSize={13.5} fontWeight={600} fill={INK}>Ad</text>
+                <text x={66} y={884}>keyword</text>
+                <text x={66} y={904}>url</text>
+                <text x={66} y={924}>api</text>
+
+                <text x={314} y={862} fontSize={13.5} fontWeight={600} fill={INK}>Search</text>
+                <text x={314} y={884}>keyword</text>
+
+                <text x={562} y={862} fontSize={13.5} fontWeight={600} fill={INK}>Shelf</text>
+                <text x={562} y={884}>url</text>
+                <text x={562} y={904}>api</text>
+
+                <text x={810} y={862} fontSize={13.5} fontWeight={600} fill={INK}>Digital Shelf PLP</text>
+                <text x={810} y={884}>keyword</text>
+                <text x={810} y={904}>url</text>
+                <text x={810} y={924}>api</text>
+
+                <text x={1058} y={862} fontSize={13.5} fontWeight={600} fill={INK}>Digital Shelf PDP</text>
+                <text x={1058} y={884}>url</text>
+                <text x={1058} y={904}>api</text>
+
+                <text x={1306} y={862} fontSize={13.5} fontWeight={600} fill={INK}>Media</text>
+                <text x={1306} y={884}>url</text>
+                <text x={1306} y={904}>keyword</text>
+                <text x={1306} y={924}>api</text>
+              </g>
+
+              <line x1={66} y1={948} x2={1534} y2={948} stroke="#e5e7eb" strokeWidth={1} />
+
+              {/* retired seeds-api legacy entities */}
+              <text className="phrem" x={66} y={966} fontSize={11} letterSpacing="0.04em" fill={MUT} opacity={fOp("rem")} style={T}>OBSOLETE — TO BE REMOVED</text>
+              <text className="phrem" x={66} y={984} fontSize={13} fill={RED} opacity={fOp("rem")} style={T}>Box Subscription  ·  StorePackage  ·  RetailerPackage</text>
             </g>
           </svg>
         </div>
