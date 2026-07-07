@@ -157,10 +157,10 @@ export function SeedsDeliveryMap() {
               <path d="M382 650 C481 650,481 415,580 415" stroke={AMBER} strokeWidth={14} opacity={rOp("p2")} style={T} />
               <path d="M382 886 C481 886,481 650,580 650" stroke={BLUE} strokeWidth={14} opacity={rOp("p3")} style={T} />
             </g>
-            {/* col2 → col3 ribbons: Scraping option (P2) + Selection parameters (P3) feed the engine */}
+            {/* col2 → col3 ribbons: Scraping option (P2) → Resolution engine; Selection parameters (P3) → Task Generation */}
             <g fill="none">
-              <path d="M965 276 C1065 276,1065 292,1165 292" stroke={BLUE} strokeWidth={13} opacity={rOp("p3")} style={T} />
-              <path d="M965 400 C1065 400,1065 313,1165 313" stroke={AMBER} strokeWidth={13} opacity={rOp("p2")} style={T} />
+              <path d="M965 400 C1065 400,1065 248,1165 248" stroke={AMBER} strokeWidth={13} opacity={rOp("p2")} style={T} />
+              <path d="M965 276 C1065 276,1065 454,1165 454" stroke={BLUE} strokeWidth={13} opacity={rOp("p3")} style={T} />
             </g>
 
             {/* COL 1 · legacy */}
@@ -262,25 +262,35 @@ export function SeedsDeliveryMap() {
               <text x={598} y={813} fontSize={13} fill={RED} textDecoration="line-through" opacity={fOp("rem")} style={T}>StorePackage · RetailerPackage</text>
             </g>
 
-            {/* COL 3 · resolution engine (spec-driven task generator) */}
+            {/* COL 3 · two boxes — Resolution engine (fed by Scraping option, P2) + Task Generation (fed by Selection parameters, P3) */}
             <g>
-              <rect x={1165} y={168} width={400} height={356} rx={10} fill="#eef2f7" stroke="#94a3b8" />
-              <text x={1183} y={196} fontSize={16} fontWeight={600} fill={INK}>Resolution engine · task gen</text>
-              <text x={1183} y={214} fontSize={11} fill={MUT}>Data Collector · dbt dim_task — spec-driven</text>
-              <text x={1183} y={238} fontSize={12} fontWeight={600} fill={GREEN}>24-CTE matrix → 4 engines · ~800 → ~300 lines</text>
-              <line x1={1183} y1={252} x2={1547} y2={252} stroke="#dbe1e8" strokeWidth={1} />
-              <text x={1183} y={271} fontSize={10.5} letterSpacing="0.05em" fill={MUT}>INPUT PARAMETERS</text>
-              <text x={1183} y={292} fontSize={12.5} fill={BLUE} opacity={fOp("p3")} style={T}>← Selection parameters · rotation · freshness · volume</text>
-              <text x={1183} y={313} fontSize={12.5} fill={AMBER} opacity={fOp("p2")} style={T}>← Scraping option · extraction values · taskGroups</text>
-              <line x1={1183} y1={329} x2={1547} y2={329} stroke="#dbe1e8" strokeWidth={1} />
-              <text x={1183} y={349} fontSize={11} fill={SLATE}>⚙  dim_seed_location_selection_params (spec)</text>
-              <text x={1183} y={373} fontSize={12.5} fill={INK}>🌱  ① Seed selection · none/weekly/monthly/stateful</text>
-              <text x={1183} y={395} fontSize={12.5} fill={INK}>📍  ② Candidate locations · geoloc_mode (+ CMI)</text>
-              <text x={1183} y={417} fontSize={12.5} fill={INK}>🔁  ③ Location rotation · none/cmi/hash 1-day/N-day</text>
-              <text x={1183} y={439} fontSize={12.5} fill={INK}>🎛  ④ Volume policy · full/top-10/backfill 1.5×</text>
-              <text x={1183} y={461} fontSize={12.5} fill={INK}>⏱  is_last_offer · freshness ≡ write cadence</text>
-              <line x1={1183} y1={477} x2={1547} y2={477} stroke="#dbe1e8" strokeWidth={1} />
-              <text x={1183} y={500} fontSize={13} fontWeight={600} fill={GREEN}>✅  tasks = seeds × locations / store</text>
+              {/* Box 1 — Resolution engine */}
+              <rect x={1165} y={168} width={400} height={166} rx={10} fill="#eef2f7" stroke="#94a3b8" />
+              <text x={1183} y={196} fontSize={16} fontWeight={600} fill={INK}>Resolution engine</text>
+              <text x={1183} y={214} fontSize={11} fill={MUT}>Data Collector · resolves the scraping config</text>
+              <line x1={1183} y1={228} x2={1547} y2={228} stroke="#dbe1e8" strokeWidth={1} />
+              <text x={1183} y={248} fontSize={12.5} fill={AMBER} opacity={fOp("p2")} style={T}>← Scraping option · extraction values + taskGroups</text>
+              <text x={1183} y={270} fontSize={12} fill={INK}>Joints: multivariants · maxPage · maxRank</text>
+              <text x={1183} y={290} fontSize={12} fill={INK}>Disjoints: modalities · sorting</text>
+              <text x={1183} y={312} fontSize={12} fill={INK}>taskGroups → grouping &amp; schedule</text>
+
+              {/* Box 2 — Task Generation (the spec-driven task generator summary) */}
+              <rect x={1165} y={352} width={400} height={324} rx={10} fill="#eef2f7" stroke="#94a3b8" />
+              <text x={1183} y={380} fontSize={16} fontWeight={600} fill={INK}>Task Generation</text>
+              <text x={1183} y={398} fontSize={11} fill={MUT}>dbt dim_task · spec-driven</text>
+              <text x={1183} y={420} fontSize={12} fontWeight={600} fill={GREEN}>24-CTE matrix → 4 engines · ~800 → ~300 lines</text>
+              <line x1={1183} y1={434} x2={1547} y2={434} stroke="#dbe1e8" strokeWidth={1} />
+              <text x={1183} y={454} fontSize={12.5} fill={BLUE} opacity={fOp("p3")} style={T}>← Selection parameters · rotation · freshness · volume</text>
+              <text x={1183} y={474} fontSize={12.5} fill={BLUE} opacity={fOp("p3")} style={T}>Frequency · Daily / Weekly / Monthly / Custom</text>
+              <line x1={1183} y1={490} x2={1547} y2={490} stroke="#dbe1e8" strokeWidth={1} />
+              <text x={1183} y={510} fontSize={11} fill={SLATE}>⚙  dim_seed_location_selection_params (spec)</text>
+              <text x={1183} y={532} fontSize={12.5} fill={INK}>🌱  ① Seed selection · none/weekly/monthly/stateful</text>
+              <text x={1183} y={554} fontSize={12.5} fill={INK}>📍  ② Candidate locations · geoloc_mode (+ CMI)</text>
+              <text x={1183} y={576} fontSize={12.5} fill={INK}>🔁  ③ Location rotation · none/cmi/hash 1-day/N-day</text>
+              <text x={1183} y={598} fontSize={12.5} fill={INK}>🎛  ④ Volume policy · full/top-10/backfill 1.5×</text>
+              <text x={1183} y={620} fontSize={12.5} fill={INK}>⏱  is_last_offer · freshness ≡ write cadence</text>
+              <line x1={1183} y1={636} x2={1547} y2={636} stroke="#dbe1e8" strokeWidth={1} />
+              <text x={1183} y={658} fontSize={13} fontWeight={600} fill={GREEN}>✅  tasks = seeds × locations / store</text>
             </g>
           </svg>
         </div>
