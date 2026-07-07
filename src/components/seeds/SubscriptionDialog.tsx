@@ -364,7 +364,7 @@ export function SubscriptionDialog({
                     disabled={!isStateful}
                     placeholder={isStateful ? "Select a window" : "Enabled for Stateful freshness"}
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">Last days · Current week · Current fortnight · Current month</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Last days · Current week · Current fortnight · Current month · Current quarter</p>
                 </Field>
                 <Field label="Days" required={showFreshnessDays}>
                   <Input

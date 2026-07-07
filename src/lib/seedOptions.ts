@@ -87,7 +87,7 @@ export const TIMES_PER_DAY_OPTIONS = ["1x", "2x", "3x", "4x"];
 // How seeds are picked each run.
 export const SEED_SELECTION_OPTIONS = ["All seeds", "Weekly bucket", "Monthly bucket", "Stateful freshness"];
 // Stateful-freshness window — only when Seed selection = "Stateful freshness".
-export const FRESHNESS_WINDOW_OPTIONS = ["Last days", "Current week", "Current fortnight", "Current month"];
+export const FRESHNESS_WINDOW_OPTIONS = ["Last days", "Current week", "Current fortnight", "Current month", "Current quarter"];
 // How locations are picked — only when Geolocation is AUTOMATIC or MANUAL.
 export const LOCATION_SELECTION_OPTIONS = ["All locations", "Monthly CMI schedule", "1 random per day", "N-day rotation"];
 // Per-run volume cap.
