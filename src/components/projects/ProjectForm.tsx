@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,8 @@ import { AssignClientDialog } from "@/components/projects/AssignClientDialog";
 import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimitives";
 import { FilterChip } from "@/components/seeds/FilterChip";
 import type { Project, AssignedSubscription } from "@/lib/projects";
+import { getStores } from "@/lib/retailers";
+import { getSubscriptions } from "@/lib/subscriptions";
 import { getAssignedClientsForProject, setProjectClients, type ProjectClient } from "@/lib/clients";
 import { toast } from "sonner";
 import { ArrowLeft, Calendar, HelpCircle, MapPin, Pencil, Plus, Store, Tag, Trash2, Users, X } from "lucide-react";
@@ -45,6 +48,28 @@ export function ProjectForm({
   /** Persist a subscription-grid change immediately (auto-save) — edit mode only. */
   onSubscriptionsChange?: (subs: AssignedSubscription[]) => void;
 }) {
+  const navigate = useNavigate();
+  // Resolve a store name → id so the assigned-subscription store cell can deep-link
+  // to the store edit page (assigned subs carry the store NAME, not its id).
+  const storeIdByName = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const s of getStores()) m.set(s.name, s.id);
+    return m;
+  }, []);
+  // Deep-link to the subscription's edit dialog. Assigned rows may carry a snapshot id
+  // (fixtures) or a real one, so resolve against the live list by id first, then name.
+  const goSubscription = (sp: AssignedSubscription) => {
+    const subs = getSubscriptions();
+    const match = subs.find((s) => s.id === sp.id) ?? subs.find((s) => s.name === sp.name);
+    if (match) navigate({ to: "/seeds-api/subscriptions", search: { edit: match.id } });
+    else navigate({ to: "/seeds-api/subscriptions" });
+  };
+  const goStore = (name: string) => {
+    const id = storeIdByName.get(name);
+    if (id) navigate({ to: "/stores/$storeId", params: { storeId: id } });
+    else navigate({ to: "/stores" });
+  };
+
   const [project, setProject] = useState<Project>(initial);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -347,8 +372,8 @@ export function ProjectForm({
                   ) : (
                     shownSubs.map((sp) => (
                       <tr key={sp.id} className="border-t border-border hover:bg-secondary/40">
-                        <Td><LinkText>{sp.name}</LinkText></Td>
-                        <Td><LinkText>{sp.store}</LinkText></Td>
+                        <Td><LinkText onClick={() => goSubscription(sp)}>{sp.name}</LinkText></Td>
+                        <Td><LinkText onClick={() => goStore(sp.store)}>{sp.store}</LinkText></Td>
                         <Td><Pill tone={sp.geo === "VIRTUAL STORE" ? "amber" : "violet"}>{sp.geo}</Pill></Td>
                         <Td>{sp.type ? <Pill tone="slate">{sp.type}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
                         <Td className="text-muted-foreground">{sp.expiration}</Td>
