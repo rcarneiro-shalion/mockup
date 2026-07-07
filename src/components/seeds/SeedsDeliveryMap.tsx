@@ -280,7 +280,17 @@ export function SeedsDeliveryMap() {
               <text x={1183} y={386} fontSize={12.5} fill={BLUE} opacity={fOp("p3")} style={T}>← Selection parameters · rotation · freshness · volume</text>
               <text x={1183} y={406} fontSize={12.5} fill={BLUE} opacity={fOp("p3")} style={T}>Frequency · Daily / Weekly / Monthly / Custom</text>
               <line x1={1183} y1={422} x2={1547} y2={422} stroke="#dbe1e8" strokeWidth={1} />
-              <text x={1183} y={442} fontSize={11} fill={SLATE}>⚙  dim_seed_location_selection_params (spec)</text>
+              <text x={1183} y={442} fontSize={12.5} fill={SLATE}>
+                ⚙  dim_seed_location_selection_params{" "}
+                <a
+                  href="https://app.notion.com/p/Task-generator-38b56175e1818087ac08c35539ed01c8?source=copy_link"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ cursor: "pointer" }}
+                >
+                  <tspan fill={BLUE} textDecoration="underline">(spec)</tspan>
+                </a>
+              </text>
               <text x={1183} y={464} fontSize={12.5} fill={INK}>🌱  ① Seed selection · none/weekly/monthly/stateful</text>
               <text x={1183} y={486} fontSize={12.5} fill={INK}>📍  ② Candidate locations · geoloc_mode (+ CMI)</text>
               <text x={1183} y={508} fontSize={12.5} fill={INK}>🔁  ③ Location rotation · none/cmi/hash 1-day/N-day</text>
