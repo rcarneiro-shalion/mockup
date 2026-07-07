@@ -300,6 +300,8 @@ export type LocationCatalog = {
    * from the location set: the catalog, not its buckets, carries the purpose.)
    */
   purposes?: Purpose[];
+  /** Stores this catalog applies to (multi-select, scoped to its country). Optional. */
+  stores?: string[];
   /** Location sets (buckets) — ex Region. */
   sets?: LocationSet[];
   createdAt: string;
@@ -1640,7 +1642,7 @@ export function getLocationCatalogs(): LocationCatalog[] {
 }
 
 export function emptyLocationCatalog(): LocationCatalog {
-  return { id: genId(), name: "", country: "", purposes: [], sets: [], createdAt: nowStamp(), updatedAt: nowStamp() };
+  return { id: genId(), name: "", country: "", purposes: [], stores: [], sets: [], createdAt: nowStamp(), updatedAt: nowStamp() };
 }
 
 // ---------- shared persistence read (SSR-safe) ----------

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import {
 import { Th, Td, Pagination, LinkText } from "@/components/seeds/ListPrimitives";
 import { ChipMultiSelect } from "@/components/seeds/ChipMultiSelect";
 import { LocationSetDialog } from "@/components/retailers/LocationSetDialog";
-import { COUNTRY_OPTIONS, countryLabel, emptyLocationSet, PURPOSE_OPTIONS, type LocationCatalog, type LocationSet, type Purpose } from "@/lib/retailers";
+import { COUNTRY_OPTIONS, countryLabel, emptyLocationSet, getStores, PURPOSE_OPTIONS, type LocationCatalog, type LocationSet, type Purpose } from "@/lib/retailers";
 import { catalogTerms } from "@/lib/catalogTerms";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, FileSpreadsheet } from "lucide-react";
@@ -33,6 +33,15 @@ export function LocationCatalogForm({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const set = <K extends keyof LocationCatalog>(k: K, v: LocationCatalog[K]) => setC((p) => ({ ...p, [k]: v }));
   const canSave = c.name.trim() && c.country.trim();
+
+  // Store options scoped to the catalog's country (distinct names, sorted).
+  const storeOptions = useMemo(
+    () =>
+      [...new Set(getStores().filter((s) => !c.country || s.country === c.country).map((s) => s.name))].sort(
+        (a, b) => a.localeCompare(b),
+      ),
+    [c.country],
+  );
 
   // A catalog holds location sets (buckets). Each set holds locations.
   const sets = c.sets ?? [];
@@ -108,6 +117,23 @@ export function LocationCatalogForm({
                   />
                   <p className="text-xs text-muted-foreground">
                     Which product flows this catalog is intended for — choose any of DASHBOARD, MSRP, ASSORTMENT, SCRAPING.
+                  </p>
+                </div>
+              )}
+              {t.showPurpose && (
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-sm font-medium text-foreground/80">Stores</Label>
+                  <ChipMultiSelect
+                    value={c.stores ?? []}
+                    onChange={(arr) => set("stores", arr)}
+                    options={storeOptions}
+                    addLabel="Add store"
+                    emptyLabel="All stores"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {c.country
+                      ? `Stores this catalog applies to (in ${countryLabel(c.country)}). Leave empty for all.`
+                      : "Select a country first to choose its stores. Leave empty for all."}
                   </p>
                 </div>
               )}
