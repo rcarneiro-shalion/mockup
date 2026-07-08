@@ -13,14 +13,20 @@
 // — exactly as the live services expect. Hosts are the real prod URLs ("Shalion APIs"
 // Notion DB). PREVIEW ONLY in this mockup: the payload is real, no request is sent.
 
-export type PatchFieldType = "string" | "number" | "boolean" | "enum" | "uuid" | "date" | "json";
+export type PatchFieldType = "string" | "number" | "boolean" | "enum" | "uuid" | "date" | "json" | "jsonleaf";
 
 export type PatchField = {
   /** DB column — the CSV value header is `<column>_value` (what the user types). */
   column: string;
   type: PatchFieldType;
-  /** Real JSON body key / dotted path (camelCase). Defaults to `column` when identical. */
+  /** Real JSON body key / dotted path (camelCase) used on the PATCH. Defaults to `column`. */
   path?: string;
+  /**
+   * Wire path to READ the current value on the GET snapshot, when it differs from the write
+   * `path`. Needed where a service's update key ≠ its read key (e.g. orders-management writes
+   * `updateReExecutionRules` but reads `reExecutionRules`). Defaults to `path`.
+   */
+  readPath?: string;
   /** CSV empty cell / `null` / `\N` becomes JSON `null` (only when nullable). */
   nullable?: boolean;
   /** Allowed values for `enum`. */
@@ -35,6 +41,11 @@ export type PatchTable = {
   table: string;
   /** Admin endpoint segment, e.g. `jobs`, `client-skus`. */
   resource: string;
+  /**
+   * Full base path for the record endpoint, e.g. `/v2.0/orders`. Defaults to
+   * `/v1.0/admin/{resource}` (the pattern the admin APIs share). PATCH/GET hit `{basePath}/{id}`.
+   */
+  basePath?: string;
   /** CSV primary-key header, e.g. `job_id`. */
   pk: string;
   fields: PatchField[];
@@ -197,18 +208,21 @@ export const PATCH_SERVICES: PatchService[] = [
   {
     // Data collector = orders-management-api. Its `order` table is the scraping-order
     // definition (store, project, schedule, machine sizing, input/delivery instructions).
-    // The four jsonb columns are exposed as whole-object `json` fields (paste the full
-    // object — quote the CSV cell — and it REPLACES the column). A handful of frequently
-    // bulk-tuned env-var leaves are also exposed as nested paths: those READ-MODIFY-WRITE
-    // the parent object (siblings preserved) — see buildMergedBody. Deeper leaves (e.g.
-    // machineSize.size) stay inside the machine_size json so a partial patch can't wipe
-    // their siblings on a replace-semantics API.
+    // Record endpoint is `/v2.0/orders/{id}` (NOT the /v1.0/admin pattern the other services
+    // use) and the body is camelCase (verified against the orders-management-api Kotlin DTOs
+    // + the prod input_instructions.js desk-test script).
+    //
+    // The jsonb columns are exposed two ways: (a) a whole-object `json` field — paste the full
+    // object, quote the CSV cell, and it REPLACES the column; (b) via the panel's "jsonb
+    // sub-path" input on that `json` field to change ONE leaf (e.g. attributes.timeframeId) —
+    // the run read-modify-writes the WHOLE column so siblings are preserved (see buildMergedBody).
+    // A few stable env-var leaves are also pre-exposed as typed fields.
     slug: "orders-management-api",
     label: "Data collector",
     host: "orders-management-api-prod.v2.shalion.com",
     tables: [
       {
-        table: "order", resource: "orders", pk: "order_id",
+        table: "order", resource: "orders", basePath: "/v2.0/orders", pk: "order_id",
         fields: [
           // top-level scalar columns
           { column: "name", type: "string" },
@@ -220,15 +234,19 @@ export const PATCH_SERVICES: PatchService[] = [
           { column: "is_active", type: "boolean", path: "isActive" },
           { column: "is_archived", type: "boolean", path: "isArchived" },
           { column: "cache_validity", type: "number", path: "cacheValidity", int: true, nullable: true, note: "cache TTL in hours (0 = no cache)" },
-          // jsonb columns — whole-object replace (quote the CSV cell; escape inner quotes as "")
-          { column: "environment_variables", type: "json", path: "environmentVariables", note: "jsonb — {machineSize:{cpu,size,memoryMb,cpuLimitsMultiplier,memoryLimitsMultiplier},parallelism,maxConcurrency}. Quote the cell." },
-          { column: "inputs_instructions", type: "json", path: "inputsInstructions", note: "jsonb — {type,attributes:{…}} (type e.g. discovery / ecometrypdp / digitalshelf …). Quote the cell." },
-          { column: "delivery_method", type: "json", path: "deliveryMethod", note: "jsonb — {type,attributes:{…}} (type: rabbitmq / s3 / firehose / ecometrygeolocapi / none). Quote the cell." },
-          { column: "re_execution_rules", type: "json", path: "reExecutionRules", nullable: true, note: "jsonb — {retries,errorCategories[],nextTriggerDelayMinutes} or NULL. Quote the cell." },
+          // jsonb columns — whole-object replace (quote the CSV cell; escape inner quotes as "").
+          // To change ONE leaf instead, keep the field selected and fill the "jsonb sub-path".
+          { column: "environment_variables", type: "json", path: "environmentVariables", note: "jsonb — {machineSize:{cpu,size,memoryMb,…},parallelism,maxConcurrency,maxTasks,additionalVariables}. Quote the cell, or use a sub-path." },
+          { column: "inputs_instructions", type: "json", path: "inputsInstructions", note: "jsonb — {type,attributes:{…}} (type e.g. discovery / ecometrypdp …; attributes holds timeframeId, retailer, …). Quote the cell, or use a sub-path." },
+          { column: "delivery_method", type: "json", path: "deliveryMethod", note: "jsonb — {type,attributes:{…}} (type: rabbitmq / s3 / firehose / ecometrygeolocapi / none). Quote the cell, or use a sub-path." },
+          // Read key is `reExecutionRules`; the PATCH write key is `updateReExecutionRules`
+          // (custom deserializer) — hence readPath. Value shape assumed same as read.
+          { column: "re_execution_rules", type: "json", path: "updateReExecutionRules", readPath: "reExecutionRules", nullable: true, note: "jsonb — {retries,errorCategories[],nextTriggerDelayMinutes} or NULL. Write key updateReExecutionRules. Quote the cell." },
           // convenient environment_variables leaves (read-modify-write; siblings preserved)
           { column: "parallelism", type: "number", path: "environmentVariables.parallelism", int: true, note: "leaf of environment_variables" },
           { column: "max_concurrency", type: "number", path: "environmentVariables.maxConcurrency", int: true, note: "leaf of environment_variables" },
-          { column: "machine_size", type: "json", path: "environmentVariables.machineSize", note: "leaf object of environment_variables: {cpu,size,memoryMb,cpuLimitsMultiplier,memoryLimitsMultiplier}. Quote the cell." },
+          { column: "max_tasks", type: "number", path: "environmentVariables.maxTasks", int: true, nullable: true, note: "leaf of environment_variables" },
+          { column: "machine_size", type: "json", path: "environmentVariables.machineSize", note: "leaf object of environment_variables: {cpu,size,memoryMb,…}. Quote the cell." },
         ],
       },
     ],
@@ -251,9 +269,15 @@ export function hostFor(service: PatchService, env: PatchEnv): string {
     : service.host;
 }
 
+/** Base path for a table's record endpoint (`{basePath}/{id}`). Defaults to the shared admin
+ *  pattern `/v1.0/admin/{resource}`; a table may override it (e.g. orders → `/v2.0/orders`). */
+export function tableBasePath(table: PatchTable): string {
+  return table.basePath ?? `/v1.0/admin/${table.resource}`;
+}
+
 /** Real PATCH URL for one row (id interpolated raw, as the live scripts do). */
 export function patchUrl(service: PatchService, table: PatchTable, id = "{id}", env: PatchEnv = "prod"): string {
-  return `https://${hostFor(service, env)}/v1.0/admin/${table.resource}/${id}`;
+  return `https://${hostFor(service, env)}${tableBasePath(table)}/${id}`;
 }
 
 /** CSV header the user should provide: `<pk>,<column>_value`. */
@@ -290,6 +314,24 @@ export function coerceValue(field: PatchField, rawIn: string, opts?: { literal?:
       return { value: JSON.parse(s), isNull: false };
     } catch {
       return { value: s, isNull: false, error: `invalid JSON: ${s.slice(0, 40)}${s.length > 40 ? "…" : ""}` };
+    }
+  }
+  // A single leaf INSIDE a jsonb column, targeted by a sub-path (e.g. attributes.timeframeId).
+  // Only the leaf changes; the rest of the object is preserved on write (read-modify-write).
+  // A quoted cell is forced to a literal string (e.g. an all-digit id). Otherwise an empty /
+  // NULL cell clears the leaf, a bare true/false/number/{…}/[…] is parsed as JSON, and any
+  // other token (a UUID, a domain, a cron) is kept as a string.
+  if (field.type === "jsonleaf") {
+    if (literal) return { value: rawIn ?? "", isNull: false };
+    const s = (rawIn ?? "").trim();
+    if (NULL_TOKENS.has(s))
+      return field.nullable
+        ? { value: null, isNull: true }
+        : { value: s, isNull: false, error: `"${field.column}" is not nullable — empty/NULL not allowed` };
+    try {
+      return { value: JSON.parse(s), isNull: false };
+    } catch {
+      return { value: s, isNull: false };
     }
   }
   const raw = literal ? (rawIn ?? "") : (rawIn ?? "").trim();
@@ -340,24 +382,51 @@ export function isNestedField(field: PatchField): boolean {
 }
 
 /**
- * Build a PATCH body that sets ONE field while PRESERVING its siblings. For a nested
- * field it READ-MODIFY-WRITES the parent object from the freshly-GET'd `record`: clone
- * the live parent (e.g. seedType.attributes), override the one leaf, and re-wrap up the
- * path — so the body carries the FULL parent (siblings intact) and is safe whether the
- * API merges or replaces that node. For a top-level field it is just `{ key: value }`.
+ * Build a PATCH body that sets ONE (possibly deep) field while PRESERVING every sibling.
+ * For a nested path it READ-MODIFY-WRITES the ENTIRE top-level object from the freshly
+ * GET'd `record`: deep-clone the whole top-level value (e.g. all of `inputsInstructions`),
+ * override just the target leaf, and send the complete object back under the top-level key.
+ *
+ * Re-sending the full top-level object (not merely the leaf's immediate parent) is safe at
+ * ANY depth and under EITHER API semantics — whether the service deep-merges the jsonb node
+ * or replaces the whole column, the body already carries the complete intended value, so no
+ * sibling at any level can be dropped. Example: setting inputsInstructions.attributes.timeframeId
+ * sends `{ inputsInstructions: { type, attributes: { retailer, timeframeId: <new> } } }`, so
+ * `type` and `retailer` survive. For a top-level field it is just `{ key: value }`.
  */
 export function buildMergedBody(field: PatchField, value: unknown, record: unknown): Record<string, unknown> {
   const segs = (field.path ?? field.column).split(".");
   if (segs.length === 1) return { [segs[0]]: value };
-  const parentSegs = segs.slice(0, -1);
-  const leaf = segs[segs.length - 1];
-  const parent = getByPath(record, parentSegs.join("."));
-  let body: Record<string, unknown> = {
-    ...(parent && typeof parent === "object" ? (structuredClone(parent) as Record<string, unknown>) : {}),
-    [leaf]: value,
-  };
-  for (let i = parentSegs.length - 1; i >= 0; i--) body = { [parentSegs[i]]: body };
-  return body;
+  const topKey = segs[0];
+  const top = getByPath(record, topKey);
+  const clone: Record<string, unknown> =
+    top && typeof top === "object" ? (structuredClone(top) as Record<string, unknown>) : {};
+  // Walk (creating intermediate objects if the live value is missing them) to the leaf's
+  // parent, then set the leaf on the CLONE — never on the live record.
+  let cur: Record<string, unknown> = clone;
+  for (let i = 1; i < segs.length - 1; i++) {
+    const k = segs[i];
+    const next = cur[k];
+    if (!next || typeof next !== "object") cur[k] = {};
+    cur = cur[k] as Record<string, unknown>;
+  }
+  cur[segs[segs.length - 1]] = value;
+  return { [topKey]: clone };
+}
+
+// A jsonb sub-path is a dotted chain of bare object keys — camelCase, as stored INSIDE the
+// jsonb (e.g. "attributes.timeframeId"). Validated so it only ever builds JSON body keys,
+// never anything that could reach the request URL.
+export const JSON_SUBPATH_RE = /^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)*$/;
+
+/**
+ * Synthetic field for editing ONE value at `subPath` inside a jsonb column (`base`, a `json`
+ * field). Its wire path is `<base path>.<subPath>` so the run read-modify-writes the whole
+ * column (siblings preserved); the CSV header stays `<base column>_value` and the value is
+ * coerced as a jsonb leaf (smart scalar — quote to force a string, empty to clear).
+ */
+export function jsonLeafField(base: PatchField, subPath: string): PatchField {
+  return { column: base.column, type: "jsonleaf", path: `${base.path ?? base.column}.${subPath}`, nullable: true };
 }
 
 export type ParsedRow = { line: number; id: string; raw: string; value: unknown; isNull: boolean; error?: string };
@@ -641,6 +710,7 @@ export type SuperUpdateBatch = {
   pk: string;
   fieldColumn: string;
   fieldPath: string;
+  fieldType?: PatchFieldType; // so the Rollback CSV can round-trip a jsonb leaf faithfully
   rows: SuperUpdateRowResult[];
   applied: number;
   failed: number;
@@ -660,14 +730,31 @@ function csvCell(v: unknown): string {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
+// Rollback cell for a jsonb LEAF (jsonleaf) value — encoded so it re-parses through jsonleaf
+// coercion to the SAME value when the batch's sub-path is re-selected: a STRING is always
+// quoted (jsonleaf reads a quoted cell as a literal string, so "123" restores as "123" not the
+// number 123), a number/boolean is bare (JSON.parse restores it), and null → empty cell. An
+// object/array leaf is emitted as JSON but re-imports as a string (a quoted cell is literal) —
+// use the in-tool Restore for exact object-leaf rollback.
+function jsonLeafCsvCell(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  if (typeof v === "string") return `"${v.replace(/"/g, '""')}"`;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  const s = JSON.stringify(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
 /**
  * Rollback CSV (`<pk>,<column>_value`) of the captured OLD values for the rows that were
- * actually changed — re-runnable through Super Update (same table+field) to restore.
+ * actually changed — re-runnable through Super Update to restore. For a jsonb sub-path (leaf)
+ * batch, re-select the SAME field AND sub-path before re-running (the values round-trip through
+ * jsonleaf coercion); the in-tool Restore button reverts a leaf batch without any re-selection.
  */
 export function buildRollbackCsv(batch: SuperUpdateBatch): string {
   const header = `${batch.pk},${batch.fieldColumn}_value`;
+  const cell = batch.fieldType === "jsonleaf" ? jsonLeafCsvCell : csvCell;
   const lines = batch.rows
     .filter((r) => r.status === "ok")
-    .map((r) => `${r.pk},${csvCell(r.oldValue)}`);
+    .map((r) => `${r.pk},${cell(r.oldValue)}`);
   return [header, ...lines].join("\n");
 }

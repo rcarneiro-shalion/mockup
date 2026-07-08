@@ -13,6 +13,7 @@ import {
   buildPayload,
   buildMergedBody,
   isNestedField,
+  tableBasePath,
   junctionLinkBody,
   findRelation,
   relationSideId,
@@ -59,7 +60,7 @@ export type RunInput = {
   onProgress?: (done: number, total: number, phase: RunPhase) => void;
 };
 
-const path = (table: PatchTable, pk: string) => `/v1.0/admin/${table.resource}/${pk}`;
+const path = (table: PatchTable, pk: string) => `${tableBasePath(table)}/${pk}`;
 
 /**
  * Snapshot (GET current value) then apply (PATCH new value) for each row. Returns a
@@ -70,7 +71,9 @@ export async function runSuperUpdate(input: RunInput): Promise<SuperUpdateRowRes
   const { service, table, field, env, token, idToken, rows, onProgress } = input;
   const svc = proxyServiceFor(service);
   const liveEnv = toLiveEnv(env);
-  const wirePath = field.path ?? field.column;
+  // Read path may differ from the write path (e.g. read `reExecutionRules`, write
+  // `updateReExecutionRules`) — snapshot by the read path, patch by field.path.
+  const readWirePath = field.readPath ?? field.path ?? field.column;
   const nested = isNestedField(field);
   const auth = { token: token || undefined, idToken: idToken || undefined, env: liveEnv };
 
@@ -91,7 +94,7 @@ export async function runSuperUpdate(input: RunInput): Promise<SuperUpdateRowRes
           : (res.error ?? `GET failed (${res.status})`);
         return { ok: false as const, error: why };
       }
-      const found = getByPath(res.data, wirePath);
+      const found = getByPath(res.data, readWirePath);
       if (found === undefined && !nested)
         return { ok: false as const, error: "current value not found in record — not patched (no rollback snapshot)" };
       return { ok: true as const, oldValue: found === undefined ? null : found, record: res.data };

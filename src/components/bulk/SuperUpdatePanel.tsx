@@ -18,6 +18,8 @@ import {
   buildRollbackCsv,
   junctionRollbackCsv,
   isJunctionBatch,
+  jsonLeafField,
+  JSON_SUBPATH_RE,
   type PatchService,
   type PatchTable,
   type PatchField,
@@ -67,6 +69,7 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
   const [serviceSlug, setServiceSlug] = useState("");
   const [tableName, setTableName] = useState("");
   const [fieldColumn, setFieldColumn] = useState("");
+  const [subPath, setSubPath] = useState(""); // optional jsonb leaf path, for a `json` field
   // relationship mode
   const [junctionKey, setJunctionKey] = useState("");
   const [op, setOp] = useState<JunctionOp>("link");
@@ -89,7 +92,20 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
 
   const service: PatchService | undefined = PATCH_SERVICES.find((s) => s.slug === serviceSlug);
   const table: PatchTable | undefined = service?.tables.find((t) => t.table === tableName);
-  const field: PatchField | undefined = table?.fields.find((f) => f.column === fieldColumn);
+  const baseField: PatchField | undefined = table?.fields.find((f) => f.column === fieldColumn);
+  // A `json` (jsonb) field can be narrowed to ONE leaf via an optional dotted sub-path
+  // (e.g. attributes.timeframeId). The run then read-modify-writes the whole column so the
+  // untargeted siblings survive. Empty sub-path = replace the whole object (as before).
+  // Excluded: fields whose READ key differs from the WRITE key (readPath) — the read-modify
+  // -write would clone the wrong top-level object and drop siblings, so those stay whole-object
+  // only (e.g. re_execution_rules: read reExecutionRules / write updateReExecutionRules).
+  const canSubPath = baseField?.type === "json" && !baseField.readPath;
+  const subPathTrim = subPath.trim();
+  const subPathError = canSubPath && subPathTrim !== "" && !JSON_SUBPATH_RE.test(subPathTrim);
+  const field: PatchField | undefined = useMemo(() => {
+    if (!(canSubPath && subPathTrim !== "")) return baseField;
+    return subPathError ? undefined : jsonLeafField(baseField!, subPathTrim);
+  }, [baseField, canSubPath, subPathTrim, subPathError]);
   const junction: PatchJunction | undefined = PATCH_JUNCTIONS.find((j) => j.key === junctionKey);
 
   const parsed = useMemo(
@@ -116,8 +132,9 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
 
   const onProgress = (done: number, total: number, phase: RunPhase) => setProgress({ done, total, phase });
 
-  const pickService = (v: string) => { setServiceSlug(v); setTableName(""); setFieldColumn(""); };
-  const pickTable = (v: string) => { setTableName(v); setFieldColumn(""); };
+  const pickService = (v: string) => { setServiceSlug(v); setTableName(""); setFieldColumn(""); setSubPath(""); };
+  const pickTable = (v: string) => { setTableName(v); setFieldColumn(""); setSubPath(""); };
+  const pickField = (v: string) => { setFieldColumn(v); setSubPath(""); };
 
   const onFile = (file: File | undefined) => {
     if (!file) return;
@@ -137,7 +154,7 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
       const batch: SuperUpdateBatch = {
         id: crypto.randomUUID(), when: stamp(), kind: "apply", mode: "field", env,
         serviceSlug: service.slug, serviceLabel: service.label, table: table.table, resource: table.resource, pk: table.pk,
-        fieldColumn: field.column, fieldPath: field.path ?? field.column, rows: results, applied, failed,
+        fieldColumn: field.column, fieldPath: field.path ?? field.column, fieldType: field.type, rows: results, applied, failed,
       };
       setHistory((prev) => capHistory([batch, ...prev]));
       onRun({ service: `${service.label} · ${table.table}`, table: table.table, field: field.column, fileName: fileName || `super-update-${table.table}-${field.column}.csv`, applied, failed, env });
@@ -197,7 +214,15 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
       } else {
         const svc = PATCH_SERVICES.find((s) => s.slug === batch.serviceSlug);
         const tbl = svc?.tables.find((t) => t.table === batch.table);
-        const fld = tbl?.fields.find((f) => f.column === batch.fieldColumn);
+        // Reconstruct the field from the batch's stored PATH (not just the base column) so a
+        // jsonb sub-path batch restores that LEAF — otherwise the catalogue's base `json`
+        // field would rewrite the whole column with a single leaf value. Keeps readPath etc.
+        const found = tbl?.fields.find((f) => f.column === batch.fieldColumn);
+        const fld: PatchField | undefined = found
+          ? { ...found, path: batch.fieldPath }
+          : tbl
+            ? { column: batch.fieldColumn, type: "string", path: batch.fieldPath }
+            : undefined;
         const okRows = batch.rows.filter((r) => r.status === "ok").map((r) => ({ pk: r.pk, oldValue: r.oldValue }));
         if (!svc || !tbl || !fld || !okRows.length) { toast.info("Nothing to restore"); return; }
         const results = await restoreSuperUpdate({ service: svc, table: tbl, field: fld, env: batch.env, token, idToken, rows: okRows, onProgress });
@@ -300,12 +325,35 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
                   </Select>
                 </Field>
                 <Field label="Field to update">
-                  <Select value={fieldColumn} onValueChange={setFieldColumn} disabled={!table}>
+                  <Select value={fieldColumn} onValueChange={pickField} disabled={!table}>
                     <SelectTrigger><SelectValue placeholder="Field" /></SelectTrigger>
                     <SelectContent>{table?.fields.map((f) => <SelectItem key={f.column} value={f.column}>{f.column}</SelectItem>)}</SelectContent>
                   </Select>
                 </Field>
               </div>
+              {/* jsonb sub-path — only for a `json` column: change ONE leaf (siblings kept). */}
+              {canSubPath && (
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    jsonb sub-path <span className="font-normal">(optional — target one leaf)</span>
+                  </Label>
+                  <input
+                    value={subPath}
+                    onChange={(e) => setSubPath(e.target.value)}
+                    placeholder="e.g. attributes.timeframeId — empty replaces the whole object"
+                    spellCheck={false}
+                    className={cn(
+                      "h-9 rounded-md border bg-background px-3 font-mono text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring",
+                      subPathError ? "border-rose-400" : "border-input",
+                    )}
+                  />
+                  {subPathError ? (
+                    <p className="text-[11px] text-rose-600">Dotted keys only, e.g. <span className="font-mono">attributes.timeframeId</span> (letters, digits, _).</p>
+                  ) : subPathTrim ? (
+                    <p className="text-[11px] text-muted-foreground">Only this leaf changes — the rest of <span className="font-mono">{baseField?.column}</span> is preserved (read-modify-write).</p>
+                  ) : null}
+                </div>
+              )}
               {field && table && service && (
                 <div className="space-y-2 rounded-lg border border-border bg-card p-3 text-sm shadow-sm">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -313,6 +361,11 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
                     {field.nullable && <Pill tone="amber">nullable</Pill>}
                     {field.note && <span className="text-xs text-muted-foreground">{field.note}</span>}
                   </div>
+                  {field.type === "jsonleaf" && (
+                    <div className="rounded bg-blue-50 px-2 py-1 text-[11px] leading-relaxed text-blue-800">
+                      Editing one leaf — body path <code className="font-mono">{field.path}</code>. The rest of <span className="font-mono">{baseField?.column}</span> is re-sent unchanged.
+                    </div>
+                  )}
                   {field.options && (
                     <div className="flex flex-wrap gap-1">{field.options.map((o) => <span key={o} className="rounded border border-border bg-secondary/60 px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">{o}</span>)}</div>
                   )}
@@ -445,7 +498,7 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
                     <div className="flex flex-wrap items-center gap-2">
                       {isJunctionBatch(b)
                         ? <><span className="font-medium text-foreground">{b.junctionLabel}</span><Pill tone={b.op === "link" ? "green" : "red"}>{b.op}</Pill></>
-                        : <><span className="font-medium text-foreground">{b.serviceLabel} · {b.table}</span><span className="font-mono text-xs text-foreground/80">{b.fieldColumn}</span></>}
+                        : <><span className="font-medium text-foreground">{b.serviceLabel} · {b.table}</span><span className="font-mono text-xs text-foreground/80">{b.fieldColumn}</span>{b.fieldType === "jsonleaf" && <span className="font-mono text-[11px] text-muted-foreground">→ {b.fieldPath}</span>}</>}
                       <Pill tone={b.env === "prod" ? "red" : "green"}>{b.env}</Pill>
                       {b.kind === "restore" && <Pill tone="slate">restore</Pill>}
                     </div>

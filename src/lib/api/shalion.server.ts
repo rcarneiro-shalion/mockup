@@ -379,7 +379,10 @@ const PATCH_PATH_PREFIXES = [
   "/v1.0/admin/manufacturers",
   "/v1.0/admin/datagroups",
   "/v1.0/admin/stores",
-  "/v1.0/admin/orders",
+  // orders-management-api does NOT use the /v1.0/admin pattern — its order endpoint is
+  // /v2.0/orders/{id} (v1 controller also exists at /v1.0/orders/{id}).
+  "/v2.0/orders",
+  "/v1.0/orders",
 ];
 
 // PUT is limited to the IAM user↔application "authorities" endpoint — the per-application
