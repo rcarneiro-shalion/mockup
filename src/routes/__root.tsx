@@ -111,6 +111,20 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        {/* Google Analytics (gtag.js) — deployed builds only, so local dev / preview
+            traffic doesn't pollute the GA property. */}
+        {import.meta.env.PROD && (
+          <>
+            <script async src="https://www.googletagmanager.com/gtag/js?id=G-2PL9N3GG9D" />
+            <script
+              // eslint-disable-next-line react/no-danger
+              dangerouslySetInnerHTML={{
+                __html:
+                  "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2PL9N3GG9D');",
+              }}
+            />
+          </>
+        )}
       </head>
       <body>
         {children}
