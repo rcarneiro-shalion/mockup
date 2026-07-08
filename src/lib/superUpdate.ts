@@ -15,6 +15,14 @@
 
 export type PatchFieldType = "string" | "number" | "boolean" | "enum" | "uuid" | "date" | "json" | "jsonleaf";
 
+/**
+ * Expected type of a value INSIDE a jsonb column (a whole-object `leaves` map, or the leaf a
+ * sub-path targets). The tool validates the value against this BEFORE sending — the safety net
+ * the services lack (e.g. `timeframeId` is read via a `::uuid` @Formula but never validated on
+ * write, so a bare `30` silently persists and then breaks every read). "int" = whole number.
+ */
+export type PatchLeafType = "uuid" | "string" | "number" | "int" | "boolean" | "uuidArray" | "stringArray" | "json";
+
 export type PatchField = {
   /** DB column — the CSV value header is `<column>_value` (what the user types). */
   column: string;
@@ -33,6 +41,14 @@ export type PatchField = {
   options?: string[];
   /** `number` fields that must be whole integers. */
   int?: boolean;
+  /**
+   * For a `json` (jsonb) field: known sub-paths (relative to the column value) → expected type,
+   * used to validate both a sub-path leaf edit and a whole-object paste. Unknown sub-paths fall
+   * back to a smart scalar + an `*Id`/`*Ids` → UUID/UUID[] heuristic.
+   */
+  leaves?: Record<string, PatchLeafType>;
+  /** Set on a synthetic `jsonleaf` field (from jsonLeafField) — the expected type of THAT leaf. */
+  leaf?: PatchLeafType;
   note?: string;
 };
 
@@ -236,17 +252,32 @@ export const PATCH_SERVICES: PatchService[] = [
           { column: "cache_validity", type: "number", path: "cacheValidity", int: true, nullable: true, note: "cache TTL in hours (0 = no cache)" },
           // jsonb columns — whole-object replace (quote the CSV cell; escape inner quotes as "").
           // To change ONE leaf instead, keep the field selected and fill the "jsonb sub-path".
-          { column: "environment_variables", type: "json", path: "environmentVariables", note: "jsonb — {machineSize:{cpu,size,memoryMb,…},parallelism,maxConcurrency,maxTasks,additionalVariables}. Quote the cell, or use a sub-path." },
-          { column: "inputs_instructions", type: "json", path: "inputsInstructions", note: "jsonb — {type,attributes:{…}} (type e.g. discovery / ecometrypdp …; attributes holds timeframeId, retailer, …). Quote the cell, or use a sub-path." },
-          { column: "delivery_method", type: "json", path: "deliveryMethod", note: "jsonb — {type,attributes:{…}} (type: rabbitmq / s3 / firehose / ecometrygeolocapi / none). Quote the cell, or use a sub-path." },
+          // `leaves` = known sub-paths → expected type; the tool validates the value against
+          // these (and the *Id/*Ids heuristic) BEFORE sending, so a bad value can't reach the
+          // service's unguarded jsonb (the timeframeId ::uuid footgun). Unlisted attributes.*
+          // keys vary per input type → validated only by the *Id heuristic / smart scalar.
+          { column: "environment_variables", type: "json", path: "environmentVariables",
+            leaves: { parallelism: "int", maxConcurrency: "int", maxTasks: "int", "machineSize.cpu": "int", "machineSize.memoryMb": "int", "machineSize.size": "string", "machineSize.cpuLimitsMultiplier": "int", "machineSize.memoryLimitsMultiplier": "int" },
+            note: "jsonb — {machineSize:{cpu,size,memoryMb,…},parallelism,maxConcurrency,maxTasks,additionalVariables}. Quote the cell, or use a sub-path." },
+          { column: "inputs_instructions", type: "json", path: "inputsInstructions",
+            leaves: { type: "string", "attributes.timeframeId": "uuid", "attributes.storeIds": "uuidArray", "attributes.retailer": "string", "attributes.lastOfferDays": "string" },
+            note: "jsonb — {type,attributes:{…}} (type e.g. discovery / ecometrypdp …; attributes holds timeframeId, retailer, …). Quote the cell, or use a sub-path." },
+          { column: "delivery_method", type: "json", path: "deliveryMethod",
+            leaves: { type: "string" },
+            note: "jsonb — {type,attributes:{…}} (type: rabbitmq / s3 / firehose / ecometrygeolocapi / none). Quote the cell, or use a sub-path." },
           // Read key is `reExecutionRules`; the PATCH write key is `updateReExecutionRules`
-          // (custom deserializer) — hence readPath. Value shape assumed same as read.
-          { column: "re_execution_rules", type: "json", path: "updateReExecutionRules", readPath: "reExecutionRules", nullable: true, note: "jsonb — {retries,errorCategories[],nextTriggerDelayMinutes} or NULL. Write key updateReExecutionRules. Quote the cell." },
+          // (custom deserializer) — hence readPath. Value shape assumed same as read. (readPath
+          // ≠ path → the panel offers whole-object mode only, so `leaves` here guard the paste.)
+          { column: "re_execution_rules", type: "json", path: "updateReExecutionRules", readPath: "reExecutionRules", nullable: true,
+            leaves: { retries: "int", errorCategories: "stringArray", nextTriggerDelayMinutes: "int" },
+            note: "jsonb — {retries,errorCategories[],nextTriggerDelayMinutes} or NULL. Write key updateReExecutionRules. Quote the cell." },
           // convenient environment_variables leaves (read-modify-write; siblings preserved)
           { column: "parallelism", type: "number", path: "environmentVariables.parallelism", int: true, note: "leaf of environment_variables" },
           { column: "max_concurrency", type: "number", path: "environmentVariables.maxConcurrency", int: true, note: "leaf of environment_variables" },
           { column: "max_tasks", type: "number", path: "environmentVariables.maxTasks", int: true, nullable: true, note: "leaf of environment_variables" },
-          { column: "machine_size", type: "json", path: "environmentVariables.machineSize", note: "leaf object of environment_variables: {cpu,size,memoryMb,…}. Quote the cell." },
+          { column: "machine_size", type: "json", path: "environmentVariables.machineSize",
+            leaves: { cpu: "int", memoryMb: "int", size: "string", cpuLimitsMultiplier: "int", memoryLimitsMultiplier: "int" },
+            note: "leaf object of environment_variables: {cpu,size,memoryMb,…}. Quote the cell." },
         ],
       },
     ],
@@ -290,6 +321,66 @@ const NULL_TOKENS = new Set(["", "null", "NULL", "Null", "\\N", "(null)"]);
 const TRUE_TOKENS = new Set(["true", "1", "yes", "y", "t"]);
 const FALSE_TOKENS = new Set(["false", "0", "no", "n", "f"]);
 const NUMERIC_RE = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
+export const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+/**
+ * Validate an already-parsed JS value against a jsonb leaf type. Returns an error string, or
+ * undefined when valid. null passes (it clears/leaves the key). This is the client-side guard
+ * the services lack — e.g. it rejects a number `30` (or any non-UUID) for a `uuid` leaf, which
+ * is what silently bricks a row whose `timeframeId` is read via a `::uuid` cast.
+ */
+export function leafValueError(leaf: PatchLeafType, value: unknown): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  const isUuid = (v: unknown) => typeof v === "string" && UUID_RE.test(v);
+  switch (leaf) {
+    case "uuid":
+      return isUuid(value) ? undefined : `expected a UUID, got ${JSON.stringify(value)}`;
+    case "string":
+      return typeof value === "string" ? undefined : `expected a string, got ${typeof value}`;
+    case "number":
+      return typeof value === "number" && Number.isFinite(value) ? undefined : `expected a number, got ${JSON.stringify(value)}`;
+    case "int":
+      return typeof value === "number" && Number.isInteger(value) ? undefined : `expected a whole number, got ${JSON.stringify(value)}`;
+    case "boolean":
+      return typeof value === "boolean" ? undefined : `expected true/false, got ${JSON.stringify(value)}`;
+    case "uuidArray":
+      return Array.isArray(value) && value.every(isUuid) ? undefined : `expected an array of UUIDs`;
+    case "stringArray":
+      return Array.isArray(value) && value.every((x) => typeof x === "string") ? undefined : `expected an array of strings`;
+    case "json":
+      return undefined;
+  }
+}
+
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+/**
+ * Validate a pasted whole jsonb object against its known `leaves`. The value must BE an object
+ * (a scalar/array paste for a structured column is rejected). A declared leaf that is genuinely
+ * ABSENT is fine, but one whose path is BLOCKED by a non-object intermediate (e.g. `attributes`
+ * pasted as an array) is an error — we can't confirm the leaf and the shape is wrong. Returns
+ * the first error, or undefined when valid.
+ */
+export function validateJsonLeaves(parsed: unknown, leaves: Record<string, PatchLeafType>): string | undefined {
+  if (!isPlainObject(parsed)) return `expected a JSON object`;
+  for (const [sub, leaf] of Object.entries(leaves)) {
+    const segs = sub.split(".");
+    let cur: unknown = parsed;
+    let absent = false;
+    for (let i = 0; i < segs.length - 1; i++) {
+      const next = (cur as Record<string, unknown>)[segs[i]];
+      if (next === undefined || next === null) { absent = true; break; } // parent absent → leaf absent (ok)
+      if (!isPlainObject(next)) return `${sub}: "${segs[i]}" is not an object`; // blocked → can't validate
+      cur = next;
+    }
+    if (absent) continue;
+    const err = leafValueError(leaf, (cur as Record<string, unknown>)[segs[segs.length - 1]]);
+    if (err) return `${sub}: ${err}`;
+  }
+  return undefined;
+}
 
 export type Coerced = { value: unknown; isNull: boolean; error?: string };
 
@@ -310,29 +401,52 @@ export function coerceValue(field: PatchField, rawIn: string, opts?: { literal?:
       return field.nullable
         ? { value: null, isNull: true }
         : { value: s, isNull: false, error: `"${field.column}" is not nullable — empty/NULL not allowed` };
+    let parsed: unknown;
     try {
-      return { value: JSON.parse(s), isNull: false };
+      parsed = JSON.parse(s);
     } catch {
       return { value: s, isNull: false, error: `invalid JSON: ${s.slice(0, 40)}${s.length > 40 ? "…" : ""}` };
     }
+    // Validate the pasted object against KNOWN leaves (e.g. a bad attributes.timeframeId in a
+    // whole-object paste is caught here, not just via the sub-path) — and reject a malformed
+    // shape (scalar/array paste, or a non-object where an object is expected).
+    if (field.leaves) {
+      const err = validateJsonLeaves(parsed, field.leaves);
+      if (err) return { value: parsed, isNull: false, error: err };
+    }
+    return { value: parsed, isNull: false };
   }
   // A single leaf INSIDE a jsonb column, targeted by a sub-path (e.g. attributes.timeframeId).
   // Only the leaf changes; the rest of the object is preserved on write (read-modify-write).
-  // A quoted cell is forced to a literal string (e.g. an all-digit id). Otherwise an empty /
-  // NULL cell clears the leaf, a bare true/false/number/{…}/[…] is parsed as JSON, and any
-  // other token (a UUID, a domain, a cron) is kept as a string.
+  // When the leaf's type is KNOWN (field.leaf, from jsonLeafField) the value is validated
+  // against it — so a `uuid` leaf rejects a bare `30`, a `string` leaf keeps "90" a string
+  // (no number drift), etc. Unknown leaves fall back to a smart scalar (quote to force string).
   if (field.type === "jsonleaf") {
-    if (literal) return { value: rawIn ?? "", isNull: false };
+    const leaf = field.leaf;
     const s = (rawIn ?? "").trim();
-    if (NULL_TOKENS.has(s))
+    if (!literal && NULL_TOKENS.has(s))
       return field.nullable
         ? { value: null, isNull: true }
         : { value: s, isNull: false, error: `"${field.column}" is not nullable — empty/NULL not allowed` };
-    try {
-      return { value: JSON.parse(s), isNull: false };
-    } catch {
-      return { value: s, isNull: false };
+    // string leaf: never JSON-parse — the raw text IS the value (prevents "90" → number 90).
+    if (leaf === "string") return { value: literal ? (rawIn ?? "") : s, isNull: false };
+    // uuid leaf: the value is the (unquoted or quoted) token, validated as a UUID.
+    if (leaf === "uuid") {
+      const v = literal ? (rawIn ?? "") : s;
+      const err = leafValueError("uuid", v);
+      return err ? { value: v, isNull: false, error: err } : { value: v, isNull: false };
     }
+    // number/int/boolean/array/json/unknown: parse as JSON (or keep string), then validate.
+    let value: unknown;
+    if (literal) value = rawIn ?? "";
+    else {
+      try { value = JSON.parse(s); } catch { value = s; }
+    }
+    if (leaf) {
+      const err = leafValueError(leaf, value);
+      if (err) return { value, isNull: false, error: err };
+    }
+    return { value, isNull: false };
   }
   const raw = literal ? (rawIn ?? "") : (rawIn ?? "").trim();
   if (!literal && NULL_TOKENS.has(raw)) {
@@ -353,6 +467,8 @@ export function coerceValue(field: PatchField, rawIn: string, opts?: { literal?:
       if (FALSE_TOKENS.has(t)) return { value: false, isNull: false };
       return { value: raw, isNull: false, error: `not a boolean: "${raw}"` };
     }
+    case "uuid":
+      return UUID_RE.test(raw) ? { value: raw, isNull: false } : { value: raw, isNull: false, error: `not a UUID: "${raw}"` };
     case "enum":
       return field.options && !field.options.includes(raw)
         ? { value: raw, isNull: false, error: `must be one of ${field.options.join(" / ")}` }
@@ -420,13 +536,35 @@ export function buildMergedBody(field: PatchField, value: unknown, record: unkno
 export const JSON_SUBPATH_RE = /^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)*$/;
 
 /**
+ * Expected type of the leaf a sub-path targets inside `base` (a `json` field): the field's
+ * declared `leaves` map wins; otherwise a camelCase `…Id` segment → `uuid` and `…Ids` → array
+ * of UUIDs (these services key relations by UUID, and a non-UUID there bricks reads). Anything
+ * else is unknown → a smart scalar. `undefined` = unknown.
+ */
+export function leafTypeFor(base: PatchField, subPath: string): PatchLeafType | undefined {
+  const declared = base.leaves?.[subPath];
+  if (declared) return declared;
+  const last = subPath.split(".").pop() ?? "";
+  if (/(^|[a-z0-9_])Ids$/.test(last) || last === "ids") return "uuidArray";
+  if (/(^|[a-z0-9_])Id$/.test(last) || last === "id") return "uuid";
+  return undefined;
+}
+
+/**
  * Synthetic field for editing ONE value at `subPath` inside a jsonb column (`base`, a `json`
  * field). Its wire path is `<base path>.<subPath>` so the run read-modify-writes the whole
- * column (siblings preserved); the CSV header stays `<base column>_value` and the value is
- * coerced as a jsonb leaf (smart scalar — quote to force a string, empty to clear).
+ * column (siblings preserved); the CSV header stays `<base column>_value`. `leaf` carries the
+ * expected value type so coerceValue can VALIDATE it (a `uuid` leaf rejects a bare `30`);
+ * unknown leaves fall back to a smart scalar (quote to force a string, empty to clear).
  */
 export function jsonLeafField(base: PatchField, subPath: string): PatchField {
-  return { column: base.column, type: "jsonleaf", path: `${base.path ?? base.column}.${subPath}`, nullable: true };
+  return {
+    column: base.column,
+    type: "jsonleaf",
+    path: `${base.path ?? base.column}.${subPath}`,
+    nullable: true,
+    leaf: leafTypeFor(base, subPath),
+  };
 }
 
 export type ParsedRow = { line: number; id: string; raw: string; value: unknown; isNull: boolean; error?: string };

@@ -358,12 +358,16 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
                 <div className="space-y-2 rounded-lg border border-border bg-card p-3 text-sm shadow-sm">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <Pill tone="blue">{field.type}</Pill>
+                    {field.leaf && <Pill tone="green">value: {field.leaf}</Pill>}
                     {field.nullable && <Pill tone="amber">nullable</Pill>}
                     {field.note && <span className="text-xs text-muted-foreground">{field.note}</span>}
                   </div>
                   {field.type === "jsonleaf" && (
                     <div className="rounded bg-blue-50 px-2 py-1 text-[11px] leading-relaxed text-blue-800">
                       Editing one leaf — body path <code className="font-mono">{field.path}</code>. The rest of <span className="font-mono">{baseField?.column}</span> is re-sent unchanged.
+                      {field.leaf
+                        ? <> The value is validated as <span className="font-semibold">{field.leaf}</span> before sending.</>
+                        : <> Value type is unverified (unknown leaf) — quote it to force a string.</>}
                     </div>
                   )}
                   {field.options && (
