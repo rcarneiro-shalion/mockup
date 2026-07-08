@@ -553,7 +553,9 @@ export async function fetchShalion(args: {
         ? undefined
         : res.status === 401 || res.status === 403
           ? "Unauthorized — the token is missing, expired or lacks permission for this resource."
-          : `Upstream responded ${res.status}.`,
+          // Surface the upstream body (e.g. a JDBC/validation message) so a failing
+          // GET/snapshot is diagnosable instead of an opaque status — mirrors mutateShalion.
+          : `Upstream responded ${res.status}${text ? ` — ${text.slice(0, 200)}` : ""}.`,
     };
   } catch (e) {
     const internal = /\.develop\.shalion\.com|\.ondemand\.shalion\.com/.test(base);
