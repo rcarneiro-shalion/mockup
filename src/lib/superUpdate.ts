@@ -13,7 +13,7 @@
 // — exactly as the live services expect. Hosts are the real prod URLs ("Shalion APIs"
 // Notion DB). PREVIEW ONLY in this mockup: the payload is real, no request is sent.
 
-export type PatchFieldType = "string" | "number" | "boolean" | "enum" | "uuid" | "date";
+export type PatchFieldType = "string" | "number" | "boolean" | "enum" | "uuid" | "date" | "json";
 
 export type PatchField = {
   /** DB column — the CSV value header is `<column>_value` (what the user types). */
@@ -194,6 +194,45 @@ export const PATCH_SERVICES: PatchService[] = [
       },
     ],
   },
+  {
+    // Data collector = orders-management-api. Its `order` table is the scraping-order
+    // definition (store, project, schedule, machine sizing, input/delivery instructions).
+    // The four jsonb columns are exposed as whole-object `json` fields (paste the full
+    // object — quote the CSV cell — and it REPLACES the column). A handful of frequently
+    // bulk-tuned env-var leaves are also exposed as nested paths: those READ-MODIFY-WRITE
+    // the parent object (siblings preserved) — see buildMergedBody. Deeper leaves (e.g.
+    // machineSize.size) stay inside the machine_size json so a partial patch can't wipe
+    // their siblings on a replace-semantics API.
+    slug: "orders-management-api",
+    label: "Data collector",
+    host: "orders-management-api-prod.v2.shalion.com",
+    tables: [
+      {
+        table: "order", resource: "orders", pk: "order_id",
+        fields: [
+          // top-level scalar columns
+          { column: "name", type: "string" },
+          { column: "description", type: "string", nullable: true },
+          { column: "store_id", type: "uuid", path: "storeId" },
+          { column: "project_id", type: "uuid", path: "projectId" },
+          { column: "scheduling", type: "string", note: "cron expression (Quartz), e.g. 0 21 4 ? * WED" },
+          { column: "timezone", type: "string", nullable: true, note: "IANA tz, e.g. Europe/Brussels" },
+          { column: "is_active", type: "boolean", path: "isActive" },
+          { column: "is_archived", type: "boolean", path: "isArchived" },
+          { column: "cache_validity", type: "number", path: "cacheValidity", int: true, nullable: true, note: "cache TTL in hours (0 = no cache)" },
+          // jsonb columns — whole-object replace (quote the CSV cell; escape inner quotes as "")
+          { column: "environment_variables", type: "json", path: "environmentVariables", note: "jsonb — {machineSize:{cpu,size,memoryMb,cpuLimitsMultiplier,memoryLimitsMultiplier},parallelism,maxConcurrency}. Quote the cell." },
+          { column: "inputs_instructions", type: "json", path: "inputsInstructions", note: "jsonb — {type,attributes:{…}} (type e.g. discovery / ecometrypdp / digitalshelf …). Quote the cell." },
+          { column: "delivery_method", type: "json", path: "deliveryMethod", note: "jsonb — {type,attributes:{…}} (type: rabbitmq / s3 / firehose / ecometrygeolocapi / none). Quote the cell." },
+          { column: "re_execution_rules", type: "json", path: "reExecutionRules", nullable: true, note: "jsonb — {retries,errorCategories[],nextTriggerDelayMinutes} or NULL. Quote the cell." },
+          // convenient environment_variables leaves (read-modify-write; siblings preserved)
+          { column: "parallelism", type: "number", path: "environmentVariables.parallelism", int: true, note: "leaf of environment_variables" },
+          { column: "max_concurrency", type: "number", path: "environmentVariables.maxConcurrency", int: true, note: "leaf of environment_variables" },
+          { column: "machine_size", type: "json", path: "environmentVariables.machineSize", note: "leaf object of environment_variables: {cpu,size,memoryMb,cpuLimitsMultiplier,memoryLimitsMultiplier}. Quote the cell." },
+        ],
+      },
+    ],
+  },
 ];
 
 // ---------- helpers ----------
@@ -237,6 +276,22 @@ export type Coerced = { value: unknown; isNull: boolean; error?: string };
  */
 export function coerceValue(field: PatchField, rawIn: string, opts?: { literal?: boolean }): Coerced {
   const literal = opts?.literal ?? false;
+  // jsonb columns: the cell is a JSON document (object/array/scalar). It always survives
+  // CSV as a single quoted cell (splitDelimited already stripped the outer quotes + ""
+  // escapes), so parse the inner text whether or not it was quoted. An empty / NULL cell
+  // clears the column (only when nullable).
+  if (field.type === "json") {
+    const s = (rawIn ?? "").trim();
+    if (NULL_TOKENS.has(s))
+      return field.nullable
+        ? { value: null, isNull: true }
+        : { value: s, isNull: false, error: `"${field.column}" is not nullable — empty/NULL not allowed` };
+    try {
+      return { value: JSON.parse(s), isNull: false };
+    } catch {
+      return { value: s, isNull: false, error: `invalid JSON: ${s.slice(0, 40)}${s.length > 40 ? "…" : ""}` };
+    }
+  }
   const raw = literal ? (rawIn ?? "") : (rawIn ?? "").trim();
   if (!literal && NULL_TOKENS.has(raw)) {
     if (field.nullable) return { value: null, isNull: true };
