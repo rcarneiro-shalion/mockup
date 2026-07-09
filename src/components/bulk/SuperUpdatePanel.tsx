@@ -373,6 +373,11 @@ export function SuperUpdatePanel({ onRun }: { onRun: (r: SuperUpdateRun) => void
                   {field.options && (
                     <div className="flex flex-wrap gap-1">{field.options.map((o) => <span key={o} className="rounded border border-border bg-secondary/60 px-1.5 py-0.5 font-mono text-[11px] text-foreground/80">{o}</span>)}</div>
                   )}
+                  {field.nullable && (
+                    <div className="rounded bg-amber-50 px-2 py-1 text-[11px] leading-relaxed text-amber-800">
+                      To <span className="font-semibold">clear</span> this field, leave the value cell empty (or type <code className="font-mono">NULL</code>) — it sends <code className="font-mono">null</code> to set the column empty. Wrap a value in <code className="font-mono">"…"</code> to write the literal text instead.
+                    </div>
+                  )}
                   <div className="pt-1">
                     <span className="text-xs font-medium text-muted-foreground">Endpoint <span className={cn("ml-1 rounded px-1 py-0.5 text-[10px] font-semibold", env === "prod" ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700")}>{env.toUpperCase()}</span></span>
                     <code className="mt-0.5 block break-all rounded bg-secondary/60 px-2 py-1 text-[11px] text-foreground/80"><span className="font-semibold text-emerald-600">PATCH</span> {patchUrl(service, table, "{id}", env)}</code>

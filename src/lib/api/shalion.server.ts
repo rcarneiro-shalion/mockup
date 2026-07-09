@@ -376,6 +376,7 @@ const PATCH_PATH_PREFIXES = [
   "/v1.0/admin/store-skus",
   "/v1.0/admin/assortments",
   "/v1.0/admin/brands",
+  "/v1.0/admin/brand-regular-expressions",
   "/v1.0/admin/manufacturers",
   "/v1.0/admin/datagroups",
   "/v1.0/admin/stores",

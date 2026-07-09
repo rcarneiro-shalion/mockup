@@ -166,18 +166,37 @@ export const PATCH_SERVICES: PatchService[] = [
     host: "codification-api-prod.v2.shalion.com",
     tables: [
       {
+        // Fields verified against codification-api UpdateBrandRequestBody (camelCase; PATCH
+        // /v1.0/admin/brands/{id}). The update mapper treats a null as "leave unchanged" for
+        // every field EXCEPT parentId — only parentId is a nullable column that an explicit
+        // null clears (empty cell here). name/defaultCategoryId/defaultManufacturerId are
+        // NOT NULL and can't be cleared. Brand has NO `status`; the manufacturer FK is
+        // `defaultManufacturerId` (there is no plain `manufacturerId` on Brand — that lives on
+        // brand-country-manufacturers). `defaultManufacturerName` is read-only (not patchable).
         table: "brand", resource: "brands", pk: "brand_id",
         fields: [
-          { column: "name", type: "string" },
-          { column: "manufacturer_id", type: "uuid", path: "manufacturerId", nullable: true },
-          { column: "status", type: "enum", options: [...STATUS] },
+          { column: "name", type: "string", note: "unique; max 250 (cannot be cleared)" },
+          { column: "default_category_id", type: "uuid", path: "defaultCategoryId", note: "category FK — mandatory, cannot be cleared" },
+          { column: "default_manufacturer_id", type: "uuid", path: "defaultManufacturerId", note: "manufacturer FK — cannot be cleared" },
+          { column: "parent_id", type: "uuid", path: "parentId", nullable: true, note: "parent Brand FK — leave empty to CLEAR (sets parent_id = NULL)" },
+          { column: "is_white_label", type: "boolean", path: "isWhiteLabel" },
+          { column: "is_multi_brand", type: "boolean", path: "isMultiBrand" },
+        ],
+      },
+      {
+        // Separate resource (not a Brand column): PATCH /v1.0/admin/brand-regular-expressions/{id}.
+        // A brand's regex rule — regularExpression pairs with isNegative (UpdateBrandRegularExpressionRequestBody).
+        table: "brand_regular_expression", resource: "brand-regular-expressions", pk: "brand_regular_expression_id",
+        fields: [
+          { column: "regular_expression", type: "string", path: "regularExpression", note: "regex; max 4000 (pair with is_negative)" },
+          { column: "is_negative", type: "boolean", path: "isNegative" },
         ],
       },
       {
         table: "manufacturer", resource: "manufacturers", pk: "manufacturer_id",
         fields: [
           { column: "name", type: "string" },
-          { column: "status", type: "enum", options: [...STATUS] },
+          { column: "status", type: "enum", options: [...STATUS], note: "unverified against codification-api — confirm before a prod run" },
         ],
       },
     ],
