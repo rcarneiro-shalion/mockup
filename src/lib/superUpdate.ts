@@ -173,12 +173,17 @@ export const PATCH_SERVICES: PatchService[] = [
         // NOT NULL and can't be cleared. Brand has NO `status`; the manufacturer FK is
         // `defaultManufacturerId` (there is no plain `manufacturerId` on Brand — that lives on
         // brand-country-manufacturers). `defaultManufacturerName` is read-only (not patchable).
+        //
+        // IMPORTANT: the PATCH body uses FLAT ids (parentId, …) but the GET response nests the
+        // relations as objects — `parent` (null when none), `defaultCategory`, `defaultManufacturer`,
+        // each with `.id`, and NO flat `…Id` keys. So the snapshot must READ the id via readPath
+        // (e.g. parent.id) while the PATCH still WRITES the flat key (parentId).
         table: "brand", resource: "brands", pk: "brand_id",
         fields: [
           { column: "name", type: "string", note: "unique; max 250 (cannot be cleared)" },
-          { column: "default_category_id", type: "uuid", path: "defaultCategoryId", note: "category FK — mandatory, cannot be cleared" },
-          { column: "default_manufacturer_id", type: "uuid", path: "defaultManufacturerId", note: "manufacturer FK — cannot be cleared" },
-          { column: "parent_id", type: "uuid", path: "parentId", nullable: true, note: "parent Brand FK — leave empty to CLEAR (sets parent_id = NULL)" },
+          { column: "default_category_id", type: "uuid", path: "defaultCategoryId", readPath: "defaultCategory.id", note: "category FK — mandatory, cannot be cleared" },
+          { column: "default_manufacturer_id", type: "uuid", path: "defaultManufacturerId", readPath: "defaultManufacturer.id", note: "manufacturer FK — cannot be cleared" },
+          { column: "parent_id", type: "uuid", path: "parentId", readPath: "parent.id", nullable: true, note: "parent Brand FK — leave empty to CLEAR (sets parent_id = NULL)" },
           { column: "is_white_label", type: "boolean", path: "isWhiteLabel" },
           { column: "is_multi_brand", type: "boolean", path: "isMultiBrand" },
         ],

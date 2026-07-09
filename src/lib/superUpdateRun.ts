@@ -95,7 +95,12 @@ export async function runSuperUpdate(input: RunInput): Promise<SuperUpdateRowRes
         return { ok: false as const, error: why };
       }
       const found = getByPath(res.data, readWirePath);
-      if (found === undefined && !nested)
+      // A top-level field whose value isn't in the record can't be snapshotted → skip, EXCEPT
+      // when it's a nullable field with an explicit readPath: there `undefined` means the mapped
+      // read location is genuinely empty (e.g. a nested `parent` object is null), so treat it as
+      // null and proceed (lets a nullable field be cleared even when it's already empty). Fields
+      // WITHOUT a readPath still error on undefined — a useful signal the read key may be wrong.
+      if (found === undefined && !nested && !(field.readPath && field.nullable))
         return { ok: false as const, error: "current value not found in record — not patched (no rollback snapshot)" };
       return { ok: true as const, oldValue: found === undefined ? null : found, record: res.data };
     } catch (e) {
