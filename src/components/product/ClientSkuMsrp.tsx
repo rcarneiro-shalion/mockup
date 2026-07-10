@@ -88,11 +88,11 @@ function buildData(sku: Partial<ClientSku>): Record<Scope, Row[]> {
   };
 }
 
-const tabs: { key: Scope; label: string; assignLabel: string }[] = [
-  { key: "global", label: "Global", assignLabel: "Assign msrp" },
-  { key: "region", label: "Region", assignLabel: "Assign msrp region" },
-  { key: "store", label: "Store", assignLabel: "Assign msrp store" },
-  { key: "regionStore", label: "Region & Store", assignLabel: "Assign store & region" },
+const tabs: { key: Scope; label: string; buttonLabel: string; assignLabel: string }[] = [
+  { key: "global", label: "Global", buttonLabel: "Assign global", assignLabel: "Assign Global Client Configuration" },
+  { key: "region", label: "Region", buttonLabel: "Assign region", assignLabel: "Assign Region Client Configuration" },
+  { key: "store", label: "Store", buttonLabel: "Assign store", assignLabel: "Assign Store Client Configuration" },
+  { key: "regionStore", label: "Region & Store", buttonLabel: "Assign region & store", assignLabel: "Assign Region & Store Client Configuration" },
 ];
 
 /** Embeddable MSRP module — tabs (Global / Region / Store / Region & Store) + assign dialog.
@@ -123,11 +123,11 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
         : [row, ...prev[active]],
     }));
     setOpen(false);
-    toast.success(editRow ? "MSRP updated" : `${currentTab.assignLabel} created`);
+    toast.success(editRow ? "Client configuration updated" : "Client configuration created");
   };
   const handleDelete = (id: string) => {
     setData((prev) => ({ ...prev, [active]: prev[active].filter((r) => r.id !== id) }));
-    toast.success("MSRP unassigned");
+    toast.success("Client configuration unassigned");
   };
 
   return (
@@ -142,11 +142,11 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary">
               <ChevronUp className={`h-4 w-4 transition-transform ${collapsed ? "rotate-180" : ""}`} />
             </span>
-            MSRP
+            Client Configuration
           </button>
           <Button variant="outline" onClick={openAssign} className="rounded-full gap-1.5">
             <Plus className="h-4 w-4" />
-            {currentTab.assignLabel}
+            {currentTab.buttonLabel}
           </Button>
         </div>
 
@@ -192,7 +192,7 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
                   {rows.length === 0 && (
                     <tr>
                       <td colSpan={13} className="px-4 py-8 text-center text-muted-foreground">
-                        No MSRP defined at this level.
+                        No client configuration defined at this level.
                       </td>
                     </tr>
                   )}
@@ -229,7 +229,7 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
                           id={row.id}
                           onEdit={() => openEdit(row)}
                           onDelete={() => handleDelete(row.id)}
-                          entityLabel="MSRP entry"
+                          entityLabel="client configuration"
                           deleteLabel="Unassign"
                         />
                       </Td>
@@ -276,6 +276,7 @@ export function ClientSkuMsrp({ sku }: { sku?: Partial<ClientSku> } = {}) {
         scope={active}
         scopeLabel={currentTab.label}
         assignLabel={currentTab.assignLabel}
+        buttonLabel={currentTab.buttonLabel}
         initial={editRow}
         onSubmit={handleSubmit}
         skuCurrency={skuCurrency}
@@ -295,13 +296,14 @@ function Td({ children, className = "" }: { children?: React.ReactNode; classNam
 }
 
 function AssignDialog({
-  open, onOpenChange, scope, scopeLabel, assignLabel, initial, onSubmit, skuCurrency, regionSystem, regions, stores,
+  open, onOpenChange, scope, scopeLabel, assignLabel, buttonLabel, initial, onSubmit, skuCurrency, regionSystem, regions, stores,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   scope: Scope;
   scopeLabel: string;
   assignLabel: string;
+  buttonLabel: string;
   initial: Row | null;
   onSubmit: (row: Row) => void;
   skuCurrency: string;
@@ -310,7 +312,7 @@ function AssignDialog({
   stores: string[];
 }) {
   const isEdit = !!initial;
-  const title = isEdit ? `Edit ${scopeLabel} MSRP` : assignLabel;
+  const title = isEdit ? `Edit ${scopeLabel} Client Configuration` : assignLabel;
   const [msrp, setMsrp] = useState(initial ? String(initial.msrp) : "");
   const [currency, setCurrency] = useState(initial?.currency ?? skuCurrency);
   const [businessUnit, setBusinessUnit] = useState(initial?.businessUnit ?? "");
@@ -449,7 +451,7 @@ function AssignDialog({
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button disabled={!canSubmit} onClick={submit}>{isEdit ? "Save" : assignLabel}</Button>
+          <Button disabled={!canSubmit} onClick={submit}>{isEdit ? "Save" : buttonLabel}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
