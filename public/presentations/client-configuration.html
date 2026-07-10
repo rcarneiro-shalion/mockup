@@ -345,6 +345,35 @@
   .cfgchip{border-radius:999px;padding:.28em .75em;font-size:.85em;font-weight:600;color:var(--dg);background:color-mix(in srgb,var(--dg) 12%,transparent);border:1px solid color-mix(in srgb,var(--dg) 35%,transparent)}
   .cfgchip.muted{color:var(--muted);background:var(--surface2);border-color:var(--line)}
 
+
+  /* ---- map composite (slide 8, from spec p10) ---- */
+  .mapwrap{display:grid;grid-template-columns:.8fr 1.2fr;gap:1.5em;align-items:center;width:100%}
+  .skuchip{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.75em .85em;box-shadow:var(--shadow);font-size:.8em}
+  .skuchip .r{display:flex;justify-content:space-between;gap:1em;padding:.16em 0}
+  .skuchip .r .l{color:var(--faint)} .skuchip .r .v{color:var(--ink);font-weight:600}
+  .pricebars{display:flex;flex-direction:column;gap:.4em;margin-top:.7em}
+  .pbar{border-radius:9px;padding:.5em .75em;color:#fff;display:flex;align-items:center;gap:.5em;background:var(--dc);box-shadow:var(--shadow)}
+  .pbar .pl{font-weight:700;font-size:.82em} .pbar .pv{margin-left:auto;font-family:var(--mono);font-weight:800;font-variant-numeric:tabular-nums}
+  .mapcard{position:relative;background:linear-gradient(180deg,color-mix(in srgb,var(--ds) 6%,var(--surface)),var(--surface));border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;aspect-ratio:16/10.5}
+  .mxmap{width:100%;height:100%;display:block}
+  .mxmap text{paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round;font-family:var(--sans);font-weight:700}
+  .mxland{fill:color-mix(in srgb,var(--dg) 12%,transparent);stroke:color-mix(in srgb,var(--muted) 45%,transparent);stroke-width:1}
+  .mxlabel{position:absolute;left:50%;bottom:.25em;transform:translateX(-50%);font-weight:800;letter-spacing:.24em;font-size:1.5em;color:color-mix(in srgb,var(--muted) 20%,transparent)}
+  .gchip{position:absolute;right:.7em;top:.7em;font-size:.72em;font-weight:700;color:#fff;background:var(--dg);border-radius:999px;padding:.2em .7em;box-shadow:var(--shadow)}
+  /* ---- ops form (slide 9, from spec p24) ---- */
+  .opswrap{display:grid;grid-template-columns:.82fr 1.35fr;gap:1.25em;align-items:start;width:100%}
+  .miniform{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.85em;box-shadow:var(--shadow);font-size:.78em}
+  .miniform .lbl{font-family:var(--mono);font-size:.82em;color:var(--faint);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.5em}
+  .ff{margin-bottom:.5em} .ff .fl{font-size:.86em;color:var(--faint);margin-bottom:.15em} .ff .fv{border:1px solid var(--line);border-radius:7px;padding:.42em .55em;color:var(--ink);background:var(--surface2)}
+  .ff.dashred .fv{outline:2px dashed var(--dr);outline-offset:2px}
+  .tbl th.dashgreen{outline:2px dashed var(--good);outline-offset:-2px}
+  .legend{display:flex;gap:1.4em;margin-top:.85em;font-size:.8em;color:var(--muted);flex-wrap:wrap}
+  .legend .lg{display:flex;align-items:center;gap:.45em}
+  .legend .sw{width:1.2em;height:.85em;border-radius:3px;border:2px dashed var(--dc)}
+
+  .cctabs{display:flex;gap:.35em;border-bottom:1px solid var(--line2);padding:.15em .6em 0}
+  .cctab{padding:.5em .7em;font-size:.82em;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+  .cctab.on{color:var(--dg);border-color:var(--dg);font-weight:600}
 </style>
 
 <svg style="display:none" aria-hidden="true">
@@ -522,11 +551,72 @@
       </article>
 
       <!-- 8 RECAP -->
-      <article class="slide s-recap" id="s-recap">
-        <div class="cover">
-          <span class="badge rise" style="--i:0"><svg class="i"><use href="#ic-spark"/></svg> In short</span>
-          <h1 class="rise" style="--i:1">Global as before &mdash;<br>now with <span style="color:var(--dr)">region</span>, <span style="color:var(--ds)">store</span> &amp; <span style="color:var(--drs)">region-store</span> on top.</h1>
-          <p class="lead rise" style="--i:2">The same commercial settings, configurable at the level that matches the deal &mdash; with the most specific one always winning. Shaped with the commercial &amp; product teams; rolling out across the console.</p>
+      <!-- 8 MAP (spec p10) -->
+      <article class="slide s-map" id="s-map">
+        <div class="k rise" style="--i:0"><span class="num">07</span> On the map</div>
+        <h2 class="title rise" style="--i:1;max-width:22em;margin-bottom:.55em">Same product, the right price <span class="accent">wherever it sells</span>.</h2>
+        <div class="mapwrap">
+          <div class="rise" style="--i:2">
+            <div class="skuchip">
+              <div class="r"><span class="l">Product</span><span class="v">Coca-Cola Light 1L</span></div>
+              <div class="r"><span class="l">SKU code</span><span class="v mono" style="font-size:.92em">7501055305346</span></div>
+              <div class="r"><span class="l">Country</span><span class="v">Mexico</span></div>
+            </div>
+            <div class="pricebars">
+              <div class="pbar" style="--dc:var(--dg)"><span class="pl">Global</span><span class="pv">MX$ 32.00</span></div>
+              <div class="pbar" style="--dc:var(--dr)"><span class="pl">Regional</span><span class="pv">MX$ 31.00</span></div>
+              <div class="pbar" style="--dc:var(--ds)"><span class="pl">Store</span><span class="pv">MX$ 30.00</span></div>
+              <div class="pbar" style="--dc:var(--drs)"><span class="pl">Store &amp; Regional</span><span class="pv">MX$ 29.00</span></div>
+            </div>
+          </div>
+          <div class="mapcard rise" style="--i:3">
+            <svg class="mxmap" viewBox="0 0 460 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+              <path class="mxland" d="M60 96 C110 82 175 80 240 86 C300 92 350 96 392 116 C424 132 448 152 452 176 C454 190 448 202 452 214 C440 220 424 214 414 216 C398 226 378 220 366 214 C350 224 330 220 320 212 C304 222 286 220 276 210 C260 222 240 226 228 214 C214 224 196 216 188 200 C178 180 172 164 160 156 C146 148 128 148 116 138 C100 126 80 126 66 118 C56 112 52 104 60 96 Z"/>
+              <path class="mxland" d="M40 90 C52 86 60 96 66 110 C74 128 84 142 78 152 C72 160 62 154 56 142 C46 124 34 106 40 90 Z"/>
+              <ellipse cx="252" cy="152" rx="80" ry="42" fill="none" stroke="var(--dr)" stroke-width="2.4" stroke-dasharray="6 5"/>
+              <text x="208" y="100" font-size="13" fill="var(--dr)">Region &middot; 31</text>
+              <circle cx="205" cy="154" r="8" fill="var(--surface)" stroke="var(--ds)" stroke-width="3"/><circle cx="205" cy="154" r="3" fill="var(--ds)"/>
+              <text x="195" y="158" text-anchor="end" font-size="13" fill="var(--ds)">Store &middot; 30</text>
+              <circle cx="292" cy="170" r="8" fill="var(--surface)" stroke="var(--drs)" stroke-width="3"/><circle cx="292" cy="170" r="3" fill="var(--drs)"/>
+              <text x="305" y="174" font-size="13" fill="var(--drs)">Store in region &middot; 29</text>
+            </svg>
+            <span class="gchip">Global &middot; MX$ 32</span>
+            <span class="mxlabel">M&Eacute;XICO</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 9 OPS FORM (spec p24) -->
+      <article class="slide s-ops" id="s-ops">
+        <div class="k rise" style="--i:0"><span class="num">08</span> For the Ops team</div>
+        <h2 class="title rise" style="--i:1;max-width:26em;margin-bottom:.55em">Where those fields live now.</h2>
+        <div class="opswrap">
+          <div class="miniform rise" style="--i:2">
+            <div class="lbl">Client SKU</div>
+            <div class="ff"><div class="fl">Title</div><div class="fv">REFRESCO COCA-COLA LIGHT 1L</div></div>
+            <div class="ff dashred"><div class="fl">Msrp</div><div class="fv">MX$ 32.00 &middot; MXN</div></div>
+            <div class="ff dashred"><div class="fl">Client category</div><div class="fv">SSDs</div></div>
+            <div class="ff dashred"><div class="fl">Business unit</div><div class="fv">Coca Cola Trademark</div></div>
+            <div class="ff dashred"><div class="fl">Hero</div><div class="fv">No</div></div>
+          </div>
+          <div class="colart rise" style="--i:3">
+            <div class="panel" style="overflow:hidden">
+              <div class="card-h"><span class="ttl"><svg class="i" style="color:var(--dg)"><use href="#ic-layers"/></svg> Client Configuration</span></div>
+              <div class="cctabs"><span class="cctab">Global</span><span class="cctab on">Region</span><span class="cctab">Store</span><span class="cctab">Region &amp; Store</span></div>
+              <table class="tbl">
+                <thead><tr><th class="dashgreen">Region system</th><th class="dashgreen">Region</th><th>Currency</th><th>Msrp</th><th>Business unit</th></tr></thead>
+                <tbody>
+                  <tr><td>MX - Coke Bottlers</td><td>CDF MX</td><td>MXN</td><td class="mono">28</td><td class="muted">Coca-Cola TM</td></tr>
+                  <tr><td>MX - Coke Bottlers</td><td>Arca MX</td><td>MXN</td><td class="mono">23</td><td class="muted">Coca-Cola TM</td></tr>
+                  <tr><td>MX - Coke Bottlers</td><td>FEMSA MX</td><td>MXN</td><td class="mono">28</td><td class="muted">Coca-Cola TM</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="legend">
+              <span class="lg"><span class="sw" style="border-color:var(--dr)"></span> Moved off Client SKU &rarr; into Client Configuration</span>
+              <span class="lg"><span class="sw" style="border-color:var(--good)"></span> New field on the configuration</span>
+            </div>
+          </div>
         </div>
       </article>
 
