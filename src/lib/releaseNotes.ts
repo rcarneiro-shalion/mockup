@@ -52,7 +52,7 @@ export const INITIAL_RELEASE_NOTES: ReleaseNote[] = [
     ],
     link: {
       label: "Watch the 2-minute walkthrough",
-      url: "https://claude.ai/code/artifact/85774a4e-9559-468b-9e47-4daf806965ba",
+      url: "/presentations/users-client-level.html",
     },
   },
   {
@@ -85,21 +85,21 @@ export const INITIAL_RELEASE_NOTES: ReleaseNote[] = [
   },
   {
     id: "msrp-by-level",
-    title: "MSRP is now Client Configuration",
+    title: "Pricing & product config, now down to the store",
     date: "2026-07-10",
     sprint: "Sprint S1",
     status: "Published",
-    tag: "Improved",
+    tag: "New",
     summary:
-      "What used to be a single MSRP is now a flexible Client Configuration: pricing can be set across four levels — Global, Region, Store, and Region & Store — with the most specific level winning. And it is no longer just a price — business unit, client category, validity dates and the hero flag now live at each level too.",
+      "The commercial settings on a product — MSRP, hero, business unit and client category — can now be configured across four levels: the global default you already had, plus new regional, store, and region-&-store levels. The most specific setting wins, so pricing and merchandising can finally match how each client sells — right down to a single store.",
     highlights: [
-      "Price a SKU globally, by region, by store, or by a store within a region — the rightmost defined value wins",
-      "Business unit, client category, active-from/to and hero moved onto the configuration (out of the client SKU)",
-      "Renamed across the console today; the data migration and table renames follow next",
+      "Global stays exactly as-is — now with regional, store and region-&-store configuration on top",
+      "Store-level is the big change: set a product's price, hero status, business unit and category per store",
+      "The most specific setting wins (store beats region beats global) — overrides without the manual juggling",
     ],
     link: {
-      label: "Read the full story",
-      url: "https://claude.ai/code/artifact/7579f72c-56e7-431a-8793-3ec244edef35",
+      label: "See how it works",
+      url: "/presentations/client-configuration.html",
     },
   },
   {

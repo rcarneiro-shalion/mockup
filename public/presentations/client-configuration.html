@@ -1,4 +1,11 @@
-<title>Ecometry: Users at the client level</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ecometry: Pricing &amp; config, by store &amp; region</title>
+</head>
+<body>
 <style>
   :root{
     --sans:"Inter","SF Pro Text",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
@@ -304,6 +311,40 @@
     .s-change .silo{opacity:1;transform:none}
     .s-filter .dd-menu{opacity:1;transform:none;pointer-events:auto}
   }
+
+  /* ---- Client Configuration deck ---- */
+  :root{ --dg:#7c5cff; --dr:#e5397a; --ds:#2f7ef0; --drs:#f59e0b; }
+  @media (prefers-color-scheme:dark){ :root{ --dg:#a48bff; --dr:#ff6fa1; --ds:#6aa8ff; --drs:#fbbf24; } }
+  :root[data-theme="light"]{ --dg:#7c5cff; --dr:#e5397a; --ds:#2f7ef0; --drs:#f59e0b; }
+  :root[data-theme="dark"]{ --dg:#a48bff; --dr:#ff6fa1; --ds:#6aa8ff; --drs:#fbbf24; }
+  .mono{font-family:var(--mono)}
+  .skuprice{font-family:var(--mono);font-weight:800;font-size:1.5em;color:var(--ink);font-variant-numeric:tabular-nums}
+  .dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.85em;width:100%}
+  .dcard{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--dc);border-radius:12px;padding:.9em .95em;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:.35em}
+  .dcard.star{box-shadow:0 0 0 2px var(--dc), var(--shadow-lg)}
+  .dcard .dh{display:flex;align-items:center;gap:.45em;font-weight:700;font-size:.98em}
+  .dcard .dh .sw{width:.7em;height:.7em;border-radius:50%;background:var(--dc)}
+  .dcard .asis{margin-left:auto;font-size:.6em;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:.15em .55em}
+  .dcard .newtag{margin-left:auto;font-size:.6em;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#fff;background:var(--dc);border-radius:999px;padding:.15em .55em}
+  .dcard p{margin:0;font-size:.82em;line-height:1.4;color:var(--muted)}
+  .dcard .ex{margin-top:auto;font-family:var(--mono);font-weight:700;font-size:1.05em;color:var(--dc);font-variant-numeric:tabular-nums}
+  .ladder{display:flex;flex-direction:column;gap:.55em;width:100%;max-width:44em;margin:0 auto}
+  .rung{display:flex;align-items:center;gap:1em;border-radius:12px;padding:.85em 1.15em;color:#fff;box-shadow:var(--shadow-lg);background:var(--dc)}
+  .rung .lvl{font-weight:700;font-size:1.02em}
+  .rung .sub{opacity:.85;font-size:.8em;margin-left:.2em}
+  .rung .price{margin-left:auto;font-family:var(--mono);font-weight:800;font-size:1.5em;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .rung .wins{background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.5);border-radius:999px;padding:.15em .6em;font-size:.72em;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+  .rung.r1{width:100%} .rung.r2{width:92%;margin-left:8%} .rung.r3{width:84%;margin-left:16%} .rung.r4{width:76%;margin-left:24%}
+  .chevrow{display:flex;align-items:stretch;gap:.5em;width:100%}
+  .chev{flex:1;border-radius:11px;padding:.9em .6em;text-align:center;font-weight:700;font-size:.92em;border:2px solid var(--dc);color:var(--dc);background:color-mix(in srgb,var(--dc) 12%,transparent);display:flex;flex-direction:column;gap:.15em;justify-content:center}
+  .chev .cl{font-size:.66em;font-weight:600;letter-spacing:.1em;text-transform:uppercase;opacity:.7}
+  .chev.win{background:var(--dc);color:#fff;box-shadow:var(--shadow-lg)}
+  .chev.win .cl{opacity:.85}
+  .chevarr{display:flex;align-items:center;color:var(--faint);font-weight:700}
+  .cfgchips{display:flex;flex-wrap:wrap;gap:.45em}
+  .cfgchip{border-radius:999px;padding:.28em .75em;font-size:.85em;font-weight:600;color:var(--dg);background:color-mix(in srgb,var(--dg) 12%,transparent);border:1px solid color-mix(in srgb,var(--dg) 35%,transparent)}
+  .cfgchip.muted{color:var(--muted);background:var(--surface2);border-color:var(--line)}
+
 </style>
 
 <svg style="display:none" aria-hidden="true">
@@ -351,7 +392,7 @@
       <span class="wordmark">shalion</span>
     </span>
     <span class="sep"></span>
-    <span class="eyebrow">Ecometry &middot; Internal training</span>
+    <span class="eyebrow">Ecometry &middot; Product update</span>
     <span class="grow"></span>
     <span class="hintkeys"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> to move &middot; <kbd>F</kbd> full screen</span>
   </header>
@@ -359,323 +400,133 @@
   <main class="stage-wrap">
     <section class="stage" id="stage" aria-live="polite">
 
-      <!-- 1 &middot; COVER -->
+      <!-- 1 COVER -->
       <article class="slide s-cover active" id="s-cover">
         <div class="cover">
-          <span class="badge rise" style="--i:0"><svg class="i"><use href="#ic-users"/></svg> What changed &middot; Client-level users</span>
-          <h1 class="rise" style="--i:1">Your users,<br>now at the client level.</h1>
-          <p class="lead rise" style="--i:2">Managing <b>who sees what</b> used to mean digging through every data group, one at a time. We moved it all into one place. Here's the new way &mdash; and why it makes your day easier.</p>
-          <div class="foothint rise" style="--i:3">
-            <span>Ecometry &rarr; Clients &rarr; <b style="color:var(--muted)">any client</b> &rarr; Users</span>
-            <span>&middot;</span>
-            <span>Press <b style="color:var(--muted)">Autoplay</b> to watch it run.</span>
-          </div>
-          <div class="ghostgrid rise" style="--i:2" aria-hidden="true">
-            <div class="miniafter">
-              <div class="mrow"><span class="ava" style="width:1.5em;height:1.5em;font-size:.7em">AP</span><span class="muted">aaron.perez@&hellip;</span><span class="chip count" style="margin-left:auto">9 groups</span></div>
-              <div class="mrow"><span class="ava" style="width:1.5em;height:1.5em;font-size:.7em;background:linear-gradient(135deg,var(--cyan),var(--brand))">AR</span><span class="muted">abhijeet.rajput@&hellip;</span><span class="chip count" style="margin-left:auto">4 groups</span></div>
-              <div class="mrow"><span class="ava" style="width:1.5em;height:1.5em;font-size:.7em;background:linear-gradient(135deg,var(--grn),var(--cyan))">AG</span><span class="muted">adrija.ghosh@&hellip;</span><span class="chip" style="margin-left:auto">Latam</span></div>
-            </div>
-          </div>
+          <span class="badge rise" style="--i:0"><svg class="i"><use href="#ic-layers"/></svg> Product update &middot; Ecometry</span>
+          <h1 class="rise" style="--i:1">Pricing &amp; merchandising,<br>now down to the <span style="color:var(--ds)">store</span>.</h1>
+          <p class="lead rise" style="--i:2">The commercial settings on a product &mdash; <b>MSRP, hero, business unit and client category</b> &mdash; used to be set once, for the whole country. Now they can be configured by <b>region</b>, by <b>store</b>, and by <b>store within a region</b>. Global stays exactly as it was &mdash; store is the big new lever.</p>
+          <div class="foothint rise" style="--i:3"><span>Ecometry &rarr; Product &rarr; Client SKUs &rarr; Client Configuration</span> <span>&middot;</span> <span>Press <b style="color:var(--muted)">Autoplay</b> to watch.</span></div>
         </div>
       </article>
 
-      <!-- 2 &middot; THE CHANGE -->
-      <article class="slide s-change" id="s-change">
-        <div class="colcopy" style="justify-content:flex-start;padding-top:.3em">
-          <div class="k rise" style="--i:0"><span class="num">01</span> The change, in one line</div>
-          <h2 class="title rise" style="--i:1">User management moved <span class="strike">out of individual data groups</span> &mdash; up into a single <span class="accent">client-level grid</span>.</h2>
-          <p class="lead rise" style="--i:2">Same users, same data groups. What changed is <b>where you manage them</b>: one list per client instead of the same person scattered across every group.</p>
-        </div>
-        <div class="diagram rise" style="--i:3;margin-top:1.4em">
-          <div class="silos">
-            <div class="silo"><span class="ava">AP</span><span class="tag">Pepsico US &middot; Users</span></div>
-            <div class="silo"><span class="ava">AP</span><span class="tag">Pepsico MX &middot; Users</span></div>
-            <div class="silo"><span class="ava">AP</span><span class="tag">PepsiCo Latam &middot; Users</span></div>
-          </div>
-          <div class="arrowbig"><svg class="i"><use href="#ic-arrowr"/></svg></div>
-          <div class="clientcard">
-            <span class="pulse-ring"></span>
-            <div class="hh"><svg class="i" style="color:var(--brand)"><use href="#ic-grid"/></svg> Pepsico &middot; Users</div>
-            <div class="clientrow">
-              <span class="ava">AP</span>
-              <div style="min-width:0">
-                <div style="font-size:.82em;font-weight:600">aaron.perez@pepsico.com</div>
-                <div class="chips" style="margin-top:.3em">
-                  <span class="chip">Pepsico US</span><span class="chip">Pepsico MX</span><span class="chip">PepsiCo Latam</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <!-- 3 &middot; BEFORE -->
+      <!-- 2 BEFORE -->
       <article class="slide s-before" id="s-before">
         <div class="split">
           <div class="colcopy">
-            <div class="k rise" style="--i:0"><span class="num">02</span> Before</div>
-            <h2 class="title rise" style="--i:1">Users lived <span class="strike">inside each data group</span>.</h2>
-            <ul class="bullets warn rise" style="--i:2">
-              <li><svg class="i"><use href="#ic-x"/></svg><div>To find a person you opened a data group first &mdash; and only saw the users of <b>that</b> group.</div></li>
-              <li><svg class="i"><use href="#ic-x"/></svg><div>Someone who worked across <b>3 groups</b> had to be managed in <b>3 separate places</b>.</div></li>
-              <li><svg class="i"><use href="#ic-x"/></svg><div>No single view of a user's <b>full access</b> &mdash; and easy to leave groups inconsistent.</div></li>
+            <div class="k rise" style="--i:0"><span class="num">01</span> Until now</div>
+            <h2 class="title rise" style="--i:1">One setting for the <span class="accent">whole country</span>.</h2>
+            <p class="lead rise" style="--i:2">A product&rsquo;s price, hero status, business unit and client category were set a single time &mdash; and applied everywhere. Every region, every store, the same values.</p>
+            <ul class="bullets warn rise" style="--i:3">
+              <li><svg class="i"><use href="#ic-x"/></svg><div>No way to price a product differently in one <b>region</b> or one <b>store</b>.</div></li>
+              <li><svg class="i"><use href="#ic-x"/></svg><div>Real distribution deals didn&rsquo;t fit &mdash; overrides were manual and messy.</div></li>
             </ul>
           </div>
           <div class="colart rise" style="--i:2">
-            <div class="panel" style="overflow:hidden">
-              <div class="card-h"><span class="ttl"><svg class="i" style="color:var(--faint)"><use href="#ic-grid"/></svg> Data group</span></div>
-              <div class="oldtabs">
-                <span class="oldtab on">Pepsico US</span><span class="oldtab">Pepsico MX</span><span class="oldtab">PepsiCo Latam</span><span class="oldtab">Pepsico GT</span>
+            <div class="panel" style="padding:1.2em 1.3em">
+              <div class="mono" style="font-size:.72em;color:var(--faint);text-transform:uppercase;letter-spacing:.14em">One global setting</div>
+              <div style="font-weight:750;font-size:1.05em;margin:.3em 0 .1em">REFRESCO COCA-COLA LIGHT 1L</div>
+              <div class="muted" style="font-size:.82em">Mexico &middot; applies to every store</div>
+              <div style="margin-top:1em;padding-top:.9em;border-top:1px solid var(--line2);display:flex;align-items:center;gap:.6em">
+                <span class="mono muted" style="font-size:.8em">MSRP</span><span class="skuprice">MX$&nbsp;32.00</span>
               </div>
-              <div style="padding:.3em .2em">
-                <table class="tbl">
-                  <tr><td class="em">aaron.perez@pepsico.com</td><td><span class="status"><span class="d"></span>Active</span></td></tr>
-                  <tr><td class="em">alan.lefebvre@pepsico.com</td><td><span class="status"><span class="d"></span>Active</span></td></tr>
-                  <tr><td class="em">akibo.watson@pepsico.com</td><td><span class="status"><span class="d"></span>Active</span></td></tr>
-                </table>
-              </div>
-              <div class="tfoot" style="justify-content:space-between">
-                <span class="dupflag"><svg class="i"><use href="#ic-users"/></svg> aaron.perez is also in MX &amp; Latam &mdash; managed separately</span>
-              </div>
+              <div class="chips" style="margin-top:.8em;gap:.35em"><span class="chip">Hero</span><span class="chip">Business unit</span><span class="chip">Client category</span></div>
             </div>
           </div>
         </div>
       </article>
 
-      <!-- 4 &middot; AFTER -->
-      <article class="slide s-after" id="s-after">
+      <!-- 3 THE FOUR LEVELS -->
+      <article class="slide s-levels" id="s-levels">
         <div class="colcopy" style="justify-content:flex-start">
-          <div class="k rise" style="--i:0"><span class="num">03</span> After</div>
-          <h2 class="title rise" style="--i:1;max-width:26em">One <span class="accent">Users</span> grid on the client &mdash; every user once, with all their data groups.</h2>
+          <div class="k rise" style="--i:0"><span class="num">02</span> The change</div>
+          <h2 class="title rise" style="--i:1;max-width:26em">The same settings, now at <span class="accent">four levels</span>.</h2>
+          <p class="lead rise" style="--i:2">Global is exactly what you had. Regional, Store and Region &amp; Store are new &mdash; and <b>Store</b> is where the real change is.</p>
         </div>
-        <div class="panel rise" style="--i:2;margin-top:1em;overflow:hidden">
-          <div class="card-h">
-            <span class="ttl"><svg class="i" style="color:var(--brand)"><use href="#ic-users"/></svg> Users</span>
-            <span class="inp" style="width:16em"><svg class="i"><use href="#ic-search"/></svg> Search users</span>
-            <span class="btn"><svg class="i"><use href="#ic-grid"/></svg> Data groups <svg class="i"><use href="#ic-chev"/></svg></span>
-            <span class="grow"></span>
-            <span class="btn pri"><svg class="i"><use href="#ic-plus"/></svg> Create users</span>
-          </div>
-          <table class="tbl">
-            <thead><tr><th>Email</th><th>Data groups</th><th>Status</th><th>Created at</th><th>Updated at</th><th></th></tr></thead>
-            <tbody>
-              <tr><td class="em">aaron.perez@pepsico.com</td><td><span class="chip count"><svg class="i" style="width:.85em"><use href="#ic-grid"/></svg> 9 Data groups</span></td><td><span class="status"><span class="d"></span>Active</span></td><td class="datecol">2026-01-08</td><td class="datecol">2026-07-09</td><td><span class="rowacts"><svg class="i"><use href="#ic-pencil"/></svg><svg class="i"><use href="#ic-mail"/></svg><svg class="i"><use href="#ic-trash"/></svg></span></td></tr>
-              <tr><td class="em">abhijeet.rajput@pepsico.com</td><td><span class="chip count"><svg class="i" style="width:.85em"><use href="#ic-grid"/></svg> 4 Data groups</span></td><td><span class="status"><span class="d"></span>Active</span></td><td class="datecol">2025-12-17</td><td class="datecol">2026-07-07</td><td><span class="rowacts"><svg class="i"><use href="#ic-pencil"/></svg><svg class="i"><use href="#ic-mail"/></svg><svg class="i"><use href="#ic-trash"/></svg></span></td></tr>
-              <tr><td class="em">adam.whelan@pepsico.com</td><td><span class="chips"><span class="chip">Pepsico PE</span><span class="chip">Pepsico US</span></span></td><td><span class="status"><span class="d"></span>Active</span></td><td class="datecol">2026-01-07</td><td class="datecol">2026-07-07</td><td><span class="rowacts"><svg class="i"><use href="#ic-pencil"/></svg><svg class="i"><use href="#ic-mail"/></svg><svg class="i"><use href="#ic-trash"/></svg></span></td></tr>
-              <tr><td class="em">adrija.ghosh@pepsico.com</td><td><span class="chip">PepsiCo Latam</span></td><td><span class="status"><span class="d"></span>Active</span></td><td class="datecol">2025-03-27</td><td class="datecol">2025-03-27</td><td><span class="rowacts"><svg class="i"><use href="#ic-pencil"/></svg><svg class="i"><use href="#ic-mail"/></svg><svg class="i"><use href="#ic-trash"/></svg></span></td></tr>
-              <tr><td class="em">akibo.watson@pepsico.com</td><td><span class="chip">Pepsico US</span></td><td><span class="status"><span class="d"></span>Active</span></td><td class="datecol">2026-01-07</td><td class="datecol">2026-01-07</td><td><span class="rowacts"><svg class="i"><use href="#ic-pencil"/></svg><svg class="i"><use href="#ic-mail"/></svg><svg class="i"><use href="#ic-trash"/></svg></span></td></tr>
-            </tbody>
-          </table>
-          <div class="tfoot"><span>Rows per page: 100</span><span class="count">1&ndash;100 of 360</span><span class="pager"><b class="on">1</b><b>2</b><b>3</b><b>4</b></span></div>
+        <div class="dgrid" style="margin-top:1.2em">
+          <div class="dcard rise" style="--i:3;--dc:var(--dg)"><div class="dh"><span class="sw"></span>Global<span class="asis">as-is</span></div><p>One value for the whole country &mdash; unchanged.</p><span class="ex">MX$ 32.00</span></div>
+          <div class="dcard rise" style="--i:4;--dc:var(--dr)"><div class="dh"><span class="sw"></span>Region<span class="newtag">new</span></div><p>Override for a specific region.</p><span class="ex">MX$ 31.00</span></div>
+          <div class="dcard star rise" style="--i:5;--dc:var(--ds)"><div class="dh"><span class="sw"></span>Store<span class="newtag">new</span></div><p>Set it per store &mdash; the big new lever.</p><span class="ex">MX$ 30.00</span></div>
+          <div class="dcard rise" style="--i:6;--dc:var(--drs)"><div class="dh"><span class="sw"></span>Region &amp; Store<span class="newtag">new</span></div><p>A store within a region &mdash; the most specific.</p><span class="ex">MX$ 29.00</span></div>
         </div>
       </article>
 
-      <!-- 5 &middot; N:M -->
-      <article class="slide s-nm" id="s-nm">
+      <!-- 4 IN ACTION (ladder) -->
+      <article class="slide s-ladder" id="s-ladder">
+        <div class="colcopy" style="justify-content:flex-start">
+          <div class="k rise" style="--i:0"><span class="num">03</span> In action</div>
+          <h2 class="title rise" style="--i:1;max-width:26em">Same product, the right price <span class="accent">everywhere it sells</span>.</h2>
+          <p class="lead rise" style="--i:2">REFRESCO COCA-COLA LIGHT 1L &middot; Mexico &mdash; one product, priced by where it&rsquo;s sold.</p>
+        </div>
+        <div class="ladder" style="margin-top:1.1em">
+          <div class="rung r1 rise" style="--i:3;--dc:var(--dg)"><span class="lvl">Global</span><span class="sub">whole country</span><span class="price">MX$ 32.00</span></div>
+          <div class="rung r2 rise" style="--i:4;--dc:var(--dr)"><span class="lvl">Region</span><span class="sub">Arca MX</span><span class="price">MX$ 31.00</span></div>
+          <div class="rung r3 rise" style="--i:5;--dc:var(--ds)"><span class="lvl">Store</span><span class="sub">Walmart MX</span><span class="price">MX$ 30.00</span></div>
+          <div class="rung r4 rise" style="--i:6;--dc:var(--drs)"><span class="lvl">Region &amp; Store</span><span class="sub">Walmart MX &middot; Arca MX</span><span class="wins">applies</span><span class="price">MX$ 29.00</span></div>
+        </div>
+      </article>
+
+      <!-- 5 THE RULE -->
+      <article class="slide s-precedence" id="s-precedence">
+        <div class="colcopy" style="justify-content:flex-start">
+          <div class="k rise" style="--i:0"><span class="num">04</span> Simple to reason about</div>
+          <h2 class="title rise" style="--i:1">Set a global value &mdash; override <span class="accent">only where you need to</span>.</h2>
+        </div>
+        <div class="chevrow rise" style="--i:2;margin-top:1.3em">
+          <div class="chev" style="--dc:var(--dg)"><span class="cl">Broadest</span>Global</div>
+          <div class="chevarr"><svg class="i"><use href="#ic-arrowr"/></svg></div>
+          <div class="chev" style="--dc:var(--dr)"><span class="cl">Region</span>Region</div>
+          <div class="chevarr"><svg class="i"><use href="#ic-arrowr"/></svg></div>
+          <div class="chev" style="--dc:var(--ds)"><span class="cl">Store</span>Store</div>
+          <div class="chevarr"><svg class="i"><use href="#ic-arrowr"/></svg></div>
+          <div class="chev win" style="--dc:var(--drs)"><span class="cl">Most specific</span>Region &amp; Store</div>
+        </div>
+        <ul class="bullets rise" style="--i:3;margin-top:1.4em">
+          <li><svg class="i"><use href="#ic-check"/></svg><div>The <b>closest, most specific</b> setting always wins &mdash; store beats region, region beats global.</div></li>
+          <li><svg class="i"><use href="#ic-check"/></svg><div>Only fill the levels you actually use &mdash; everything else falls back to Global.</div></li>
+        </ul>
+      </article>
+
+      <!-- 6 MORE THAN A PRICE -->
+      <article class="slide s-fields" id="s-fields">
         <div class="split">
           <div class="colcopy">
-            <div class="k rise" style="--i:0"><span class="num">04</span> One user &middot; many groups</div>
-            <h2 class="title rise" style="--i:1">A user's <span class="accent">full access</span>, on one line.</h2>
-            <p class="lead rise" style="--i:2">Each user carries <b>all</b> the data groups they belong to. A couple of groups show as chips; when there are more, they collapse into a tidy <b>count</b> so the row stays readable.</p>
-            <ul class="bullets rise" style="--i:3">
-              <li><svg class="i"><use href="#ic-check"/></svg><div>See exactly which groups a person can access &mdash; no clicking required.</div></li>
-              <li><svg class="i"><use href="#ic-check"/></svg><div>Hover the count to expand the full list.</div></li>
-            </ul>
+            <div class="k rise" style="--i:0"><span class="num">05</span> More than a price</div>
+            <h2 class="title rise" style="--i:1">It&rsquo;s the whole <span class="accent">commercial setup</span> &mdash; per level.</h2>
+            <p class="lead rise" style="--i:2">Every level carries more than the price. A product can be a <b>hero</b> in one store and not another, sit in a different <b>client category</b> by region, or map to a different <b>business unit</b> &mdash; each with its own validity dates.</p>
           </div>
           <div class="colart rise" style="--i:2">
-            <div class="panel" style="padding:.4em .2em">
-              <table class="tbl">
-                <thead><tr><th>Email</th><th>Data groups</th><th>Status</th></tr></thead>
-                <tbody>
-                  <tr><td class="em">aaron.perez@pepsico.com</td><td><span class="chip count"><svg class="i" style="width:.85em"><use href="#ic-grid"/></svg> 9 Data groups</span></td><td><span class="status"><span class="d"></span>Active</span></td></tr>
-                  <tr><td class="em">alessandro.tirollo@pepsico.com</td><td><span class="chips"><span class="chip">Pepsico US</span><span class="chip">Pepsico GT</span></span></td><td><span class="status"><span class="d"></span>Active</span></td></tr>
-                  <tr><td class="em">amanda.kaplowitz@pepsico.com</td><td><span class="chips"><span class="chip">dummy-nestle</span><span class="chip">Pepsico US</span></span></td><td><span class="status"><span class="d"></span>Active</span></td></tr>
-                  <tr><td class="em">adrija.ghosh@pepsico.com</td><td><span class="chip">PepsiCo Latam</span></td><td><span class="status"><span class="d"></span>Active</span></td></tr>
-                </tbody>
-              </table>
-            </div>
-            <p class="muted" style="font-size:.8em;margin:.8em .2em 0">N : M &mdash; one user belongs to many data groups, and one data group holds many users.</p>
-          </div>
-        </div>
-      </article>
-
-      <!-- 6 &middot; FILTER -->
-      <article class="slide s-filter" id="s-filter">
-        <div class="split">
-          <div class="colcopy">
-            <div class="k rise" style="--i:0"><span class="num">05</span> Filter by data group</div>
-            <h2 class="title rise" style="--i:1">"Who can see <span class="accent">PepsiCo Latam</span>?" &mdash; answered instantly.</h2>
-            <p class="lead rise" style="--i:2">Open the <b>Data groups</b> filter, pick one or several, and the list narrows in place &mdash; here, from <b>360</b> users down to the <b>33</b> in PepsiCo Latam. Pair it with search to zero in on a single person.</p>
-          </div>
-          <div class="colart rise" style="--i:2">
-            <div class="panel" style="overflow:visible">
-              <div class="card-h" style="border-radius:var(--r) var(--r) 0 0">
-                <span class="inp" style="min-width:8em"><svg class="i"><use href="#ic-search"/></svg> Search users</span>
-                <span class="ddwrap">
-                  <span class="btn filterbtn"><svg class="i"><use href="#ic-grid"/></svg> Data groups <svg class="i"><use href="#ic-chev"/></svg></span>
-                  <span class="clearflt"><svg class="i"><use href="#ic-x"/></svg> Clear all filters</span>
-                  <div class="dd-menu">
-                    <div class="dd-search"><svg class="i"><use href="#ic-search"/></svg> Search</div>
-                    <div class="opt opt-latam"><span class="cb"><svg class="i"><use href="#ic-check"/></svg></span> PepsiCo Latam</div>
-                    <div class="opt"><span class="cb"><svg class="i"><use href="#ic-check"/></svg></span> Pepsico US</div>
-                    <div class="opt"><span class="cb"><svg class="i"><use href="#ic-check"/></svg></span> Pepsico MX</div>
-                    <div class="opt"><span class="cb"><svg class="i"><use href="#ic-check"/></svg></span> Pepsico GT</div>
-                    <div class="opt"><span class="cb"><svg class="i"><use href="#ic-check"/></svg></span> dummy-nestle</div>
-                  </div>
-                </span>
+            <div class="panel" style="padding:1.1em 1.2em">
+              <div class="mono" style="font-size:.72em;color:var(--faint);text-transform:uppercase;letter-spacing:.14em;margin-bottom:.75em">Set at every level</div>
+              <div class="cfgchips">
+                <span class="cfgchip">MSRP</span><span class="cfgchip">Hero</span><span class="cfgchip">Business unit</span><span class="cfgchip">Client category</span><span class="cfgchip muted">Valid from</span><span class="cfgchip muted">Valid to</span>
               </div>
-              <table class="tbl">
-                <tbody>
-                  <tr class="frow"><td class="em">adrija.ghosh@pepsico.com</td><td><span class="chip">PepsiCo Latam</span></td></tr>
-                  <tr class="frow hide"><td class="em">akibo.watson@pepsico.com</td><td><span class="chip">Pepsico US</span></td></tr>
-                  <tr class="frow"><td class="em">anastasiya.shulman@pepsico.com</td><td><span class="chip">PepsiCo Latam</span></td></tr>
-                  <tr class="frow hide"><td class="em">adam.whelan@pepsico.com</td><td><span class="chip">Pepsico PE</span></td></tr>
-                  <tr class="frow"><td class="em">belen.flores@pepsico.com</td><td><span class="chip">PepsiCo Latam</span></td></tr>
-                  <tr class="frow"><td class="em">fernando.paiva@pepsico.com</td><td><span class="chip">PepsiCo Latam</span></td></tr>
-                </tbody>
-              </table>
-              <div class="tfoot"><span class="count"><span class="foot-all">1&ndash;100 of 360</span><span class="foot-latam">1&ndash;33 of 33</span></span></div>
+              <div class="muted" style="font-size:.8em;margin-top:.95em;padding-top:.8em;border-top:1px solid var(--line2)">Price is now <b>optional</b> &mdash; a level can carry just the hero flag, category or business unit, with no price at all.</div>
             </div>
           </div>
         </div>
       </article>
 
-      <!-- 7 &middot; EDIT -->
-      <article class="slide s-edit" id="s-edit">
-        <div class="split narrow">
-          <div class="colcopy">
-            <div class="k rise" style="--i:0"><span class="num">06</span> Edit access in one action</div>
-            <h2 class="title rise" style="--i:1">Add or remove <span class="accent">several groups</span> at once.</h2>
-            <p class="lead rise" style="--i:2">Click the pencil on any user to open their data groups as a single checklist. Tick what they need, untick what they don't, <b>Save</b> once &mdash; no more editing the same person group by group.</p>
-            <ul class="bullets rise" style="--i:3">
-              <li><svg class="i"><use href="#ic-check"/></svg><div>Search within the client's groups.</div></li>
-              <li><svg class="i"><use href="#ic-check"/></svg><div>Every change to a user's access happens in <b>one</b> place.</div></li>
-            </ul>
-          </div>
-          <div class="colart rise" style="--i:2">
-            <div class="modal" style="width:100%;box-shadow:var(--shadow)">
-              <div class="mh"><h3>Edit data groups <svg class="i" style="color:var(--faint)"><use href="#ic-x"/></svg></h3><p>aaron.perez@pepsico.com &mdash; select one or many groups from this client.</p></div>
-              <div class="mb">
-                <div class="field" style="display:flex;align-items:center;gap:.5em;color:var(--faint);font-size:.82em"><svg class="i"><use href="#ic-search"/></svg> Search data groups</div>
-                <div class="chkrow on"><span class="chkbox"><svg class="i"><use href="#ic-check"/></svg></span> PepsiCo Latam</div>
-                <div class="chkrow on"><span class="chkbox"><svg class="i"><use href="#ic-check"/></svg></span> Pepsico US</div>
-                <div class="chkrow on"><span class="chkbox"><svg class="i"><use href="#ic-check"/></svg></span> Pepsico GT</div>
-                <div class="chkrow chk-mx"><span class="chkbox"><svg class="i"><use href="#ic-check"/></svg></span> Pepsico MX</div>
-                <div class="chkrow chk-pr"><span class="chkbox"><svg class="i"><use href="#ic-check"/></svg></span> Pepsico PR</div>
-                <div class="chkrow"><span class="chkbox"><svg class="i"><use href="#ic-check"/></svg></span> Pepsico CA</div>
-              </div>
-              <div class="mf"><span class="btn">Cancel</span><span class="btn pri btn-save">Save</span></div>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <!-- 8 &middot; CREATE -->
-      <article class="slide s-create" id="s-create">
-        <div class="split narrow">
-          <div class="colcopy">
-            <div class="k rise" style="--i:0"><span class="num">07</span> Onboard in one modal</div>
-            <h2 class="title rise" style="--i:1">Create users, assign groups &amp; set <span class="accent">permissions</span> &mdash; then invite.</h2>
-            <p class="lead rise" style="--i:2">Paste one or many emails, choose a language, drop them into the data groups they need, and set their <b>Maestro permissions</b> up front. We send the invitation email for you.</p>
-            <ul class="bullets rise" style="--i:3">
-              <li><svg class="i"><use href="#ic-check"/></svg><div>Bulk-create several users in a single step.</div></li>
-              <li><svg class="i"><use href="#ic-check"/></svg><div>New people arrive with the right access from day one.</div></li>
-            </ul>
-          </div>
-          <div class="colart rise" style="--i:2">
-            <div class="modal" style="width:100%;box-shadow:var(--shadow)">
-              <div class="mh"><h3>Create users <svg class="i" style="color:var(--faint)"><use href="#ic-x"/></svg></h3><p>New users are added to these data groups and emailed an invitation.</p></div>
-              <div class="mb" style="max-height:none">
-                <div><span class="fieldlbl">Emails <span class="req">*</span></span><div class="field">john.doe@pepsico.com</div></div>
-                <div class="banner"><svg class="i"><use href="#ic-info"/></svg><div>About to create <b>1 user</b> &mdash; an invitation email will be sent to join the platform.</div></div>
-                <div><span class="fieldlbl">Data groups <span class="req">*</span></span>
-                  <div class="field" style="display:flex;gap:.35em;flex-wrap:wrap"><span class="chip">Pepsico CO <svg class="i" style="width:.75em"><use href="#ic-x"/></svg></span><span class="chip">PepsiCo Latam <svg class="i" style="width:.75em"><use href="#ic-x"/></svg></span><span class="chip">Pepsico AR <svg class="i" style="width:.75em"><use href="#ic-x"/></svg></span></div>
-                </div>
-                <div class="permbox">
-                  <span class="fieldlbl" style="margin-bottom:.4em"><svg class="i" style="width:1em;color:var(--brand)"><use href="#ic-shield"/></svg> Maestro permissions</span>
-                  <div class="permrow"><span class="pl">explorer</span><span class="permopt perm-a"><span class="chkbox" style="width:.9em;height:.9em"><svg class="i"><use href="#ic-check"/></svg></span> view</span></div>
-                  <div class="permrow"><span class="pl">conversation</span><span class="permopt perm-b"><span class="chkbox" style="width:.9em;height:.9em"><svg class="i"><use href="#ic-check"/></svg></span> manage</span><span class="permopt"><span class="chkbox" style="width:.9em;height:.9em"><svg class="i"><use href="#ic-check"/></svg></span> unlimited</span></div>
-                  <div class="permrow"><span class="pl">slides</span><span class="permopt perm-c"><span class="chkbox" style="width:.9em;height:.9em"><svg class="i"><use href="#ic-check"/></svg></span> view</span><span class="permopt"><span class="chkbox" style="width:.9em;height:.9em"><svg class="i"><use href="#ic-check"/></svg></span> manage</span></div>
-                </div>
-              </div>
-              <div class="mf"><span class="btn">Cancel</span><span class="btn pri btn-create">Create users</span></div>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <!-- 9 &middot; BENEFITS -->
+      <!-- 7 BENEFITS -->
       <article class="slide s-benefits" id="s-benefits">
         <div class="colcopy" style="justify-content:flex-start">
-          <div class="k rise" style="--i:0"><span class="num">08</span> Why it helps you</div>
-          <h2 class="title rise" style="--i:1;max-width:24em">Less hunting, fewer mistakes, faster onboarding.</h2>
+          <div class="k rise" style="--i:0"><span class="num">06</span> Why it matters</div>
+          <h2 class="title rise" style="--i:1;max-width:24em">Reflect how each client actually sells.</h2>
         </div>
-        <div class="bgrid" style="margin-top:1.2em">
-          <div class="bcard rise" style="--i:2"><span class="bic"><svg class="i"><use href="#ic-users"/></svg></span><h4>Everyone in one place</h4><p>All 360 of a client's users in a single grid &mdash; no more opening data groups one by one.</p></div>
-          <div class="bcard rise" style="--i:3"><span class="bic"><svg class="i"><use href="#ic-layers"/></svg></span><h4>Full access at a glance</h4><p>Every data group a person belongs to sits on their row (N : M) &mdash; nothing hidden.</p></div>
-          <div class="bcard rise" style="--i:4"><span class="bic"><svg class="i"><use href="#ic-pencil"/></svg></span><h4>Edit access in one action</h4><p>Add or remove several groups from a single checklist instead of repeating per group.</p></div>
-          <div class="bcard rise" style="--i:5"><span class="bic"><svg class="i"><use href="#ic-filter"/></svg></span><h4>Answer access questions fast</h4><p>Filter by data group to see exactly who can reach it &mdash; 33 of 360 in a click.</p></div>
-          <div class="bcard rise" style="--i:6"><span class="bic"><svg class="i"><use href="#ic-bolt"/></svg></span><h4>Onboard in one step</h4><p>Create users, assign groups and set Maestro permissions together, then auto-invite.</p></div>
-          <div class="bcard rise" style="--i:7"><span class="bic"><svg class="i"><use href="#ic-shield"/></svg></span><h4>One source of truth</h4><p>Consistent access per client, easier to audit &mdash; and it scales to hundreds of users.</p></div>
+        <div class="bgrid" style="margin-top:1.2em;grid-template-columns:repeat(2,1fr)">
+          <div class="bcard rise" style="--i:2"><span class="bic" style="background:color-mix(in srgb,var(--ds) 14%,transparent);color:var(--ds)"><svg class="i"><use href="#ic-grid"/></svg></span><h4>Price by store</h4><p>Match the exact price a client sells at &mdash; store by store, not just a country default.</p></div>
+          <div class="bcard rise" style="--i:3"><span class="bic" style="background:color-mix(in srgb,var(--drs) 16%,transparent);color:var(--drs)"><svg class="i"><use href="#ic-shield"/></svg></span><h4>Hero where it counts</h4><p>Flag a product as hero only in the stores or regions where it really is one.</p></div>
+          <div class="bcard rise" style="--i:4"><span class="bic" style="background:color-mix(in srgb,var(--dg) 14%,transparent);color:var(--dg)"><svg class="i"><use href="#ic-layers"/></svg></span><h4>Fits real deals</h4><p>Regional and store agreements finally map one-to-one onto the platform.</p></div>
+          <div class="bcard rise" style="--i:5"><span class="bic" style="background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)"><svg class="i"><use href="#ic-check"/></svg></span><h4>Less manual work</h4><p>Set it once at the right level; the closest setting applies automatically &mdash; no juggling overrides.</p></div>
         </div>
       </article>
 
-      <!-- 10 &middot; RECAP -->
+      <!-- 8 RECAP -->
       <article class="slide s-recap" id="s-recap">
-        <div class="colcopy" style="justify-content:flex-start">
-          <div class="k rise" style="--i:0"><span class="num">09</span> Before &rarr; after</div>
-          <h2 class="title rise" style="--i:1;max-width:22em">The same job, a much shorter path.</h2>
-        </div>
-        <div class="recap" style="margin-top:1em">
-          <div class="rcol before rise" style="--i:2">
-            <div class="rh"><svg class="i"><use href="#ic-clock"/></svg> Before &middot; per data group</div>
-            <ul class="rlist">
-              <li><svg class="i"><use href="#ic-x"/></svg> Users lived inside each data-group tab</li>
-              <li><svg class="i"><use href="#ic-x"/></svg> A user in N groups = managed in N places</li>
-              <li><svg class="i"><use href="#ic-x"/></svg> No single view of a user's full access</li>
-              <li><svg class="i"><use href="#ic-x"/></svg> Repetitive, error-prone, hard to audit</li>
-            </ul>
-          </div>
-          <div class="rcol after rise" style="--i:3">
-            <div class="rh"><svg class="i"><use href="#ic-spark"/></svg> After &middot; client level</div>
-            <ul class="rlist">
-              <li><svg class="i"><use href="#ic-check"/></svg> One Users grid on the client</li>
-              <li><svg class="i"><use href="#ic-check"/></svg> Each user once, with all groups (N : M)</li>
-              <li><svg class="i"><use href="#ic-check"/></svg> Search, filter by group, paginate hundreds</li>
-              <li><svg class="i"><use href="#ic-check"/></svg> Edit membership &amp; bulk-create with permissions</li>
-            </ul>
-          </div>
-        </div>
-      </article>
-
-      <!-- 11 &middot; NEXT -->
-      <article class="slide s-next" id="s-next">
-        <div class="split">
-          <div class="colcopy">
-            <div class="k rise" style="--i:0"><span class="num">10</span> Try it &amp; what's next</div>
-            <h2 class="title rise" style="--i:1">It's live now &mdash; and it's the groundwork for more.</h2>
-            <div class="next-cta rise" style="--i:2">
-              <span class="path"><b>Ecometry</b> &rarr; Clients &rarr; <b>your client</b> &rarr; Users</span>
-              <div class="steps">
-                <div class="stepline"><svg class="i"><use href="#ic-route"/></svg><div>Next in <b>IAM</b>: permission grants &mdash; manage what each user can <i>do</i>, not just where.</div></div>
-                <div class="stepline"><svg class="i"><use href="#ic-users"/></svg><div>Coming later: a <b>cross-client</b> view of a user across every client they touch.</div></div>
-              </div>
-            </div>
-          </div>
-          <div class="colart rise" style="--i:2">
-            <div class="panel" style="padding:1.4em 1.5em;display:flex;flex-direction:column;gap:1em">
-              <div style="display:flex;align-items:center;gap:.6em">
-                <span class="bic" style="width:2.6em;height:2.6em"><svg class="i" style="width:1.4em"><use href="#ic-spark"/></svg></span>
-                <div><div style="font-weight:750;font-size:1.05em">Questions?</div><div class="muted" style="font-size:.86em">Ping the platform team on Slack.</div></div>
-              </div>
-              <div style="border-top:1px solid var(--line2);padding-top:1em">
-                <div class="muted" style="font-size:.78em;text-transform:uppercase;letter-spacing:.14em;font-family:var(--mono)">Delivered &middot; Sprint S1</div>
-                <div style="font-weight:600;margin-top:.35em;font-size:.95em">User datagrid &rarr; client level <span class="muted" style="font-weight:400">&middot; TECH-14864</span></div>
-              </div>
-              <div style="display:flex;align-items:center;gap:.5em;color:var(--good);font-weight:600;font-size:.88em"><span class="status"><span class="d"></span></span> Available in Ecometry today</div>
-            </div>
-          </div>
+        <div class="cover">
+          <span class="badge rise" style="--i:0"><svg class="i"><use href="#ic-spark"/></svg> In short</span>
+          <h1 class="rise" style="--i:1">Global as before &mdash;<br>now with <span style="color:var(--dr)">region</span>, <span style="color:var(--ds)">store</span> &amp; <span style="color:var(--drs)">region-store</span> on top.</h1>
+          <p class="lead rise" style="--i:2">The same commercial settings, configurable at the level that matches the deal &mdash; with the most specific one always winning. Shaped with the commercial &amp; product teams; rolling out across the console.</p>
         </div>
       </article>
 
@@ -802,3 +653,6 @@
   go(0);
 })();
 </script>
+
+</body>
+</html>
