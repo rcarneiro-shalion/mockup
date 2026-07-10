@@ -85,13 +85,22 @@ export const INITIAL_RELEASE_NOTES: ReleaseNote[] = [
   },
   {
     id: "msrp-by-level",
-    title: "MSRP, now tracked at every level",
-    date: "2026-07-04",
+    title: "MSRP is now Client Configuration",
+    date: "2026-07-10",
     sprint: "Sprint S1",
     status: "Published",
     tag: "Improved",
     summary:
-      "Manufacturer suggested prices can now be modelled globally, by region, by store, and by store-within-a-region — so price comparisons reflect exactly where each product is actually sold.",
+      "What used to be a single MSRP is now a flexible Client Configuration: pricing can be set across four levels — Global, Region, Store, and Region & Store — with the most specific level winning. And it is no longer just a price — business unit, client category, validity dates and the hero flag now live at each level too.",
+    highlights: [
+      "Price a SKU globally, by region, by store, or by a store within a region — the rightmost defined value wins",
+      "Business unit, client category, active-from/to and hero moved onto the configuration (out of the client SKU)",
+      "Renamed across the console today; the data migration and table renames follow next",
+    ],
+    link: {
+      label: "Read the full story",
+      url: "https://claude.ai/code/artifact/7579f72c-56e7-431a-8793-3ec244edef35",
+    },
   },
   {
     id: "discovery-key-rename",

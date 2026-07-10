@@ -11,5 +11,14 @@ Artifacts and linked from the mockup's **Release notes** page.
   (before/after, the filter, edit-membership and bulk-create modals, benefits). Uses the
   official shalion mark; theme-aware (light/dark); keyboard + autoplay navigation.
 
+## MSRP → Client Configuration
+- **Source:** [`client-configuration.html`](./client-configuration.html)
+- **Live (online):** https://claude.ai/code/artifact/7579f72c-56e7-431a-8793-3ec244edef35
+- **Linked from:** Release notes → *"MSRP is now Client Configuration"* → **Read the full story**
+- The story of MSRP becoming Client Configuration: flexible pricing across Global / Region /
+  Store / Region & Store with rightmost-wins precedence, the fields that moved off the client
+  SKU (business unit, client category, hero, validity dates), and the downstream table renames
+  (`msrp_* → client_configuration_*`) + Airbyte/ETL migration. Built from the product spec.
+
 To update: edit the HTML, then re-publish it as a Claude Artifact — it redeploys to the same
 URL, so the Release-notes link keeps working.
