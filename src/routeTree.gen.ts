@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ReleaseNotesRouteImport } from './routes/release-notes'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoresIndexRouteImport } from './routes/stores/index'
 import { Route as RetailersIndexRouteImport } from './routes/retailers/index'
@@ -193,6 +194,11 @@ import { Route as DataCollectorSettingsProxiesAccountsIdRouteImport } from './ro
 import { Route as SettingsDashboardApplicationsAppIdGroupsGroupIdIndexRouteImport } from './routes/settings/dashboard-applications.$appId.groups.$groupId.index'
 import { Route as SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRouteImport } from './routes/settings/dashboard-applications.$appId.groups.$groupId.sections.$sectionId'
 
+const ReleaseNotesRoute = ReleaseNotesRouteImport.update({
+  id: '/release-notes',
+  path: '/release-notes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -1207,6 +1213,7 @@ const SettingsDashboardApplicationsAppIdGroupsGroupIdSectionsSectionIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/release-notes': typeof ReleaseNotesRoute
   '/bulk/$id': typeof BulkIdRoute
   '/bulk/new': typeof BulkNewRoute
   '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
@@ -1392,6 +1399,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/release-notes': typeof ReleaseNotesRoute
   '/bulk/$id': typeof BulkIdRoute
   '/bulk/new': typeof BulkNewRoute
   '/clients/new': typeof ClientsNewRoute
@@ -1570,6 +1578,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/release-notes': typeof ReleaseNotesRoute
   '/bulk/$id': typeof BulkIdRoute
   '/bulk/new': typeof BulkNewRoute
   '/clients/$clientId': typeof ClientsClientIdRouteWithChildren
@@ -1757,6 +1766,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/release-notes'
     | '/bulk/$id'
     | '/bulk/new'
     | '/clients/$clientId'
@@ -1942,6 +1952,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/release-notes'
     | '/bulk/$id'
     | '/bulk/new'
     | '/clients/new'
@@ -2119,6 +2130,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/release-notes'
     | '/bulk/$id'
     | '/bulk/new'
     | '/clients/$clientId'
@@ -2305,6 +2317,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ReleaseNotesRoute: typeof ReleaseNotesRoute
   BulkIdRoute: typeof BulkIdRoute
   BulkNewRoute: typeof BulkNewRoute
   ClientsClientIdRoute: typeof ClientsClientIdRouteWithChildren
@@ -2468,6 +2481,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/release-notes': {
+      id: '/release-notes'
+      path: '/release-notes'
+      fullPath: '/release-notes'
+      preLoaderRoute: typeof ReleaseNotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -3896,6 +3916,7 @@ const SettingsRulesRouteWithChildren = SettingsRulesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ReleaseNotesRoute: ReleaseNotesRoute,
   BulkIdRoute: BulkIdRoute,
   BulkNewRoute: BulkNewRoute,
   ClientsClientIdRoute: ClientsClientIdRouteWithChildren,

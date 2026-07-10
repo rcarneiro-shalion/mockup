@@ -22,9 +22,11 @@ import {
   Contact,
   ChevronDown,
   ChevronLeft,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAppVersion, stripVersionPrefix } from "@/lib/appVersion";
+import { useLatestUnseenRelease } from "@/lib/releaseNotes";
 
 type NavChild = { label: string; to: string; legacy?: boolean };
 
@@ -213,6 +215,10 @@ export function Sidebar() {
     setOpenGroup(activeGroupLabel);
   }, [activeGroupLabel]);
 
+  // A permanent "Release notes" item is pinned to the bottom of the sidebar; show a dot
+  // when there is a published release this visitor has not opened yet.
+  const unseenRelease = useLatestUnseenRelease();
+
   if (collapsed) {
     return (
       <aside className="flex w-14 flex-col border-r border-[var(--topbar-border)] bg-[var(--sidebar-bg)] py-3">
@@ -237,6 +243,17 @@ export function Sidebar() {
             );
           })}
         </nav>
+        <div className="mt-auto flex flex-col items-center px-1 pt-2">
+          <div
+            className="relative grid h-9 w-9 place-items-center rounded-md text-muted-foreground hover:bg-secondary"
+            title="Release notes"
+          >
+            <Gift className="h-4.5 w-4.5" />
+            {unseenRelease && (
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500" />
+            )}
+          </div>
+        </div>
       </aside>
     );
   }
@@ -339,6 +356,23 @@ export function Sidebar() {
           );
         })}
       </nav>
+      <div className="shrink-0 border-t border-[var(--topbar-border)] px-2 pt-2">
+        <Link
+          to="/release-notes"
+          className={cn(
+            "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
+            pathname === "/release-notes"
+              ? "bg-[var(--sidebar-active)] text-[var(--sidebar-active-fg)]"
+              : "text-foreground/80 hover:bg-[var(--sidebar-hover)]",
+          )}
+        >
+          <Gift className="h-4 w-4" />
+          Release notes
+          {unseenRelease && (
+            <span className="ml-auto h-2 w-2 rounded-full bg-rose-500" aria-label="New release" />
+          )}
+        </Link>
+      </div>
     </aside>
   );
 }
