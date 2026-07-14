@@ -235,7 +235,7 @@ export function getStores(): Store[] {
  * Real per-store active-location count keyed by store name, for every store in the
  * prod store entity (≈1,677). This is the authoritative location volume the Value
  * Stream Map / task estimator scale by — far wider coverage than the curated
- * STORE_LOCATIONS subset, so a MANUAL subscription's tasks = seeds × the store's
+ * STORE_LOCATIONS subset, so a MANUAL scrapingPlan's tasks = seeds × the store's
  * own active locations whenever its store is on record.
  */
 export function storeLocationCounts(): Map<string, number> {

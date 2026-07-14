@@ -26,7 +26,7 @@ function StatusDot({ status }: { status?: Seed["status"] }) {
 }
 
 /**
- * Assigned seeds for a subscription — a tabbed (Keyword / URL / API / Virtual Seed)
+ * Assigned seeds for a scrapingPlan — a tabbed (Keyword / URL / API / Virtual Seed)
  * searchable grid. PDP seeds are the Virtual Seeds produced by Discovery over a PLP
  * extraction. `seeds` holds the assigned seed descriptions; each is resolved against
  * the seeds store to render type-specific columns.
@@ -38,7 +38,7 @@ export function AssignedSeeds({
 }: {
   seeds: string[];
   onChange: (next: string[]) => void;
-  /** Seed types valid for the subscription's extraction type; others are disabled. */
+  /** Seed types valid for the scrapingPlan's extraction type; others are disabled. */
   allowedTypes?: SeedType[];
 }) {
   const allowed = allowedTypes && allowedTypes.length ? allowedTypes : (["KEYWORD", "URL", "API", "PDP"] as SeedType[]);

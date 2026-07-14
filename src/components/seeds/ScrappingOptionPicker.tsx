@@ -56,7 +56,7 @@ function Descriptor({ o }: { o: ScrappingOptionValues }) {
 }
 
 /**
- * Searchable scrapping-option picker for the subscription form. Search matches
+ * Searchable scrapping-option picker for the scrapingPlan form. Search matches
  * name, extraction type, taskgroup and the scrapping options summary; both the
  * trigger and the list show "name (extraction type, taskgroup, options)" with a
  * "…" ellipsis and a tooltip carrying the full breakdown.
@@ -124,7 +124,7 @@ export function ScrappingOptionPicker({
 }
 
 /**
- * Multi-select scrapping-option picker — a subscription may run several options.
+ * Multi-select scrapping-option picker — a scrapingPlan may run several options.
  * The popover stays open while toggling; selected options show as removable chips
  * below the trigger. Search matches name / extraction type / taskgroup / options.
  */

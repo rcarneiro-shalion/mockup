@@ -23,14 +23,14 @@ import { Route as StoresStoreIdRouteImport } from './routes/stores/$storeId'
 import { Route as SettingsTimeframesRouteImport } from './routes/settings/timeframes'
 import { Route as SettingsTaskGroupsRouteImport } from './routes/settings/task-groups'
 import { Route as SettingsTargetsRouteImport } from './routes/settings/targets'
-import { Route as SettingsSubscriptionTypesRouteImport } from './routes/settings/subscription-types'
+import { Route as SettingsScrapingPlanTypesRouteImport } from './routes/settings/scraping-plan-types'
 import { Route as SettingsRulesRouteImport } from './routes/settings/rules'
 import { Route as SettingsDashboardApplicationsRouteImport } from './routes/settings/dashboard-applications'
 import { Route as SettingsCountryGroupsRouteImport } from './routes/settings/country-groups'
 import { Route as SettingsCategoriesRouteImport } from './routes/settings/categories'
 import { Route as SeedsApiTagsRouteImport } from './routes/seeds-api/tags'
-import { Route as SeedsApiSubscriptionsRouteImport } from './routes/seeds-api/subscriptions'
 import { Route as SeedsApiScrappingOptionsRouteImport } from './routes/seeds-api/scrapping-options'
+import { Route as SeedsApiScrapingPlansRouteImport } from './routes/seeds-api/scraping-plans'
 import { Route as SeedsApiScenarioGeneratorRouteImport } from './routes/seeds-api/scenario-generator'
 import { Route as SeedsApiPlannerRouteImport } from './routes/seeds-api/planner'
 import { Route as SeedsApiDeliveryMapRouteImport } from './routes/seeds-api/delivery-map'
@@ -264,10 +264,10 @@ const SettingsTargetsRoute = SettingsTargetsRouteImport.update({
   path: '/settings/targets',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsSubscriptionTypesRoute =
-  SettingsSubscriptionTypesRouteImport.update({
-    id: '/settings/subscription-types',
-    path: '/settings/subscription-types',
+const SettingsScrapingPlanTypesRoute =
+  SettingsScrapingPlanTypesRouteImport.update({
+    id: '/settings/scraping-plan-types',
+    path: '/settings/scraping-plan-types',
     getParentRoute: () => rootRouteImport,
   } as any)
 const SettingsRulesRoute = SettingsRulesRouteImport.update({
@@ -296,17 +296,17 @@ const SeedsApiTagsRoute = SeedsApiTagsRouteImport.update({
   path: '/seeds-api/tags',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SeedsApiSubscriptionsRoute = SeedsApiSubscriptionsRouteImport.update({
-  id: '/seeds-api/subscriptions',
-  path: '/seeds-api/subscriptions',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SeedsApiScrappingOptionsRoute =
   SeedsApiScrappingOptionsRouteImport.update({
     id: '/seeds-api/scrapping-options',
     path: '/seeds-api/scrapping-options',
     getParentRoute: () => rootRouteImport,
   } as any)
+const SeedsApiScrapingPlansRoute = SeedsApiScrapingPlansRouteImport.update({
+  id: '/seeds-api/scraping-plans',
+  path: '/seeds-api/scraping-plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SeedsApiScenarioGeneratorRoute =
   SeedsApiScenarioGeneratorRouteImport.update({
     id: '/seeds-api/scenario-generator',
@@ -1226,14 +1226,14 @@ export interface FileRoutesByFullPath {
   '/seeds-api/delivery-map': typeof SeedsApiDeliveryMapRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
   '/seeds-api/scenario-generator': typeof SeedsApiScenarioGeneratorRoute
+  '/seeds-api/scraping-plans': typeof SeedsApiScrapingPlansRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
-  '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/settings/categories': typeof SettingsCategoriesRouteWithChildren
   '/settings/country-groups': typeof SettingsCountryGroupsRouteWithChildren
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRouteWithChildren
   '/settings/rules': typeof SettingsRulesRouteWithChildren
-  '/settings/subscription-types': typeof SettingsSubscriptionTypesRoute
+  '/settings/scraping-plan-types': typeof SettingsScrapingPlanTypesRoute
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/task-groups': typeof SettingsTaskGroupsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
@@ -1410,10 +1410,10 @@ export interface FileRoutesByTo {
   '/seeds-api/delivery-map': typeof SeedsApiDeliveryMapRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
   '/seeds-api/scenario-generator': typeof SeedsApiScenarioGeneratorRoute
+  '/seeds-api/scraping-plans': typeof SeedsApiScrapingPlansRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
-  '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
-  '/settings/subscription-types': typeof SettingsSubscriptionTypesRoute
+  '/settings/scraping-plan-types': typeof SettingsScrapingPlanTypesRoute
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/task-groups': typeof SettingsTaskGroupsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
@@ -1591,14 +1591,14 @@ export interface FileRoutesById {
   '/seeds-api/delivery-map': typeof SeedsApiDeliveryMapRoute
   '/seeds-api/planner': typeof SeedsApiPlannerRoute
   '/seeds-api/scenario-generator': typeof SeedsApiScenarioGeneratorRoute
+  '/seeds-api/scraping-plans': typeof SeedsApiScrapingPlansRoute
   '/seeds-api/scrapping-options': typeof SeedsApiScrappingOptionsRoute
-  '/seeds-api/subscriptions': typeof SeedsApiSubscriptionsRoute
   '/seeds-api/tags': typeof SeedsApiTagsRoute
   '/settings/categories': typeof SettingsCategoriesRouteWithChildren
   '/settings/country-groups': typeof SettingsCountryGroupsRouteWithChildren
   '/settings/dashboard-applications': typeof SettingsDashboardApplicationsRouteWithChildren
   '/settings/rules': typeof SettingsRulesRouteWithChildren
-  '/settings/subscription-types': typeof SettingsSubscriptionTypesRoute
+  '/settings/scraping-plan-types': typeof SettingsScrapingPlanTypesRoute
   '/settings/targets': typeof SettingsTargetsRoute
   '/settings/task-groups': typeof SettingsTaskGroupsRoute
   '/settings/timeframes': typeof SettingsTimeframesRoute
@@ -1779,14 +1779,14 @@ export interface FileRouteTypes {
     | '/seeds-api/delivery-map'
     | '/seeds-api/planner'
     | '/seeds-api/scenario-generator'
+    | '/seeds-api/scraping-plans'
     | '/seeds-api/scrapping-options'
-    | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/settings/categories'
     | '/settings/country-groups'
     | '/settings/dashboard-applications'
     | '/settings/rules'
-    | '/settings/subscription-types'
+    | '/settings/scraping-plan-types'
     | '/settings/targets'
     | '/settings/task-groups'
     | '/settings/timeframes'
@@ -1963,10 +1963,10 @@ export interface FileRouteTypes {
     | '/seeds-api/delivery-map'
     | '/seeds-api/planner'
     | '/seeds-api/scenario-generator'
+    | '/seeds-api/scraping-plans'
     | '/seeds-api/scrapping-options'
-    | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
-    | '/settings/subscription-types'
+    | '/settings/scraping-plan-types'
     | '/settings/targets'
     | '/settings/task-groups'
     | '/settings/timeframes'
@@ -2143,14 +2143,14 @@ export interface FileRouteTypes {
     | '/seeds-api/delivery-map'
     | '/seeds-api/planner'
     | '/seeds-api/scenario-generator'
+    | '/seeds-api/scraping-plans'
     | '/seeds-api/scrapping-options'
-    | '/seeds-api/subscriptions'
     | '/seeds-api/tags'
     | '/settings/categories'
     | '/settings/country-groups'
     | '/settings/dashboard-applications'
     | '/settings/rules'
-    | '/settings/subscription-types'
+    | '/settings/scraping-plan-types'
     | '/settings/targets'
     | '/settings/task-groups'
     | '/settings/timeframes'
@@ -2330,14 +2330,14 @@ export interface RootRouteChildren {
   SeedsApiDeliveryMapRoute: typeof SeedsApiDeliveryMapRoute
   SeedsApiPlannerRoute: typeof SeedsApiPlannerRoute
   SeedsApiScenarioGeneratorRoute: typeof SeedsApiScenarioGeneratorRoute
+  SeedsApiScrapingPlansRoute: typeof SeedsApiScrapingPlansRoute
   SeedsApiScrappingOptionsRoute: typeof SeedsApiScrappingOptionsRoute
-  SeedsApiSubscriptionsRoute: typeof SeedsApiSubscriptionsRoute
   SeedsApiTagsRoute: typeof SeedsApiTagsRoute
   SettingsCategoriesRoute: typeof SettingsCategoriesRouteWithChildren
   SettingsCountryGroupsRoute: typeof SettingsCountryGroupsRouteWithChildren
   SettingsDashboardApplicationsRoute: typeof SettingsDashboardApplicationsRouteWithChildren
   SettingsRulesRoute: typeof SettingsRulesRouteWithChildren
-  SettingsSubscriptionTypesRoute: typeof SettingsSubscriptionTypesRoute
+  SettingsScrapingPlanTypesRoute: typeof SettingsScrapingPlanTypesRoute
   SettingsTargetsRoute: typeof SettingsTargetsRoute
   SettingsTaskGroupsRoute: typeof SettingsTaskGroupsRoute
   SettingsTimeframesRoute: typeof SettingsTimeframesRoute
@@ -2579,11 +2579,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsTargetsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/subscription-types': {
-      id: '/settings/subscription-types'
-      path: '/settings/subscription-types'
-      fullPath: '/settings/subscription-types'
-      preLoaderRoute: typeof SettingsSubscriptionTypesRouteImport
+    '/settings/scraping-plan-types': {
+      id: '/settings/scraping-plan-types'
+      path: '/settings/scraping-plan-types'
+      fullPath: '/settings/scraping-plan-types'
+      preLoaderRoute: typeof SettingsScrapingPlanTypesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/rules': {
@@ -2621,18 +2621,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SeedsApiTagsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/seeds-api/subscriptions': {
-      id: '/seeds-api/subscriptions'
-      path: '/seeds-api/subscriptions'
-      fullPath: '/seeds-api/subscriptions'
-      preLoaderRoute: typeof SeedsApiSubscriptionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/seeds-api/scrapping-options': {
       id: '/seeds-api/scrapping-options'
       path: '/seeds-api/scrapping-options'
       fullPath: '/seeds-api/scrapping-options'
       preLoaderRoute: typeof SeedsApiScrappingOptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seeds-api/scraping-plans': {
+      id: '/seeds-api/scraping-plans'
+      path: '/seeds-api/scraping-plans'
+      fullPath: '/seeds-api/scraping-plans'
+      preLoaderRoute: typeof SeedsApiScrapingPlansRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seeds-api/scenario-generator': {
@@ -3929,15 +3929,15 @@ const rootRouteChildren: RootRouteChildren = {
   SeedsApiDeliveryMapRoute: SeedsApiDeliveryMapRoute,
   SeedsApiPlannerRoute: SeedsApiPlannerRoute,
   SeedsApiScenarioGeneratorRoute: SeedsApiScenarioGeneratorRoute,
+  SeedsApiScrapingPlansRoute: SeedsApiScrapingPlansRoute,
   SeedsApiScrappingOptionsRoute: SeedsApiScrappingOptionsRoute,
-  SeedsApiSubscriptionsRoute: SeedsApiSubscriptionsRoute,
   SeedsApiTagsRoute: SeedsApiTagsRoute,
   SettingsCategoriesRoute: SettingsCategoriesRouteWithChildren,
   SettingsCountryGroupsRoute: SettingsCountryGroupsRouteWithChildren,
   SettingsDashboardApplicationsRoute:
     SettingsDashboardApplicationsRouteWithChildren,
   SettingsRulesRoute: SettingsRulesRouteWithChildren,
-  SettingsSubscriptionTypesRoute: SettingsSubscriptionTypesRoute,
+  SettingsScrapingPlanTypesRoute: SettingsScrapingPlanTypesRoute,
   SettingsTargetsRoute: SettingsTargetsRoute,
   SettingsTaskGroupsRoute: SettingsTaskGroupsRoute,
   SettingsTimeframesRoute: SettingsTimeframesRoute,

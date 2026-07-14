@@ -13,7 +13,7 @@ import {
   type Seed,
 } from "@/lib/seeds";
 import { PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
-import { getSubscriptions, subProjects } from "@/lib/subscriptions";
+import { getScrapingPlans, subProjects } from "@/lib/scrapingPlans";
 import { getProjects } from "@/lib/projects";
 import { getClientsForProject } from "@/lib/clients";
 import {
@@ -85,13 +85,13 @@ function SeedsPage() {
   const sort = useSort("seeds");
   const navigate = useNavigate();
 
-  // Indirect relationship: a subscription holds its assigned seeds by description
-  // (Subscription.seeds = seed.d). The set of seed descriptions covered by the
-  // currently-picked subscriptions — a seed row matches if its description is in it.
-  const allSubs = getSubscriptions();
+  // Indirect relationship: a scrapingPlan holds its assigned seeds by description
+  // (ScrapingPlan.seeds = seed.d). The set of seed descriptions covered by the
+  // currently-picked scrapingPlans — a seed row matches if its description is in it.
+  const allSubs = getScrapingPlans();
   const subSeedSet = new Set(allSubs.filter((s) => fSub.includes(s.name)).flatMap((s) => s.seeds ?? []));
-  // Inverse of the relationship: seed description → the subscription name(s) it's
-  // assigned to (a seed can belong to several). Drives the Subscriptions column.
+  // Inverse of the relationship: seed description → the scrapingPlan name(s) it's
+  // assigned to (a seed can belong to several). Drives the ScrapingPlans column.
   const subsBySeedDesc = new Map<string, string[]>();
   for (const sub of allSubs) for (const d of sub.seeds ?? []) {
     const arr = subsBySeedDesc.get(d);
@@ -100,8 +100,8 @@ function SeedsPage() {
   }
 
   // Deeper indirect chains for the Projects / Clients filters:
-  //   seed (d) → subscription (seeds[]) → project (sub.project) → client(s).
-  // A subscription's project resolves to its assigned clients via the
+  //   seed (d) → scrapingPlan (seeds[]) → project (sub.project) → client(s).
+  // A scrapingPlan's project resolves to its assigned clients via the
   // client↔project relationship; cache the lookup per project name.
   const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
   const clientsByProjectName = new Map<string, string[]>();
@@ -113,7 +113,7 @@ function SeedsPage() {
     }
     return c;
   };
-  // Seed descriptions reachable through the subscriptions matching the picked
+  // Seed descriptions reachable through the scrapingPlans matching the picked
   // projects / clients — a seed row matches if its description is in the set.
   const projectSeedSet = new Set(
     allSubs.filter((s) => subProjects(s).some((p) => fProject.includes(p))).flatMap((s) => s.seeds ?? []),
@@ -123,7 +123,7 @@ function SeedsPage() {
       .filter((s) => subProjects(s).some((p) => clientsOf(p).some((c) => fClient.includes(c))))
       .flatMap((s) => s.seeds ?? []),
   );
-  // Only projects / clients reachable through a subscription can ever match.
+  // Only projects / clients reachable through a scrapingPlan can ever match.
   const projectFilterOptions = [...new Set(allSubs.flatMap(subProjects).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   const clientFilterOptions = [...new Set(allSubs.flatMap((s) => subProjects(s).flatMap(clientsOf)))].sort((a, b) => a.localeCompare(b));
 
@@ -170,7 +170,7 @@ function SeedsPage() {
     status: (r) => r.status ?? "Active",
     createdAt: (r) => r.c,
     updatedAt: (r) => r.u,
-    subscriptions: (r) => (subsBySeedDesc.get(r.d) ?? []).join(", "),
+    scrapingPlans: (r) => (subsBySeedDesc.get(r.d) ?? []).join(", "),
   });
   const pg = usePagination(visible.length, query);
 
@@ -238,9 +238,9 @@ function SeedsPage() {
   cols.push({ key: "cat", label: "Category", sortKey: "category", cell: (r) => <span className="text-foreground/80">{r.cat}</span> });
   cols.push({
     key: "subs",
-    label: "Subscriptions",
-    sortKey: "subscriptions",
-    cell: (r) => <GroupedPills items={subsBySeedDesc.get(r.d) ?? []} noun="subscription" tone="slate" />,
+    label: "Scraping Plans",
+    sortKey: "scraping plans",
+    cell: (r) => <GroupedPills items={subsBySeedDesc.get(r.d) ?? []} noun="scraping plan" tone="slate" />,
   });
   cols.push({ key: "c", label: "Created at", sortKey: "createdAt", cell: (r) => <span className="text-muted-foreground">{r.c}</span> });
   cols.push({ key: "u", label: "Updated at", sortKey: "updatedAt", cell: (r) => <span className="text-muted-foreground">{r.u}</span> });
@@ -294,7 +294,7 @@ function SeedsPage() {
             getLabel={(v) => (v.length > 48 ? v.slice(0, 48) + "…" : v)}
           />
           <FilterChip
-            label="Subscriptions"
+            label="Scraping Plans"
             icon={Layers}
             options={allSubs.map((s) => s.name)}
             value={fSub}

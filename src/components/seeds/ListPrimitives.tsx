@@ -361,7 +361,7 @@ export function Pill({
   );
 }
 
-// Shared "grouped" multi-value cell — the canonical rule from the Subscriptions →
+// Shared "grouped" multi-value cell — the canonical rule from the ScrapingPlans →
 // Seeds column, reused everywhere a cell lists several values: up to GROUP_INLINE_MAX
 // values render as inline pills; beyond that they collapse into one "N nouns" chip
 // with a hover card listing them (capped, "…+N more") and an optional "See all".
@@ -376,7 +376,7 @@ export function GroupedPills({
   colorFor,
 }: {
   items: string[];
-  /** singular noun, e.g. "client" / "subscription" / "seed" / "scrapping option" */
+  /** singular noun, e.g. "client" / "scraping plan" / "seed" / "scrapping option" */
   noun: string;
   tone?: PillTone;
   onSeeAll?: () => void;

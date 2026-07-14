@@ -59,7 +59,7 @@ const ecometryNav: NavItem[] = [
     defaultOpen: true,
     children: [
       { label: "Projects", to: "/seeds-api/projects" },
-      { label: "Subscriptions", to: "/seeds-api/subscriptions" },
+      { label: "Scraping Plans", to: "/seeds-api/scraping-plans" },
       { label: "Seeds", to: "/seeds-api/seeds" },
       { label: "Scraping options", to: "/seeds-api/scrapping-options" },
       { label: "Tags", to: "/seeds-api/tags" },
@@ -124,7 +124,7 @@ const ecometryNav: NavItem[] = [
       { label: "Cubes", to: "/settings/cubes" },
       { label: "Scopes", to: "/settings/scopes" },
       { label: "Rules", to: "/settings/rules" },
-      { label: "Subscription type", to: "/settings/subscription-types" },
+      { label: "Scraping Plan type", to: "/settings/scraping-plan-types" },
       { label: "TaskGroup", to: "/settings/task-groups" },
     ],
   },

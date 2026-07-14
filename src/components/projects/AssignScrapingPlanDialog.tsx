@@ -3,8 +3,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getSubscriptions } from "@/lib/subscriptions";
-import { typeFromName, type AssignedSubscription } from "@/lib/projects";
+import { getScrapingPlans } from "@/lib/scrapingPlans";
+import { typeFromName, type AssignedScrapingPlan } from "@/lib/projects";
 import { buildQueryMatch } from "@/lib/textMatch";
 import { Search } from "lucide-react";
 
@@ -22,7 +22,7 @@ function toDateInput(s?: string): string {
 
 const newId = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
 
-export function AssignSubscriptionDialog({
+export function AssignScrapingPlanDialog({
   open,
   onOpenChange,
   assignedNames,
@@ -34,11 +34,11 @@ export function AssignSubscriptionDialog({
   onOpenChange: (v: boolean) => void;
   assignedNames: string[];
   /** Edit mode: save the single edited row. */
-  onAssign: (s: AssignedSubscription) => void;
-  /** Add mode: assign one or more picked subscriptions at once. */
-  onAssignMany: (subs: AssignedSubscription[]) => void;
-  /** When set, edit this row's Type/Expiration instead of picking new subscriptions. */
-  editing?: AssignedSubscription | null;
+  onAssign: (s: AssignedScrapingPlan) => void;
+  /** Add mode: assign one or more picked scrapingPlans at once. */
+  onAssignMany: (subs: AssignedScrapingPlan[]) => void;
+  /** When set, edit this row's Type/Expiration instead of picking new scrapingPlans. */
+  editing?: AssignedScrapingPlan | null;
 }) {
   const isEdit = !!editing;
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -53,7 +53,7 @@ export function AssignSubscriptionDialog({
     }
   }, [open, editing]);
 
-  const available = useMemo(() => getSubscriptions().filter((s) => !assignedNames.includes(s.name)), [assignedNames, open]);
+  const available = useMemo(() => getScrapingPlans().filter((s) => !assignedNames.includes(s.name)), [assignedNames, open]);
   const match = useMemo(() => buildQueryMatch(query), [query]);
   const filtered = useMemo(() => available.filter((s) => match(s.name) || match(s.store)), [available, match]);
 
@@ -81,13 +81,13 @@ export function AssignSubscriptionDialog({
       <DialogContent className="gap-0 p-0" style={{ maxWidth: 560 }}>
         <div className="border-b border-border px-5 py-4">
           <DialogTitle className="text-base font-semibold tracking-tight">
-            {isEdit ? "Edit subscription" : "Assign subscriptions"}
+            {isEdit ? "Edit scraping plan" : "Assign scraping plans"}
           </DialogTitle>
         </div>
         <div className="space-y-4 px-5 py-5">
           <div className="flex flex-col gap-1.5">
             <Label className="text-sm font-medium text-foreground/80">
-              Subscription{!isEdit && "s"} {!isEdit && <span className="text-destructive">*</span>}
+              Scraping Plan{!isEdit && "s"} {!isEdit && <span className="text-destructive">*</span>}
             </Label>
             {isEdit ? (
               <div className="flex h-9 items-center rounded-md border border-border bg-secondary/40 px-3 text-sm text-foreground">
@@ -97,7 +97,7 @@ export function AssignSubscriptionDialog({
               <>
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search subscription (% wildcard)" className="pl-8" />
+                  <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search scraping plan (% wildcard)" className="pl-8" />
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{picked.size} selected · {filtered.length} of {available.length}</span>
@@ -108,7 +108,7 @@ export function AssignSubscriptionDialog({
                 </div>
                 <div className="max-h-60 overflow-auto rounded-md border border-border">
                   {available.length === 0 ? (
-                    <div className="px-3 py-6 text-center text-sm text-muted-foreground">No subscriptions available</div>
+                    <div className="px-3 py-6 text-center text-sm text-muted-foreground">No scraping plans available</div>
                   ) : filtered.length === 0 ? (
                     <div className="px-3 py-6 text-center text-sm text-muted-foreground">No match.</div>
                   ) : (
@@ -130,7 +130,7 @@ export function AssignSubscriptionDialog({
               <div className="flex h-9 items-center rounded-md border border-border bg-secondary/40 px-3 text-sm text-foreground/90">
                 {isEdit ? (typeFromName(editing!.name) || "—") : "Auto from name prefix"}
               </div>
-              <p className="text-xs text-muted-foreground">Derived from the subscription name prefix (e.g. ME_ → Media).</p>
+              <p className="text-xs text-muted-foreground">Derived from the scraping plan name prefix (e.g. ME_ → Media).</p>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label className="text-sm font-medium text-foreground/80">Expiration date</Label>
@@ -141,7 +141,7 @@ export function AssignSubscriptionDialog({
         <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={!canSubmit}>
-            {isEdit ? "Save" : `Assign ${picked.size || ""} subscription${picked.size === 1 ? "" : "s"}`.replace("  ", " ")}
+            {isEdit ? "Save" : `Assign ${picked.size || ""} scraping plan${picked.size === 1 ? "" : "s"}`.replace("  ", " ")}
           </Button>
         </div>
       </DialogContent>

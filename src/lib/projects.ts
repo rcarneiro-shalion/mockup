@@ -2,13 +2,13 @@ import { nowStamp } from "./clients";
 import { readPersistedList } from "./seedOptions";
 import { BULK_PROJECTS } from "./projectsBulk";
 
-// project-subscription relationship: a subscription assigned to a project.
-export type AssignedSubscription = {
+// project-scrapingPlan relationship: a scrapingPlan assigned to a project.
+export type AssignedScrapingPlan = {
   id: string;
   name: string;
   store: string;
   geo: string;
-  type: string; // a Subscription type from Settings › Subscription type (e.g. Select Assortment, Matching)
+  type: string; // a ScrapingPlan type from Settings › ScrapingPlan type (e.g. Select Assortment, Matching)
   expiration: string;
 };
 
@@ -21,16 +21,16 @@ export type Project = {
   updatedAt: string;
   createdBy: string;
   updatedBy: string;
-  assignedSubscriptions?: AssignedSubscription[];
+  assignedScrapingPlans?: AssignedScrapingPlan[];
 };
 
 export const PROJECTS_KEY = "seeds-api:projects";
 
-// A subscription's "type" is derived from its NAME prefix (the part before the first
-// "_") — it maps to a Subscription type in Settings › Subscription type. Used to
-// "replay" the Type when a subscription is assigned to a project (and by the scenario
+// A scrapingPlan's "type" is derived from its NAME prefix (the part before the first
+// "_") — it maps to a ScrapingPlan type in Settings › ScrapingPlan type. Used to
+// "replay" the Type when a scrapingPlan is assigned to a project (and by the scenario
 // simulator). Unknown prefixes resolve to "" (no type). Values MUST match the catalog
-// names in src/lib/settings.ts (INITIAL_SUBSCRIPTION_TYPES).
+// names in src/lib/settings.ts (INITIAL_SCRAPING_PLAN_TYPES).
 const TYPE_BY_PREFIX: Record<string, string> = {
   SA: "Select Assortment (SA)",
   MAG: "Matching (MAG)",
@@ -43,7 +43,7 @@ const TYPE_BY_PREFIX: Record<string, string> = {
   SH: "Shelf (SH)",
 };
 
-/** Resolve a subscription/job NAME to its Subscription type via the leading prefix. */
+/** Resolve a scrapingPlan/job NAME to its ScrapingPlan type via the leading prefix. */
 export function typeFromName(name: string): string {
   const prefix = (name.split("_")[0] || "").trim().toUpperCase();
   return TYPE_BY_PREFIX[prefix] ?? "";
@@ -74,7 +74,7 @@ const CURATED_PROJECTS: Project[] = [
   {
     id: "abinmx", name: "Ab Inbev MX", bom: "SHL0131", status: "Active",
     createdAt: "Wed, Jun 25, 2025 10:00", updatedAt: "Mon, Oct 27, 2025 1:50", createdBy: EC, updatedBy: EC,
-    assignedSubscriptions: [
+    assignedScrapingPlans: [
       { id: "asu1", name: "ME_KW_WATER — Amazon US", store: "Amazon US", geo: "MANUAL", type: "Media (ME)", expiration: "-" },
       { id: "asu2", name: "PDP_BEAM_US — Amazon US", store: "Amazon US", geo: "AUTOMATIC", type: "Product Detail Page (PDP)", expiration: "-" },
     ],

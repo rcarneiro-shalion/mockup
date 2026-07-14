@@ -14,8 +14,8 @@ import {
 /**
  * Generic searchable multi-select over a flat list of string options. The popover
  * stays open while toggling; selections show as removable chips below the trigger.
- * Used by the subscription form's "Destination options" (zero, one or many PDP
- * sibling subscriptions).
+ * Used by the scrapingPlan form's "Destination options" (zero, one or many PDP
+ * sibling scrapingPlans).
  */
 export function MultiSelectPopover({
   value,

@@ -221,7 +221,7 @@ export function SeedsDeliveryMap() {
             {/* COL 2 · seeds api */}
             <g fontSize={12.5}>
               <rect x={580} y={44} width={385} height={180} rx={8} fill="#f3f4f6" stroke="#cfcfcf" />
-              <text x={598} y={68} fontSize={15} fontWeight={600} fill={INK}>Subscription</text>
+              <text x={598} y={68} fontSize={15} fontWeight={600} fill={INK}>Scraping Plan</text>
               <text x={598} y={90} fill={GREEN} fontWeight={600} opacity={fOp("p1")} style={T}>projects[] — N:M, direct</text>
               <text x={598} y={110} fill={INK}>name · status · store</text>
               <text x={598} y={130} fill={GREEN} opacity={fOp("p1")} style={T}>geo → NONE / AUTO / MANUAL / VIRTUAL_STORE</text>
@@ -257,7 +257,7 @@ export function SeedsDeliveryMap() {
               <text x={598} y={678} fill={RED} opacity={fOp("rem")} style={T}>Box</text>
               <text x={598} y={698} fill={RED} opacity={fOp("rem")} style={T}>Definition method (seed / box)</text>
               <text x={598} y={718} fill={RED} opacity={fOp("rem")} style={T}>Job extension</text>
-              <text x={598} y={738} fill={RED} textDecoration="line-through" opacity={fOp("rem")} style={T}>Box Subscription</text>
+              <text x={598} y={738} fill={RED} textDecoration="line-through" opacity={fOp("rem")} style={T}>Box Scraping Plan</text>
               <text x={598} y={758} fill={RED} textDecoration="line-through" opacity={fOp("rem")} style={T}>StorePackage · RetailerPackage</text>
             </g>
 

@@ -24,7 +24,7 @@ import { Pill, Th, Td, LinkText } from "@/components/seeds/ListPrimitives";
 import { PAGE_TYPE_OPTIONS } from "@/lib/seedOptions";
 import { emptySeed, seedValueLabel, getAllSeeds, discoveryKeyRequired, KEYWORD_TYPE_OPTIONS, SEED_STATUS_OPTIONS, type Seed, type SeedType, type KeywordType, type SeedStatus } from "@/lib/seeds";
 import { nowStamp, getClientsForProject } from "@/lib/clients";
-import { getSubscriptions, subProjects } from "@/lib/subscriptions";
+import { getScrapingPlans, subProjects } from "@/lib/scrapingPlans";
 import { getProjects } from "@/lib/projects";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -54,8 +54,8 @@ export function SeedForm({
   // holds the pending keyword type until the user confirms removing the brand bond.
   const [pendingKwType, setPendingKwType] = useState<KeywordType | null>(null);
 
-  // Subscriptions this seed belongs to — indirect: a subscription lists its seeds
-  // by description (Subscription.seeds = seed.d), each tied to a project → client(s).
+  // ScrapingPlans this seed belongs to — indirect: a scrapingPlan lists its seeds
+  // by description (ScrapingPlan.seeds = seed.d), each tied to a project → client(s).
   // Keyed off the PERSISTED description (initial.d), not the live-edited one, and
   // loaded client-side (localStorage) to avoid an SSR/hydration mismatch.
   const [inSubs, setInSubs] = useState<{ id: string; name: string; project: string; clients: string[] }[]>([]);
@@ -66,7 +66,7 @@ export function SeedForm({
     }
     const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
     setInSubs(
-      getSubscriptions()
+      getScrapingPlans()
         .filter((s) => (s.seeds ?? []).includes(initial.d))
         .map((s) => ({ id: s.id, name: s.name, project: subProjects(s).join(", "), clients: [...new Set(subProjects(s).flatMap((pn) => getClientsForProject(projectIdByName.get(pn) ?? "")))] })),
     );
@@ -265,18 +265,18 @@ export function SeedForm({
             )}
           </div>
 
-          {/* Subscriptions this seed belongs to (read-only) */}
+          {/* ScrapingPlans this seed belongs to (read-only) */}
           {isEdit && (
             <div className="mx-auto mt-5 max-w-5xl rounded-xl border border-border bg-card p-6 shadow-sm">
               <div className="flex items-baseline gap-2">
-                <span className="text-base font-semibold text-foreground">Subscriptions</span>
+                <span className="text-base font-semibold text-foreground">Scraping Plans</span>
                 <span className="text-sm text-muted-foreground">where this seed is used</span>
               </div>
               <div className="mt-4 overflow-hidden rounded-lg border border-border">
                 <table className="w-full text-sm">
                   <thead className="bg-secondary/60">
                     <tr>
-                      <Th>Subscription name</Th>
+                      <Th>Scraping Plan name</Th>
                       <Th>Projects assigned</Th>
                       <Th>Clients belongs</Th>
                     </tr>
@@ -285,7 +285,7 @@ export function SeedForm({
                     {inSubs.length === 0 ? (
                       <tr>
                         <Td className="text-muted-foreground">
-                          <span className="block py-2">This seed isn't used in any subscription yet.</span>
+                          <span className="block py-2">This seed isn't used in any scraping plan yet.</span>
                         </Td>
                         <Td /><Td />
                       </tr>

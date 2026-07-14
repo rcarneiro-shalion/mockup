@@ -49,7 +49,7 @@ const SECTIONS: Section[] = [
     icon: Sprout,
     summary: "What we keep an eye on.",
     detail:
-      "The starting points we monitor across the web: search terms, product pages and data feeds. Projects bundle the work, subscriptions decide what gets collected and how often, and seeds are the individual things we track.",
+      "The starting points we monitor across the web: search terms, product pages and data feeds. Projects bundle the work, scraping plans decide what gets collected and how often, and seeds are the individual things we track.",
   },
   {
     label: "Tasks",

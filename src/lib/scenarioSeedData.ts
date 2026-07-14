@@ -1,7 +1,7 @@
 // AUTO-GENERATED real-like seed data for the desk-test Scenario simulator.
 // Parsed from live ecometry-tasks-api (most-recently-updated Jobs) on 2026-06-19,
 // for 6 + 12 target clients (18 total). Used offline by src/lib/scenarioGenerator.ts to fabricate
-// internally-consistent Seeds-API scenarios (project → subscription → scrapping option
+// internally-consistent Seeds-API scenarios (project → scrapingPlan → scrapping option
 // → seeds) that surface in the Value Stream Map. Re-pull from live to refresh.
 
 export type RealJob = {
@@ -57,7 +57,7 @@ export const PRODUCT_POOL = [
 
 // Real store location sets pulled from backoffice-api (store > locations) on 2026-06-19.
 // Used by the simulator to assign a realistic locationSet + location volume to
-// geolocated (MANUAL) subscriptions, instead of a flat placeholder count.
+// geolocated (MANUAL) scrapingPlans, instead of a flat placeholder count.
 export type RealLoc = { name: string; city: string; address: string; postal: string };
 export type LocationSet = { name: string; store: string; country: string; count: number; locations: RealLoc[] };
 // Real per-store location sets — the real activeLocationsCount + a real sample of
@@ -68,7 +68,7 @@ export { REAL_LOCATION_SETS } from "./locationsBulk";
 // On-brand keyword pools + default category per client. The live job↔seed relation
 // is unavailable (the ecometry-tasks-api seeds endpoint times out on every query),
 // so these stand in as realistic, brand-accurate seed samples the generator uses for
-// KEYWORD-type subscriptions, tied to the subscription store.
+// KEYWORD-type scrapingPlans, tied to the scrapingPlan store.
 export const CLIENT_KEYWORDS: Record<string, string[]> = {
   groupm: ["pet food","dog food","cat litter","laundry detergent","dishwasher tablets","shampoo","diapers"],
   coca: ["coca cola","coca cola zero","sprite","fanta","fuze tea","powerade","del valle","aquarius"],
@@ -112,8 +112,8 @@ export const CLIENT_CATEGORY: Record<string, string> = {
 
 // Real per-store active location counts, pulled from backoffice-api store entity
 // (store.activeLocationsCount) on 2026-06-19. The simulator + Value Stream Map use
-// this as the location multiplier for a geolocated subscription: tasks scale by the
-// total locations of the store the subscription belongs to. 0 = no geoloc locations.
+// this as the location multiplier for a geolocated scrapingPlan: tasks scale by the
+// total locations of the store the scrapingPlan belongs to. 0 = no geoloc locations.
 export const STORE_LOCATIONS: Record<string, number> = {
   "24 Pharma BE_nl": 0,
   "AO UK": 0,

@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { SelectBox } from "@/components/seeds/SelectBox";
 import { WeekdayPicker, WEEKDAYS } from "@/components/seeds/WeekdayPicker";
 import { cn } from "@/lib/utils";
-import type { CustomSchedule } from "@/lib/subscriptions";
+import type { CustomSchedule } from "@/lib/scrapingPlans";
 
 const range = (n: number, from = 1) => Array.from({ length: n }, (_, i) => String(i + from));
 
@@ -19,7 +19,7 @@ export const DEFAULT_CUSTOM_SCHEDULE: CustomSchedule = {
 };
 
 /**
- * Rich recurrence editor for a Subscription's Custom frequency. A Daily base runs
+ * Rich recurrence editor for a ScrapingPlan's Custom frequency. A Daily base runs
  * either "every N days" or "N× per day"; a Weekly base runs N× per week, every
  * N weeks, on chosen weekdays. Either base can end Never / On a date / After N runs.
  */

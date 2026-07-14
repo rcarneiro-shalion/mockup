@@ -73,12 +73,12 @@ export const SORT_OPTIONS = [
 
 // Scrapping option: how often it re-runs. "Custom" unlocks a simple Days field + a
 // times-per-day selector (TIMES_PER_DAY_OPTIONS). (Frequency lives on the scrapping option,
-// not the subscription; the subscription carries the new Selection parameters instead.)
+// not the scrapingPlan; the scrapingPlan carries the new Selection parameters instead.)
 export const FREQUENCY_OPTIONS = ["Daily", "Weekly", "Monthly", "Custom"];
 // Custom frequency: how many runs per day.
 export const TIMES_PER_DAY_OPTIONS = ["1x", "2x", "3x", "4x"];
 
-// --- Subscription "Selection parameters" (2026 Task-Generator refactor) ---
+// --- ScrapingPlan "Selection parameters" (2026 Task-Generator refactor) ---
 // Replace the legacy single-axis "Rotation" tag-list with explicit, independent axes —
 // seed selection, freshness window, location selection and volume cap — mirroring the
 // Task Generator's new dim_seed_location_selection_params model (rotation, freshness,

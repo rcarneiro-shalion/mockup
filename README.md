@@ -18,7 +18,7 @@ and **IAM** — and each renders its own left-hand menu.
 **Ecometry** (the main console):
 
 - **Clients** and **Retailers** (Retailers / Stores / Region systems).
-- **Seeds API** — the focus: **Projects**, **Subscriptions**, **Seeds** (URL / API /
+- **Seeds API** — the focus: **Projects**, **Scraping Plans**, **Seeds** (URL / API /
   KEYWORD), **Scraping options**, **Tags** and **Timeframes**.
 - **Tasks** — the legacy operational area, being deprecated by the Seeds API.
 - **Codification**, **Product** (client SKUs, assortments, …), **Bulk** and
@@ -135,5 +135,5 @@ Change the Nitro preset in `vite.config.ts`:
   state, clear the site's Local Storage (DevTools → Application → Local Storage)
   and reload.
 - Wiring this to a real backend later is a matter of replacing the `localStorage`
-  reads/writes (e.g. `getClients()`, `getProjects()`, `getSubscriptions()` in
+  reads/writes (e.g. `getClients()`, `getProjects()`, `getScrapingPlans()` in
   `src/lib/`) with API calls.

@@ -6,14 +6,14 @@ import { AddRecordDialog, type AddFieldDef } from "@/components/seeds/AddRecordD
 import { LinkText, Pill } from "@/components/seeds/ListPrimitives";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import {
-  SUBSCRIPTION_TYPES_KEY,
-  INITIAL_SUBSCRIPTION_TYPES,
-  type SettingSubscriptionType,
+  SCRAPING_PLAN_TYPES_KEY,
+  INITIAL_SCRAPING_PLAN_TYPES,
+  type SettingScrapingPlanType,
 } from "@/lib/settings";
 
-export const Route = createFileRoute("/settings/subscription-types")({
-  head: () => ({ meta: [{ title: "Subscription type — Shalion" }] }),
-  component: SubscriptionTypesPage,
+export const Route = createFileRoute("/settings/scraping-plan-types")({
+  head: () => ({ meta: [{ title: "Scraping Plan type — Shalion" }] }),
+  component: ScrapingPlanTypesPage,
 });
 
 // Settings-style readable timestamp, e.g. "Wed, Jun 18, 2026, 12:00 PM".
@@ -27,15 +27,15 @@ const stamp = () =>
     minute: "2-digit",
   });
 
-function SubscriptionTypesPage() {
-  const [rows, setRows] = usePersistentState<SettingSubscriptionType[]>(
-    SUBSCRIPTION_TYPES_KEY,
-    INITIAL_SUBSCRIPTION_TYPES,
+function ScrapingPlanTypesPage() {
+  const [rows, setRows] = usePersistentState<SettingScrapingPlanType[]>(
+    SCRAPING_PLAN_TYPES_KEY,
+    INITIAL_SCRAPING_PLAN_TYPES,
   );
-  const [selected, setSelected] = useState<SettingSubscriptionType | null>(null);
+  const [selected, setSelected] = useState<SettingScrapingPlanType | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
-  const columns: SettingsColumn<SettingSubscriptionType>[] = [
+  const columns: SettingsColumn<SettingScrapingPlanType>[] = [
     {
       key: "name",
       label: "Name",
@@ -81,12 +81,12 @@ function SubscriptionTypesPage() {
 
   return (
     <SettingsList
-      title="Subscription type"
-      newLabel="New subscription type"
+      title="Scraping Plan type"
+      newLabel="New scraping plan type"
       onNew={() => setAddOpen(true)}
-      searchPlaceholder="Search subscription types by name or description"
+      searchPlaceholder="Search scraping plan types by name or description"
       searchText={(r) => `${r.name} ${r.slug} ${r.description}`}
-      entityLabel="subscription type"
+      entityLabel="scraping plan type"
       columns={columns}
       rows={rows}
       onDelete={(id) => setRows((prev) => prev.filter((r) => r.id !== id))}
@@ -96,8 +96,8 @@ function SubscriptionTypesPage() {
           <AddRecordDialog
             open={addOpen}
             onOpenChange={setAddOpen}
-            title="Add subscription type"
-            saveLabel="Add subscription type"
+            title="Add scraping plan type"
+            saveLabel="Add scraping plan type"
             fields={addFields}
             onSave={(values) => {
               const now = stamp();
@@ -119,7 +119,7 @@ function SubscriptionTypesPage() {
             open={!!selected}
             onOpenChange={(v) => { if (!v) setSelected(null); }}
             title={selected?.name ?? ""}
-            saveLabel="Save subscription type"
+            saveLabel="Save scraping plan type"
             fields={editFields}
             onSave={(values) => {
               setRows((prev) =>

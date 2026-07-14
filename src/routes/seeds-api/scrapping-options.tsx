@@ -27,7 +27,7 @@ import {
 } from "@/components/seeds/ListPrimitives";
 import { Switch } from "@/components/ui/switch";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
-import { getSubscriptions } from "@/lib/subscriptions";
+import { getScrapingPlans } from "@/lib/scrapingPlans";
 import { nowStamp } from "@/lib/clients";
 import { getAppVersion } from "@/lib/appVersion";
 import { Calendar, Layers, PlayCircle } from "lucide-react";
@@ -82,11 +82,11 @@ function ScrappingOptionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [edit]);
 
-  // Indirect relationship: a subscription references its scrapping option by name
-  // (Subscription.scrappingOption). Build the inverse — option name → subscription
+  // Indirect relationship: a scrapingPlan references its scrapping option by name
+  // (ScrapingPlan.scrappingOption). Build the inverse — option name → scrapingPlan
   // name(s) — for the column, plus the set of option names covered by the selected
-  // subscriptions for the filter.
-  const allSubs = getSubscriptions();
+  // scrapingPlans for the filter.
+  const allSubs = getScrapingPlans();
   const subsByOption = new Map<string, string[]>();
   for (const s of allSubs) {
     const opt = s.scrappingOption;
@@ -122,7 +122,7 @@ function ScrappingOptionsPage() {
   const sorted = sortRows(filtered, sort, {
     options: (r) => summaryPills(r).length,
     timeframes: (r) => (r.timeframes ?? []).join(", "),
-    subscriptions: (r) => (subsByOption.get(r.name) ?? []).join(", "),
+    scrapingPlans: (r) => (subsByOption.get(r.name) ?? []).join(", "),
     createdAt: (r) => parseListDate(r.createdAt),
     updatedAt: (r) => parseListDate(r.updatedAt),
   });
@@ -137,7 +137,7 @@ function ScrappingOptionsPage() {
         />
         <FilterBar search="Search by Scraping option name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Extraction types" icon={PlayCircle} options={distinct(rows, (r) => r.extractionType)} value={fExtraction} onChange={setFExtraction} />
-          <FilterChip label="Subscriptions" icon={Layers} options={allSubs.map((s) => s.name)} value={fSub} onChange={setFSub} searchable />
+          <FilterChip label="Scraping Plans" icon={Layers} options={allSubs.map((s) => s.name)} value={fSub} onChange={setFSub} searchable />
           {!isV1 && (
             <>
               <FilterChip label="Joints" options={["Multivariants", "Pagination", "Limited discovery"]} value={fJoints} onChange={setFJoints} />
@@ -158,7 +158,7 @@ function ScrappingOptionsPage() {
                 <SortTh label="Frequency" sortKey="frequency" sort={sort} />
               )}
               {!isV1 && <SortTh label="Options" sortKey="options" sort={sort} />}
-              <SortTh label="Subscriptions" sortKey="subscriptions" sort={sort} />
+              <SortTh label="Scraping Plans" sortKey="scraping plans" sort={sort} />
               <SortTh label="Created at" sortKey="createdAt" sort={sort} />
               <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <Th>Active</Th>
@@ -190,7 +190,7 @@ function ScrappingOptionsPage() {
                     </div>
                   </Td>
                 )}
-                <Td><GroupedPills items={subNames} noun="subscription" tone="slate" /></Td>
+                <Td><GroupedPills items={subNames} noun="scraping plan" tone="slate" /></Td>
                 <Td className="whitespace-nowrap text-muted-foreground">{r.createdAt || "—"}</Td>
                 <Td className="whitespace-nowrap text-muted-foreground">{r.updatedAt || "—"}</Td>
                 <Td><Switch defaultChecked={r.status === "Active"} /></Td>

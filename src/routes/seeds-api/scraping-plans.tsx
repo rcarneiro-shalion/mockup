@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { AppShell } from "@/components/layout/AppShell";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import { SubscriptionDialog } from "@/components/seeds/SubscriptionDialog";
+import { ScrapingPlanDialog } from "@/components/seeds/ScrapingPlanDialog";
 import {
   PageHeader,
   FilterBar,
@@ -25,31 +25,31 @@ import { Switch } from "@/components/ui/switch";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { Calendar, Store, Sprout } from "lucide-react";
 import {
-  SUBSCRIPTIONS_KEY,
-  INITIAL_SUBSCRIPTIONS,
+  SCRAPING_PLANS_KEY,
+  INITIAL_SCRAPING_PLANS,
   BUSINESS_UNITS,
-  SUBSCRIPTION_GEOLOC_OPTIONS,
+  SCRAPING_PLAN_GEOLOC_OPTIONS,
   subDestinationOptions,
   subProjects,
-  type Subscription,
-} from "@/lib/subscriptions";
+  type ScrapingPlan,
+} from "@/lib/scrapingPlans";
 import { nowStamp } from "@/lib/clients";
 import { getClientNames, getClientsForProject } from "@/lib/clients";
 import { getProjects } from "@/lib/projects";
-import { getSubscriptionTypes } from "@/lib/settings";
+import { getScrapingPlanTypes } from "@/lib/settings";
 
-export const Route = createFileRoute("/seeds-api/subscriptions")({
-  // `?edit=<id>` deep-links straight into a subscription's edit dialog (used by
+export const Route = createFileRoute("/seeds-api/scraping-plans")({
+  // `?edit=<id>` deep-links straight into a scrapingPlan's edit dialog (used by
   // the Value Stream Map cards).
   validateSearch: (search: Record<string, unknown>): { edit?: string } => ({
     edit: typeof search.edit === "string" ? search.edit : undefined,
   }),
-  head: () => ({ meta: [{ title: "Subscriptions — Shalion" }] }),
-  component: SubscriptionsPage,
+  head: () => ({ meta: [{ title: "Scraping Plans — Shalion" }] }),
+  component: ScrapingPlansPage,
 });
 
-function SubscriptionsPage() {
-  const [rows, setRows] = usePersistentState<Subscription[]>(SUBSCRIPTIONS_KEY, INITIAL_SUBSCRIPTIONS);
+function ScrapingPlansPage() {
+  const [rows, setRows] = usePersistentState<ScrapingPlan[]>(SCRAPING_PLANS_KEY, INITIAL_SCRAPING_PLANS);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -61,7 +61,7 @@ function SubscriptionsPage() {
   const [fGeo, setFGeo] = useState<string[]>([]);
   const [fBu, setFBu] = useState<string[]>([]);
   const [fType, setFType] = useState<string[]>([]);
-  const sort = useSort("subscriptions", "updatedAt", "desc");
+  const sort = useSort("scraping plans", "updatedAt", "desc");
   const navigate = useNavigate();
 
   // Open the edit dialog when arriving with ?edit=<id>, then strip the param so
@@ -70,20 +70,20 @@ function SubscriptionsPage() {
   useEffect(() => {
     if (!edit) return;
     if (rows.some((r) => r.id === edit)) setSelectedId(edit);
-    navigate({ to: "/seeds-api/subscriptions", search: {}, replace: true });
+    navigate({ to: "/seeds-api/scraping-plans", search: {}, replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [edit]);
 
   const q = query.trim().toLowerCase();
   const seedOptions = [...new Set(rows.flatMap((r) => r.seeds ?? []))].sort();
   const scrapOptions = [...new Set(rows.map((r) => r.scrappingOption).filter(Boolean))].sort();
-  // A subscription's "type" slug = its NAME prefix (before the first "_"); the filter
-  // options come from the Subscription type catalog (Settings › Subscription type).
-  const typeSlugs = [...new Set(getSubscriptionTypes().map((t) => t.slug).filter(Boolean))];
-  const subSlug = (r: Subscription) => (r.name.split("_")[0] || "").toUpperCase();
-  // subscription → project → client(s)
+  // A scrapingPlan's "type" slug = its NAME prefix (before the first "_"); the filter
+  // options come from the ScrapingPlan type catalog (Settings › ScrapingPlan type).
+  const typeSlugs = [...new Set(getScrapingPlanTypes().map((t) => t.slug).filter(Boolean))];
+  const subSlug = (r: ScrapingPlan) => (r.name.split("_")[0] || "").toUpperCase();
+  // scrapingPlan → project → client(s)
   const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
-  const clientsForSub = (sub: Subscription) =>
+  const clientsForSub = (sub: ScrapingPlan) =>
     [...new Set(subProjects(sub).flatMap((pn) => getClientsForProject(projectIdByName.get(pn) ?? "")))];
   const filtered = rows.filter((r) =>
     (!q || r.name.toLowerCase().includes(q)) &&
@@ -113,8 +113,8 @@ function SubscriptionsPage() {
     <AppShell>
       <div className="flex h-full flex-col">
         <PageHeader
-          title="Subscriptions"
-          action={{ label: "Add subscription", onClick: () => setAddOpen(true) }}
+          title="Scraping Plans"
+          action={{ label: "Add scraping plan", onClick: () => setAddOpen(true) }}
         />
         <FilterBar search="Search by name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Clients" options={getClientNames()} value={fClient} onChange={setFClient} searchable />
@@ -122,7 +122,7 @@ function SubscriptionsPage() {
           <FilterChip label="Stores" icon={Store} options={distinct(rows, (r) => r.store)} value={fStore} onChange={setFStore} />
           <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} searchable />
           <FilterChip label="Scraping options" options={scrapOptions} value={fScrap} onChange={setFScrap} searchable />
-          <FilterChip label="Geoloc modes" options={SUBSCRIPTION_GEOLOC_OPTIONS} value={fGeo} onChange={setFGeo} />
+          <FilterChip label="Geoloc modes" options={SCRAPING_PLAN_GEOLOC_OPTIONS} value={fGeo} onChange={setFGeo} />
           <FilterChip label="Business units" options={BUSINESS_UNITS} value={fBu} onChange={setFBu} />
           <FilterChip label="Type" options={typeSlugs} value={fType} onChange={setFType} />
           <FilterChip label="Created at" icon={Calendar} />
@@ -164,7 +164,7 @@ function SubscriptionsPage() {
                   <RowActionsMenu
                     id={r.id}
                     onDelete={() => setRows((prev) => prev.filter((x) => x.id !== r.id))}
-                    entityLabel="subscription"
+                    entityLabel="scraping plan"
                   />
                 </Td>
               </tr>
@@ -174,7 +174,7 @@ function SubscriptionsPage() {
         <Pagination total={sorted.length} page={pg.page} pageSize={pg.pageSize} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} />
       </div>
 
-      <SubscriptionDialog
+      <ScrapingPlanDialog
         open={addOpen}
         onOpenChange={setAddOpen}
         mode="add"
@@ -182,7 +182,7 @@ function SubscriptionsPage() {
         onSave={(values) => setRows((prev) => [...prev, { ...values, createdAt: nowStamp(), updatedAt: nowStamp() }])}
       />
 
-      <SubscriptionDialog
+      <ScrapingPlanDialog
         open={selectedId !== null}
         onOpenChange={(v) => { if (!v) setSelectedId(null); }}
         mode="edit"

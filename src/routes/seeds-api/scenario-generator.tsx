@@ -87,11 +87,11 @@ function ScenarioGeneratorPage() {
   const [simSlugs, setSimSlugs] = useState<Set<string>>(new Set()); // clients with a live simulated scenario
   useEffect(() => {
     setMounted(true);
-    // Sweep any invalid scenario left behind (a desk-test project with no subscription,
+    // Sweep any invalid scenario left behind (a desk-test project with no scrapingPlan,
     // e.g. from an interrupted generation) so the simulator only ever shows valid
-    // client → project → subscription scenarios.
+    // client → project → scrapingPlan scenarios.
     const pruned = pruneInvalidSimProjects();
-    if (pruned) toast.message(`Cleaned ${pruned} incomplete test project${pruned > 1 ? "s" : ""} (no subscription).`);
+    if (pruned) toast.message(`Cleaned ${pruned} incomplete test project${pruned > 1 ? "s" : ""} (no scraping plan).`);
     setSimLive(hasSimulated());
     setSimSlugs(new Set(simulatedSlugs()));
     // Restore the per-use-case checkbox state persisted from the last generation.
@@ -164,11 +164,11 @@ function ScenarioGeneratorPage() {
     setSel((p) => ({ ...p, [slug]: new Set(use.map((j) => j.name)) }));
     setSimLive(true);
     setSimSlugs((s) => { const n = new Set(s); n.add(slug); return n; });
-    toast.success(`Generated ${CLIENT_LABELS[slug]}: ${built.subscriptions.length} subscriptions · ${built.scrappingOptions.length} options · ${built.seeds.length} seeds`);
+    toast.success(`Generated ${CLIENT_LABELS[slug]}: ${built.scrapingPlans.length} scraping plans · ${built.scrappingOptions.length} options · ${built.seeds.length} seeds`);
   };
 
   // "Generate all" spans every visible client, so it uses a lighter seed volume per
-  // subscription than a single-client run (which keeps the deep SEEDS_PER_SUB) — this
+  // scrapingPlan than a single-client run (which keeps the deep SEEDS_PER_SUB) — this
   // keeps the whole batch well under the localStorage budget. It is also resilient:
   // each client is generated independently so one failure (e.g. storage limit) can't
   // abort the rest, and the use-case checkboxes tick for every client that succeeded.
@@ -196,11 +196,11 @@ function ScenarioGeneratorPage() {
       setSimLive(true);
       setSimSlugs(new Set(simulatedSlugs()));
     }
-    const subs = built.reduce((a, b) => a + b.subscriptions.length, 0);
+    const subs = built.reduce((a, b) => a + b.scrapingPlans.length, 0);
     if (failed.length) {
-      toast.error(`Generated ${built.length} of ${visibleClients.length} client(s) · ${subs} subscriptions. ${failed.length} hit the storage limit — Clear simulated, or filter to fewer clients, then retry.`);
+      toast.error(`Generated ${built.length} of ${visibleClients.length} client(s) · ${subs} scraping plans. ${failed.length} hit the storage limit — Clear simulated, or filter to fewer clients, then retry.`);
     } else {
-      toast.success(`Generated ${built.length} client(s) · ${subs} subscriptions`);
+      toast.success(`Generated ${built.length} client(s) · ${subs} scraping plans`);
     }
   };
 
@@ -210,7 +210,7 @@ function ScenarioGeneratorPage() {
     setSimLive(false);
     setSimSlugs(new Set());
     setSel({});
-    toast.success(`Cleared ${c.subscriptions} subscriptions · ${c.scrappingOptions} options · ${c.seeds} seeds · ${c.projects} projects${c.clients ? ` · ${c.clients} test clients` : ""}`);
+    toast.success(`Cleared ${c.scrapingPlans} scraping plans · ${c.scrappingOptions} options · ${c.seeds} seeds · ${c.projects} projects${c.clients ? ` · ${c.clients} test clients` : ""}`);
   };
 
   // Clear only one client's simulated scenario (per-card).
@@ -220,7 +220,7 @@ function ScenarioGeneratorPage() {
     setSimSlugs((s) => { const n = new Set(s); n.delete(slug); return n; });
     setSimLive(hasSimulated());
     setSel((p) => { const n = { ...p }; delete n[slug]; return n; }); // untick this client's use cases
-    toast.success(`Cleared ${CLIENT_LABELS[slug] ?? slug}: ${c.subscriptions} subscriptions · ${c.scrappingOptions} options · ${c.seeds} seeds`);
+    toast.success(`Cleared ${CLIENT_LABELS[slug] ?? slug}: ${c.scrapingPlans} scraping plans · ${c.scrappingOptions} options · ${c.seeds} seeds`);
   };
 
   return (
@@ -241,7 +241,7 @@ function ScenarioGeneratorPage() {
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" align="start" className="max-w-sm text-xs leading-relaxed">
-                    Fabricate internally-consistent client → project → subscription → scraping option → seeds scenarios from real production Jobs (ecometry-tasks-api), with real seeds and real store locations, then review them in the Value Stream Map. Cross-references are wired by name so the whole flow resolves.
+                    Fabricate internally-consistent client → project → scraping plan → scraping option → seeds scenarios from real production Jobs (ecometry-tasks-api), with real seeds and real store locations, then review them in the Value Stream Map. Cross-references are wired by name so the whole flow resolves.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -269,7 +269,7 @@ function ScenarioGeneratorPage() {
             <input
               value={jobQuery}
               onChange={(e) => setJobQuery(e.target.value)}
-              placeholder="Search subscription (% wildcard)"
+              placeholder="Search scraping plan (% wildcard)"
               className="h-8 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
@@ -332,7 +332,7 @@ function ScenarioGeneratorPage() {
               {results.map((b) => {
                 const warns = validateScenario(b);
                 const optByName = new Map(b.scrappingOptions.map((o) => [o.name, o]));
-                const total = b.subscriptions.reduce((a, s) => a + estimateTasks(s, optByName.get(s.scrappingOption), storeLoc.get(s.store)), 0);
+                const total = b.scrapingPlans.reduce((a, s) => a + estimateTasks(s, optByName.get(s.scrappingOption), storeLoc.get(s.store)), 0);
                 return (
                   <div key={b.project.id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -344,13 +344,13 @@ function ScenarioGeneratorPage() {
                       </span>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <Pill tone="slate">{b.subscriptions.length} subscriptions</Pill>
+                      <Pill tone="slate">{b.scrapingPlans.length} scraping plans</Pill>
                       <Pill tone="slate">{b.scrappingOptions.length} scraping options</Pill>
                       <Pill tone="green"><Sprout className="mr-1 inline h-3 w-3" />{b.seeds.length} seeds</Pill>
                       {b.clientIsNew && <Pill tone="amber">test client created</Pill>}
                     </div>
                     <div className="mt-2 space-y-0.5">
-                      {b.subscriptions.map((s) => (
+                      {b.scrapingPlans.map((s) => (
                         <div key={s.id} className="flex items-center gap-2 text-[11px]">
                           <span className="min-w-0 flex-1 truncate font-mono text-foreground/75">{s.name}</span>
                           {s.locationSet && <span className="shrink-0 text-muted-foreground" title={s.locationSet}>📍 {s.locationSet.replace(/ — .*/, "")}</span>}
@@ -369,7 +369,7 @@ function ScenarioGeneratorPage() {
                 );
               })}
               <p className="text-xs text-muted-foreground">
-                Open the <button className="font-medium text-[var(--sidebar-active-fg)] hover:underline" onClick={() => navigate({ to: "/seeds-api/planner" })}>Value Stream Map</button> to see them wired Client → Project → Subscription → Scraping option.
+                Open the <button className="font-medium text-[var(--sidebar-active-fg)] hover:underline" onClick={() => navigate({ to: "/seeds-api/planner" })}>Value Stream Map</button> to see them wired Client → Project → Scraping Plan → Scraping option.
               </p>
             </div>
           )}

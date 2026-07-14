@@ -8,7 +8,7 @@ import {
 
 /**
  * Bordered "chips + Add" multi-select — the TaskGroup pattern from the Scrapping
- * option form, extracted so other multi-value fields (e.g. the Subscription
+ * option form, extracted so other multi-value fields (e.g. the ScrapingPlan
  * Rotation field) look and behave identically. Selected values render as removable
  * chips inside a bordered box; a dashed "Add …" dropdown offers the remaining options.
  */

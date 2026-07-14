@@ -7,7 +7,7 @@ import { FilterChip } from "@/components/seeds/FilterChip";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import { distinct } from "@/components/seeds/ListPrimitives";
 import { SEED_STATUS_OPTIONS, type Seed, type SeedType } from "@/lib/seeds";
-import { getSubscriptions, subProjects } from "@/lib/subscriptions";
+import { getScrapingPlans, subProjects } from "@/lib/scrapingPlans";
 import { getClientsForProject } from "@/lib/clients";
 import { getProjects } from "@/lib/projects";
 import { cn } from "@/lib/utils";
@@ -35,12 +35,12 @@ function StatusDot({ status }: { status?: Seed["status"] }) {
 
 /**
  * Full "Assign seeds" modal — a tabbed (by seed type), filterable, multi-select
- * grid of the seeds NOT yet assigned to the subscription. Checking rows and
+ * grid of the seeds NOT yet assigned to the scrapingPlan. Checking rows and
  * confirming with "Assign seeds" returns the chosen seed descriptions.
  *
- * Filters: Store (seed.store, direct) plus Projects / Subscriptions, resolved
- * indirectly from which subscriptions already use each seed (Subscription.seeds
- * holds seed descriptions; the subscription's project gives the project). The
+ * Filters: Store (seed.store, direct) plus Projects / ScrapingPlans, resolved
+ * indirectly from which scrapingPlans already use each seed (ScrapingPlan.seeds
+ * holds seed descriptions; the scrapingPlan's project gives the project). The
  * Discovery key and Origin (Physical / Virtual) columns/filters show only on the
  * PDP tab, where they are meaningful.
  */
@@ -53,7 +53,7 @@ export function AssignSeedsDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Seeds available to assign (already excludes the ones on the subscription). */
+  /** Seeds available to assign (already excludes the ones on the scrapingPlan). */
   available: Seed[];
   onAssign: (descriptions: string[]) => void;
   /** Restrict the picker's tabs to these seed types (extraction-type matrix). */
@@ -71,25 +71,25 @@ export function AssignSeedsDialog({
   const [fClient, setFClient] = useState<string[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // Subscriptions (client-side) → which subscriptions/projects use each seed.
+  // ScrapingPlans (client-side) → which scrapingPlans/projects use each seed.
   // Loaded on open to avoid an SSR/hydration mismatch over localStorage.
   const [subs, setSubs] = useState<{ name: string; projects: string[]; clients: string[]; seeds: string[] }[]>([]);
   useEffect(() => {
     if (!open) return;
-    // Resolve each subscription's clients (sub → projects → clients) once, client-side
+    // Resolve each scrapingPlan's clients (sub → projects → clients) once, client-side
     // (localStorage reads happen after mount to avoid an SSR/hydration mismatch).
     const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
     const clientsForProjects = (projects: string[]) =>
       [...new Set(projects.flatMap((pn) => getClientsForProject(projectIdByName.get(pn) ?? "")))];
     setSubs(
-      getSubscriptions().map((s) => {
+      getScrapingPlans().map((s) => {
         const projects = subProjects(s);
         return { name: s.name, projects, clients: clientsForProjects(projects), seeds: s.seeds ?? [] };
       }),
     );
   }, [open]);
 
-  // seed description → the subscriptions + projects + clients that use it.
+  // seed description → the scrapingPlans + projects + clients that use it.
   const seedUsage = useMemo(() => {
     const m = new Map<string, { subs: Set<string>; projects: Set<string>; clients: Set<string> }>();
     for (const sub of subs) {
@@ -143,7 +143,7 @@ export function AssignSeedsDialog({
     );
   });
 
-  // Filter options. Store is direct; Projects/Subscriptions come from all subs
+  // Filter options. Store is direct; Projects/ScrapingPlans come from all subs
   // (so the chips are stable across tabs). Category/Discovery key are per-tab.
   const storeOptions = [...new Set(available.map((s) => s.store).filter(Boolean))].sort();
   const projectOptions = [...new Set(subs.flatMap((s) => s.projects).filter(Boolean))].sort();
@@ -231,7 +231,7 @@ export function AssignSeedsDialog({
           <FilterChip label="Store" icon={Store} options={storeOptions} value={fStore} onChange={setFStore} searchable />
           <FilterChip label="Projects" icon={FolderKanban} options={projectOptions} value={fProject} onChange={setFProject} searchable />
           <FilterChip label="Clients" icon={Users} options={clientOptions} value={fClient} onChange={setFClient} searchable />
-          <FilterChip label="Subscriptions" icon={Layers} options={subOptions} value={fSub} onChange={setFSub} searchable />
+          <FilterChip label="Scraping Plans" icon={Layers} options={subOptions} value={fSub} onChange={setFSub} searchable />
           <FilterChip label="Category" options={catOptions} value={fCat} onChange={setFCat} searchable />
           <FilterChip label="Status" options={[...SEED_STATUS_OPTIONS]} value={fStatus} onChange={setFStatus} />
           {isPdp && <FilterChip label="Discovery key" options={dkOptions} value={fDk} onChange={setFDk} searchable />}

@@ -1,7 +1,7 @@
 import { REAL_LOCATION_SETS } from "./locationsBulk";
 import { getStores } from "./retailers";
 
-// V1 "Locations" source for the subscription form: the locations that belong to the
+// V1 "Locations" source for the scrapingPlan form: the locations that belong to the
 // store picked in the form. Real sampled records (locationsBulk) when the store has
 // them; otherwise a DETERMINISTIC simulated set (≥5) so every store offers choices.
 

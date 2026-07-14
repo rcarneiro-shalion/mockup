@@ -21,13 +21,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AssignSubscriptionDialog } from "@/components/projects/AssignSubscriptionDialog";
+import { AssignScrapingPlanDialog } from "@/components/projects/AssignScrapingPlanDialog";
 import { AssignClientDialog } from "@/components/projects/AssignClientDialog";
 import { Th, Td, Pagination, LinkText, Pill } from "@/components/seeds/ListPrimitives";
 import { FilterChip } from "@/components/seeds/FilterChip";
-import type { Project, AssignedSubscription } from "@/lib/projects";
+import type { Project, AssignedScrapingPlan } from "@/lib/projects";
 import { getStores } from "@/lib/retailers";
-import { getSubscriptions } from "@/lib/subscriptions";
+import { getScrapingPlans } from "@/lib/scrapingPlans";
 import { getAssignedClientsForProject, setProjectClients, type ProjectClient } from "@/lib/clients";
 import { toast } from "sonner";
 import { ArrowLeft, Calendar, HelpCircle, MapPin, Pencil, Plus, Store, Tag, Trash2, Users, X } from "lucide-react";
@@ -38,31 +38,31 @@ export function ProjectForm({
   onSave,
   onCancel,
   onDelete,
-  onSubscriptionsChange,
+  onScrapingPlansChange,
 }: {
   mode: "add" | "edit";
   initial: Project;
   onSave: (project: Project) => void;
   onCancel: () => void;
   onDelete?: () => void;
-  /** Persist a subscription-grid change immediately (auto-save) — edit mode only. */
-  onSubscriptionsChange?: (subs: AssignedSubscription[]) => void;
+  /** Persist a scrapingPlan-grid change immediately (auto-save) — edit mode only. */
+  onScrapingPlansChange?: (subs: AssignedScrapingPlan[]) => void;
 }) {
   const navigate = useNavigate();
-  // Resolve a store name → id so the assigned-subscription store cell can deep-link
+  // Resolve a store name → id so the assigned-scrapingPlan store cell can deep-link
   // to the store edit page (assigned subs carry the store NAME, not its id).
   const storeIdByName = useMemo(() => {
     const m = new Map<string, string>();
     for (const s of getStores()) m.set(s.name, s.id);
     return m;
   }, []);
-  // Deep-link to the subscription's edit dialog. Assigned rows may carry a snapshot id
+  // Deep-link to the scrapingPlan's edit dialog. Assigned rows may carry a snapshot id
   // (fixtures) or a real one, so resolve against the live list by id first, then name.
-  const goSubscription = (sp: AssignedSubscription) => {
-    const subs = getSubscriptions();
+  const goScrapingPlan = (sp: AssignedScrapingPlan) => {
+    const subs = getScrapingPlans();
     const match = subs.find((s) => s.id === sp.id) ?? subs.find((s) => s.name === sp.name);
-    if (match) navigate({ to: "/seeds-api/subscriptions", search: { edit: match.id } });
-    else navigate({ to: "/seeds-api/subscriptions" });
+    if (match) navigate({ to: "/seeds-api/scraping-plans", search: { edit: match.id } });
+    else navigate({ to: "/seeds-api/scraping-plans" });
   };
   const goStore = (name: string) => {
     const id = storeIdByName.get(name);
@@ -76,8 +76,8 @@ export function ProjectForm({
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignClientOpen, setAssignClientOpen] = useState(false);
   const [editClient, setEditClient] = useState<ProjectClient | null>(null);
-  const [editSub, setEditSub] = useState<AssignedSubscription | null>(null);
-  // --- grid filters (Assigned clients + Assigned subscriptions) -----------
+  const [editSub, setEditSub] = useState<AssignedScrapingPlan | null>(null);
+  // --- grid filters (Assigned clients + Assigned scrapingPlans) -----------
   const [fClient, setFClient] = useState<string[]>([]);
   const [fName, setFName] = useState<string[]>([]);
   const [fStore, setFStore] = useState<string[]>([]);
@@ -93,7 +93,7 @@ export function ProjectForm({
   const set = <K extends keyof Project>(k: K, v: Project[K]) =>
     setProject((prev) => ({ ...prev, [k]: v }));
 
-  const assignedSubscriptions = project.assignedSubscriptions ?? [];
+  const assignedScrapingPlans = project.assignedScrapingPlans ?? [];
 
   // Apply the grid filters (mockup-side filtering of the displayed rows).
   const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))].sort((a, b) => a.localeCompare(b));
@@ -104,7 +104,7 @@ export function ProjectForm({
     return !Number.isNaN(t) && t <= expCutoff;
   };
   const shownClients = assignedClients.filter((c) => !fClient.length || fClient.includes(c.name));
-  const shownSubs = assignedSubscriptions.filter(
+  const shownSubs = assignedScrapingPlans.filter(
     (sp) =>
       (!fName.length || fName.includes(sp.name)) &&
       (!fStore.length || fStore.includes(sp.store)) &&
@@ -140,23 +140,23 @@ export function ProjectForm({
     setProjectClients(projectRef, next);
     toast.success(`${c.name} updated`);
   };
-  const assignSubscriptions = (list: AssignedSubscription[]) => {
+  const assignScrapingPlans = (list: AssignedScrapingPlan[]) => {
     if (!list.length) return;
-    const next = [...assignedSubscriptions, ...list];
-    set("assignedSubscriptions", next);
-    onSubscriptionsChange?.(next); // → Projects store, via the route's setter
-    toast.success(`${list.length} subscription${list.length === 1 ? "" : "s"} assigned`);
+    const next = [...assignedScrapingPlans, ...list];
+    set("assignedScrapingPlans", next);
+    onScrapingPlansChange?.(next); // → Projects store, via the route's setter
+    toast.success(`${list.length} scraping plan${list.length === 1 ? "" : "s"} assigned`);
   };
-  const removeSubscription = (sp: AssignedSubscription) => {
-    const next = assignedSubscriptions.filter((x) => x.id !== sp.id);
-    set("assignedSubscriptions", next);
-    onSubscriptionsChange?.(next);
+  const removeScrapingPlan = (sp: AssignedScrapingPlan) => {
+    const next = assignedScrapingPlans.filter((x) => x.id !== sp.id);
+    set("assignedScrapingPlans", next);
+    onScrapingPlansChange?.(next);
     toast.success(`${sp.name} removed`);
   };
-  const updateSubscription = (sp: AssignedSubscription) => {
-    const next = assignedSubscriptions.map((x) => (x.id === sp.id ? sp : x));
-    set("assignedSubscriptions", next);
-    onSubscriptionsChange?.(next);
+  const updateScrapingPlan = (sp: AssignedScrapingPlan) => {
+    const next = assignedScrapingPlans.map((x) => (x.id === sp.id ? sp : x));
+    set("assignedScrapingPlans", next);
+    onScrapingPlansChange?.(next);
     toast.success(`${sp.name} updated`);
   };
 
@@ -315,21 +315,21 @@ export function ProjectForm({
             <Pagination total={shownClients.length} />
           </div>
 
-          {/* Assigned subscriptions */}
+          {/* Assigned scrapingPlans */}
           <div className="mt-5 rounded-xl border border-border bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-foreground">Assigned subscriptions</h2>
+              <h2 className="text-base font-semibold text-foreground">Assigned scraping plans</h2>
               <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={!canAssign} onClick={() => setAssignOpen(true)}>
                 <Plus className="h-3.5 w-3.5" />
-                Assign subscription
+                Assign scraping plan
               </Button>
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <FilterChip label="Name" options={uniq(assignedSubscriptions.map((s) => s.name))} value={fName} onChange={setFName} searchable />
-              <FilterChip label="Store" icon={Store} options={uniq(assignedSubscriptions.map((s) => s.store))} value={fStore} onChange={setFStore} />
-              <FilterChip label="Geolocation mode" icon={MapPin} options={uniq(assignedSubscriptions.map((s) => s.geo))} value={fGeo} onChange={setFGeo} />
-              <FilterChip label="Type" icon={Tag} options={uniq(assignedSubscriptions.map((s) => s.type))} value={fType} onChange={setFType} />
+              <FilterChip label="Name" options={uniq(assignedScrapingPlans.map((s) => s.name))} value={fName} onChange={setFName} searchable />
+              <FilterChip label="Store" icon={Store} options={uniq(assignedScrapingPlans.map((s) => s.store))} value={fStore} onChange={setFStore} />
+              <FilterChip label="Geolocation mode" icon={MapPin} options={uniq(assignedScrapingPlans.map((s) => s.geo))} value={fGeo} onChange={setFGeo} />
+              <FilterChip label="Type" icon={Tag} options={uniq(assignedScrapingPlans.map((s) => s.type))} value={fType} onChange={setFType} />
               <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm ${fExpBy ? "border-primary bg-primary/5 text-foreground" : "border-border bg-background text-foreground/80"}`}>
                 <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>Expires by</span>
@@ -355,24 +355,24 @@ export function ProjectForm({
                   </tr>
                 </thead>
                 <tbody>
-                  {assignedSubscriptions.length === 0 ? (
+                  {assignedScrapingPlans.length === 0 ? (
                     <tr>
                       <Td className="text-muted-foreground">
-                        <span className="block py-2">{canAssign ? "No subscriptions assigned yet." : "Save the project first to assign subscriptions."}</span>
+                        <span className="block py-2">{canAssign ? "No scraping plans assigned yet." : "Save the project first to assign scraping plans."}</span>
                       </Td>
                       <Td /><Td /><Td /><Td /><Td />
                     </tr>
                   ) : shownSubs.length === 0 ? (
                     <tr>
                       <Td className="text-muted-foreground">
-                        <span className="block py-2">No subscriptions match the filters.</span>
+                        <span className="block py-2">No scraping plans match the filters.</span>
                       </Td>
                       <Td /><Td /><Td /><Td /><Td />
                     </tr>
                   ) : (
                     shownSubs.map((sp) => (
                       <tr key={sp.id} className="border-t border-border hover:bg-secondary/40">
-                        <Td><LinkText onClick={() => goSubscription(sp)}>{sp.name}</LinkText></Td>
+                        <Td><LinkText onClick={() => goScrapingPlan(sp)}>{sp.name}</LinkText></Td>
                         <Td><LinkText onClick={() => goStore(sp.store)}>{sp.store}</LinkText></Td>
                         <Td><Pill tone={sp.geo === "VIRTUAL STORE" ? "amber" : "violet"}>{sp.geo}</Pill></Td>
                         <Td>{sp.type ? <Pill tone="slate">{sp.type}</Pill> : <span className="text-muted-foreground">—</span>}</Td>
@@ -387,7 +387,7 @@ export function ProjectForm({
                               <Pencil className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => removeSubscription(sp)}
+                              onClick={() => removeScrapingPlan(sp)}
                               className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
                               aria-label={`Remove ${sp.name}`}
                             >
@@ -436,13 +436,13 @@ export function ProjectForm({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AssignSubscriptionDialog
+      <AssignScrapingPlanDialog
         open={assignOpen || !!editSub}
         onOpenChange={(v) => { if (!v) { setAssignOpen(false); setEditSub(null); } }}
-        assignedNames={assignedSubscriptions.map((sp) => sp.name)}
+        assignedNames={assignedScrapingPlans.map((sp) => sp.name)}
         editing={editSub}
-        onAssign={updateSubscription}
-        onAssignMany={assignSubscriptions}
+        onAssign={updateScrapingPlan}
+        onAssignMany={assignScrapingPlans}
       />
 
       <AssignClientDialog

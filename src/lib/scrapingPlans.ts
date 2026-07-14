@@ -1,6 +1,6 @@
 import { readPersistedList } from "./seedOptions";
 
-// "Subscription" is the renamed job-like hub entity (formerly "Stuff"): it ties one
+// "Scraping Plan" is the renamed job-like hub entity (formerly "Stuff"): it ties one
 // or MORE Projects to a list of Seeds, exactly ONE Scrapping option (1:1), and (when
 // geoloc is MANUAL) a Location SET, and carries the client-oriented options.
 
@@ -21,16 +21,16 @@ export type CustomSchedule = {
   endsAfter?: string;    // occurrences, when ends = After
 };
 
-export type Subscription = {
+export type ScrapingPlan = {
   id: string;
   name: string;
-  projects: string[]; // a subscription may belong to one OR MANY projects
+  projects: string[]; // a scrapingPlan may belong to one OR MANY projects
   /** @deprecated legacy single project — migrated into `projects` on read. */
   project?: string;
   store: string;
   seeds: string[];
-  // A subscription runs exactly ONE scrapping option (1:1). Scrapping options stay
-  // reusable — several subscriptions may reference the same option by name.
+  // A scrapingPlan runs exactly ONE scrapping option (1:1). Scrapping options stay
+  // reusable — several scrapingPlans may reference the same option by name.
   scrappingOption: string;
   geo: string; // NONE | AUTOMATIC | MANUAL | VIRTUAL_STORE
   locationSet: string;
@@ -52,16 +52,16 @@ export type Subscription = {
   // Independent seed/location selection axes mirroring dim_seed_location_selection_params.
   seedSelection: string;       // All seeds | Weekly bucket | Monthly bucket | Stateful freshness
   freshnessWindow?: string;    // Last days | Current week | Current fortnight | Current month — only when seedSelection = Stateful freshness
-  lastOfferDays?: string;      // "Days" window — only when freshnessWindow = Last days (migrating order → subscription)
+  lastOfferDays?: string;      // "Days" window — only when freshnessWindow = Last days (migrating order → scrapingPlan)
   locationSelection?: string;  // All locations | Monthly CMI schedule | 1 random per day | N-day rotation — only when geo = AUTOMATIC | MANUAL
   cycleLength?: string;        // N (2..6) — only when locationSelection = N-day rotation
   volumeCap: string;           // Full coverage | Top 10/day | Backfill 1.5×
   /** @deprecated Replaced by the Selection parameters above. Kept optional for back-compat reads. */
   rotation?: string[];
-  status?: SubscriptionStatus; // Active | Inactive
+  status?: ScrapingPlanStatus; // Active | Inactive
   businessUnit?: string; // single Business Unit (CMI / FSA / DSM / RMM / MSH / GEN)
   // Shown only when the scrapping option's extraction type is DIGITAL_SHELF_PLP or
-  // MEDIA — points to zero, one or many sibling subscriptions running a PDP option.
+  // MEDIA — points to zero, one or many sibling scrapingPlans running a PDP option.
   destinationOptions?: string[];
   /** @deprecated legacy single value — migrated into destinationOptions on read. */
   destinationOption?: string;
@@ -69,17 +69,17 @@ export type Subscription = {
   updatedAt?: string;
 };
 
-// Business Units — exactly one may be assigned to a subscription.
+// Business Units — exactly one may be assigned to a scrapingPlan.
 export const BUSINESS_UNITS = ["CMI", "FSA", "DSM", "RMM", "MSH", "GEN"];
 
-export const SUBSCRIPTIONS_KEY = "seeds-api:subscriptions";
+export const SCRAPING_PLANS_KEY = "seeds-api:scraping-plans";
 
-export type SubscriptionStatus = "Active" | "Inactive";
-export const SUBSCRIPTION_STATUS_OPTIONS: SubscriptionStatus[] = ["Active", "Inactive"];
+export type ScrapingPlanStatus = "Active" | "Inactive";
+export const SCRAPING_PLAN_STATUS_OPTIONS: ScrapingPlanStatus[] = ["Active", "Inactive"];
 
-export const SUBSCRIPTION_GEOLOC_OPTIONS = ["NONE", "AUTOMATIC", "MANUAL", "VIRTUAL_STORE"];
+export const SCRAPING_PLAN_GEOLOC_OPTIONS = ["NONE", "AUTOMATIC", "MANUAL", "VIRTUAL_STORE"];
 
-export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
+export const INITIAL_SCRAPING_PLANS: ScrapingPlan[] = [
   {
     id: "sub1",
     name: "ME_KW_WATER — Amazon US",
@@ -118,21 +118,21 @@ export const INITIAL_SUBSCRIPTIONS: Subscription[] = [
   },
 ];
 
-export function getSubscriptions(): Subscription[] {
-  const list = readPersistedList<Subscription>(SUBSCRIPTIONS_KEY);
-  return list.length ? list : INITIAL_SUBSCRIPTIONS;
+export function getScrapingPlans(): ScrapingPlan[] {
+  const list = readPersistedList<ScrapingPlan>(SCRAPING_PLANS_KEY);
+  return list.length ? list : INITIAL_SCRAPING_PLANS;
 }
 
-/** A subscription's destination options as a list, tolerating legacy records that
+/** A scrapingPlan's destination options as a list, tolerating legacy records that
  *  only carry the singular `destinationOption`. Zero, one or many PDP siblings. */
-export function subDestinationOptions(s: Subscription): string[] {
+export function subDestinationOptions(s: ScrapingPlan): string[] {
   if (s.destinationOptions?.length) return s.destinationOptions;
   return s.destinationOption ? [s.destinationOption] : [];
 }
 
-/** A subscription's rotation as a list, tolerating legacy single-string records:
+/** A scrapingPlan's rotation as a list, tolerating legacy single-string records:
  *  "Both" → Locations + Seeds; "Zipcode" → Locations; "" → none. */
-export function subRotation(s: Subscription): string[] {
+export function subRotation(s: ScrapingPlan): string[] {
   const r = s.rotation as unknown;
   if (Array.isArray(r)) return r as string[];
   if (typeof r === "string" && r) {
@@ -143,14 +143,14 @@ export function subRotation(s: Subscription): string[] {
   return [];
 }
 
-/** A subscription's projects as a list, tolerating legacy records that only carry
+/** A scrapingPlan's projects as a list, tolerating legacy records that only carry
  *  the singular `project`. One or many. */
-export function subProjects(s: Subscription): string[] {
+export function subProjects(s: ScrapingPlan): string[] {
   if (s.projects?.length) return s.projects;
   return s.project ? [s.project] : [];
 }
 
-export function emptySubscription(): Subscription {
+export function emptyScrapingPlan(): ScrapingPlan {
   return {
     id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     name: "",

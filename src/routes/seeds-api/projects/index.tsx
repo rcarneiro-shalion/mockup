@@ -24,7 +24,7 @@ import { usePersistentState } from "@/hooks/usePersistentState";
 import { RowActionsMenu } from "@/components/seeds/RowActionsMenu";
 import { PROJECTS_KEY, INITIAL_PROJECTS, BULK_PROJECTS_EXTRA, type Project } from "@/lib/projects";
 import { getClientsForProject, getClientNames } from "@/lib/clients";
-import { getSubscriptions } from "@/lib/subscriptions";
+import { getScrapingPlans } from "@/lib/scrapingPlans";
 import { cn } from "@/lib/utils";
 import { Plus, Calendar, MoreHorizontal, HelpCircle } from "lucide-react";
 
@@ -57,15 +57,15 @@ function ProjectsListPage() {
   const [fStatus, setFStatus] = useState<string[]>([]);
   const [fBom, setFBom] = useState<string[]>([]);
   const [fClient, setFClient] = useState<string[]>([]);
-  const [fSubscription, setFSubscription] = useState<string[]>([]);
+  const [fScrapingPlan, setFScrapingPlan] = useState<string[]>([]);
   const sort = useSort("projects", "updatedAt", "desc");
   const navigate = useNavigate();
 
   const clientOptions = getClientNames();
-  const subscriptionOptions = [
+  const scrapingPlanOptions = [
     ...new Set([
-      ...getSubscriptions().map((s) => s.name),
-      ...projects.flatMap((p) => (p.assignedSubscriptions ?? []).map((s) => s.name)),
+      ...getScrapingPlans().map((s) => s.name),
+      ...projects.flatMap((p) => (p.assignedScrapingPlans ?? []).map((s) => s.name)),
     ]),
   ].sort();
 
@@ -75,11 +75,11 @@ function ProjectsListPage() {
     (!fStatus.length || fStatus.includes(p.status)) &&
     (!fBom.length || fBom.includes(p.bom)) &&
     (!fClient.length || fClient.some((c) => getClientsForProject(p.id).includes(c))) &&
-    (!fSubscription.length || fSubscription.some((name) => (p.assignedSubscriptions ?? []).some((s) => s.name === name))),
+    (!fScrapingPlan.length || fScrapingPlan.some((name) => (p.assignedScrapingPlans ?? []).some((s) => s.name === name))),
   );
   const sorted = sortRows(filtered, sort, {
     clients: (p) => getClientsForProject(p.id).length,
-    subscriptions: (p) => (p.assignedSubscriptions ?? []).length,
+    scrapingPlans: (p) => (p.assignedScrapingPlans ?? []).length,
     createdAt: (p) => parseListDate(p.createdAt),
     updatedAt: (p) => parseListDate(p.updatedAt),
   });
@@ -105,7 +105,7 @@ function ProjectsListPage() {
 
         <FilterBar search="Search by project name" searchValue={query} onSearchChange={setQuery}>
           <FilterChip label="Clients" options={clientOptions} value={fClient} onChange={setFClient} searchable />
-          <FilterChip label="Subscriptions" options={subscriptionOptions} value={fSubscription} onChange={setFSubscription} searchable />
+          <FilterChip label="Scraping Plans" options={scrapingPlanOptions} value={fScrapingPlan} onChange={setFScrapingPlan} searchable />
           <FilterChip label="Status" options={["Active", "Inactive"]} value={fStatus} onChange={setFStatus} />
           <FilterChip label="BoM" options={distinct(allProjects, (p) => p.bom)} value={fBom} onChange={setFBom} />
           <FilterChip label="Created at" icon={Calendar} />
@@ -117,7 +117,7 @@ function ProjectsListPage() {
             <tr>
               <SortTh label="Name" sortKey="name" sort={sort} />
               <SortTh label="Clients" sortKey="clients" sort={sort} />
-              <SortTh label="Subscriptions" sortKey="subscriptions" sort={sort} />
+              <SortTh label="Scraping Plans" sortKey="scraping plans" sort={sort} />
               <SortTh label={<span className="inline-flex items-center gap-1">BoM <HelpCircle className="h-3 w-3" /></span>} sortKey="bom" sort={sort} />
               <SortTh label="Created at" sortKey="createdAt" sort={sort} />
               <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
@@ -153,8 +153,8 @@ function ProjectsListPage() {
                 </Td>
                 <Td>
                   <GroupedPills
-                    items={(p.assignedSubscriptions ?? []).map((s) => s.name)}
-                    noun="subscription"
+                    items={(p.assignedScrapingPlans ?? []).map((s) => s.name)}
+                    noun="scraping plan"
                     tone="slate"
                     onSeeAll={() => navigate({ to: "/seeds-api/projects/$projectId", params: { projectId: p.id } })}
                   />

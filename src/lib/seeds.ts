@@ -11,7 +11,7 @@ export const KEYWORD_TYPE_OPTIONS: KeywordType[] = ["BRANDED", "CATEGORY"];
 export const SEED_STATUS_OPTIONS: SeedStatus[] = ["Active", "Inactive"];
 
 // Field names d/store/cat/c/u are kept for backward compatibility (e.g. the
-// Subscriptions seed dropdown reads `.d`). New type-aware fields are optional.
+// ScrapingPlans seed dropdown reads `.d`). New type-aware fields are optional.
 export type Seed = {
   id: string;
   d: string; // description

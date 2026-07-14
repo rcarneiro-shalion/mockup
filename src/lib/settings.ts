@@ -137,16 +137,16 @@ export const INITIAL_TASK_GROUPS: SettingTaskGroup[] = [
   TG("tg-3", "group_3", "grp3", "Thu, Oct 26, 2023 3:30 PM", "Thu, Oct 26, 2023 3:30 PM"),
 ];
 
-// ---------- Subscription types ----------
-// The catalog of subscription types (e.g. Select Assortment, Matching) referenced when
-// editing a subscription. Maintained from Settings › Subscription type.
-export type SettingSubscriptionType = { id: string; name: string; slug: string; description: string; createdAt: string; updatedAt: string };
-export const SUBSCRIPTION_TYPES_KEY = "settings:subscription-types";
+// ---------- ScrapingPlan types ----------
+// The catalog of scrapingPlan types (e.g. Select Assortment, Matching) referenced when
+// editing a scrapingPlan. Maintained from Settings › ScrapingPlan type.
+export type SettingScrapingPlanType = { id: string; name: string; slug: string; description: string; createdAt: string; updatedAt: string };
+export const SCRAPING_PLAN_TYPES_KEY = "settings:scraping-plan-types";
 // `slug` = the short code (max 3 chars), i.e. the value in parentheses — it matches a
-// subscription NAME prefix (see projects.ts typeFromName) and powers the list's Type filter.
-const ST = (id: string, name: string, slug: string, description: string, createdAt: string, updatedAt: string): SettingSubscriptionType =>
+// scrapingPlan NAME prefix (see projects.ts typeFromName) and powers the list's Type filter.
+const ST = (id: string, name: string, slug: string, description: string, createdAt: string, updatedAt: string): SettingScrapingPlanType =>
   ({ id, name, slug, description, createdAt, updatedAt });
-export const INITIAL_SUBSCRIPTION_TYPES: SettingSubscriptionType[] = [
+export const INITIAL_SCRAPING_PLAN_TYPES: SettingScrapingPlanType[] = [
   ST("sub-sa", "Select Assortment (SA)", "SA", "Selected Assortment (also sometimes called Selected Items) shows the status of the client products in online retailers.", "Thu, Oct 26, 2023 3:30 PM", "Thu, Oct 26, 2023 3:30 PM"),
   ST("sub-mag", "Matching (MAG)", "MAG", "Matching identifies which products extracted from online retailers correspond to the client's own catalog — codifying their attributes (brand, size, flavour, …) so each listing is linked to the right product, which makes price, naming and image tracking comparable across retailers.", "Mon, Nov 18, 2024 11:58 AM", "Mon, Dec 29, 2025 4:21 PM"),
   ST("sub-geo", "GEO", "GEO", "Category scraping in geolocation mode (automatic), all from store.", "Mon, Jan 13, 2025 9:00 AM", "Mon, Jan 13, 2025 9:00 AM"),
@@ -167,5 +167,5 @@ export const getSettingsTimeframes = () => read(SETTINGS_TIMEFRAMES_KEY, INITIAL
 export const getCategories = () => read(CATEGORIES_KEY, INITIAL_CATEGORIES);
 export const getCountryGroups = () => read(COUNTRY_GROUPS_KEY, INITIAL_COUNTRY_GROUPS);
 export const getRules = () => read(RULES_KEY, INITIAL_RULES);
-export const getSubscriptionTypes = () => read(SUBSCRIPTION_TYPES_KEY, INITIAL_SUBSCRIPTION_TYPES);
+export const getScrapingPlanTypes = () => read(SCRAPING_PLAN_TYPES_KEY, INITIAL_SCRAPING_PLAN_TYPES);
 export const getTaskGroups = () => read(TASK_GROUPS_KEY, INITIAL_TASK_GROUPS);

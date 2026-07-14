@@ -44,7 +44,7 @@ function EditProjectPage() {
       onCancel={goBack}
       onSave={(updated) => {
         // The Save button commits only the header fields — the grids auto-save themselves, so
-        // preserve the project's subscriptions. If this is a read-only overlay project (not yet
+        // preserve the project's scraping plans. If this is a read-only overlay project (not yet
         // in the writable set), upsert it so the edit persists ("promote" it).
         setProjects((prev) =>
           prev.some((p) => p.id === projectId)
@@ -53,12 +53,12 @@ function EditProjectPage() {
         );
         goBack();
       }}
-      onSubscriptionsChange={(subs) => {
-        // Auto-save the subscription grid (same upsert: promote an overlay project on first edit).
+      onScrapingPlansChange={(subs) => {
+        // Auto-save the scrapingPlan grid (same upsert: promote an overlay project on first edit).
         setProjects((prev) =>
           prev.some((p) => p.id === projectId)
-            ? prev.map((p) => (p.id === projectId ? { ...p, assignedSubscriptions: subs, updatedAt: nowStamp() } : p))
-            : [...prev, { ...project, assignedSubscriptions: subs, updatedAt: nowStamp() }],
+            ? prev.map((p) => (p.id === projectId ? { ...p, assignedScrapingPlans: subs, updatedAt: nowStamp() } : p))
+            : [...prev, { ...project, assignedScrapingPlans: subs, updatedAt: nowStamp() }],
         );
       }}
       onDelete={() => {

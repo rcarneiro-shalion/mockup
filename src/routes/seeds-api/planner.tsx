@@ -11,7 +11,7 @@ import { FilterChip } from "@/components/seeds/FilterChip";
 import { Pill } from "@/components/seeds/ListPrimitives";
 import { getClients } from "@/lib/clients";
 import { getProjects } from "@/lib/projects";
-import { getSubscriptions, subDestinationOptions, subProjects } from "@/lib/subscriptions";
+import { getScrapingPlans, subDestinationOptions, subProjects } from "@/lib/scrapingPlans";
 import { getScrappingOptions } from "@/lib/scrappingOptions";
 import { storeLocationCounts } from "@/lib/retailers";
 import { getAppVersion } from "@/lib/appVersion";
@@ -33,7 +33,7 @@ const ZOOM_STEP = 0.1;
 
 // ---- Graph model -----------------------------------------------------------
 
-type NodeKind = "client" | "project" | "subscription" | "scrap";
+type NodeKind = "client" | "project" | "scraping plan" | "scrap";
 type GNode = {
   key: string;
   kind: NodeKind;
@@ -59,17 +59,17 @@ function PlannerPage() {
   // measurement effect from re-running every render (which would loop infinitely).
   const clients = useMemo(() => getClients(), []);
   const projects = useMemo(() => getProjects(), []);
-  const subs = useMemo(() => getSubscriptions(), []);
+  const subs = useMemo(() => getScrapingPlans(), []);
   const scraps = useMemo(() => getScrappingOptions(), []);
 
-  // The planner is anchored on configured pipelines: a subscription ties a project
-  // to a scrapping option, so the base view = everything reachable from a subscription.
+  // The planner is anchored on configured pipelines: a scrapingPlan ties a project
+  // to a scrapping option, so the base view = everything reachable from a scrapingPlan.
   const projectByName = new Map(projects.map((p) => [p.name, p]));
   const projectById = new Map(projects.map((p) => [p.id, p]));
   const scrapByName = new Map(scraps.map((s) => [s.name, s]));
 
-  // Only COMPLETE chains render: client → project → subscription → scrapping option.
-  // A subscription is "in the flow" only when its project resolves AND that project is
+  // Only COMPLETE chains render: client → project → scrapingPlan → scrapping option.
+  // A scrapingPlan is "in the flow" only when its project resolves AND that project is
   // linked to a client AND its scrapping option resolves. Clients/projects/scraps all
   // derive from those, so orphans (e.g. a project with no client) never appear.
   const projectIdsWithClient = new Set<string>();
@@ -124,7 +124,7 @@ function PlannerPage() {
         go: () => navigate({ to: "/seeds-api/projects/$projectId", params: { projectId: p.id } }),
         body: (
           <>
-            <InfoLine icon={Layers}>{n} subscription{n === 1 ? "" : "s"}</InfoLine>
+            <InfoLine icon={Layers}>{n} scraping plan{n === 1 ? "" : "s"}</InfoLine>
             {p.bom && <InfoLine>BoM {p.bom}</InfoLine>}
           </>
         ),
@@ -133,8 +133,8 @@ function PlannerPage() {
     for (const s of baseSubs) {
       const o = scrapByName.get(s.scrappingOption);
       nodes.set(`s:${s.id}`, {
-        key: `s:${s.id}`, kind: "subscription", title: s.name,
-        go: () => navigate({ to: "/seeds-api/subscriptions", search: { edit: s.id } }),
+        key: `s:${s.id}`, kind: "scraping plan", title: s.name,
+        go: () => navigate({ to: "/seeds-api/scraping-plans", search: { edit: s.id } }),
         body: (
           <div className="space-y-1">
             {s.store && <InfoLine icon={Store}>{s.store}</InfoLine>}
@@ -184,10 +184,10 @@ function PlannerPage() {
   }, [clients, projects, subs, scraps]);
 
   // Visible subgraph. With no filter, everything. With filters, AND semantics: a
-  // subscription must satisfy EVERY active filter (client/project/store/seed/scrap/
-  // extraction/subscription). We then show the matching subscriptions plus their
+  // scrapingPlan must satisfy EVERY active filter (client/project/store/seed/scrap/
+  // extraction/scrapingPlan). We then show the matching scrapingPlans plus their
   // lineage (project → client) and their scrapping option — no flood to sibling
-  // subscriptions, so each added filter genuinely narrows the result.
+  // scrapingPlans, so each added filter genuinely narrows the result.
   const visible = useMemo(() => {
     const all = new Set(nodes.keys());
     if (!hasFilter) return all;
@@ -235,15 +235,15 @@ function PlannerPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges, hasFilter, fClient, fProject, fSub, fStore, fSeed, fScrap, fExtraction]);
 
-  // Task generation estimation over the visible subscriptions.
+  // Task generation estimation over the visible scrapingPlans.
   // Rule: tasks = seeds × locations per store. Locations = the active-location count the
-  // subscription's store declares in the prod store entity (storeLocationCounts).
+  // scrapingPlan's store declares in the prod store entity (storeLocationCounts).
   const storeLoc = useMemo(() => storeLocationCounts(), []);
   const visibleSubs = subs.filter((s) => visible.has(`s:${s.id}`));
   const estRows = visibleSubs.map((s) => {
     const seedCount = (s.seeds ?? []).length;
     const usesLoc = s.geo === "MANUAL";
-    // A geolocated (MANUAL) subscription extracts each of its store's active locations,
+    // A geolocated (MANUAL) scrapingPlan extracts each of its store's active locations,
     // so its volume = the store's own active-location count; non-geo runs the store once.
     const storeCount = storeLoc.get(s.store) ?? 0;
     const tbd = usesLoc && storeCount <= 0; // store has no count on record → estimate
@@ -256,7 +256,7 @@ function PlannerPage() {
   const columns: { kind: NodeKind; label: string; icon: typeof Users; tone: string }[] = [
     { kind: "client", label: "Clients", icon: Users, tone: "text-emerald-600" },
     { kind: "project", label: "Projects", icon: FolderKanban, tone: "text-sky-600" },
-    { kind: "subscription", label: "Subscriptions", icon: Layers, tone: "text-violet-600" },
+    { kind: "scraping plan", label: "Scraping Plans", icon: Layers, tone: "text-violet-600" },
     { kind: "scrap", label: "Scraping options", icon: PlayCircle, tone: "text-amber-600" },
   ];
 
@@ -345,7 +345,7 @@ function PlannerPage() {
           <div>
             <h1 className="text-[17px] font-semibold text-foreground">Value Stream Map</h1>
             <p className="text-sm text-muted-foreground">
-              Visual map of the data-extraction setup — clients → projects → subscriptions → scraping options.
+              Visual map of the data-extraction setup — clients → projects → scraping plans → scraping options.
             </p>
           </div>
           <div className="flex items-center gap-1.5">
@@ -391,7 +391,7 @@ function PlannerPage() {
         <div className="flex flex-wrap items-center gap-2 px-6 py-4">
           <FilterChip label="Clients" icon={Users} options={baseClients.map((c) => c.name)} value={fClient} onChange={setFClient} searchable />
           <FilterChip label="Projects" icon={FolderKanban} options={baseProjects.map((p) => p.name)} value={fProject} onChange={setFProject} searchable />
-          <FilterChip label="Subscriptions" icon={Layers} options={subs.map((s) => s.name)} value={fSub} onChange={setFSub} searchable />
+          <FilterChip label="Scraping Plans" icon={Layers} options={subs.map((s) => s.name)} value={fSub} onChange={setFSub} searchable />
           <FilterChip label="Store" icon={Store} options={storeOptions} value={fStore} onChange={setFStore} searchable />
           <FilterChip label="Seeds" icon={Sprout} options={seedOptions} value={fSeed} onChange={setFSeed} searchable />
           <FilterChip label="Scraping options" icon={PlayCircle} options={baseScraps.map((o) => o.name)} value={fScrap} onChange={setFScrap} searchable />
@@ -467,10 +467,10 @@ function PlannerPage() {
                   <p className="text-xs leading-relaxed text-muted-foreground">
                     A task = <span className="font-medium text-foreground">seeds × locations</span> per store. Locations ={" "}
                     the store's <span className="font-medium text-foreground">active-location count</span> for geolocated
-                    (MANUAL) subscriptions; otherwise 1.
+                    (MANUAL) scraping plans; otherwise 1.
                   </p>
                   <div className="mt-3 space-y-1.5">
-                    {estRows.length === 0 && <p className="text-xs text-muted-foreground">No subscriptions in view.</p>}
+                    {estRows.length === 0 && <p className="text-xs text-muted-foreground">No scraping plans in view.</p>}
                     {estRows.map((r) => (
                       <div key={r.id} className="flex items-center justify-between gap-2 text-xs">
                         <span className="min-w-0 truncate text-foreground/80" title={r.name}>{r.name}</span>

@@ -33,7 +33,7 @@ import {
 } from "@/lib/seedOptions";
 import { getTaskGroups, getSettingsTimeframes } from "@/lib/settings";
 import { getAppVersion } from "@/lib/appVersion";
-import { getSubscriptions, subProjects } from "@/lib/subscriptions";
+import { getScrapingPlans, subProjects } from "@/lib/scrapingPlans";
 import { getProjects } from "@/lib/projects";
 import { getClientsForProject } from "@/lib/clients";
 import { cn } from "@/lib/utils";
@@ -50,7 +50,7 @@ export type ScrappingOptionValues = {
   // V1/V2 phase: the taskGroup concept is out — the option references Settings ›
   // Timeframes directly (1:N). v3 keeps taskGroups; both fields coexist on the record.
   timeframes?: string[];
-  // How often the option re-runs (moved here from the subscription). "Custom" → a simple
+  // How often the option re-runs (moved here from the scrapingPlan). "Custom" → a simple
   // Days field + times-per-day selector. Daily/Weekly/Monthly carry no extra config.
   frequency: string;
   customDays?: string;        // Custom only: which/how many days (free field)
@@ -97,7 +97,7 @@ export const EMPTY_SCRAPPING_OPTION: ScrappingOptionValues = {
 
 // --- Auto-suggested name convention (scraping option) ----------------------
 // A scraping option's name follows its OWN convention, distinct from the
-// subscription/Job one (ME_KW_WATER — Amazon US, which encodes client + store).
+// scrapingPlan/Job one (ME_KW_WATER — Amazon US, which encodes client + store).
 // It instead encodes the extraction config:
 //   EXTRACTION _ FREQUENCY _ MULTIVARIANTS [_ MODALITY]   e.g. SE_DAY_MONO_SHIP
 // Surfaced as the Name placeholder (a live suggestion that tracks the form); it
@@ -157,8 +157,8 @@ export function ScrappingOptionDialog({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [metaOpen, setMetaOpen] = useState(true);
   const [metaEditing, setMetaEditing] = useState(false);
-  // Subscriptions using this scrapping option — indirect: a subscription references
-  // its scrapping option by name (Subscription.scrappingOption), each tied to a
+  // ScrapingPlans using this scrapping option — indirect: a scrapingPlan references
+  // its scrapping option by name (ScrapingPlan.scrappingOption), each tied to a
   // project → client(s). Keyed off the persisted name; loaded client-side.
   const [inSubs, setInSubs] = useState<{ id: string; name: string; project: string; clients: string[] }[]>([]);
 
@@ -180,7 +180,7 @@ export function ScrappingOptionDialog({
     }
     const projectIdByName = new Map(getProjects().map((p) => [p.name, p.id]));
     setInSubs(
-      getSubscriptions()
+      getScrapingPlans()
         .filter((s) => s.scrappingOption === initial.name)
         .map((s) => ({
           id: s.id,
@@ -288,7 +288,7 @@ export function ScrappingOptionDialog({
                 </Field>
               )}
 
-              {/* Frequency — moved here from the subscription. Custom = Days + times/day.
+              {/* Frequency — moved here from the scrapingPlan. Custom = Days + times/day.
                   Not part of the V1/V2 phase (stored values pass through untouched). */}
               {!lean && (
               <Field label="Frequency" required className="sm:col-span-2">
@@ -461,18 +461,18 @@ export function ScrappingOptionDialog({
               )}
             </section>
 
-            {/* Subscriptions using this scrapping option (read-only) — same layout as the seed form */}
+            {/* ScrapingPlans using this scrapping option (read-only) — same layout as the seed form */}
             {mode === "edit" && (
               <section className="rounded-xl border border-border bg-card p-5">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-base font-semibold text-foreground">Subscriptions</span>
+                  <span className="text-base font-semibold text-foreground">Scraping Plans</span>
                   <span className="text-sm text-muted-foreground">where this scraping option is used</span>
                 </div>
                 <div className="mt-4 overflow-hidden rounded-lg border border-border">
                   <table className="w-full text-sm">
                     <thead className="bg-secondary/60">
                       <tr>
-                        <Th>Subscription name</Th>
+                        <Th>Scraping Plan name</Th>
                         <Th>Projects assigned</Th>
                         <Th>Clients belongs</Th>
                       </tr>
@@ -481,7 +481,7 @@ export function ScrappingOptionDialog({
                       {inSubs.length === 0 ? (
                         <tr>
                           <Td className="text-muted-foreground">
-                            <span className="block py-2">This scraping option isn't used in any subscription yet.</span>
+                            <span className="block py-2">This scraping option isn't used in any scraping plan yet.</span>
                           </Td>
                           <Td /><Td />
                         </tr>

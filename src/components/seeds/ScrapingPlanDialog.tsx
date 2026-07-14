@@ -30,15 +30,15 @@ import { getProjects } from "@/lib/projects";
 import { getStores } from "@/lib/retailers";
 import { REAL_LOCATION_SETS } from "@/lib/scenarioSeedData";
 import {
-  SUBSCRIPTION_GEOLOC_OPTIONS,
-  SUBSCRIPTION_STATUS_OPTIONS,
+  SCRAPING_PLAN_GEOLOC_OPTIONS,
+  SCRAPING_PLAN_STATUS_OPTIONS,
   BUSINESS_UNITS,
-  emptySubscription,
-  getSubscriptions,
+  emptyScrapingPlan,
+  getScrapingPlans,
   subProjects,
-  type Subscription,
-  type SubscriptionStatus,
-} from "@/lib/subscriptions";
+  type ScrapingPlan,
+  type ScrapingPlanStatus,
+} from "@/lib/scrapingPlans";
 import { AssignedSeeds } from "@/components/seeds/AssignedSeeds";
 import { AssignedLocations } from "@/components/seeds/AssignedLocations";
 import type { SeedType } from "@/lib/seeds";
@@ -47,7 +47,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { MapPin, Sprout, Trash2 } from "lucide-react";
 
-export function SubscriptionDialog({
+export function ScrapingPlanDialog({
   open,
   onOpenChange,
   initial,
@@ -57,12 +57,12 @@ export function SubscriptionDialog({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  initial: Subscription | null;
+  initial: ScrapingPlan | null;
   mode: "add" | "edit";
-  onSave: (values: Subscription) => void;
+  onSave: (values: ScrapingPlan) => void;
   onDelete?: () => void;
 }) {
-  const [v, setV] = useState<Subscription>(emptySubscription());
+  const [v, setV] = useState<ScrapingPlan>(emptyScrapingPlan());
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   // V1/V2 bottom tabs (Seeds | Locations) — the Locations tab needs MANUAL geolocation.
@@ -71,7 +71,7 @@ export function SubscriptionDialog({
   useEffect(() => {
     if (open) {
       // Merge over defaults so older saved records get safe defaults (e.g. seeds[]).
-      const merged = initial ? { ...emptySubscription(), ...initial } : emptySubscription();
+      const merged = initial ? { ...emptyScrapingPlan(), ...initial } : emptyScrapingPlan();
       // Migrate legacy data: a single destinationOption → the destinationOptions array.
       merged.projects = subProjects(merged);
       if (!merged.destinationOptions?.length && merged.destinationOption) {
@@ -89,26 +89,26 @@ export function SubscriptionDialog({
     if (v.geo !== "MANUAL") setBottomTab("seeds");
   }, [v.geo]);
 
-  const set = <K extends keyof Subscription>(k: K, val: Subscription[K]) =>
+  const set = <K extends keyof ScrapingPlan>(k: K, val: ScrapingPlan[K]) =>
     setV((prev) => ({ ...prev, [k]: val }));
 
   // Scrapping options drive the searchable picker plus the extraction-type logic:
   // the Destination option field (PLP / MEDIA) and the Virtual Seed tab (PDP).
   const allOptions = getScrappingOptions();
   const extractionByOption = new Map(allOptions.map((s) => [s.name, s.extractionType]));
-  // Show the destination field when the subscription's single scrapping option is a
+  // Show the destination field when the scrapingPlan's single scrapping option is a
   // discovery (PLP / MEDIA) extraction.
   const selectedExtraction = extractionByOption.get(v.scrappingOption);
   const showDestination = selectedExtraction === "DIGITAL_SHELF_PLP" || selectedExtraction === "MEDIA";
-  // Destination choices: sibling subscriptions that run a PDP scrapping option.
-  const pdpSubscriptionNames = getSubscriptions()
+  // Destination choices: sibling scrapingPlans that run a PDP scrapping option.
+  const pdpScrapingPlanNames = getScrapingPlans()
     .filter((s) => s.id !== v.id && extractionByOption.get(s.scrappingOption) === "DIGITAL_SHELF_PDP")
     .map((s) => s.name);
   const projectNames = getProjects().map((p) => p.name);
   // Store options come from the Stores entity (Retailers › Stores), deduped by name.
   const storeOptions = [...new Set(getStores().map((s) => s.name))].sort((a, b) => a.localeCompare(b));
 
-  // The V1/V2 phase cut keeps the subscription lean: no Selection parameters section,
+  // The V1/V2 phase cut keeps the scrapingPlan lean: no Selection parameters section,
   // and the Location-set reference is simplified to a direct "Locations" multi-select
   // (same MANUAL-only gating). v3 keeps the full As-Is form.
   const lean = getAppVersion() <= 2;
@@ -119,7 +119,7 @@ export function SubscriptionDialog({
   // Business rule: VIRTUAL_STORE geolocation is ONLY available for a PDP scrapping
   // option; for every other extraction type it stays visible but disabled.
   const isPdp = selectedExtraction === "DIGITAL_SHELF_PDP";
-  const geoOptions = SUBSCRIPTION_GEOLOC_OPTIONS.map((g) =>
+  const geoOptions = SCRAPING_PLAN_GEOLOC_OPTIONS.map((g) =>
     g === "VIRTUAL_STORE" ? { value: g, label: g, disabled: !isPdp } : g,
   );
   // Seed tabs are restricted to the types valid for the chosen extraction type
@@ -186,7 +186,7 @@ export function SubscriptionDialog({
               volumeCap: v.volumeCap || "Full coverage",
             }),
       });
-      toast.success(`Subscription ${mode === "add" ? "created" : "saved"} successfully`);
+      toast.success(`Scraping Plan ${mode === "add" ? "created" : "saved"} successfully`);
       onOpenChange(false);
     } catch {
       toast.error("Save failed. Please try again.");
@@ -197,7 +197,7 @@ export function SubscriptionDialog({
 
   const handleDelete = () => {
     onDelete?.();
-    toast.success("Subscription deleted");
+    toast.success("Scraping Plan deleted");
     onOpenChange(false);
   };
 
@@ -207,7 +207,7 @@ export function SubscriptionDialog({
         <DialogContent className="flex max-h-[90vh] w-[min(820px,94vw)] max-w-none flex-col gap-0 overflow-hidden p-0">
           <div className="flex items-center justify-between border-b border-border px-6 py-4">
             <DialogTitle className="text-lg font-semibold tracking-tight">
-              {mode === "add" ? "Add subscription" : v.name || "Subscription"}
+              {mode === "add" ? "Add scraping plan" : v.name || "Scraping Plan"}
             </DialogTitle>
             {mode === "edit" && onDelete && (
               <button
@@ -240,8 +240,8 @@ export function SubscriptionDialog({
                 <Field label="Status" className="sm:w-36">
                   <SelectBox
                     value={v.status ?? "Active"}
-                    onChange={(x) => set("status", x as SubscriptionStatus)}
-                    options={SUBSCRIPTION_STATUS_OPTIONS}
+                    onChange={(x) => set("status", x as ScrapingPlanStatus)}
+                    options={SCRAPING_PLAN_STATUS_OPTIONS}
                   />
                 </Field>
               </div>
@@ -292,11 +292,11 @@ export function SubscriptionDialog({
                   <MultiSelectPopover
                     value={v.destinationOptions ?? []}
                     onChange={(arr) => set("destinationOptions", arr)}
-                    options={pdpSubscriptionNames}
+                    options={pdpScrapingPlanNames}
                     noun="destination"
-                    placeholder="Select PDP subscription(s) — optional"
-                    searchPlaceholder="Search Digital Shelf PDP subscriptions…"
-                    emptyText="No PDP subscriptions found."
+                    placeholder="Select PDP scraping plan(s) — optional"
+                    searchPlaceholder="Search Digital Shelf PDP scraping plans…"
+                    emptyText="No PDP scraping plans found."
                   />
                 </Field>
               )}
@@ -460,7 +460,7 @@ export function SubscriptionDialog({
           <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>Cancel</Button>
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? "Saving..." : mode === "add" ? "Add subscription" : "Save subscription"}
+              {isSaving ? "Saving..." : mode === "add" ? "Add scraping plan" : "Save scraping plan"}
             </Button>
           </div>
         </DialogContent>
@@ -469,9 +469,9 @@ export function SubscriptionDialog({
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete subscription</AlertDialogTitle>
+            <AlertDialogTitle>Delete scraping plan</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this subscription? This action cannot be undone.
+              Are you sure you want to delete this scraping plan? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

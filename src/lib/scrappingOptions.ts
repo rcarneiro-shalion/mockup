@@ -2,7 +2,7 @@ import { readPersistedList } from "./seedOptions";
 import { EMPTY_SCRAPPING_OPTION, type ScrappingOptionValues } from "@/components/seeds/ScrappingOptionDialog";
 
 // Single source of truth for the Scrapping options store, so any reader (the
-// Scrapping options page, the Subscription form picker, the planner) gets the
+// Scrapping options page, the ScrapingPlan form picker, the planner) gets the
 // seed data even before the page that owns the grid has been visited.
 export const SCRAPPING_OPTIONS_KEY = "seeds-api:scrapping-options";
 

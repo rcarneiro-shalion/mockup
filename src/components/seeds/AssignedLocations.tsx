@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 import { Check, MapPin, Plus, Search, X } from "lucide-react";
 
 /**
- * Assigned locations for a subscription — the V1/V2 "Locations" tab (mirrors the
+ * Assigned locations for a scrapingPlan — the V1/V2 "Locations" tab (mirrors the
  * legacy Job's Assigned-locations grid). Shown only when geolocation mode is MANUAL.
- * `assigned` holds location NAMES (Subscription.locations); each row is resolved
+ * `assigned` holds location NAMES (ScrapingPlan.locations); each row is resolved
  * against the store's location records for the Job-style columns.
  */
 export function AssignedLocations({
@@ -94,7 +94,7 @@ export function AssignedLocations({
             {rows.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-3 py-5 text-center text-muted-foreground">
-                  {assigned.length === 0 ? "No locations assigned to this subscription." : "No assigned location matches the search."}
+                  {assigned.length === 0 ? "No locations assigned to this scraping plan." : "No assigned location matches the search."}
                 </td>
               </tr>
             )}
@@ -182,7 +182,7 @@ function AssignLocationsDialog({
             Assign locations{store ? ` — ${store}` : ""}
           </DialogTitle>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            The store's locations not yet assigned to this subscription.
+            The store's locations not yet assigned to this scraping plan.
           </p>
         </div>
         <div className="px-5 pt-3">

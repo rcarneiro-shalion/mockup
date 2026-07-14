@@ -8151,5 +8151,5 @@ const ROWS: Row[] = [
 export const BULK_PROJECTS: Project[] = ROWS.map(([id, name, bom, active, c, u, cb, ub]) => ({
   id, name, bom, status: active ? "Active" : "Inactive",
   createdAt: c, updatedAt: u, createdBy: cb ?? U, updatedBy: ub ?? U,
-  assignedSubscriptions: [],
+  assignedScrapingPlans: [],
 }));

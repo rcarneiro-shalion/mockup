@@ -204,15 +204,15 @@ const projects: RulePage = {
       category: "Relationships",
       rules: [
         "A project can serve several clients, each with its own start and end dates.",
-        "A project can have any number of subscriptions; each assignment records its store, geolocation mode, type and expiry.",
-        "A subscription is assigned as either Base (foundational) or Add-on (supplementary), and the same subscription cannot be added twice.",
+        "A project can have any number of scraping plans; each assignment records its store, geolocation mode, type and expiry.",
+        "A scraping plan is assigned as either Base (foundational) or Add-on (supplementary), and the same scraping plan cannot be added twice.",
       ],
     },
     {
       category: "Search & listing",
       rules: [
-        "Projects can be searched by name and filtered by status, BOM, assigned clients or subscriptions.",
-        "The list can be sorted by name, dates, creator, status, and the client/subscription counts.",
+        "Projects can be searched by name and filtered by status, BOM, assigned clients or scraping plans.",
+        "The list can be sorted by name, dates, creator, status, and the client/scraping plan counts.",
       ],
     },
     {
@@ -222,40 +222,40 @@ const projects: RulePage = {
   ],
 };
 
-const subscriptions: RulePage = {
-  key: "subscriptions",
-  label: "Subscriptions",
-  match: "/seeds-api/subscriptions",
+const scrapingPlans: RulePage = {
+  key: "scraping plans",
+  label: "Scraping Plans",
+  match: "/seeds-api/scraping-plans",
   groups: [
     {
       category: "Creating & editing",
       rules: [
-        "A subscription needs a name, a project, a store and a scraping option; everything else is optional.",
+        "A scraping plan needs a name, a project, a store and a scraping option; everything else is optional.",
         "Geolocation can be None, Automatic or Manual — and a location set is only required (and only editable) when Manual is chosen.",
-        "A new subscription defaults to no geolocation, all-seeds selection with full coverage, and no seeds assigned yet.",
+        "A new scraping plan defaults to no geolocation, all-seeds selection with full coverage, and no seeds assigned yet.",
       ],
     },
     {
       category: "Fields & options",
       rules: [
         "Selection parameters (replacing the old Rotation tag-list) set how seeds and locations are picked each run: a seed selection (all seeds, weekly/monthly bucket or stateful freshness), an optional freshness window + day count, a location selection when geolocation is automatic or manual, and a volume cap.",
-        "A subscription runs exactly one scraping option (1:1); the same option may be reused by other subscriptions. Extraction config and frequency live on that option.",
-        "When the scraping option is a discovery (PLP / MEDIA) extraction, it can point to zero, one or many PDP sibling subscriptions (Destination options).",
-        "A subscription can hold many seeds across the four types (Keyword, URL, API, PDP), added or removed from a searchable, tabbed picker.",
+        "A scraping plan runs exactly one scraping option (1:1); the same option may be reused by other scraping plans. Extraction config and frequency live on that option.",
+        "When the scraping option is a discovery (PLP / MEDIA) extraction, it can point to zero, one or many PDP sibling scraping plans (Destination options).",
+        "A scraping plan can hold many seeds across the four types (Keyword, URL, API, PDP), added or removed from a searchable, tabbed picker.",
       ],
     },
     {
       category: "Relationships",
       rules: [
-        "A subscription belongs to one project, and its clients are inherited from that project.",
+        "A scraping plan belongs to one project, and its clients are inherited from that project.",
         "The scraping option it points to defines how data is extracted (type, stores, task groups, pagination, sorting, modalities).",
       ],
     },
     {
       category: "Search & listing",
       rules: [
-        "Subscriptions can be searched by name and filtered by client, project, store, seeds, scraping option and geolocation mode.",
-        "Deleting a subscription asks for confirmation first.",
+        "Scraping Plans can be searched by name and filtered by client, project, store, seeds, scraping option and geolocation mode.",
+        "Deleting a scraping plan asks for confirmation first.",
       ],
     },
   ],
@@ -1136,8 +1136,8 @@ export const RULE_SECTIONS: RuleSection[] = [
   {
     section: "Seeds API",
     intro:
-      "The Seeds API is what we monitor across the web and how that work is organised — projects, subscriptions, the seeds themselves, scraping options and tags.",
-    pages: [projects, subscriptions, seeds, scrappingOptions, tags],
+      "The Seeds API is what we monitor across the web and how that work is organised — projects, scraping plans, the seeds themselves, scraping options and tags.",
+    pages: [projects, scrapingPlans, seeds, scrappingOptions, tags],
   },
   {
     section: "Codification",

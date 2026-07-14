@@ -63,7 +63,7 @@ export const INITIAL_RELEASE_NOTES: ReleaseNote[] = [
     status: "Draft",
     tag: "New",
     summary:
-      "We're rebuilding how we configure what gets monitored across the web — clients, projects, subscriptions and seeds — into a cleaner, more flexible model. The foundation landed this sprint; the first usable version rolls out over the coming sprints.",
+      "We're rebuilding how we configure what gets monitored across the web — clients, projects, scraping plans and seeds — into a cleaner, more flexible model. The foundation landed this sprint; the first usable version rolls out over the coming sprints.",
     highlights: [
       "A simpler, more consistent way to define what we collect",
       "Still in development — shipping progressively across the next sprints",
