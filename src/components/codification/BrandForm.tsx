@@ -50,11 +50,35 @@ export function BrandForm({
 
   const editions = b.editions ?? [];
   const hasEditions = editions.length > 0;
-  const canSave = b.name.trim() && b.defaultCategory && b.defaultManufacturer;
+  // A multi-brand with editions must nominate a default edition (mirrors Default
+  // category being required); a multi-brand with no editions yet cannot.
+  const needsDefaultEdition = b.isMultiBrand && hasEditions;
+  const canSave =
+    b.name.trim() &&
+    b.defaultCategory &&
+    b.defaultManufacturer &&
+    (!needsDefaultEdition || !!b.defaultEdition);
 
   // Options always include the record's current values so they remain selectable.
   const categoryOptions = uniq([b.defaultCategory, ...BRAND_CATEGORIES]);
   const manufacturerOptions = uniq([b.defaultManufacturer, ...MANUFACTURERS]);
+  // Default edition can only be one of this brand's editions.
+  const editionOptions = uniq(editions.map((e) => e.name));
+
+  // Remove an edition; if it was the nominated default, clear the default too.
+  const removeEdition = (id: string) => {
+    const next = editions.filter((x) => x.id !== id);
+    const removed = editions.find((x) => x.id === id);
+    setB((p) => ({
+      ...p,
+      editions: next,
+      defaultEdition: removed && p.defaultEdition === removed.name ? undefined : p.defaultEdition,
+    }));
+  };
+
+  // Toggling multi-brand off drops the editions concept entirely.
+  const setMultiBrand = (on: boolean) =>
+    setB((p) => (on ? { ...p, isMultiBrand: true } : { ...p, isMultiBrand: false, defaultEdition: undefined }));
   const parentOptions = uniq([
     b.parent,
     ...getBrands()
@@ -64,7 +88,11 @@ export function BrandForm({
 
   const handleSave = async () => {
     if (!canSave) {
-      toast.error("Name, Default category and Default manufacturer are required");
+      toast.error(
+        needsDefaultEdition && !b.defaultEdition
+          ? "Select a Default edition for this multi-brand"
+          : "Name, Default category and Default manufacturer are required",
+      );
       return;
     }
     setIsSaving(true);
@@ -159,6 +187,38 @@ export function BrandForm({
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Default edition — multi-brand only; sits below Default category */}
+                {b.isMultiBrand && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label className="text-sm font-medium text-foreground/80">
+                      Default edition{" "}
+                      {needsDefaultEdition && <span className="text-destructive">*</span>}
+                    </Label>
+                    <Select
+                      value={b.defaultEdition || NONE}
+                      onValueChange={(v) => set("defaultEdition", v === NONE ? undefined : v)}
+                      disabled={!hasEditions}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={hasEditions ? "Select an edition" : "Add an edition first"}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NONE}>— No default —</SelectItem>
+                        {editionOptions.map((e) => (
+                          <SelectItem key={e} value={e}>
+                            {e}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-xs text-muted-foreground">
+                      The edition applied by default for this multi-brand.
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-1.5 md:max-w-[calc(50%-0.75rem)]">
@@ -200,7 +260,7 @@ export function BrandForm({
                   <Checkbox
                     checked={b.isMultiBrand}
                     disabled={b.isMultiBrand && hasEditions}
-                    onCheckedChange={(v) => set("isMultiBrand", v === true)}
+                    onCheckedChange={(v) => setMultiBrand(v === true)}
                     className="mt-0.5"
                   />
                   <span>
@@ -243,14 +303,21 @@ export function BrandForm({
                       ) : (
                         editions.map((e) => (
                           <tr key={e.id} className="border-t border-border hover:bg-secondary/40">
-                            <Td className="text-foreground/90">{e.name}</Td>
+                            <Td className="text-foreground/90">
+                              <span className="inline-flex items-center gap-2">
+                                {e.name}
+                                {b.defaultEdition === e.name && (
+                                  <span className="rounded-full bg-[var(--sidebar-active-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--sidebar-active-fg)]">
+                                    Default
+                                  </span>
+                                )}
+                              </span>
+                            </Td>
                             <Td className="text-foreground/80">{e.category}</Td>
                             <Td className="text-muted-foreground">{e.createdAt}</Td>
                             <Td>
                               <button
-                                onClick={() =>
-                                  set("editions", editions.filter((x) => x.id !== e.id))
-                                }
+                                onClick={() => removeEdition(e.id)}
                                 className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
                                 aria-label={`Remove ${e.name}`}
                               >

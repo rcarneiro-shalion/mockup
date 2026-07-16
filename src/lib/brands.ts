@@ -23,6 +23,9 @@ export type Brand = {
   isWhiteLabel: boolean;
   isMultiBrand: boolean;
   editions?: BrandEdition[];
+  // Multi-brand only: the edition applied by default. Must reference one of this
+  // brand's `editions` (by name), mirroring how defaultCategory references a category.
+  defaultEdition?: string;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
@@ -76,6 +79,7 @@ const B = (
   createdAt: string,
   updatedAt: string,
   editions?: BrandEdition[],
+  defaultEdition?: string,
 ): Brand => ({
   id,
   name,
@@ -85,6 +89,7 @@ const B = (
   isWhiteLabel,
   isMultiBrand,
   editions,
+  defaultEdition,
   createdAt,
   updatedAt,
   createdBy: "ecometry@shalion.com",
@@ -97,7 +102,7 @@ export const INITIAL_BRANDS: Brand[] = [
       ed("be-1", "Coca-Cola Original", "Beverages > Soft Drinks > Soda", "Thu, Mar 7, 2024 11:20 AM"),
       ed("be-2", "Coca-Cola Zero", "Beverages > Soft Drinks > Soda", "Thu, Mar 7, 2024 11:22 AM"),
       ed("be-3", "Coca-Cola Cherry", "Beverages > Soft Drinks > Soda", "Tue, Jun 2, 2026 7:01 AM"),
-    ]),
+    ], "Coca-Cola Original"),
   B("br-coca-light", "Coca-Cola Light", "Beverages > Soft Drinks > Soda", "The Coca-Cola Company", "Coca-Cola", false, false,
     "Thu, Mar 7, 2024 11:18 AM", "Mon, Jun 1, 2026 12:01 PM"),
   B("br-fanta", "Fanta", "Beverages > Soft Drinks > Soda", "The Coca-Cola Company", undefined, false, false,
@@ -110,7 +115,7 @@ export const INITIAL_BRANDS: Brand[] = [
     "Mon, Nov 18, 2024 11:58 AM", "Sun, Jun 29, 2025 7:25 PM", [
       ed("be-4", "Essence Spring Collection", "Beauty > Makeup > Face", "Wed, Apr 2, 2025 8:52 AM"),
       ed("be-5", "Essence Holiday Edition", "Beauty > Makeup > Lips", "Mon, Nov 18, 2024 12:10 PM"),
-    ]),
+    ], "Essence Spring Collection"),
   B("br-catrice", "Catrice", "Beauty > Makeup > Eyes", "Cosnova", undefined, false, false,
     "Thu, Oct 26, 2023 3:31 PM", "Thu, Oct 26, 2023 3:31 PM"),
   B("br-lancome", "Lancôme", "Beauty > Skin Care", "L'Oréal", undefined, false, false,
@@ -171,6 +176,7 @@ export function emptyBrand(): Brand {
     isWhiteLabel: false,
     isMultiBrand: false,
     editions: [],
+    defaultEdition: undefined,
     createdAt: stamp,
     updatedAt: stamp,
   };

@@ -32,6 +32,7 @@ function BrandsListPage() {
   const sort = useSort("codification-brands");
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<string[]>([]);
+  const [edition, setEdition] = useState<string[]>([]);
   const [manufacturer, setManufacturer] = useState<string[]>([]);
   const [parent, setParent] = useState<string[]>([]);
   const [whiteLabel, setWhiteLabel] = useState<string[]>([]);
@@ -52,6 +53,7 @@ function BrandsListPage() {
     (r) =>
       (!q || r.name.toLowerCase().includes(q.trim().toLowerCase())) &&
       inSel(category, r.defaultCategory) &&
+      inSel(edition, r.defaultEdition) &&
       inSel(manufacturer, r.defaultManufacturer) &&
       inSel(parent, r.parent) &&
       inSel(whiteLabel, r.isWhiteLabel ? "Yes" : "No") &&
@@ -76,6 +78,7 @@ function BrandsListPage() {
         <FilterBar search="Search brands by name" searchValue={q} onSearchChange={setQ}>
           <FilterChip label="Name starts with" icon={Tag} />
           <FilterChip label="Default categories" icon={Layers} options={distinct(rows, (r) => r.defaultCategory)} value={category} onChange={setCategory} />
+          <FilterChip label="Default editions" icon={Layers} options={distinct(rows, (r) => r.defaultEdition)} value={edition} onChange={setEdition} />
           <FilterChip label="Default manufacturers" icon={Factory} options={distinct(rows, (r) => r.defaultManufacturer)} value={manufacturer} onChange={setManufacturer} />
           <FilterChip label="Parents" icon={GitBranch} options={distinct(rows, (r) => r.parent)} value={parent} onChange={setParent} />
           <FilterChip label="White label" icon={BadgeCheck} options={["Yes", "No"]} value={whiteLabel} onChange={setWhiteLabel} />
@@ -91,11 +94,13 @@ function BrandsListPage() {
             <tr>
               <SortTh label="Name" sortKey="name" sort={sort} />
               <SortTh label="Default category" sortKey="defaultCategory" sort={sort} />
+              <SortTh label="Default edition" sortKey="defaultEdition" sort={sort} />
               <SortTh label="Default manufacturer" sortKey="defaultManufacturer" sort={sort} />
               <SortTh label="Parent" sortKey="parent" sort={sort} />
               <SortTh label="Created at" sortKey="createdAt" sort={sort} />
               <SortTh label="Updated at" sortKey="updatedAt" sort={sort} />
               <SortTh label="Created by" sortKey="createdBy" sort={sort} />
+              <SortTh label="Updated by" sortKey="updatedBy" sort={sort} />
               <Th className="w-10" />
             </tr>
           </thead>
@@ -109,6 +114,13 @@ function BrandsListPage() {
                 </Td>
                 <Td>
                   <span className="text-[var(--sidebar-active-fg)]">{r.defaultCategory}</span>
+                </Td>
+                <Td>
+                  {r.defaultEdition ? (
+                    <span className="text-[var(--sidebar-active-fg)]">{r.defaultEdition}</span>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
                 </Td>
                 <Td>
                   <span className="text-[var(--sidebar-active-fg)]">{r.defaultManufacturer}</span>
@@ -131,6 +143,9 @@ function BrandsListPage() {
                 <Td className="whitespace-nowrap text-muted-foreground">{r.updatedAt}</Td>
                 <Td>
                   <UserCell email={r.createdBy ?? "ecometry@shalion.com"} />
+                </Td>
+                <Td>
+                  <UserCell email={r.updatedBy ?? "ecometry@shalion.com"} />
                 </Td>
                 <Td>
                   <RowActionsMenu
