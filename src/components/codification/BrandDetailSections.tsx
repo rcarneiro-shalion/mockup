@@ -15,15 +15,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Th, Td } from "@/components/seeds/ListPrimitives";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Plus, Trash2, X, Regex, Star } from "lucide-react";
+import {
+  ChevronDown,
+  Plus,
+  Trash2,
+  X,
+  Regex,
+  Star,
+  CopyPlus,
+  CopyMinus,
+  ChevronsUpDown,
+  Check,
+} from "lucide-react";
 import {
   uid,
   type RegexEntry,
@@ -32,6 +42,15 @@ import {
 } from "@/lib/brandSampleSections";
 import type { BrandEdition } from "@/lib/brands";
 import { TryRegexModal } from "@/components/codification/TryRegexModal";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { getCategories } from "@/lib/settings";
 
 // ---------------------------------------------------------------------------
 // Richer Brand-detail sections, mirroring the real console-frontend brand
@@ -94,35 +113,58 @@ function RegexChips({
             <Plus className="h-3 w-3" /> Add regex
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-96">
+        <PopoverContent align="start" className="w-[32rem]">
           <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Regex</Label>
+            <div className="text-sm font-semibold text-foreground">New regex</div>
+            <div className="flex items-center gap-2">
               <Input
                 value={expr}
                 onChange={(e) => setExpr(e.target.value)}
                 placeholder="Regex"
                 autoFocus
                 onKeyDown={(e) => e.key === "Enter" && add()}
-                className="font-mono text-xs"
+                className="h-9 flex-1 font-mono text-xs"
               />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex h-9 w-32 shrink-0 items-center justify-between rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    {isNeg ? "Exclusive" : "Inclusive"}
+                    <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72">
+                  <DropdownMenuItem className="items-start gap-2" onSelect={() => setIsNeg(false)}>
+                    <CopyPlus className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      <span className="block text-sm font-medium">Inclusive</span>
+                      <span className="block text-xs text-muted-foreground">
+                        Regex matches will be included
+                      </span>
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="items-start gap-2" onSelect={() => setIsNeg(true)}>
+                    <CopyMinus className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      <span className="block text-sm font-medium">Exclusive</span>
+                      <span className="block text-xs text-muted-foreground">
+                        Regex matches will be excluded
+                      </span>
+                    </span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Match type</Label>
-              <Select value={isNeg ? "exc" : "inc"} onValueChange={(v) => setIsNeg(v === "exc")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="inc">Inclusive — matches will be included</SelectItem>
-                  <SelectItem value="exc">Exclusive — matches will be excluded</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
                 Cancel
-              </Button>
+              </button>
               <Button size="sm" onClick={add} disabled={!expr.trim()}>
                 Add regex
               </Button>
@@ -359,7 +401,37 @@ export function CategorySelectionSection({ initial }: { initial: CategorySel[] }
           setAddOpen(false);
         }}
       >
-        <Field label="Category" value={name} onChange={setName} placeholder="e.g. Carbonated Soft Drinks" />
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-sm font-medium text-foreground/80">
+            Category <span className="text-destructive">*</span>
+          </Label>
+          <Command className="rounded-md border border-border">
+            <CommandInput placeholder="Search by category, description, sector…" />
+            <CommandList className="max-h-56">
+              <CommandEmpty>No category found.</CommandEmpty>
+              <CommandGroup>
+                {getCategories().map((c) => (
+                  <CommandItem
+                    key={c.id}
+                    value={`${c.name} ${c.description} ${c.sector} ${c.id}`}
+                    onSelect={() => setName(c.name)}
+                    className="flex items-start gap-2"
+                  >
+                    <Check
+                      className={cn("mt-0.5 h-4 w-4 shrink-0", name === c.name ? "opacity-100" : "opacity-0")}
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate">{c.name}</span>
+                      {c.description && (
+                        <span className="block truncate text-xs text-muted-foreground">{c.description}</span>
+                      )}
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </div>
       </AssignDialog>
     </SectionCard>
   );
