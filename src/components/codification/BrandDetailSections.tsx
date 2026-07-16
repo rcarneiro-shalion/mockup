@@ -40,7 +40,7 @@ import {
   type CategorySel,
   type ManufacturerRow,
 } from "@/lib/brandSampleSections";
-import type { BrandEdition } from "@/lib/brands";
+import { MANUFACTURERS, type BrandEdition } from "@/lib/brands";
 import { TryRegexModal } from "@/components/codification/TryRegexModal";
 import {
   Command,
@@ -51,6 +51,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { getCategories } from "@/lib/settings";
+import { COUNTRY_OPTIONS, COUNTRY_NAMES } from "@/lib/retailers";
 
 // ---------------------------------------------------------------------------
 // Richer Brand-detail sections, mirroring the real console-frontend brand
@@ -623,23 +624,65 @@ export function ManufacturerSelectionSection({ initial }: { initial: Manufacture
         submitLabel="Assign manufacturer"
         canSubmit={!!country.trim() && !!manufacturer.trim()}
         onSubmit={() => {
-          const cc = country.trim().toUpperCase().slice(0, 2);
-          setRows((rs) => [
-            ...rs,
-            { id: uid(), country: cc, flag: flagFor(cc), manufacturer: manufacturer.trim() },
-          ]);
+          setRows((rs) => [...rs, { id: uid(), country, flag: flagFor(country), manufacturer }]);
           setCountry("");
           setManufacturer("");
           setAddOpen(false);
         }}
       >
-        <Field label="Country" value={country} onChange={setCountry} placeholder="ISO-2, e.g. GB" />
-        <Field
-          label="Manufacturer"
-          value={manufacturer}
-          onChange={setManufacturer}
-          placeholder="e.g. Coca-Cola Europacific Partners"
-        />
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-sm font-medium text-foreground/80">
+            Country <span className="text-destructive">*</span>
+          </Label>
+          <Command className="rounded-md border border-border">
+            <CommandInput placeholder="Search country…" />
+            <CommandList className="max-h-40">
+              <CommandEmpty>No country found.</CommandEmpty>
+              <CommandGroup>
+                {COUNTRY_OPTIONS.map((code) => (
+                  <CommandItem
+                    key={code}
+                    value={`${COUNTRY_NAMES[code] ?? code} ${code}`}
+                    onSelect={() => setCountry(code)}
+                    className="flex items-center gap-2"
+                  >
+                    <Check className={cn("h-4 w-4 shrink-0", country === code ? "opacity-100" : "opacity-0")} />
+                    <span className="text-base leading-none">{flagFor(code)}</span>
+                    <span className="min-w-0 flex-1 truncate">
+                      {COUNTRY_NAMES[code] ?? code} <span className="text-muted-foreground">({code})</span>
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-sm font-medium text-foreground/80">
+            Manufacturer <span className="text-destructive">*</span>
+          </Label>
+          <Command className="rounded-md border border-border">
+            <CommandInput placeholder="Search manufacturer…" />
+            <CommandList className="max-h-40">
+              <CommandEmpty>No manufacturer found.</CommandEmpty>
+              <CommandGroup>
+                {MANUFACTURERS.map((m) => (
+                  <CommandItem
+                    key={m}
+                    value={m}
+                    onSelect={() => setManufacturer(m)}
+                    className="flex items-center gap-2"
+                  >
+                    <Check
+                      className={cn("h-4 w-4 shrink-0", manufacturer === m ? "opacity-100" : "opacity-0")}
+                    />
+                    <span className="min-w-0 flex-1 truncate">{m}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </div>
       </AssignDialog>
     </SectionCard>
   );
