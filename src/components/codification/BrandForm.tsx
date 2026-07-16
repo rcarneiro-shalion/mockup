@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -21,8 +21,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Th, Td, Pagination } from "@/components/seeds/ListPrimitives";
 import { getBrands, MANUFACTURERS, BRAND_CATEGORIES, type Brand } from "@/lib/brands";
+import { getBrandSections, uid } from "@/lib/brandSampleSections";
+import {
+  BrandClassificationSection,
+  CategorySelectionSection,
+  EditionSelectionSection,
+  ManufacturerSelectionSection,
+} from "@/components/codification/BrandDetailSections";
 import { toast } from "sonner";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
@@ -79,6 +85,15 @@ export function BrandForm({
   // Toggling multi-brand off drops the editions concept entirely.
   const setMultiBrand = (on: boolean) =>
     setB((p) => (on ? { ...p, isMultiBrand: true } : { ...p, isMultiBrand: false, defaultEdition: undefined }));
+
+  // Richer console-style sections (illustrative prototype data, not persisted).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const sections = useMemo(() => getBrandSections(b), [b.id]);
+  const addEdition = (name: string, category: string) =>
+    setB((p) => ({
+      ...p,
+      editions: [...(p.editions ?? []), { id: uid(), name, category, createdAt: new Date().toDateString() }],
+    }));
   const parentOptions = uniq([
     b.parent,
     ...getBrands()
@@ -276,62 +291,23 @@ export function BrandForm({
               </div>
             </div>
 
-            {/* Editions (multi-brand only) */}
-            {b.isMultiBrand && (
-              <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-                <h2 className="text-base font-semibold text-foreground">Editions</h2>
-                <div className="mt-4 overflow-hidden rounded-lg border border-border">
-                  <table className="w-full text-sm">
-                    <thead className="bg-secondary/60">
-                      <tr>
-                        <Th>Name</Th>
-                        <Th>Category</Th>
-                        <Th>Created at</Th>
-                        <Th className="w-10" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {editions.length === 0 ? (
-                        <tr>
-                          <Td className="text-muted-foreground">
-                            <span className="block py-2">No editions yet.</span>
-                          </Td>
-                          <Td />
-                          <Td />
-                          <Td />
-                        </tr>
-                      ) : (
-                        editions.map((e) => (
-                          <tr key={e.id} className="border-t border-border hover:bg-secondary/40">
-                            <Td className="text-foreground/90">
-                              <span className="inline-flex items-center gap-2">
-                                {e.name}
-                                {b.defaultEdition === e.name && (
-                                  <span className="rounded-full bg-[var(--sidebar-active-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--sidebar-active-fg)]">
-                                    Default
-                                  </span>
-                                )}
-                              </span>
-                            </Td>
-                            <Td className="text-foreground/80">{e.category}</Td>
-                            <Td className="text-muted-foreground">{e.createdAt}</Td>
-                            <Td>
-                              <button
-                                onClick={() => removeEdition(e.id)}
-                                className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-destructive"
-                                aria-label={`Remove ${e.name}`}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </Td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-                <Pagination total={editions.length} />
-              </div>
+            {/* Richer console-style sections (edit mode) — mirror the real brand editor */}
+            {mode === "edit" && (
+              <>
+                <BrandClassificationSection initial={sections.classification} />
+                <CategorySelectionSection initial={sections.categories} />
+                {b.isMultiBrand && (
+                  <EditionSelectionSection
+                    editions={editions}
+                    defaultEdition={b.defaultEdition}
+                    editionRegexps={sections.editionRegexps}
+                    onAddEdition={addEdition}
+                    onRemoveEdition={removeEdition}
+                    onMakeDefault={(name) => set("defaultEdition", name)}
+                  />
+                )}
+                <ManufacturerSelectionSection initial={sections.manufacturers} />
+              </>
             )}
           </div>
         </div>
