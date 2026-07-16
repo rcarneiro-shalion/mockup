@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EntityEditPage } from "@/components/common/EntityEditPage";
-import { DC_SPECS } from "@/lib/dataCollectorEntities";
+import { OrderForm } from "@/components/data-collector/OrderForm";
 
 export const Route = createFileRoute("/data-collector/orders/new")({
-  head: () => ({ meta: [{ title: "Add Orders — Shalion" }] }),
-  component: () => <EntityEditPage spec={DC_SPECS["dc-orders"]} editBase={"/data-collector/orders"} isNew />,
+  head: () => ({ meta: [{ title: "Add order — Shalion" }] }),
+  component: () => <OrderForm isNew />,
 });
