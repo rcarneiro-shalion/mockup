@@ -90,6 +90,9 @@ export function BrandForm({
   // Richer console-style sections (illustrative prototype data, not persisted).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const sections = useMemo(() => getBrandSections(b), [b.id]);
+  // Category selection is shared: it feeds the Edition "Assign edition" category
+  // picker, which is limited to the Default category + these assigned categories.
+  const [categorySel, setCategorySel] = useState(sections.categories);
   const addEdition = (name: string, category: string) =>
     setB((p) => ({
       ...p,
@@ -292,12 +295,13 @@ export function BrandForm({
             {mode === "edit" && (
               <>
                 <BrandClassificationSection initial={sections.classification} />
-                <CategorySelectionSection initial={sections.categories} />
+                <CategorySelectionSection value={categorySel} onChange={setCategorySel} />
                 {b.isMultiBrand && (
                   <EditionSelectionSection
                     editions={editions}
                     defaultEdition={b.defaultEdition}
                     editionRegexps={sections.editionRegexps}
+                    categoryOptions={uniq([b.defaultCategory, ...categorySel.map((c) => c.name)])}
                     onAddEdition={addEdition}
                     onRemoveEdition={removeEdition}
                     onMakeDefault={(name) => set("defaultEdition", name)}

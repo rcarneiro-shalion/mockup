@@ -345,8 +345,13 @@ export function BrandClassificationSection({ initial }: { initial: RegexEntry[] 
 
 // --- Category selection ---------------------------------------------------
 
-export function CategorySelectionSection({ initial }: { initial: CategorySel[] }) {
-  const [cats, setCats] = useState(initial);
+export function CategorySelectionSection({
+  value,
+  onChange,
+}: {
+  value: CategorySel[];
+  onChange: (v: CategorySel[]) => void;
+}) {
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState("");
   return (
@@ -365,23 +370,23 @@ export function CategorySelectionSection({ initial }: { initial: CategorySel[] }
             </tr>
           </thead>
           <tbody>
-            {cats.length === 0
+            {value.length === 0
               ? emptyRow(3, "No categories assigned.")
-              : cats.map((c) => (
+              : value.map((c) => (
                   <tr key={c.id} className="border-t border-border align-top">
                     <Td className="text-[var(--sidebar-active-fg)]">{c.name}</Td>
                     <Td>
                       <RegexChips
                         value={c.regexps}
                         onChange={(v) =>
-                          setCats((cs) => cs.map((x) => (x.id === c.id ? { ...x, regexps: v } : x)))
+                          onChange(value.map((x) => (x.id === c.id ? { ...x, regexps: v } : x)))
                         }
                       />
                     </Td>
                     <Td>
                       <TrashButton
                         label={`Remove ${c.name}`}
-                        onClick={() => setCats((cs) => cs.filter((x) => x.id !== c.id))}
+                        onClick={() => onChange(value.filter((x) => x.id !== c.id))}
                       />
                     </Td>
                   </tr>
@@ -396,7 +401,7 @@ export function CategorySelectionSection({ initial }: { initial: CategorySel[] }
         submitLabel="Assign category"
         canSubmit={!!name.trim()}
         onSubmit={() => {
-          setCats((cs) => [...cs, { id: uid(), name: name.trim(), regexps: [] }]);
+          onChange([...value, { id: uid(), name: name.trim(), regexps: [] }]);
           setName("");
           setAddOpen(false);
         }}
@@ -443,6 +448,7 @@ export function EditionSelectionSection({
   editions,
   defaultEdition,
   editionRegexps,
+  categoryOptions,
   onAddEdition,
   onRemoveEdition,
   onMakeDefault,
@@ -450,6 +456,7 @@ export function EditionSelectionSection({
   editions: BrandEdition[];
   defaultEdition?: string;
   editionRegexps: Record<string, RegexEntry[]>;
+  categoryOptions: string[];
   onAddEdition: (name: string, category: string) => void;
   onRemoveEdition: (id: string) => void;
   onMakeDefault: (name: string) => void;
@@ -527,12 +534,33 @@ export function EditionSelectionSection({
         }}
       >
         <Field label="Name" value={name} onChange={setName} placeholder="e.g. Coca-Cola Zero" />
-        <Field
-          label="Category"
-          value={category}
-          onChange={setCategory}
-          placeholder="e.g. Beverages > Soft Drinks > Soda"
-        />
+        <div className="flex flex-col gap-1.5">
+          <Label className="text-sm font-medium text-foreground/80">
+            Category <span className="text-destructive">*</span>
+          </Label>
+          <Command className="rounded-md border border-border">
+            <CommandInput placeholder="Search category…" />
+            <CommandList className="max-h-48">
+              <CommandEmpty>No category found.</CommandEmpty>
+              <CommandGroup>
+                {categoryOptions.map((c) => (
+                  <CommandItem
+                    key={c}
+                    value={c}
+                    onSelect={() => setCategory(c)}
+                    className="flex items-center gap-2"
+                  >
+                    <Check className={cn("h-4 w-4 shrink-0", category === c ? "opacity-100" : "opacity-0")} />
+                    <span className="min-w-0 flex-1 truncate">{c}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+          <span className="text-xs text-muted-foreground">
+            Limited to the brand's Default category and its Category selection.
+          </span>
+        </div>
       </AssignDialog>
     </SectionCard>
   );
