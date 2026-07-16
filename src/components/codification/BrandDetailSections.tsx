@@ -10,7 +10,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -32,6 +31,7 @@ import {
   type ManufacturerRow,
 } from "@/lib/brandSampleSections";
 import type { BrandEdition } from "@/lib/brands";
+import { TryRegexModal } from "@/components/codification/TryRegexModal";
 
 // ---------------------------------------------------------------------------
 // Richer Brand-detail sections, mirroring the real console-frontend brand
@@ -273,16 +273,12 @@ const emptyRow = (cols: number, text: string) => (
 export function BrandClassificationSection({ initial }: { initial: RegexEntry[] }) {
   const [regexps, setRegexps] = useState(initial);
   const [tryOpen, setTryOpen] = useState(false);
-  const [probe, setProbe] = useState("");
   return (
     <SectionCard
       title="Brand classification"
       subtitle="Configure regex patterns to categorize results under this brand."
       actions={
         <>
-          <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setTryOpen(true)}>
-            <Regex className="h-4 w-4" /> Try regex
-          </Button>
           {regexps.length > 0 && (
             <Button
               variant="outline"
@@ -293,34 +289,14 @@ export function BrandClassificationSection({ initial }: { initial: RegexEntry[] 
               <Trash2 className="h-4 w-4" /> Delete all
             </Button>
           )}
+          <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={() => setTryOpen(true)}>
+            <Regex className="h-4 w-4" /> Try regex
+          </Button>
         </>
       }
     >
       <RegexChips value={regexps} onChange={setRegexps} />
-      <Dialog open={tryOpen} onOpenChange={setTryOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Try regex</DialogTitle>
-            <DialogDescription>
-              Enter a regex to get the results that will match with listings and ads. Date range
-              defaults to the last 60 days.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-1">
-            <Input
-              value={probe}
-              onChange={(e) => setProbe(e.target.value)}
-              placeholder="(?i)coca[\s\-]?cola"
-              className="font-mono text-xs"
-            />
-            <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              {probe.trim()
-                ? "Matching preview isn't wired in this mockup — in the console this lists the Listings & Ads that match."
-                : "Enter a pattern to preview matching Listings & Ads."}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TryRegexModal open={tryOpen} onOpenChange={setTryOpen} />
     </SectionCard>
   );
 }
