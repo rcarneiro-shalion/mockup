@@ -29,8 +29,9 @@ import {
   EditionSelectionSection,
   ManufacturerSelectionSection,
 } from "@/components/codification/BrandDetailSections";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, Tag, Shuffle } from "lucide-react";
 
 const NONE = "__none__";
 const uniq = (arr: (string | undefined)[]) => [...new Set(arr.filter((v): v is string => !!v))];
@@ -155,41 +156,55 @@ export function BrandForm({
         <div className="flex-1 overflow-auto px-6 py-5">
           <div className="mx-auto max-w-5xl space-y-5">
             {/* Core fields */}
+            {/* Core fields — mirrors the console: Name + White label + Multi brand,
+                then Default manufacturer + Parent, then Default category (full width). */}
             <div className="space-y-5 rounded-xl border border-border bg-card p-6 shadow-sm">
-              <div className="flex flex-col gap-1.5">
-                <Label className="text-sm font-medium text-foreground/80">
-                  Name <span className="text-destructive">*</span>
-                </Label>
-                <Input value={b.name} onChange={(e) => set("name", e.target.value)} />
-              </div>
-
-              <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
-                <div className="flex flex-col gap-1.5">
+              {/* Row 1: Name + inline White label / Multi brand */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="flex flex-1 flex-col gap-1.5">
                   <Label className="text-sm font-medium text-foreground/80">
-                    Default category <span className="text-destructive">*</span>
+                    Name <span className="text-destructive">*</span>
                   </Label>
-                  <Select value={b.defaultCategory} onValueChange={(v) => set("defaultCategory", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categoryOptions.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input value={b.name} onChange={(e) => set("name", e.target.value)} />
                 </div>
 
+                <label className="flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-md border border-border px-3 text-sm">
+                  <Checkbox
+                    checked={b.isWhiteLabel}
+                    onCheckedChange={(v) => set("isWhiteLabel", v === true)}
+                  />
+                  <span className="font-medium text-foreground">White label</span>
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                </label>
+
+                <label
+                  title={
+                    b.isMultiBrand && hasEditions
+                      ? "You must remove all editions associated with the brand to disable this field."
+                      : undefined
+                  }
+                  className={cn(
+                    "flex h-10 shrink-0 items-center gap-2 rounded-md border border-border px-3 text-sm",
+                    b.isMultiBrand && hasEditions ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                  )}
+                >
+                  <Checkbox
+                    checked={b.isMultiBrand}
+                    disabled={b.isMultiBrand && hasEditions}
+                    onCheckedChange={(v) => setMultiBrand(v === true)}
+                  />
+                  <span className="font-medium text-foreground">Multi brand</span>
+                  <Shuffle className="h-4 w-4 text-muted-foreground" />
+                </label>
+              </div>
+
+              {/* Row 2: Default manufacturer + Parent */}
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-sm font-medium text-foreground/80">
                     Default manufacturer <span className="text-destructive">*</span>
                   </Label>
-                  <Select
-                    value={b.defaultManufacturer}
-                    onValueChange={(v) => set("defaultManufacturer", v)}
-                  >
+                  <Select value={b.defaultManufacturer} onValueChange={(v) => set("defaultManufacturer", v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a manufacturer" />
                     </SelectTrigger>
@@ -203,92 +218,74 @@ export function BrandForm({
                   </Select>
                 </div>
 
-                {/* Default edition — multi-brand only; sits below Default category */}
-                {b.isMultiBrand && (
-                  <div className="flex flex-col gap-1.5">
-                    <Label className="text-sm font-medium text-foreground/80">
-                      Default edition{" "}
-                      {needsDefaultEdition && <span className="text-destructive">*</span>}
-                    </Label>
-                    <Select
-                      value={b.defaultEdition || NONE}
-                      onValueChange={(v) => set("defaultEdition", v === NONE ? undefined : v)}
-                      disabled={!hasEditions}
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={hasEditions ? "Select an edition" : "Add an edition first"}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NONE}>— No default —</SelectItem>
-                        {editionOptions.map((e) => (
-                          <SelectItem key={e} value={e}>
-                            {e}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span className="text-xs text-muted-foreground">
-                      The edition applied by default for this multi-brand.
-                    </span>
-                  </div>
-                )}
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-sm font-medium text-foreground/80">Parent</Label>
+                  <Select
+                    value={b.parent || NONE}
+                    onValueChange={(v) => set("parent", v === NONE ? undefined : v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="No parent" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>— No parent —</SelectItem>
+                      {parentOptions.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="flex flex-col gap-1.5 md:max-w-[calc(50%-0.75rem)]">
-                <Label className="text-sm font-medium text-foreground/80">Parent brand</Label>
-                <Select
-                  value={b.parent || NONE}
-                  onValueChange={(v) => set("parent", v === NONE ? undefined : v)}
-                >
+              {/* Row 3: Default category (full width) */}
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-sm font-medium text-foreground/80">
+                  Default category <span className="text-destructive">*</span>
+                </Label>
+                <Select value={b.defaultCategory} onValueChange={(v) => set("defaultCategory", v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="No parent" />
+                    <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={NONE}>— No parent —</SelectItem>
-                    {parentOptions.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
+                    {categoryOptions.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-3 pt-1">
-                <label className="flex items-start gap-3">
-                  <Checkbox
-                    checked={b.isWhiteLabel}
-                    onCheckedChange={(v) => set("isWhiteLabel", v === true)}
-                    className="mt-0.5"
-                  />
-                  <span>
-                    <span className="block text-sm font-medium text-foreground">Is white label</span>
-                    <span className="mt-0.5 block text-sm text-muted-foreground">
-                      Retailer's own-brand / private-label product line.
-                    </span>
+              {/* Default edition — mockup-only feature; below Default category, multi-brand only */}
+              {b.isMultiBrand && (
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-sm font-medium text-foreground/80">
+                    Default edition {needsDefaultEdition && <span className="text-destructive">*</span>}
+                  </Label>
+                  <Select
+                    value={b.defaultEdition || NONE}
+                    onValueChange={(v) => set("defaultEdition", v === NONE ? undefined : v)}
+                    disabled={!hasEditions}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={hasEditions ? "Select an edition" : "Add an edition first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>— No default —</SelectItem>
+                      {editionOptions.map((e) => (
+                        <SelectItem key={e} value={e}>
+                          {e}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-xs text-muted-foreground">
+                    The edition applied by default for this multi-brand.
                   </span>
-                </label>
-
-                <label className="flex items-start gap-3">
-                  <Checkbox
-                    checked={b.isMultiBrand}
-                    disabled={b.isMultiBrand && hasEditions}
-                    onCheckedChange={(v) => setMultiBrand(v === true)}
-                    className="mt-0.5"
-                  />
-                  <span>
-                    <span className="block text-sm font-medium text-foreground">Is multi-brand</span>
-                    <span className="mt-0.5 block text-sm text-muted-foreground">
-                      A brand umbrella that groups several editions.
-                      {b.isMultiBrand && hasEditions
-                        ? " It can't be turned off while it has editions — delete the editions first."
-                        : ""}
-                    </span>
-                  </span>
-                </label>
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Richer console-style sections (edit mode) — mirror the real brand editor */}
