@@ -273,7 +273,6 @@ export const PATCH_SERVICES: PatchService[] = [
           { column: "timezone", type: "string", nullable: true, note: "IANA tz, e.g. Europe/Brussels" },
           { column: "is_active", type: "boolean", path: "isActive" },
           { column: "is_archived", type: "boolean", path: "isArchived" },
-          { column: "cache_validity", type: "number", path: "cacheValidity", int: true, nullable: true, note: "cache TTL in hours (0 = no cache)" },
           // jsonb columns — whole-object replace (quote the CSV cell; escape inner quotes as "").
           // To change ONE leaf instead, keep the field selected and fill the "jsonb sub-path".
           // `leaves` = known sub-paths → expected type; the tool validates the value against

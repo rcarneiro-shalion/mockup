@@ -47,11 +47,6 @@ export function DataGroupPage({
     isAdd ? [] : [{ id: "pr1", name: "Coca Cola Latam", createdAt: "2026-04-23, 07:41:10" }],
   );
 
-  const [lookerShared, setLookerShared] = useState(false);
-  const [lookerWarehouseName, setLookerWarehouseName] = useState(WAREHOUSE_OPTIONS[0]);
-  const [lookerSize, setLookerSize] = useState(isAdd ? "MEDIUM" : "X2LARGE");
-  const [lookerClusters, setLookerClusters] = useState(isAdd ? 1 : 3);
-
   const [cubeShared, setCubeShared] = useState(false);
   const [cubeWarehouseName, setCubeWarehouseName] = useState(WAREHOUSE_OPTIONS[0]);
   const [cubeSize, setCubeSize] = useState(isAdd ? "MEDIUM" : "X2LARGE");
@@ -67,7 +62,7 @@ export function DataGroupPage({
   const handleParentToggle = (next: boolean) => {
     if (!next && parents.length > 0) { setConfirmDisableOpen(true); return; }
     setIsParent(next);
-    if (next) setLookerShared(true);
+    if (next) setCubeShared(true);
   };
   const confirmDisableParent = () => { setIsParent(false); setParents([]); setConfirmDisableOpen(false); };
   const assignDatagroup = () => {
@@ -189,21 +184,7 @@ export function DataGroupPage({
               )}
             </div>
 
-            {/* Looker */}
-            <SectionCard title="Looker">
-              <Checkbox checked={lookerShared} onChange={setLookerShared} label="Use shared Snowflake warehouse" hint="This field will allow to select between shared warehouse or a custom one." />
-              {lookerShared ? (
-                <div className="mt-4 max-w-xl"><Field label="Warehouse name"><Select value={lookerWarehouseName} onChange={setLookerWarehouseName} options={WAREHOUSE_OPTIONS} /></Field></div>
-              ) : (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
-                  <Field label="Warehouse size"><Select value={lookerSize} onChange={setLookerSize} options={SIZE_OPTIONS} /></Field>
-                  <Field label="Max clusters"><NumberInput value={lookerClusters} onChange={setLookerClusters} /></Field>
-                  <p className="md:col-span-2 text-sm font-medium text-amber-600">Snowflake cost: {snowflakeCost(lookerSize, lookerClusters)}€/h</p>
-                </div>
-              )}
-            </SectionCard>
-
-            {/* Cube */}
+            {/* Cube (Looker section removed — contract cancelled) */}
             <SectionCard title="Cube">
               <Checkbox checked={cubeShared} onChange={setCubeShared} label="Use shared Snowflake warehouse" hint="This field will allow to select between shared warehouse or a custom one." />
               {cubeShared ? (

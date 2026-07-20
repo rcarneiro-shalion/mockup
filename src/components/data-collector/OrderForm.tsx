@@ -138,7 +138,6 @@ export function OrderForm({ rowId, isNew }: { rowId?: string; isNew?: boolean })
       folder: String(r.folder ?? ""),
       streamName: String(r.streamName ?? ""),
       queue: String(r.queue ?? ""),
-      cacheValidity: Number(r.cacheValidity ?? 0),
       isActive: r.isActive === undefined ? true : !!r.isActive,
     };
   });
@@ -208,7 +207,6 @@ export function OrderForm({ rowId, isNew }: { rowId?: string; isNew?: boolean })
       deliveryOutputsJson: JSON.stringify(outputs.map((o) => ({ conditionKey: o.conditionKey.trim(), method: o.method, attrs: o.attrs }))),
       bucket: String(outputs[0]?.attrs.bucket ?? ""), folder: String(outputs[0]?.attrs.folder ?? ""),
       streamName: String(outputs[0]?.attrs.streamName ?? ""), queue: String(outputs[0]?.attrs.queue ?? ""),
-      cacheValidity: Number(f.cacheValidity),
       isActive: !!f.isActive, updatedAt: stamp(),
     };
     if (isNew && !next.createdAt) next.createdAt = stamp();
@@ -216,10 +214,6 @@ export function OrderForm({ rowId, isNew }: { rowId?: string; isNew?: boolean })
     toast.success(`Order ${isNew ? "created" : "saved"} successfully`);
     back();
   };
-
-  const cacheChips: { label: string; secs: number }[] = [
-    { label: "5 min", secs: 300 }, { label: "1 hour", secs: 3600 }, { label: "1 day", secs: 86400 },
-  ];
 
   return (
     <AppShell>
@@ -381,20 +375,6 @@ export function OrderForm({ rowId, isNew }: { rowId?: string; isNew?: boolean })
                 <Plus className="h-4 w-4" /> Add delivery output
               </button>
               {dupCond && <p className="mt-2 text-xs text-destructive">Condition keys must be unique.</p>}
-            </Section>
-
-            <Section title="Cache validity time">
-              <p className="mb-2 text-sm text-muted-foreground">{Number(f.cacheValidity) > 0 ? "Cache enabled" : "No cache"}</p>
-              <div className="flex items-center gap-2">
-                {cacheChips.map((c) => (
-                  <button key={c.secs} type="button" onClick={() => set("cacheValidity", c.secs)}
-                    className={cn("rounded-md border px-3 py-1.5 text-sm", Number(f.cacheValidity) === c.secs ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground/80 hover:bg-secondary")}>
-                    {c.label}
-                  </button>
-                ))}
-                <button type="button" onClick={() => set("cacheValidity", 0)} className="px-2 text-sm text-muted-foreground hover:text-foreground">Clear</button>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">Resources will not be scraped again if they were already scraped within this interval. Maximum is 1 day.</p>
             </Section>
           </div>
         </div>
