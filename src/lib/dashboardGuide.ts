@@ -15,14 +15,6 @@ export type DashboardProduct = {
 
 export const DASHBOARD_PRODUCTS: DashboardProduct[] = [
   {
-    code: "MSM",
-    name: "Market Share Maestro",
-    tagline: "Estimated brand & SKU market share in digital retailers.",
-    measures:
-      "Market share (sales & units), visibility, conversion, assortment, 1P/3P split and promotions — from the whole market down to a single product.",
-    dashboards: ["Brand", "Category", "Benchmark Brands", "Benchmark SKUs", "Single SKU"],
-  },
-  {
     code: "RMM",
     name: "Retail Media Maestro",
     tagline: "Retail-media performance: share of voice, ads and keywords.",
@@ -103,7 +95,7 @@ export const DASHBOARD_CONFIG_GROUPS: GuideGroup[] = [
     category: "Brand vs Agency dashboards",
     rules: [
       "A data group is typed Brand or Agency, and the type decides how dashboard sections are attached and how the client is scoped.",
-      "Brand — sections are attached directly to the data group (Clients → Data groups → Dashboard sections), giving one consolidated view across the client's scope, with no forced retailer filter. Used for brand-scoped products (e.g. Market Share, Digital Shelf or CMI for a single brand).",
+      "Brand — sections are attached directly to the data group (Clients → Data groups → Dashboard sections), giving one consolidated view across the client's scope, with no forced retailer filter. Used for brand-scoped products (e.g. Digital Shelf or CMI for a single brand).",
       "Agency — sections are attached per retailer (Retailers → Dashboard sections), so each retailer can surface different dashboards and the client picks a retailer to view it. It is \"Agency\" precisely because retailers differ. Used by Retail Media (RMM / RMMS), where data is syndicated and sold per retailer.",
       "To set up a Brand dashboard: in the client's data group, assign the dashboard sections (and whole section groups) it should expose, give them an order, and set the countries it covers — those become the dashboards the client can open.",
       "To set up an Agency dashboard: open each retailer and define its Dashboard sections (which dashboards that retailer surfaces); the agency client then sees, per retailer, the sections configured on that retailer.",

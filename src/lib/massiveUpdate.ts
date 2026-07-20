@@ -46,7 +46,6 @@ const apps: MuApp[] = [
   { id: "app-cmi", label: "CMI", slug: "cmi" },
   { id: "app-rmm", label: "Retail Media Maestro", slug: "rmm" },
   { id: "app-rmms", label: "Retail Media Maestro Stretch", slug: "rmms" },
-  { id: "app-msm", label: "Market Share Maestro", slug: "msm" },
 ];
 
 const groups: MuGroup[] = [
@@ -58,8 +57,6 @@ const groups: MuGroup[] = [
   { id: "g-dsm-audit", label: "Audit setup", appSlug: "dsm" },
   { id: "g-dsm-planning", label: "Planning workspace", appSlug: "dsm" },
   { id: "g-dsm-sov", label: "Share of voice", appSlug: "dsm" },
-  { id: "g-msm-overview", label: "Overview", appSlug: "msm" },
-  { id: "g-msm-share", label: "Share evolution", appSlug: "msm" },
   { id: "g-rmm-campaigns", label: "Campaigns", appSlug: "rmm" },
   { id: "g-rmm-sov", label: "Share of voice", appSlug: "rmm" },
   { id: "g-cmi-health", label: "Content health", appSlug: "cmi" },
@@ -86,9 +83,6 @@ const sections: MuSection[] = [
   S("s-au-setup", "Audit setup", "/dse-audit/setup", "g-dsm-audit"),
   S("s-pl-ws", "Planning workspace", "/dse-planning/workspace", "g-dsm-planning"),
   S("s-sov-share", "Share of voice", "/dse-sov/share-of-voice", "g-dsm-sov"),
-  S("s-msm-ov", "Market overview", "/msm/overview", "g-msm-overview"),
-  S("s-msm-evo", "Share evolution", "/msm/share-evolution", "g-msm-share"),
-  S("s-msm-ret", "Share by retailer", "/msm/share-by-retailer", "g-msm-share"),
   S("s-rmm-camp", "Campaigns", "/rmm/campaigns", "g-rmm-campaigns"),
   S("s-rmm-spend", "Ad spend", "/rmm/spend", "g-rmm-campaigns"),
   S("s-rmm-sov", "Ad share of voice", "/rmm/share-of-voice", "g-rmm-sov"),

@@ -668,7 +668,7 @@ const settingsRules: RulePage = {
       category: "Scope",
       rules: [
         "A rule can target a specific client, or apply to all clients; likewise it can target one data group or all.",
-        "A rule can be given scope entries and dashboard applications (e.g. Market Share Maestro) to narrow where it applies; duplicates are prevented and the application picker is searchable.",
+        "A rule can be given scope entries and dashboard applications (e.g. Retail Media Maestro) to narrow where it applies; duplicates are prevented and the application picker is searchable.",
       ],
     },
     {
