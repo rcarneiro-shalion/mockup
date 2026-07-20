@@ -238,7 +238,7 @@ export function DataGroupTabs({ isParent = false, dataGroupId, dashboardType = "
         {activeTab === "categories" && <CategoriesPanel />}
         {activeTab === "store-extraction-types" && <StoreExtractionPanel />}
         {activeTab === "targets" && <TargetsPanel />}
-        {activeTab === "retailers" && <RetailersPanel dashboardType={dashboardType} dataGroupId={dataGroupId} />}
+        {activeTab === "retailers" && <RetailersPanel dashboardType={dashboardType} dataGroupId={dataGroupId} dgSectionPaths={sections.map((s) => s.path)} />}
         {activeTab === "sections" && (
           <SectionsPanel sections={sections} setSections={setSections} collapsed={sectionsCollapsed} setCollapsed={setSectionsCollapsed} onAdd={() => setAddSectionOpen(true)} />
         )}
@@ -845,17 +845,65 @@ const appTag = (label: string) => {
   return (words.length > 1 ? words.map((w) => w[0]).join("") : label).toUpperCase().slice(0, 4);
 };
 
-function sectionOptions(): SectionRef[] {
-  const out: SectionRef[] = [];
-  for (const app of getDashboardApps()) {
-    for (const g of app.groups ?? []) {
-      for (const s of g.sections ?? []) {
-        out.push({ path: s.path, app: app.label });
-        if (out.length >= 300) return out;
-      }
-    }
-  }
-  return out;
+/**
+ * Two-step picker mirroring the real console modal:
+ * 1. choose a Dashboard application, 2. choose one of its sections (grouped by
+ * dashboard group). `exclude` holds paths that are not eligible (already added /
+ * already in the data group's Dashboard sections / hidden for this retailer).
+ */
+function AddRetailerSectionModal({ kind, exclude, onAdd, onClose }: {
+  kind: "shown" | "hidden";
+  exclude: Set<string>;
+  onAdd: (s: SectionRef) => void;
+  onClose: () => void;
+}) {
+  const apps = getDashboardApps();
+  const [appId, setAppId] = useState("");
+  const [path, setPath] = useState("");
+  const app = apps.find((a) => a.id === appId);
+  const groups = (app?.groups ?? [])
+    .map((g) => ({ label: g.label, sections: (g.sections ?? []).filter((s) => !exclude.has(s.path)) }))
+    .filter((g) => g.sections.length > 0);
+  const submit = () => {
+    if (app && path) onAdd({ path, app: app.label });
+    onClose();
+  };
+  const selectCls = "w-full rounded-md border border-border bg-background px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
+  return (
+    <Modal title={`Add retailer dashboard ${kind} section`} onClose={onClose}>
+      <div className="space-y-4">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-foreground">Dashboard applications</label>
+          <select value={appId} onChange={(e) => { setAppId(e.target.value); setPath(""); }} className={selectCls}>
+            <option value="" />
+            {apps.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
+          </select>
+        </div>
+        {app && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-foreground">
+              Retailer dashboard {kind} section <span className="text-destructive">*</span>
+            </label>
+            <select value={path} onChange={(e) => setPath(e.target.value)} className={selectCls}>
+              <option value="" />
+              {groups.map((g) => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.sections.map((s) => <option key={s.path} value={s.path}>{s.path}</option>)}
+                </optgroup>
+              ))}
+            </select>
+            {groups.length === 0 && (
+              <p className="mt-1 text-xs text-muted-foreground">No eligible sections in this application.</p>
+            )}
+          </div>
+        )}
+        <div className="flex justify-end gap-2 pt-1">
+          <button type="button" onClick={onClose} className="rounded-md border border-border px-3.5 py-1.5 text-sm font-medium hover:bg-secondary">Cancel</button>
+          <button type="button" onClick={submit} disabled={!path} className="rounded-md bg-primary px-3.5 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-50">Add section</button>
+        </div>
+      </div>
+    </Modal>
+  );
 }
 
 // GroupM Global — Agency set (mirrors the real console; varied configs for testing:
@@ -901,18 +949,14 @@ function SectionChip({ s, onRemove }: { s: SectionRef; onRemove: () => void }) {
   );
 }
 
-function SectionListEditor({ title, subtitle, list, exclusiveHint, onChange }: {
-  title: string; subtitle: string; list: SectionRef[]; exclusiveHint?: boolean;
+function SectionListEditor({ title, subtitle, kind, list, excludePaths, exclusiveHint, onChange }: {
+  title: string; subtitle: string; kind: "shown" | "hidden"; list: SectionRef[];
+  excludePaths: string[]; exclusiveHint?: boolean;
   onChange: (v: SectionRef[]) => void;
 }) {
   const [adding, setAdding] = useState(false);
-  const [pick, setPick] = useState("");
-  const options = sectionOptions().filter((o) => !list.some((l) => l.path === o.path));
-  const add = () => {
-    const opt = options.find((o) => o.path === pick);
-    if (opt) onChange([...list, opt]);
-    setPick(""); setAdding(false);
-  };
+  // Never offer what's already in this list + the caller's exclusions.
+  const exclude = new Set([...excludePaths, ...list.map((l) => l.path)]);
   return (
     <div>
       <h4 className="text-sm font-semibold text-foreground">{title}</h4>
@@ -921,32 +965,26 @@ function SectionListEditor({ title, subtitle, list, exclusiveHint, onChange }: {
         {list.map((s) => (
           <SectionChip key={s.path} s={s} onRemove={() => onChange(list.filter((x) => x.path !== s.path))} />
         ))}
-        {adding ? (
-          <div className="flex w-full items-center gap-2">
-            <select value={pick} onChange={(e) => setPick(e.target.value)}
-              className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring">
-              <option value="">Select a section…</option>
-              {options.map((o) => (
-                <option key={o.path} value={o.path}>{o.path} — {appTag(o.app)}</option>
-              ))}
-            </select>
-            <button type="button" onClick={add} disabled={!pick} className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50">Add</button>
-            <button type="button" onClick={() => setAdding(false)} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
-          </div>
-        ) : (
-          <button type="button" onClick={() => setAdding(true)} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
-            <Plus className="h-4 w-4" /> Add {title.toLowerCase().replace(/s$/, "")}
-          </button>
-        )}
+        <button type="button" onClick={() => setAdding(true)} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+          <Plus className="h-4 w-4" /> Add {kind} section
+        </button>
       </div>
       {exclusiveHint && list.length > 0 && (
-        <p className="mt-2 text-xs font-medium text-amber-600">Exclusive mode — only the shown sections render for this retailer; hidden entries still subtract.</p>
+        <p className="mt-2 text-xs font-medium text-amber-600">Shown ONLY to this retailer — rendered in addition to the data group's Dashboard sections.</p>
+      )}
+      {adding && (
+        <AddRetailerSectionModal
+          kind={kind}
+          exclude={exclude}
+          onAdd={(s) => onChange([...list, s])}
+          onClose={() => setAdding(false)}
+        />
       )}
     </div>
   );
 }
 
-function RetailersPanel({ dashboardType, dataGroupId }: { dashboardType: "Brand" | "Agency"; dataGroupId?: string }) {
+function RetailersPanel({ dashboardType, dataGroupId, dgSectionPaths }: { dashboardType: "Brand" | "Agency"; dataGroupId?: string; dgSectionPaths: string[] }) {
   const isGrpm = (dataGroupId ?? "").startsWith("grpm");
   const [rows, setRows] = useState<RetailerVisibilityRow[]>(
     isGrpm ? GRPM_RETAILER_VISIBILITY : INITIAL_RETAILER_VISIBILITY,
@@ -1001,15 +1039,19 @@ function RetailersPanel({ dashboardType, dataGroupId }: { dashboardType: "Brand"
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                           <SectionListEditor
                             title="Shown sections"
-                            subtitle="Only these sections will be shown in the dashboard (exclusive)"
+                            subtitle="Extra sections shown ONLY for this retailer, on top of the data group's Dashboard sections"
+                            kind="shown"
                             list={r.shown}
+                            excludePaths={[...dgSectionPaths, ...r.hidden.map((h) => h.path)]}
                             exclusiveHint
                             onChange={(v) => patch(r.id, { shown: v })}
                           />
                           <SectionListEditor
                             title="Hidden sections"
                             subtitle="These sections will not be shown in the dashboard"
+                            kind="hidden"
                             list={r.hidden}
+                            excludePaths={[]}
                             onChange={(v) => patch(r.id, { hidden: v })}
                           />
                         </div>
