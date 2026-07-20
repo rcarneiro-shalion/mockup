@@ -205,7 +205,11 @@ export const INITIAL_CLIENTS: Client[] = [
   C("fdwa", "FSA Demo US - Waters", "FDWA", true, "Mon, Oct 28, 2024 1:14 PM", "Fri, Aug 29, 2025 9:55 AM"),
   C("geek", "Geekspeak", "GEEK", false, "Thu, Dec 5, 2024 10:17 PM", "Thu, Nov 6, 2025 3:46 PM"),
   C("mapl", "Geekspeak - Maple Leaf", "MAPL", false, "Wed, Jan 22, 2025 12:10 PM", "Wed, Jan 22, 2025 12:14 PM"),
-  C("grpm", "GroupM", "GRPM", false, "Thu, Aug 3, 2023 10:18 AM", "Thu, Jul 25, 2024 2:22 PM"),
+  { ...C("grpm", "GroupM", "GRPM", false, "Thu, Aug 3, 2023 10:18 AM", "Thu, Jul 25, 2024 2:22 PM"), dataGroups: [
+    { id: "grpm-global", name: "GroupM Global", dashboardType: "AGENCY", createdAt: "Wed, Mar 13, 2024 3:50 PM", updatedAt: "Thu, Jul 25, 2024 2:22 PM" },
+    { id: "grpm-emea", name: "GroupM EMEA", dashboardType: "AGENCY", createdAt: "Tue, Jul 22, 2025 2:44 PM", updatedAt: "Tue, Sep 16, 2025 2:07 PM" },
+    { id: "grpm-nestle", name: "GroupM - Nestlé", dashboardType: "BRAND", createdAt: "Mon, Feb 12, 2024 9:12 AM", updatedAt: "Mon, Feb 12, 2024 9:12 AM" },
+  ] },
   C("grpm_pndg", "GroupM - PNDG", "GRPM_PNDG", false, "Tue, Jul 22, 2025 2:44 PM", "Tue, Sep 16, 2025 2:07 PM"),
   C("hart", "Hartmann", "HART", false, "Thu, Dec 14, 2023 3:33 PM", "Tue, Aug 6, 2024 10:29 AM"),
   C("hasb", "Hasbro", "HASB", false, "Mon, Jan 9, 2023 8:05 AM", "Tue, Aug 6, 2024 10:30 AM"),

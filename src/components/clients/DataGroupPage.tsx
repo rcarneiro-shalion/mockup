@@ -28,24 +28,28 @@ export function DataGroupPage({
   initialName,
   dataGroupId,
   mode = "edit",
+  initialDashboardType = "Brand",
 }: {
   clientId: string;
   clientName: string;
   initialName: string;
   dataGroupId?: string;
   mode?: "add" | "edit";
+  initialDashboardType?: "Brand" | "Agency";
 }) {
   const isAdd = mode === "add";
   const navigate = useNavigate();
   const goClient = () => navigate({ to: "/clients/$clientId", params: { clientId } });
 
   const [name, setName] = useState(initialName);
-  // Deep-linkable dashboard type (?type=Agency) — handy for demos/screenshots.
-  const [dashboardType, setDashboardType] = useState<"Brand" | "Agency">(() =>
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("type") === "Agency"
-      ? "Agency"
-      : "Brand",
-  );
+  // Dashboard type: fixture value, overridable via ?type=Agency (demos/screenshots).
+  const [dashboardType, setDashboardType] = useState<"Brand" | "Agency">(() => {
+    if (typeof window !== "undefined") {
+      const q = new URLSearchParams(window.location.search).get("type");
+      if (q === "Agency" || q === "Brand") return q;
+    }
+    return initialDashboardType;
+  });
   const [fsaSection, setFsaSection] = useState(isAdd ? "" : "Drinks");
   const [isParent, setIsParent] = useState(false);
   const [parents, setParents] = useState<ParentRow[]>(

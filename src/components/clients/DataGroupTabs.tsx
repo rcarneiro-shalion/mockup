@@ -238,7 +238,7 @@ export function DataGroupTabs({ isParent = false, dataGroupId, dashboardType = "
         {activeTab === "categories" && <CategoriesPanel />}
         {activeTab === "store-extraction-types" && <StoreExtractionPanel />}
         {activeTab === "targets" && <TargetsPanel />}
-        {activeTab === "retailers" && <RetailersPanel dashboardType={dashboardType} />}
+        {activeTab === "retailers" && <RetailersPanel dashboardType={dashboardType} dataGroupId={dataGroupId} />}
         {activeTab === "sections" && (
           <SectionsPanel sections={sections} setSections={setSections} collapsed={sectionsCollapsed} setCollapsed={setSectionsCollapsed} onAdd={() => setAddSectionOpen(true)} />
         )}
@@ -858,6 +858,27 @@ function sectionOptions(): SectionRef[] {
   return out;
 }
 
+// GroupM Global — Agency set (mirrors the real console; varied configs for testing:
+// shown-only, hidden-only, both, multi-entry, and untouched rows).
+const GRPM_RETAILER_VISIBILITY: RetailerVisibilityRow[] = [
+  { id: "gr1", name: "Leclerc FR", createdAt: "2024-03-13, 15:50:31", updatedAt: "2024-03-13, 15:50:31",
+    shown: [{ path: "/keyword-intelligence/leclerc_fr-intelligencev2", app: "CMI" }],
+    hidden: [{ path: "/keyword-intelligence/keyword-intelligence", app: "CMI" }] },
+  { id: "gr2", name: "Morrisons UK", createdAt: "2024-03-13, 15:50:31", updatedAt: "2024-03-13, 15:50:31",
+    shown: [],
+    hidden: [{ path: "/keyword-intelligence/keyword-intelligence", app: "CMI" }, { path: "/dse-content/ratings-reviews", app: "Digital Shelf Maestro" }] },
+  { id: "gr3", name: "Petsmart US", createdAt: "2024-02-29, 11:52:09", updatedAt: "2024-02-29, 11:52:09",
+    shown: [{ path: "/keyword-intelligence/petsmart_us-intelligence", app: "CMI" }, { path: "/dse-range/assortment", app: "Digital Shelf Maestro" }],
+    hidden: [] },
+  { id: "gr4", name: "Dia ES", createdAt: "2024-03-13, 15:50:31", updatedAt: "2024-03-13, 15:50:31", shown: [], hidden: [] },
+  { id: "gr5", name: "Walmart US", createdAt: "2024-03-11, 16:15:42", updatedAt: "2024-03-11, 16:15:42",
+    shown: [], hidden: [{ path: "/dse-range/price", app: "Digital Shelf Maestro" }] },
+  { id: "gr6", name: "Tokopedia ID", createdAt: "2024-03-13, 15:50:31", updatedAt: "2024-03-13, 15:50:31", shown: [], hidden: [] },
+  { id: "gr7", name: "Tesco UK", createdAt: "2024-03-13, 15:50:31", updatedAt: "2024-03-13, 15:50:31",
+    shown: [], hidden: [{ path: "/dse-content/image-validation", app: "Digital Shelf Maestro" }] },
+  { id: "gr8", name: "Lidl DE", createdAt: "2024-03-13, 15:50:31", updatedAt: "2024-03-13, 15:50:31", shown: [], hidden: [] },
+];
+
 const INITIAL_RETAILER_VISIBILITY: RetailerVisibilityRow[] = [
   { id: "rv1", name: "Eroski ES", createdAt: "2025-12-12, 15:36:29", updatedAt: "2025-12-12, 15:36:29", shown: [], hidden: [{ path: "/keyword-intelligence/keyword-intelligence", app: "CMI" }] },
   { id: "rv2", name: "Dia ES", createdAt: "2025-06-16, 14:34:55", updatedAt: "2025-06-16, 14:34:55", shown: [{ path: "/keyword-intelligence/dia_es-intelligencev2", app: "CMI" }], hidden: [{ path: "/keyword-intelligence/keyword-intelligence", app: "CMI" }] },
@@ -925,9 +946,12 @@ function SectionListEditor({ title, subtitle, list, exclusiveHint, onChange }: {
   );
 }
 
-function RetailersPanel({ dashboardType }: { dashboardType: "Brand" | "Agency" }) {
-  const [rows, setRows] = useState<RetailerVisibilityRow[]>(INITIAL_RETAILER_VISIBILITY);
-  const [open, setOpen] = useState<string | null>("rv2");
+function RetailersPanel({ dashboardType, dataGroupId }: { dashboardType: "Brand" | "Agency"; dataGroupId?: string }) {
+  const isGrpm = (dataGroupId ?? "").startsWith("grpm");
+  const [rows, setRows] = useState<RetailerVisibilityRow[]>(
+    isGrpm ? GRPM_RETAILER_VISIBILITY : INITIAL_RETAILER_VISIBILITY,
+  );
+  const [open, setOpen] = useState<string | null>(isGrpm ? "gr1" : "rv2");
   const patch = (id: string, p: Partial<RetailerVisibilityRow>) =>
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...p } : r)));
   return (

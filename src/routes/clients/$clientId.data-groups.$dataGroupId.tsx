@@ -17,6 +17,7 @@ function DataGroupDetail() {
       clientName={client?.name ?? "Client"}
       initialName={dg?.name ?? "Data group"}
       dataGroupId={dataGroupId}
+      initialDashboardType={dg?.dashboardType === "AGENCY" ? "Agency" : "Brand"}
     />
   );
 }
