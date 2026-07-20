@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ChevronDown, Copy, GripVertical, LayoutList, Plus, Box, X, Globe, MapPin, LayoutGrid, Store, Target, ArrowUp, ArrowDown, Filter, Check, Search } from "lucide-react";
+import { ChevronDown, Copy, GripVertical, LayoutList, Plus, Box, X, Globe, MapPin, LayoutGrid, Store, Target, ArrowUp, ArrowDown, Filter, Check, Search, ShoppingCart, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { flag, countryLabel, COUNTRY_OPTIONS } from "@/lib/retailers";
+import { getDashboardApps } from "@/lib/dashboardApps";
 import { usePersistentState } from "@/hooks/usePersistentState";
 import { MU_SEED } from "@/lib/massiveUpdate";
 
@@ -183,7 +184,7 @@ const INITIAL_COUNTRIES: CountryRow[] = COUNTRY_CODES.map((code, i) => ({
   updatedAt: i % 3 === 0 ? "Mon, May 19, 2025 11:00" : "Tue, Oct 15, 2024 9:11",
 }));
 
-type TabKey = "countries" | "client-regions" | "categories" | "store-extraction-types" | "targets" | "sections" | "cubes";
+type TabKey = "countries" | "client-regions" | "categories" | "store-extraction-types" | "targets" | "retailers" | "sections" | "cubes";
 
 const ALL_TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "countries", label: "Countries", icon: <Globe className="h-4 w-4" /> },
@@ -191,14 +192,21 @@ const ALL_TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: "categories", label: "Categories", icon: <LayoutGrid className="h-4 w-4" /> },
   { key: "store-extraction-types", label: "Store extraction types", icon: <Store className="h-4 w-4" /> },
   { key: "targets", label: "Targets", icon: <Target className="h-4 w-4" /> },
+  { key: "retailers", label: "Retailers", icon: <ShoppingCart className="h-4 w-4" /> },
   { key: "sections", label: "Dashboard sections", icon: <LayoutList className="h-4 w-4" /> },
   { key: "cubes", label: "Cubes", icon: <Box className="h-4 w-4" /> },
 ];
 const PARENT_TAB_KEYS: TabKey[] = ["sections", "cubes"];
 
-export function DataGroupTabs({ isParent = false, dataGroupId }: { isParent?: boolean; dataGroupId?: string }) {
+export function DataGroupTabs({ isParent = false, dataGroupId, dashboardType = "Brand" }: { isParent?: boolean; dataGroupId?: string; dashboardType?: "Brand" | "Agency" }) {
   const visibleTabs = isParent ? ALL_TABS.filter((t) => PARENT_TAB_KEYS.includes(t.key)) : ALL_TABS;
-  const [tab, setTab] = useState<TabKey>(isParent ? "sections" : "countries");
+  // Deep-linkable tab (?tab=retailers) — handy for demos/screenshots.
+  const urlTab = typeof window !== "undefined"
+    ? (new URLSearchParams(window.location.search).get("tab") as TabKey | null)
+    : null;
+  const [tab, setTab] = useState<TabKey>(
+    urlTab && ALL_TABS.some((t) => t.key === urlTab) ? urlTab : isParent ? "sections" : "countries",
+  );
   const activeTab = visibleTabs.some((t) => t.key === tab) ? tab : visibleTabs[0].key;
 
   // Sections are per data group + persisted (this is the thing being managed).
@@ -230,6 +238,7 @@ export function DataGroupTabs({ isParent = false, dataGroupId }: { isParent?: bo
         {activeTab === "categories" && <CategoriesPanel />}
         {activeTab === "store-extraction-types" && <StoreExtractionPanel />}
         {activeTab === "targets" && <TargetsPanel />}
+        {activeTab === "retailers" && <RetailersPanel dashboardType={dashboardType} />}
         {activeTab === "sections" && (
           <SectionsPanel sections={sections} setSections={setSections} collapsed={sectionsCollapsed} setCollapsed={setSectionsCollapsed} onAdd={() => setAddSectionOpen(true)} />
         )}
@@ -815,5 +824,183 @@ function AssignCubeModal({ existing, onClose, onAssign }: { existing: string[]; 
       onClose={onClose}
       onAssign={onAssign}
     />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Retailers tab — per-retailer dashboard-section visibility (Agency dashboards).
+// As-is: "Hidden sections" (subtract from the dashboard). New (Inés / Dentsu
+// Global): "Shown sections" — an EXCLUSIVE allowlist; when non-empty, only
+// those sections render for that retailer (hidden entries still subtract).
+// ---------------------------------------------------------------------------
+
+type SectionRef = { path: string; app: string };
+type RetailerVisibilityRow = {
+  id: string; name: string; createdAt: string; updatedAt: string;
+  shown: SectionRef[]; hidden: SectionRef[];
+};
+
+const appTag = (label: string) => {
+  const words = label.trim().split(/\s+/);
+  return (words.length > 1 ? words.map((w) => w[0]).join("") : label).toUpperCase().slice(0, 4);
+};
+
+function sectionOptions(): SectionRef[] {
+  const out: SectionRef[] = [];
+  for (const app of getDashboardApps()) {
+    for (const g of app.groups ?? []) {
+      for (const s of g.sections ?? []) {
+        out.push({ path: s.path, app: app.label });
+        if (out.length >= 300) return out;
+      }
+    }
+  }
+  return out;
+}
+
+const INITIAL_RETAILER_VISIBILITY: RetailerVisibilityRow[] = [
+  { id: "rv1", name: "Eroski ES", createdAt: "2025-12-12, 15:36:29", updatedAt: "2025-12-12, 15:36:29", shown: [], hidden: [{ path: "/keyword-intelligence/keyword-intelligence", app: "CMI" }] },
+  { id: "rv2", name: "Dia ES", createdAt: "2025-06-16, 14:34:55", updatedAt: "2025-06-16, 14:34:55", shown: [{ path: "/keyword-intelligence/dia_es-intelligencev2", app: "CMI" }], hidden: [{ path: "/keyword-intelligence/keyword-intelligence", app: "CMI" }] },
+  { id: "rv3", name: "Alcampo ES", createdAt: "2025-06-16, 14:34:44", updatedAt: "2025-06-16, 14:34:44", shown: [], hidden: [] },
+  { id: "rv4", name: "Glovo ES", createdAt: "2026-02-12, 15:23:25", updatedAt: "2026-02-12, 15:23:25", shown: [], hidden: [] },
+  { id: "rv5", name: "Amazon ES", createdAt: "2025-06-16, 14:34:25", updatedAt: "2025-06-16, 14:34:25", shown: [], hidden: [] },
+  { id: "rv6", name: "El Corte Ingles ES", createdAt: "2026-02-12, 15:22:35", updatedAt: "2026-02-12, 15:22:35", shown: [], hidden: [] },
+  { id: "rv7", name: "Carrefour ES", createdAt: "2025-06-16, 14:34:33", updatedAt: "2025-06-16, 14:34:33", shown: [], hidden: [] },
+];
+
+function SectionChip({ s, onRemove }: { s: SectionRef; onRemove: () => void }) {
+  return (
+    <span className="inline-flex max-w-full items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm">
+      <span className="truncate font-mono text-xs text-foreground/85">{s.path}</span>
+      <span className="rounded-full border border-amber-400/70 px-1.5 py-px text-[10px] font-semibold text-amber-600">{appTag(s.app)}</span>
+      <button type="button" onClick={onRemove} className="text-muted-foreground hover:text-destructive" aria-label={`Remove ${s.path}`}>
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </span>
+  );
+}
+
+function SectionListEditor({ title, subtitle, list, exclusiveHint, onChange }: {
+  title: string; subtitle: string; list: SectionRef[]; exclusiveHint?: boolean;
+  onChange: (v: SectionRef[]) => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [pick, setPick] = useState("");
+  const options = sectionOptions().filter((o) => !list.some((l) => l.path === o.path));
+  const add = () => {
+    const opt = options.find((o) => o.path === pick);
+    if (opt) onChange([...list, opt]);
+    setPick(""); setAdding(false);
+  };
+  return (
+    <div>
+      <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+      <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
+      <div className="mt-2 flex flex-col items-start gap-1.5">
+        {list.map((s) => (
+          <SectionChip key={s.path} s={s} onRemove={() => onChange(list.filter((x) => x.path !== s.path))} />
+        ))}
+        {adding ? (
+          <div className="flex w-full items-center gap-2">
+            <select value={pick} onChange={(e) => setPick(e.target.value)}
+              className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring">
+              <option value="">Select a section…</option>
+              {options.map((o) => (
+                <option key={o.path} value={o.path}>{o.path} — {appTag(o.app)}</option>
+              ))}
+            </select>
+            <button type="button" onClick={add} disabled={!pick} className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50">Add</button>
+            <button type="button" onClick={() => setAdding(false)} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setAdding(true)} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+            <Plus className="h-4 w-4" /> Add {title.toLowerCase().replace(/s$/, "")}
+          </button>
+        )}
+      </div>
+      {exclusiveHint && list.length > 0 && (
+        <p className="mt-2 text-xs font-medium text-amber-600">Exclusive mode — only the shown sections render for this retailer; hidden entries still subtract.</p>
+      )}
+    </div>
+  );
+}
+
+function RetailersPanel({ dashboardType }: { dashboardType: "Brand" | "Agency" }) {
+  const [rows, setRows] = useState<RetailerVisibilityRow[]>(INITIAL_RETAILER_VISIBILITY);
+  const [open, setOpen] = useState<string | null>("rv2");
+  const patch = (id: string, p: Partial<RetailerVisibilityRow>) =>
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...p } : r)));
+  return (
+    <div className="rounded-xl border border-border bg-card shadow-sm p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-base font-semibold text-foreground">Retailers</h3>
+        <button type="button" className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-secondary">
+          <Plus className="h-4 w-4" /> Assign retailer
+        </button>
+      </div>
+      <div className="overflow-hidden rounded-md border border-border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-muted/40 text-muted-foreground">
+              <th className="w-10 px-3 py-2.5" />
+              <th className="px-2 py-2.5 text-left font-medium">Retailer</th>
+              <th className="w-44 px-3 py-2.5 text-left font-medium">Created at</th>
+              <th className="w-44 px-3 py-2.5 text-left font-medium">Updated at</th>
+              <th className="w-10 px-3 py-2.5" />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <>
+                <tr key={r.id} className="border-t border-border">
+                  <td className="px-3 py-2.5">
+                    <button type="button" onClick={() => setOpen(open === r.id ? null : r.id)}
+                      className="grid h-6 w-6 place-items-center rounded border border-border text-muted-foreground hover:bg-secondary"
+                      aria-label={open === r.id ? "Collapse" : "Expand"}>
+                      {open === r.id ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                    </button>
+                  </td>
+                  <td className="px-2 py-2.5 text-foreground">{r.name}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">{r.createdAt}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">{r.updatedAt}</td>
+                  <td className="px-3 py-2.5">
+                    <button type="button" onClick={() => setRows((rs) => rs.filter((x) => x.id !== r.id))}
+                      className="text-muted-foreground hover:text-destructive" aria-label={`Unassign ${r.name}`}>
+                      <X className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+                {open === r.id && (
+                  <tr key={`${r.id}-detail`} className="border-t border-border/60 bg-muted/20">
+                    <td colSpan={5} className="px-5 py-4">
+                      {dashboardType === "Agency" ? (
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                          <SectionListEditor
+                            title="Shown sections"
+                            subtitle="Only these sections will be shown in the dashboard (exclusive)"
+                            list={r.shown}
+                            exclusiveHint
+                            onChange={(v) => patch(r.id, { shown: v })}
+                          />
+                          <SectionListEditor
+                            title="Hidden sections"
+                            subtitle="These sections will not be shown in the dashboard"
+                            list={r.hidden}
+                            onChange={(v) => patch(r.id, { hidden: v })}
+                          />
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Section visibility is configured on <span className="font-medium text-foreground">Agency</span> dashboards only.</p>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Pagination total={rows.length} />
+    </div>
   );
 }

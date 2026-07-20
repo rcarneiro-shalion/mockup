@@ -40,7 +40,12 @@ export function DataGroupPage({
   const goClient = () => navigate({ to: "/clients/$clientId", params: { clientId } });
 
   const [name, setName] = useState(initialName);
-  const [dashboardType, setDashboardType] = useState<"Brand" | "Agency">("Brand");
+  // Deep-linkable dashboard type (?type=Agency) — handy for demos/screenshots.
+  const [dashboardType, setDashboardType] = useState<"Brand" | "Agency">(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("type") === "Agency"
+      ? "Agency"
+      : "Brand",
+  );
   const [fsaSection, setFsaSection] = useState(isAdd ? "" : "Drinks");
   const [isParent, setIsParent] = useState(false);
   const [parents, setParents] = useState<ParentRow[]>(
@@ -200,7 +205,7 @@ export function DataGroupPage({
           </div>
 
           {/* Tabs — only on an existing data group; reduced to Dashboard sections / Users / Cubes when parent */}
-          {!isAdd && <DataGroupTabs isParent={isParent} dataGroupId={dataGroupId} />}
+          {!isAdd && <DataGroupTabs isParent={isParent} dataGroupId={dataGroupId} dashboardType={dashboardType} />}
 
           {isAdd && (
             <div className="mt-6 flex items-center justify-end gap-2">
