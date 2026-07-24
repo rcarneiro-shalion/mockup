@@ -18,6 +18,7 @@ import {
 import { AssignProjectDialog } from "@/components/clients/AssignProjectDialog";
 import { ClientBottomTabs } from "@/components/clients/ClientBottomTabs";
 import { ClientUsersSection } from "@/components/clients/ClientUsersSection";
+import { ClientColorPersistenceSection } from "@/components/clients/ClientColorPersistenceSection";
 import { LinkText, Pagination, Th, Td } from "@/components/seeds/ListPrimitives";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Client } from "@/lib/clients";
@@ -289,6 +290,9 @@ export function ClientForm({
                 </>
               )}
             </div>
+
+            {/* Color persistence (spec: client colours for chart dimensions) */}
+            <ClientColorPersistenceSection client={client} />
 
             {/* Users (client-level pool; Datagroup column shows this client's data groups) */}
             <ClientUsersSection client={client} set={set} />
